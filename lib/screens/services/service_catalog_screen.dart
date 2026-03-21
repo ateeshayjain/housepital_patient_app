@@ -1862,19 +1862,14 @@ class _EquipmentItemCard extends StatelessWidget {
               // Category badges
               Row(
                 children: [
-                  if (item.category == 'Equipment' &&
-                      item.rentalPrice != null) ...[
+                  if (item.availableForRent) ...[
                     _typeBadge('Rent', Colors.blue.shade50,
                         Colors.blue.shade700),
                     const SizedBox(width: 4),
+                  ],
+                  if (item.availableForSale)
                     _typeBadge('Buy', HousepitalColors.successLight,
                         HousepitalColors.success),
-                  ] else
-                    _typeBadge(
-                      item.category == 'Equipment' ? 'Buy' : 'Sale',
-                      HousepitalColors.successLight,
-                      HousepitalColors.success,
-                    ),
                 ],
               ),
             ],
@@ -1932,7 +1927,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
   Widget build(BuildContext context) {
     final item = widget.item;
     final icon = widget.icon;
-    final hasRental = item.category == 'Equipment' && item.rentalPrice != null;
+    final hasRental = item.availableForRent;
     final breakeven = item.breakevenDays;
 
     return Padding(
@@ -2023,7 +2018,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: item.keyFeatures!.split(',').map((f) => Container(
+              children: item.keyFeatures!.split(RegExp(r'[|,]')).map((f) => Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -2098,6 +2093,55 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                   ),
                 ],
               ],
+            ),
+          ],
+
+          // FAQs (expandable)
+          if (item.faqs != null && item.faqs!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              title: const Text('FAQs',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: HousepitalColors.black)),
+              leading: const Icon(Icons.question_answer_outlined,
+                  size: 18, color: HousepitalColors.orange),
+              children: [
+                Text(item.faqs!,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: HousepitalColors.grey,
+                        height: 1.4)),
+              ],
+            ),
+          ],
+
+          // Variant info
+          if (item.variantType != null && item.variantValue != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${item.variantType}: ',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: HousepitalColors.greyLight)),
+                  Text(item.variantValue!,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HousepitalColors.black)),
+                ],
+              ),
             ),
           ],
 
