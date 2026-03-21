@@ -1353,6 +1353,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   }
 
   void _submitRequest(BuildContext context, AppLocalizations l) {
+    if (!_formKey.currentState!.validate()) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

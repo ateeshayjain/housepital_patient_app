@@ -225,18 +225,23 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   List<_FaqEntry> get _faqs {
     if (_catalogItem?.faqs == null || _catalogItem!.faqs!.isEmpty) return [];
-    // FAQs may use | or \n as separator between entries
-    final sep = _catalogItem!.faqs!.contains('|') ? '|' : '\n';
-    final parts = _catalogItem!.faqs!.split(sep).map((e) => e.trim()).where((e) => e.isNotEmpty);
+    final raw = _catalogItem!.faqs!;
+
+    // Strategy: split on 'Q:' boundaries to get individual QA blocks,
+    // then extract the answer from each block by splitting on ' A:'
+    final qBlocks = raw.split(RegExp(r'(?:^|\|)\s*Q:\s*')).where((e) => e.trim().isNotEmpty);
     final faqs = <_FaqEntry>[];
-    String? currentQ;
-    for (final part in parts) {
-      if (part.startsWith('Q:') || part.startsWith('Q.')) {
-        currentQ = part.substring(2).trim();
-      } else if ((part.startsWith('A:') || part.startsWith('A.')) &&
-          currentQ != null) {
-        faqs.add(_FaqEntry(question: currentQ, answer: part.substring(2).trim()));
-        currentQ = null;
+    for (final block in qBlocks) {
+      // Each block looks like: "How often...? A: Replace after..."
+      final aIndex = block.indexOf(RegExp(r'\s+A:\s'));
+      if (aIndex > 0) {
+        final question = block.substring(0, aIndex).trim();
+        final answer = block.substring(aIndex).replaceFirst(RegExp(r'^\s*A:\s*'), '').trim();
+        // Remove trailing pipe if present
+        final cleanAnswer = answer.endsWith('|') ? answer.substring(0, answer.length - 1).trim() : answer;
+        if (question.isNotEmpty && cleanAnswer.isNotEmpty) {
+          faqs.add(_FaqEntry(question: question, answer: cleanAnswer));
+        }
       }
     }
     return faqs;
@@ -824,21 +829,25 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         children: [
           const _SectionTitle(title: 'FAQs'),
           const SizedBox(height: 10),
-          ..._faqs.map((faq) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      faq.question,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: HousepitalColors.black,
-                      ),
+          ...List.generate(_faqs.length, (i) {
+            final faq = _faqs[i];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${i + 1}. ${faq.question}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: HousepitalColors.black,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Text(
                       faq.answer,
                       style: const TextStyle(
                         fontSize: 13,
@@ -846,9 +855,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         height: 1.5,
                       ),
                     ),
+                  ),
+                  if (i < _faqs.length - 1) ...[
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
                   ],
-                ),
-              )),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

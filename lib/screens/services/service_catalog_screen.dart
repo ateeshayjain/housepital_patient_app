@@ -44,22 +44,6 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
 
   // ── Real Housepital service catalog ──────────────────────────
 
-  // Physio services
-  static final List<ServiceItem> _physioServices = [
-    ServiceItem(
-      id: 'mp-physio',
-      name: 'Physiotherapy',
-      nameHi: '\u092b\u093f\u091c\u093f\u092f\u094b\u0925\u0947\u0930\u0947\u092a\u0940',
-      category: 'manpower',
-      bookingType: 'instant',
-      description:
-          'Certified physiotherapist for home visits \u2014 post-surgery rehab, mobility training & pain management.',
-      basePriceMin: 800,
-      durationMinutes: 45,
-      iconName: 'fitness_center',
-    ),
-  ];
-
   static final List<ServiceItem> _manpowerServices = [
     // ── Nursing Staff (no prices shown — assessment first) ──
     ServiceItem(
@@ -154,19 +138,19 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       id: 'mp-physio-basic', name: 'Physiotherapy (Basic)',
       category: 'manpower', bookingType: 'assessment',
       description: 'Basic physiotherapy (30-40 min) for TKR, THR, frozen shoulder, lower back pain, posture correction, sciatica & sports injuries. Therapist: 1-2 years experience.',
-      basePriceMin: 900, basePriceMax: 900, iconName: 'fitness_center',
+      iconName: 'fitness_center',
     ),
     ServiceItem(
       id: 'mp-physio-advance', name: 'Physiotherapy (Advanced)',
       category: 'manpower', bookingType: 'assessment',
       description: 'Advanced physiotherapy (45-50 min) for neuro rehab, antenatal/postnatal, cardiac rehab, pulmo rehab (not on O2). Therapist: 2-4 years experience.',
-      basePriceMin: 1200, basePriceMax: 1200, iconName: 'fitness_center',
+      iconName: 'fitness_center',
     ),
     ServiceItem(
       id: 'mp-physio-critical', name: 'Physiotherapy (Critical)',
       category: 'manpower', bookingType: 'assessment',
       description: 'Critical physiotherapy (50-60 min) for pulmo rehab on O2, neurosurgical cases, spinal cord injury & pediatric post-op. Therapist: 4+ years experience.',
-      basePriceMin: 1500, basePriceMax: 1500, iconName: 'fitness_center',
+      iconName: 'fitness_center',
     ),
   ];
 
@@ -326,25 +310,6 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       category: 'lab', bookingType: 'instant',
       description: 'Phlebotomist visits your home to collect blood samples. Reports shared digitally.',
       basePriceMin: 250, basePriceMax: 250, iconName: 'science',
-    ),
-  ];
-
-  // Sleep Therapy moved to _consultationServices
-  static final List<ServiceItem> _therapyServices = [
-    ServiceItem(
-      id: 'th-sleep-legacy',
-      name: 'Sleep Therapy',
-      nameHi: '\u0938\u094d\u0932\u0940\u092a \u0925\u0947\u0930\u0947\u092a\u0940',
-      category: 'therapy',
-      bookingType: 'instant',
-      description:
-          'Certified sleep therapist visit \u2014 assessment, sleep hygiene counselling & personalised routine.',
-      descriptionHi:
-          '\u092a\u094d\u0930\u092e\u093e\u0923\u093f\u0924 \u0938\u094d\u0932\u0940\u092a \u0925\u0947\u0930\u0947\u092a\u093f\u0938\u094d\u091f \u0935\u093f\u091c\u093f\u091f \u2014 \u092e\u0942\u0932\u094d\u092f\u093e\u0902\u0915\u0928, \u0928\u0940\u0902\u0926 \u0938\u094d\u0935\u091a\u094d\u091b\u0924\u093e \u092a\u0930\u093e\u092e\u0930\u094d\u0936 \u0914\u0930 \u0935\u094d\u092f\u0915\u094d\u0924\u093f\u0917\u0924 \u0926\u093f\u0928\u091a\u0930\u094d\u092f\u093e\u0964',
-      basePriceMin: 1500,
-      durationMinutes: 60,
-      leadTimeHours: 24,
-      iconName: 'bedtime',
     ),
   ];
 
