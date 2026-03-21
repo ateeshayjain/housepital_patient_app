@@ -1,0 +1,85 @@
+<h2>How should we structure the Active Service Monitoring?</h2>
+<p class="subtitle">Three approaches — each handles the same information differently</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Enhanced Home Screen</h3>
+      <p>Expand the existing home screen with richer cards for each active service. Staff attendance, vitals, billing summary, and Health Manager contact all live on the home dashboard as expandable sections.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Everything in one place — no new navigation to learn</li>
+            <li>Builds on existing "Your Staff" and "Today's Vitals" sections</li>
+            <li>Fastest to build</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Home screen gets very long and dense</li>
+            <li>Hard to show multiple active services (ICU + physio + equipment)</li>
+            <li>Remote family members have to scroll through everything to find what they care about</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dedicated "My Care" Tab</h3>
+      <p>Add a new bottom tab — "My Care" — as the primary monitoring hub. Shows all active services as cards, each expandable into detail views. Home screen stays light (summary + quick actions), My Care goes deep.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Clean separation: Home = "what's happening now", My Care = "full picture"</li>
+            <li>Supports multiple active services naturally (list of service cards)</li>
+            <li>Remote family members go straight to My Care tab</li>
+            <li>Room to grow — add history, documents, reports later</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>New bottom tab — need to fit into existing tab bar</li>
+            <li>Some duplication with home screen (vitals shown in both places)</li>
+            <li>More screens to build</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Service-Specific Detail Screens</h3>
+      <p>Keep the home screen as-is, but make each active service card tappable → opens a full detail screen specific to that service type. ICU package gets a medical dashboard, Japa gets a simpler attendance view, equipment gets a rental tracker.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Each service type gets a tailored experience</li>
+            <li>ICU monitoring is very different from Japa monitoring — this respects that</li>
+            <li>Home screen stays clean</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>No unified view of "all my active services"</li>
+            <li>Most complex to build — multiple screen templates</li>
+            <li>Family member has to tap into each service separately</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 24px; font-style: italic;">My recommendation: <strong>Option B</strong> — a dedicated "My Care" tab gives both patient and remote family a clear home base, scales to multiple services, and keeps the main home screen snappy. We can still use elements of C (service-specific detail views) when you tap into a service card from My Care.</p>

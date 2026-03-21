@@ -1,0 +1,218 @@
+<h2>Medication Module — Full Management</h2>
+<p class="subtitle">Lives inside My Care tab and the service detail view. Patient/family can add, staff marks administered.</p>
+
+<!-- Medication List View -->
+<div class="section">
+  <h3>Medication Schedule — Daily View</h3>
+  <p class="subtitle">Shows today's medications grouped by time slot. Staff marks administered in their app, patient sees it here.</p>
+  <div class="mockup">
+    <div class="mockup-header">Medications Tab (inside My Care or Service Detail)</div>
+    <div class="mockup-body" style="padding:16px;">
+
+      <!-- Morning -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:16px;">🌅</span>
+          <span style="font-size:14px; font-weight:700; color:#1f2937;">Morning — 8:00 AM</span>
+          <span style="margin-left:auto; font-size:12px; color:#16a34a; font-weight:600;">3/3 Given ✓</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+            <span style="color:#16a34a; font-size:16px;">✓</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Metformin 500mg</div>
+              <div style="font-size:11px; color:#6b7280;">1 tablet · After breakfast</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#16a34a;">Given 8:12 AM</div>
+              <div style="font-size:10px; color:#9ca3af;">by Priya S.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+            <span style="color:#16a34a; font-size:16px;">✓</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Amlodipine 5mg</div>
+              <div style="font-size:11px; color:#6b7280;">1 tablet · Before breakfast</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#16a34a;">Given 7:55 AM</div>
+              <div style="font-size:10px; color:#9ca3af;">by Priya S.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+            <span style="color:#16a34a; font-size:16px;">✓</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Pantoprazole 40mg</div>
+              <div style="font-size:11px; color:#6b7280;">1 tablet · Before breakfast</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px; color:#16a34a;">Given 7:50 AM</div>
+              <div style="font-size:10px; color:#9ca3af;">by Priya S.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Afternoon -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:16px;">☀️</span>
+          <span style="font-size:14px; font-weight:700; color:#1f2937;">Afternoon — 2:00 PM</span>
+          <span style="margin-left:auto; font-size:12px; color:#f97316; font-weight:600;">0/2 Pending</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+            <span style="color:#d1d5db; font-size:16px;">○</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Metformin 500mg</div>
+              <div style="font-size:11px; color:#6b7280;">1 tablet · After lunch</div>
+            </div>
+            <div style="font-size:11px; color:#9ca3af;">Scheduled</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+            <span style="color:#d1d5db; font-size:16px;">○</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Calcium + Vitamin D</div>
+              <div style="font-size:11px; color:#6b7280;">1 tablet · After lunch</div>
+            </div>
+            <div style="font-size:11px; color:#9ca3af;">Scheduled</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Night -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:16px;">🌙</span>
+          <span style="font-size:14px; font-weight:700; color:#1f2937;">Night — 9:00 PM</span>
+          <span style="margin-left:auto; font-size:12px; color:#9ca3af; font-weight:600;">0/2 Upcoming</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; padding-left:28px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+            <span style="color:#d1d5db; font-size:16px;">○</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#9ca3af;">Metoprolol 25mg</div>
+              <div style="font-size:11px; color:#d1d5db;">1 tablet · After dinner</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+            <span style="color:#d1d5db; font-size:16px;">○</span>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:600; color:#9ca3af;">Insulin Glargine 10U</div>
+              <div style="font-size:11px; color:#d1d5db;">Subcutaneous injection · Before bed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missed dose alert -->
+      <div style="padding:10px 12px; background:#fef2f2; border-radius:8px; border:1px solid #fecaca; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#dc2626; font-size:14px;">⚠</span>
+          <div>
+            <div style="font-size:13px; font-weight:600; color:#dc2626;">Missed Yesterday</div>
+            <div style="font-size:12px; color:#6b7280;">Calcium + Vitamin D (2:00 PM) — <span style="color:#3b82f6; cursor:pointer;">View reason</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Medication Management -->
+<div class="section">
+  <h3>Medication Management — Add / Edit / Stock</h3>
+  <p class="subtitle">Patient or family can manage the medication list. Staff sees updates in their app.</p>
+  <div class="mockup">
+    <div class="mockup-header">Medication List (All Medications)</div>
+    <div class="mockup-body" style="padding:16px;">
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <!-- Med card with stock -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:15px; font-weight:700; color:#1f2937;">Metformin 500mg</div>
+              <div style="font-size:12px; color:#6b7280; margin-top:2px;">1 tablet · Twice daily · After meals</div>
+              <div style="font-size:11px; color:#6b7280;">Prescribed by Dr. Mehta · Since 1 Mar 2026</div>
+            </div>
+            <span style="font-size:14px; cursor:pointer;">✏️</span>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:8px;">
+            <div style="padding:4px 10px; background:#f0fdf4; border-radius:6px; font-size:12px; color:#16a34a; font-weight:600;">
+              28 tablets left
+            </div>
+            <div style="padding:4px 10px; background:#f9fafb; border-radius:6px; font-size:12px; color:#6b7280;">
+              Refill in 14 days
+            </div>
+          </div>
+        </div>
+
+        <!-- Med with low stock warning -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #fde68a;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:15px; font-weight:700; color:#1f2937;">Insulin Glargine 10U</div>
+              <div style="font-size:12px; color:#6b7280; margin-top:2px;">Injection · Once daily · Before bed</div>
+              <div style="font-size:11px; color:#6b7280;">Prescribed by Dr. Mehta · Since 10 Mar 2026</div>
+            </div>
+            <span style="font-size:14px; cursor:pointer;">✏️</span>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:8px;">
+            <div style="padding:4px 10px; background:#fefce8; border-radius:6px; font-size:12px; color:#ca8a04; font-weight:600;">
+              ⚠ 3 units left — refill soon
+            </div>
+          </div>
+        </div>
+
+        <!-- Add medication button -->
+        <div style="padding:14px; background:#f9fafb; border-radius:10px; border:2px dashed #d1d5db; text-align:center; cursor:pointer;">
+          <span style="font-size:14px; font-weight:600; color:#6b7280;">+ Add Medication</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Data Flow -->
+<div class="section">
+  <h3>Data Flow — Staff ↔ Patient App</h3>
+  <p class="subtitle">How medications sync between both apps via shared Supabase backend</p>
+  <div style="padding:20px; background:#f9fafb; border-radius:12px; border:1px solid #e5e7eb; font-size:13px; line-height:1.8;">
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:200px;">
+        <div style="font-weight:700; color:#f97316; margin-bottom:6px;">Patient App WRITES:</div>
+        <ul style="margin:0; padding-left:16px; color:#1f2937;">
+          <li>Add/edit/delete medications</li>
+          <li>Update stock counts</li>
+          <li>Upload prescription photos</li>
+          <li>Set reminder preferences</li>
+        </ul>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="font-weight:700; color:#2563eb; margin-bottom:6px;">Staff App WRITES:</div>
+        <ul style="margin:0; padding-left:16px; color:#1f2937;">
+          <li>Mark medication administered (time + who)</li>
+          <li>Record skipped dose + reason</li>
+          <li>Flag adverse reactions</li>
+          <li>Add PRN (as-needed) doses given</li>
+        </ul>
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="font-weight:700; color:#16a34a; margin-bottom:6px;">Shared Supabase Tables:</div>
+        <ul style="margin:0; padding-left:16px; color:#1f2937;">
+          <li><code>medications</code> — master list (new table)</li>
+          <li><code>medication_logs</code> — administration records</li>
+          <li>Real-time subscriptions for instant sync</li>
+          <li>Replaces JSONB in deployments table</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px; padding:16px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+  <strong>Summary:</strong> Medications module has two views: (1) Daily schedule showing time-slotted meds with administered/pending/missed status, and (2) Full medication list with stock tracking, refill alerts, and add/edit capability. Both apps share the same Supabase tables in real-time.
+</p>

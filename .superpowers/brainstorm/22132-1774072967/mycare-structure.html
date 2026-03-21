@@ -1,0 +1,246 @@
+<h2>"My Care" Tab — Section Layout</h2>
+<p class="subtitle">What a patient/family sees when they open the My Care tab. Scroll down to review each section.</p>
+
+<!-- Section 1: Health Manager Banner -->
+<div class="section">
+  <h3>1. Health Manager — Always Visible</h3>
+  <p class="subtitle">Pain point E: "Who do I call?" — answered immediately</p>
+  <div class="mockup">
+    <div class="mockup-header">Top of My Care Tab</div>
+    <div class="mockup-body" style="padding: 16px;">
+      <div style="display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#fff5eb,#fff0e0); padding:14px 16px; border-radius:12px; border:1px solid #fde0c0;">
+        <div style="width:48px;height:48px;border-radius:50%;background:#f97316;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;">RS</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;">Your Health Manager</div>
+          <div style="font-size:16px;font-weight:700;color:#1f2937;">Ritu Sharma</div>
+          <div style="font-size:12px;color:#6b7280;">Available 8 AM – 8 PM</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#f97316;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <span style="color:white;font-size:18px;">📞</span>
+          </div>
+          <div style="width:40px;height:40px;border-radius:10px;background:white;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <span style="font-size:18px;">💬</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280;">Sticky at top. One tap to call or message. No hunting through menus.</p>
+</div>
+
+<!-- Section 2: Active Services Overview -->
+<div class="section">
+  <h3>2. Active Services — Card Stack</h3>
+  <p class="subtitle">Each active service as a card showing key status at a glance</p>
+  <div class="mockup">
+    <div class="mockup-header">Active Services Section</div>
+    <div class="mockup-body" style="padding: 16px; display:flex; flex-direction:column; gap:12px;">
+
+      <!-- ICU Package Card -->
+      <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#dc2626,#ef4444); padding:10px 16px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🏥</span>
+            <span style="color:white; font-weight:700; font-size:15px;">Critical Care Package</span>
+          </div>
+          <span style="background:rgba(255,255,255,0.2); color:white; font-size:11px; padding:3px 8px; border-radius:4px;">Day 12 of 30</span>
+        </div>
+        <div style="padding:12px 16px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Staff Today</div>
+              <div style="font-size:14px; font-weight:600; color:#16a34a;">2/2 ✓</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Tasks Done</div>
+              <div style="font-size:14px; font-weight:600; color:#f97316;">5/8</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Latest SpO2</div>
+              <div style="font-size:14px; font-weight:600; color:#16a34a;">97%</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Renewal</div>
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">18 days</div>
+            </div>
+          </div>
+          <div style="height:4px; background:#f3f4f6; border-radius:2px;">
+            <div style="height:4px; background:#f97316; border-radius:2px; width:40%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Physiotherapy Card -->
+      <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#2563eb,#3b82f6); padding:10px 16px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🏃</span>
+            <span style="color:white; font-weight:700; font-size:15px;">Physiotherapy (Advanced)</span>
+          </div>
+          <span style="background:rgba(255,255,255,0.2); color:white; font-size:11px; padding:3px 8px; border-radius:4px;">Session 4 of 12</span>
+        </div>
+        <div style="padding:12px 16px;">
+          <div style="display:flex; justify-content:space-between;">
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Next Session</div>
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Tomorrow, 10 AM</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px; color:#9ca3af;">Therapist</div>
+              <div style="font-size:14px; font-weight:600; color:#1f2937;">Amit K.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipment Rental Card -->
+      <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#059669,#10b981); padding:10px 16px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🔧</span>
+            <span style="color:white; font-weight:700; font-size:15px;">Equipment Rentals</span>
+          </div>
+          <span style="background:rgba(255,255,255,0.2); color:white; font-size:11px; padding:3px 8px; border-radius:4px;">3 items</span>
+        </div>
+        <div style="padding:12px 16px; font-size:13px; color:#6b7280;">
+          Hospital Bed · Air Mattress · Suction Machine
+          <div style="margin-top:4px; font-size:12px; color:#f97316; font-weight:600;">Renewal in 18 days</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280;">Each card tappable → opens detailed view for that service. Color-coded by severity/type.</p>
+</div>
+
+<!-- Section 3: Today's Staff Attendance -->
+<div class="section">
+  <h3>3. Today's Staff — Attendance Timeline</h3>
+  <p class="subtitle">Pain point A: "Did they show up?" — answered with timestamps</p>
+  <div class="mockup">
+    <div class="mockup-header">Staff Attendance Section</div>
+    <div class="mockup-body" style="padding: 16px; display:flex; flex-direction:column; gap:10px;">
+
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:#f0fdf4; border-radius:10px; border:1px solid #bbf7d0;">
+        <div style="width:42px;height:42px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;">PS</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:14px; color:#1f2937;">Priya Singh <span style="font-size:11px; color:#16a34a; font-weight:500;">● On Duty</span></div>
+          <div style="font-size:12px; color:#6b7280;">Nurse (Critical, 24hr) · Checked in 7:58 AM</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:700; color:#16a34a;">4h 12m</div>
+          <div style="font-size:10px; color:#9ca3af;">on shift</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:#f0fdf4; border-radius:10px; border:1px solid #bbf7d0;">
+        <div style="width:42px;height:42px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;">RK</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:14px; color:#1f2937;">Rajan Kumar <span style="font-size:11px; color:#16a34a; font-weight:500;">● On Duty</span></div>
+          <div style="font-size:12px; color:#6b7280;">Caretaker (Advanced, 24hr) · Checked in 8:05 AM</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:700; color:#16a34a;">4h 05m</div>
+          <div style="font-size:10px; color:#9ca3af;">on shift</div>
+        </div>
+      </div>
+
+      <!-- Replacement scenario -->
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:#fefce8; border-radius:10px; border:1px solid #fde68a;">
+        <div style="width:42px;height:42px;border-radius:50%;background:#eab308;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:14px;">MJ</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:14px; color:#1f2937;">Meena Joshi <span style="font-size:11px; color:#eab308; font-weight:500;">↻ Replacement</span></div>
+          <div style="font-size:12px; color:#6b7280;">Replacing Sunita (on leave) · Checked in 8:30 AM</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:700; color:#eab308;">3h 40m</div>
+          <div style="font-size:10px; color:#9ca3af;">on shift</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280;">Green = on duty, yellow = replacement, red = absent/late. Check-in and check-out timestamps visible. Replacement staff clearly flagged with who they're replacing.</p>
+</div>
+
+<!-- Section 4: Billing Summary -->
+<div class="section">
+  <h3>4. Billing Summary — No Surprises</h3>
+  <p class="subtitle">Pain point D: "How much am I spending?" — pre-paid plan consumption tracker</p>
+  <div class="mockup">
+    <div class="mockup-header">Billing Section</div>
+    <div class="mockup-body" style="padding: 16px;">
+
+      <div style="background:#f9fafb; border-radius:12px; padding:16px; border:1px solid #e5e7eb;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+          <div>
+            <div style="font-size:11px; color:#9ca3af; text-transform:uppercase;">Package Paid</div>
+            <div style="font-size:22px; font-weight:800; color:#1f2937;">₹4,50,000</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; color:#9ca3af; text-transform:uppercase;">Days Consumed</div>
+            <div style="font-size:22px; font-weight:800; color:#f97316;">12 / 30</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div style="height:8px; background:#e5e7eb; border-radius:4px; margin-bottom:12px;">
+          <div style="height:8px; background:linear-gradient(90deg,#f97316,#fb923c); border-radius:4px; width:40%;"></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; font-size:12px;">
+          <span style="color:#6b7280;">₹15,000/day × 12 days = <strong style="color:#1f2937;">₹1,80,000 consumed</strong></span>
+          <span style="color:#16a34a; font-weight:600;">₹2,70,000 remaining</span>
+        </div>
+
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #e5e7eb; display:flex; justify-content:space-between; font-size:12px;">
+          <span style="color:#6b7280;">Next renewal</span>
+          <span style="font-weight:600; color:#1f2937;">8 Apr 2026 · ₹4,50,000</span>
+        </div>
+
+        <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:12px;">
+          <span style="color:#6b7280;">Equipment deposit</span>
+          <span style="font-weight:600; color:#1f2937;">₹25,000 (refundable)</span>
+        </div>
+      </div>
+
+      <div style="margin-top:8px; text-align:center;">
+        <span style="font-size:12px; color:#3b82f6; font-weight:600; cursor:pointer;">View Invoices & Payment History →</span>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280;">Shows exactly what was paid, how much has been consumed, and when renewal is due. Links to detailed invoices. No surprises.</p>
+</div>
+
+<!-- Section 5: Quick Escalation -->
+<div class="section">
+  <h3>5. Raise Concern — One Tap</h3>
+  <p class="subtitle">Pain point E: Escalation is instant, not buried</p>
+  <div class="mockup">
+    <div class="mockup-header">Bottom of My Care Tab</div>
+    <div class="mockup-body" style="padding: 16px;">
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:14px; text-align:center; cursor:pointer;">
+          <div style="font-size:24px; margin-bottom:4px;">🚨</div>
+          <div style="font-size:13px; font-weight:600; color:#dc2626;">Raise Concern</div>
+          <div style="font-size:11px; color:#9ca3af;">Staff, service, billing</div>
+        </div>
+        <div style="flex:1; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px; text-align:center; cursor:pointer;">
+          <div style="font-size:24px; margin-bottom:4px;">📋</div>
+          <div style="font-size:13px; font-weight:600; color:#2563eb;">Daily Reports</div>
+          <div style="font-size:11px; color:#9ca3af;">View all reports</div>
+        </div>
+        <div style="flex:1; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px; text-align:center; cursor:pointer;">
+          <div style="font-size:24px; margin-bottom:4px;">📄</div>
+          <div style="font-size:13px; font-weight:600; color:#16a34a;">Documents</div>
+          <div style="font-size:11px; color:#9ca3af;">Prescriptions, reports</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px; padding:16px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+  <strong>Summary:</strong> The My Care tab flows top-to-bottom as: Health Manager → Active Service Cards → Staff Attendance → Billing Summary → Quick Actions. Everything a remote family member needs is visible without tapping — the detailed views are one tap deeper.
+</p>

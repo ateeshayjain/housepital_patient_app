@@ -1,0 +1,318 @@
+<h2>Service Detail View — Tapping into an Active Service Card</h2>
+<p class="subtitle">What opens when you tap "Critical Care Package" from My Care. Scroll to review all sections.</p>
+
+<!-- Top: Service Header -->
+<div class="section">
+  <h3>Service Header</h3>
+  <div class="mockup">
+    <div class="mockup-header">Critical Care Package — Detail View</div>
+    <div class="mockup-body" style="padding:0;">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#dc2626,#ef4444); padding:20px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:18px; font-weight:800; color:white;">Critical Care Package</div>
+            <div style="font-size:13px; color:rgba(255,255,255,0.8); margin-top:2px;">ICU-at-Home · Started 10 Mar 2026</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:8px; text-align:center;">
+            <div style="font-size:20px; font-weight:800; color:white;">12</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.8);">of 30 days</div>
+          </div>
+        </div>
+        <!-- Progress -->
+        <div style="margin-top:12px; height:6px; background:rgba(255,255,255,0.2); border-radius:3px;">
+          <div style="height:6px; background:white; border-radius:3px; width:40%;"></div>
+        </div>
+        <!-- Quick stats row -->
+        <div style="display:flex; justify-content:space-between; margin-top:14px;">
+          <div style="text-align:center;">
+            <div style="font-size:11px; color:rgba(255,255,255,0.7);">Rate</div>
+            <div style="font-size:14px; font-weight:700; color:white;">₹15,000/day</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px; color:rgba(255,255,255,0.7);">Consumed</div>
+            <div style="font-size:14px; font-weight:700; color:white;">₹1,80,000</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:11px; color:rgba(255,255,255,0.7);">Remaining</div>
+            <div style="font-size:14px; font-weight:700; color:white;">₹2,70,000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section: Staff on Duty Today -->
+<div class="section">
+  <h3>Staff on Duty — Today</h3>
+  <p class="subtitle">Expandable to see 7-day attendance log</p>
+  <div class="mockup">
+    <div class="mockup-header">Staff Section</div>
+    <div class="mockup-body" style="padding:16px; display:flex; flex-direction:column; gap:10px;">
+
+      <!-- Nurse -->
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+        <div style="width:44px;height:44px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">PS</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:14px;">Priya Singh</div>
+          <div style="font-size:12px; color:#6b7280;">Nurse (Critical) · 24hr shift</div>
+          <div style="font-size:11px; color:#16a34a; margin-top:2px;">✓ Checked in 7:58 AM · On duty 4h 12m</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+          <div style="font-size:12px; font-weight:600; color:#f97316;">⭐ 4.8</div>
+          <div style="width:32px;height:32px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">📞</div>
+        </div>
+      </div>
+
+      <!-- Caretaker -->
+      <div style="display:flex; align-items:center; gap:12px; padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+        <div style="width:44px;height:44px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">RK</div>
+        <div style="flex:1;">
+          <div style="font-weight:600; font-size:14px;">Rajan Kumar</div>
+          <div style="font-size:12px; color:#6b7280;">Caretaker (Advanced) · 24hr shift</div>
+          <div style="font-size:11px; color:#16a34a; margin-top:2px;">✓ Checked in 8:05 AM · On duty 4h 5m</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+          <div style="font-size:12px; font-weight:600; color:#f97316;">⭐ 4.6</div>
+          <div style="width:32px;height:32px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">📞</div>
+        </div>
+      </div>
+
+      <!-- 7-day attendance summary -->
+      <div style="margin-top:4px; padding:12px; background:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;">
+        <div style="font-size:12px; font-weight:600; color:#1f2937; margin-bottom:8px;">Last 7 Days Attendance</div>
+        <div style="display:flex; justify-content:space-between;">
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Mon</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">✓</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Tue</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">✓</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Wed</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">✓</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Thu</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#eab308;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">↻</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Fri</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">✓</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Sat</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">✓</div>
+          </div>
+          <div style="text-align:center; font-size:11px;">
+            <div style="color:#9ca3af;">Sun</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:#f3f4f6;color:#9ca3af;display:flex;align-items:center;justify-content:center;margin:4px auto;font-size:10px;">—</div>
+          </div>
+        </div>
+        <div style="font-size:11px; color:#6b7280; margin-top:6px;">✓ On time · <span style="color:#eab308;">↻</span> Replacement (Thu — Meena for Sunita) · — Today</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Section: Vitals Trend -->
+<div class="section">
+  <h3>Vitals Trend — Is the Patient Getting Better?</h3>
+  <p class="subtitle">7-day mini charts for key vitals. Tap any to expand to full history.</p>
+  <div class="mockup">
+    <div class="mockup-header">Vitals Section</div>
+    <div class="mockup-body" style="padding:16px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+        <!-- BP -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:600; color:#6b7280;">Blood Pressure</div>
+            <div style="font-size:11px; color:#16a34a;">Normal</div>
+          </div>
+          <div style="font-size:20px; font-weight:800; color:#1f2937;">128/82</div>
+          <div style="font-size:11px; color:#9ca3af;">12:10 PM today</div>
+          <!-- Mini sparkline -->
+          <svg width="100%" height="30" style="margin-top:6px;">
+            <polyline points="0,20 20,18 40,22 60,15 80,17 100,14 120,16" fill="none" stroke="#16a34a" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <!-- SpO2 -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:600; color:#6b7280;">SpO2</div>
+            <div style="font-size:11px; color:#16a34a;">Normal</div>
+          </div>
+          <div style="font-size:20px; font-weight:800; color:#1f2937;">97%</div>
+          <div style="font-size:11px; color:#9ca3af;">12:10 PM today</div>
+          <svg width="100%" height="30" style="margin-top:6px;">
+            <polyline points="0,10 20,8 40,12 60,6 80,8 100,5 120,7" fill="none" stroke="#16a34a" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <!-- Pulse -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #e5e7eb;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:600; color:#6b7280;">Pulse</div>
+            <div style="font-size:11px; color:#16a34a;">Normal</div>
+          </div>
+          <div style="font-size:20px; font-weight:800; color:#1f2937;">78 bpm</div>
+          <div style="font-size:11px; color:#9ca3af;">12:10 PM today</div>
+          <svg width="100%" height="30" style="margin-top:6px;">
+            <polyline points="0,15 20,18 40,12 60,16 80,14 100,13 120,15" fill="none" stroke="#16a34a" stroke-width="2"/>
+          </svg>
+        </div>
+
+        <!-- Temperature -->
+        <div style="padding:12px; background:white; border-radius:10px; border:1px solid #fecaca;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:600; color:#6b7280;">Temperature</div>
+            <div style="font-size:11px; color:#dc2626; font-weight:600;">↑ Elevated</div>
+          </div>
+          <div style="font-size:20px; font-weight:800; color:#dc2626;">100.2°F</div>
+          <div style="font-size:11px; color:#9ca3af;">12:10 PM today</div>
+          <svg width="100%" height="30" style="margin-top:6px;">
+            <polyline points="0,20 20,18 40,15 60,12 80,10 100,6 120,4" fill="none" stroke="#dc2626" stroke-width="2"/>
+          </svg>
+        </div>
+
+      </div>
+      <div style="margin-top:10px; text-align:center;">
+        <span style="font-size:12px; color:#3b82f6; font-weight:600; cursor:pointer;">View Full Vitals History →</span>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280;">Abnormal vitals highlighted in red with border. Mini sparklines show 7-day trend at a glance — remote family can see trajectory without asking anyone.</p>
+</div>
+
+<!-- Section: Today's Tasks / Daily Report -->
+<div class="section">
+  <h3>Today's Care Report</h3>
+  <p class="subtitle">What the nurse/caretaker has done so far today</p>
+  <div class="mockup">
+    <div class="mockup-header">Daily Report Section</div>
+    <div class="mockup-body" style="padding:16px;">
+
+      <!-- Progress ring -->
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:14px;">
+        <div style="width:60px;height:60px;border-radius:50%;border:4px solid #e5e7eb;display:flex;align-items:center;justify-content:center;position:relative;">
+          <div style="position:absolute;inset:0;border-radius:50%;border:4px solid #f97316;border-right-color:transparent;border-bottom-color:transparent;transform:rotate(45deg);"></div>
+          <div style="font-size:16px;font-weight:800;color:#1f2937;">5/8</div>
+        </div>
+        <div>
+          <div style="font-size:15px; font-weight:700; color:#1f2937;">62% Complete</div>
+          <div style="font-size:12px; color:#6b7280;">Last updated 11:45 AM by Priya</div>
+        </div>
+      </div>
+
+      <!-- Task sections -->
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f0fdf4; border-radius:8px;">
+          <span style="color:#16a34a; font-size:14px;">✓</span>
+          <span style="font-size:13px; color:#1f2937;">Morning vitals recorded</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">8:15 AM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f0fdf4; border-radius:8px;">
+          <span style="color:#16a34a; font-size:14px;">✓</span>
+          <span style="font-size:13px; color:#1f2937;">Medications administered</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">8:30 AM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f0fdf4; border-radius:8px;">
+          <span style="color:#16a34a; font-size:14px;">✓</span>
+          <span style="font-size:13px; color:#1f2937;">Sponge bath & bed change</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">9:15 AM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f0fdf4; border-radius:8px;">
+          <span style="color:#16a34a; font-size:14px;">✓</span>
+          <span style="font-size:13px; color:#1f2937;">Breakfast + feeding</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">10:00 AM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff7ed; border-radius:8px;">
+          <span style="color:#f97316; font-size:14px;">◷</span>
+          <span style="font-size:13px; color:#1f2937;">Physiotherapy session</span>
+          <span style="margin-left:auto; font-size:11px; color:#f97316;">In progress</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f9fafb; border-radius:8px;">
+          <span style="color:#d1d5db; font-size:14px;">○</span>
+          <span style="font-size:13px; color:#9ca3af;">Afternoon vitals</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">2:00 PM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f9fafb; border-radius:8px;">
+          <span style="color:#d1d5db; font-size:14px;">○</span>
+          <span style="font-size:13px; color:#9ca3af;">Evening medications</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">6:00 PM</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#f9fafb; border-radius:8px;">
+          <span style="color:#d1d5db; font-size:14px;">○</span>
+          <span style="font-size:13px; color:#9ca3af;">Night vitals & handover</span>
+          <span style="margin-left:auto; font-size:11px; color:#9ca3af;">8:00 PM</span>
+        </div>
+      </div>
+
+      <!-- Staff notes -->
+      <div style="margin-top:12px; padding:10px 12px; background:#eff6ff; border-radius:8px; border:1px solid #bfdbfe;">
+        <div style="font-size:11px; font-weight:600; color:#2563eb; margin-bottom:4px;">Nurse Notes</div>
+        <div style="font-size:13px; color:#1f2937; line-height:1.4;">"Patient slept well. Slight temperature rise post-lunch, monitoring. O2 flow maintained at 3L/min. Family requested extra pillow — arranged."</div>
+      </div>
+
+      <div style="margin-top:10px; text-align:center;">
+        <span style="font-size:12px; color:#3b82f6; font-weight:600; cursor:pointer;">View Past Daily Reports →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section: Equipment Deployed -->
+<div class="section">
+  <h3>Equipment Deployed</h3>
+  <p class="subtitle">What's installed at home as part of this package</p>
+  <div class="mockup">
+    <div class="mockup-header">Equipment Section</div>
+    <div class="mockup-body" style="padding:16px;">
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:white; border-radius:8px; border:1px solid #e5e7eb;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:16px;">🛏️</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">Electric Hospital Bed</div>
+            <div style="font-size:11px; color:#6b7280;">₹11,500/month · Since 10 Mar</div>
+          </div>
+          <div style="font-size:11px; color:#16a34a; font-weight:600;">Active</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:white; border-radius:8px; border:1px solid #e5e7eb;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:16px;">💨</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">Oxygen Concentrator 10L</div>
+            <div style="font-size:11px; color:#6b7280;">₹10,000/month · Since 10 Mar</div>
+          </div>
+          <div style="font-size:11px; color:#16a34a; font-weight:600;">Active</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:white; border-radius:8px; border:1px solid #e5e7eb;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:16px;">🫁</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">Ventilator / BiPAP</div>
+            <div style="font-size:11px; color:#6b7280;">₹30,000/month · Since 10 Mar</div>
+          </div>
+          <div style="font-size:11px; color:#16a34a; font-weight:600;">Active</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:white; border-radius:8px; border:1px solid #e5e7eb;">
+          <div style="width:36px;height:36px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:16px;">🩺</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">5 Para Monitor</div>
+            <div style="font-size:11px; color:#6b7280;">₹5,000/month · Since 10 Mar</div>
+          </div>
+          <div style="font-size:11px; color:#16a34a; font-weight:600;">Active</div>
+        </div>
+      </div>
+      <div style="margin-top:8px; font-size:12px; color:#6b7280; text-align:center;">+ 9 more items included in package</div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:24px; padding:16px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+  <strong>Service Detail View Flow:</strong> Header (progress + billing) → Staff on Duty (with 7-day attendance) → Vitals Trend (with sparklines) → Today's Care Report (task timeline + nurse notes) → Equipment Deployed. A remote family member reads this top-to-bottom and knows everything.
+</p>
