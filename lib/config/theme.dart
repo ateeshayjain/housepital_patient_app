@@ -45,6 +45,37 @@ class HousepitalColors {
 
   // SOS
   static const Color sos = Color(0xFFD32F2F);
+
+  // Service category colors (card headers)
+  static const Color serviceCarePackage = Color(0xFFDC2626); // red
+  static const Color serviceNursing = Color(0xFFEA580C); // orange
+  static const Color serviceCaretaker = Color(0xFF0D9488); // teal
+  static const Color serviceJapaNanny = Color(0xFF7C3AED); // purple
+  static const Color servicePhysio = Color(0xFF2563EB); // blue
+  static const Color serviceEquipment = Color(0xFF059669); // green
+
+  static Color serviceColor(String category) {
+    switch (category) {
+      case 'care_package':
+        return serviceCarePackage;
+      case 'nursing':
+        return serviceNursing;
+      case 'caretaker':
+        return serviceCaretaker;
+      case 'japa':
+      case 'nanny':
+        return serviceJapaNanny;
+      case 'physiotherapy':
+      case 'doctor_visit':
+      case 'iv_visit':
+      case 'dressing':
+        return servicePhysio;
+      case 'equipment_rental':
+        return serviceEquipment;
+      default:
+        return serviceNursing;
+    }
+  }
 }
 
 class HousepitalTheme {
