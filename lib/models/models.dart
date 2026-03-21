@@ -943,12 +943,13 @@ class StaffReview {
 
 // Equipment / Consumable Item — backend-driven catalog
 class EquipmentItem {
-  final int id;
+  final String id;
   final String name;
   final String brand;
-  final String category; // Equipment, Consumable, Medicine
-  final String type; // Sale, Rental
-  final double? price; // Sale price
+  final String category; // Equipment, Consumable
+  final bool availableForSale;
+  final bool availableForRent;
+  final double? price;
   final double? rentalPrice; // Monthly rental price
   final String status; // Active, Inactive
   final String? imageUrl;
@@ -957,13 +958,18 @@ class EquipmentItem {
   final String? keyFeatures;
   final String? idealFor;
   final String? youtubeUrl;
+  final String? faqs;
+  final String? parentProductId;
+  final String? variantType;
+  final String? variantValue;
 
   EquipmentItem({
     required this.id,
     required this.name,
     required this.brand,
     required this.category,
-    required this.type,
+    this.availableForSale = true,
+    this.availableForRent = false,
     this.price,
     this.rentalPrice,
     this.status = 'Active',
@@ -973,7 +979,14 @@ class EquipmentItem {
     this.keyFeatures,
     this.idealFor,
     this.youtubeUrl,
+    this.faqs,
+    this.parentProductId,
+    this.variantType,
+    this.variantValue,
   });
+
+  /// Legacy getter — derives type from availability flags.
+  String get type => availableForRent ? 'Rental' : 'Sale';
 
   /// Days of rental after which buying becomes cheaper
   int? get breakevenDays {
@@ -992,12 +1005,15 @@ class EquipmentItem {
         n.contains('c-pap');
   }
 
+  bool get isVariant => parentProductId != null;
+
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
-        id: json['id'],
+        id: json['id']?.toString() ?? '',
         name: json['name'] ?? '',
         brand: json['brand'] ?? 'Generic',
         category: json['category'] ?? 'Equipment',
-        type: json['type'] ?? 'Sale',
+        availableForSale: json['available_for_sale'] ?? true,
+        availableForRent: json['available_for_rent'] ?? false,
         price: json['price']?.toDouble(),
         rentalPrice: json['rental_price']?.toDouble(),
         status: json['status'] ?? 'Active',
@@ -1007,6 +1023,10 @@ class EquipmentItem {
         keyFeatures: json['key_features'],
         idealFor: json['ideal_for'],
         youtubeUrl: json['youtube_url'],
+        faqs: json['faqs'],
+        parentProductId: json['parent_product_id'],
+        variantType: json['variant_type'],
+        variantValue: json['variant_value'],
       );
 }
 
@@ -1237,7 +1257,7 @@ class CartItem {
 
 // Care Package Model — condition-based bundles of equipment + services
 class PackageItem {
-  final int equipmentId; // references EquipmentItem.id
+  final String equipmentId; // references EquipmentItem.id
   final String name;
   final bool isRental; // true = rent, false = buy
   final int quantity;

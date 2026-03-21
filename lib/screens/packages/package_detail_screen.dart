@@ -16,7 +16,7 @@ class PackageDetailScreen extends StatefulWidget {
 }
 
 class _PackageDetailScreenState extends State<PackageDetailScreen> {
-  Map<int, EquipmentItem> _catalogMap = {};
+  Map<String, EquipmentItem> _catalogMap = {};
   bool _loading = true;
 
   @override
