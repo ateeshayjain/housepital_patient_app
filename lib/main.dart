@@ -36,6 +36,14 @@ import 'screens/billing/payment_methods_screen.dart';
 import 'screens/billing/payment_screen.dart';
 import 'screens/documents/document_repository_screen.dart';
 import 'screens/search/universal_search_screen.dart';
+import 'screens/my_care/service_detail_screen.dart';
+import 'screens/my_care/medications_screen.dart';
+import 'screens/my_care/medication_schedule_screen.dart';
+import 'screens/my_care/add_edit_medication_screen.dart';
+import 'screens/my_care/report_history_screen.dart';
+import 'screens/my_care/attendance_history_screen.dart';
+import 'models/my_care_models.dart';
+import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
 import 'providers/medication_provider.dart';
 
@@ -203,6 +211,32 @@ class HousepitalApp extends StatelessWidget {
           case '/services':
             return MaterialPageRoute(
                 builder: (_) => const Scaffold());
+          case '/service-detail':
+            final service = settings.arguments as ActiveService;
+            return MaterialPageRoute(
+                builder: (_) =>
+                    ServiceDetailScreen(service: service));
+          case '/medications':
+            return MaterialPageRoute(
+                builder: (_) => const MedicationsScreen());
+          case '/medication-schedule':
+            return MaterialPageRoute(
+                builder: (_) => const MedicationScheduleScreen());
+          case '/add-medication':
+            final medication = settings.arguments as MedicationFull?;
+            return MaterialPageRoute(
+                builder: (_) =>
+                    AddEditMedicationScreen(medication: medication));
+          case '/report-history':
+            final deploymentId = settings.arguments as String;
+            return MaterialPageRoute(
+                builder: (_) =>
+                    ReportHistoryScreen(deploymentId: deploymentId));
+          case '/attendance-history':
+            final deploymentId = settings.arguments as String;
+            return MaterialPageRoute(
+                builder: (_) =>
+                    AttendanceHistoryScreen(deploymentId: deploymentId));
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));
