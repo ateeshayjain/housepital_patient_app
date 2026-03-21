@@ -77,6 +77,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 else ...[
                   _buildVitalsHighlights(context, l, app),
+                  if (app.activeDeployment != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: InkWell(
+                        onTap: () => MainShell.switchToTab(1),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFDE0C0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.favorite, color: HousepitalColors.orange, size: 20),
+                              const SizedBox(width: 8),
+                              Text(l.t('view_my_care'),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: HousepitalColors.orange)),
+                              const Spacer(),
+                              const Icon(Icons.arrow_forward_ios,
+                                  size: 14, color: HousepitalColors.orange),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   _buildStaffSection(context, l, app),
                   _buildDailyReportSection(context, l, app),
                   _buildServicesSection(context, l),
