@@ -351,17 +351,10 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   // ── Consultations (doctor visits, mental health, therapy) ──
   static final List<ServiceItem> _consultationServices = [
     ServiceItem(
-      id: 'con-doctor-gp', name: 'Doctor Visit – General Physician',
+      id: 'con-doctor', name: 'Doctor Visit',
       category: 'consultation', bookingType: 'scheduled',
-      description: 'Experienced general physician visits your home for consultation, diagnosis & prescription.',
-      basePriceMin: 3500, basePriceMax: 3500, durationMinutes: 30, leadTimeHours: 4,
-      iconName: 'stethoscope',
-    ),
-    ServiceItem(
-      id: 'con-doctor-icu', name: 'Doctor Visit – ICU Specialist',
-      category: 'consultation', bookingType: 'scheduled',
-      description: 'ICU specialist visit for critical care patients at home — assessment, medication review & treatment plan.',
-      basePriceMin: 5000, basePriceMax: 5000, durationMinutes: 45, leadTimeHours: 6,
+      description: 'Tell us your concern — we\'ll recommend the right doctor (General Physician or ICU Specialist) for your home visit.',
+      basePriceMin: 3500, basePriceMax: 5000, durationMinutes: 30, leadTimeHours: 4,
       iconName: 'stethoscope',
     ),
     ServiceItem(

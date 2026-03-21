@@ -57,9 +57,39 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   }
 
   bool get _isVisitService => widget.service.id.startsWith('visit-');
+  bool get _isDoctorVisit => widget.service.id == 'con-doctor';
+
+  // Doctor visit concern & recommendation
+  final _concernController = TextEditingController();
+  String? _selectedConcernCategory;
+  String? _recommendedDoctor; // 'gp' or 'icu'
+
+  static const List<Map<String, String>> _concernCategories = [
+    {'id': 'fever', 'label': 'Fever / Cold / Flu', 'type': 'gp'},
+    {'id': 'bp_sugar', 'label': 'BP / Sugar / Thyroid check-up', 'type': 'gp'},
+    {'id': 'stomach', 'label': 'Stomach / Digestion issues', 'type': 'gp'},
+    {'id': 'skin', 'label': 'Skin / Allergy / Infection', 'type': 'gp'},
+    {'id': 'pain', 'label': 'Body pain / Joint pain', 'type': 'gp'},
+    {'id': 'elderly', 'label': 'Elderly general check-up', 'type': 'gp'},
+    {'id': 'post_surgery', 'label': 'Post-surgery / Post-discharge follow-up', 'type': 'icu'},
+    {'id': 'ventilator', 'label': 'Ventilator / Tracheostomy patient', 'type': 'icu'},
+    {'id': 'icu_home', 'label': 'ICU-at-home patient review', 'type': 'icu'},
+    {'id': 'critical', 'label': 'Critical care / Bed-ridden patient', 'type': 'icu'},
+    {'id': 'medication', 'label': 'Medication review / Adjustment', 'type': 'gp'},
+    {'id': 'other', 'label': 'Other', 'type': 'gp'},
+  ];
+
+  void _onConcernSelected(String categoryId) {
+    final cat = _concernCategories.firstWhere((c) => c['id'] == categoryId);
+    setState(() {
+      _selectedConcernCategory = categoryId;
+      _recommendedDoctor = cat['type'];
+    });
+  }
 
   @override
   void dispose() {
+    _concernController.dispose();
     _promoController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -305,6 +335,150 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           ],
         ),
       ),
+
+      // Doctor Visit: Concern selection & recommendation
+      if (_isDoctorVisit) ...[
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.help_outline_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('What is your concern?',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Select the closest match — we\'ll recommend the right doctor',
+                style: TextStyle(
+                    fontSize: 12, color: HousepitalColors.greyLight),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _concernCategories.map((cat) {
+                  final selected = _selectedConcernCategory == cat['id'];
+                  return ChoiceChip(
+                    label: Text(cat['label']!),
+                    selected: selected,
+                    onSelected: (_) => _onConcernSelected(cat['id']!),
+                    selectedColor: HousepitalColors.orangeLight,
+                    labelStyle: TextStyle(
+                      fontSize: 13,
+                      color: selected
+                          ? HousepitalColors.orange
+                          : HousepitalColors.grey,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(
+                        color: selected
+                            ? HousepitalColors.orange
+                            : HousepitalColors.divider,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              if (_selectedConcernCategory == 'other') ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _concernController,
+                  decoration: const InputDecoration(
+                    labelText: 'Describe your concern',
+                    hintText: 'e.g. Breathing difficulty at night...',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  maxLines: 2,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Recommendation card
+        if (_recommendedDoctor != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _recommendedDoctor == 'icu'
+                  ? HousepitalColors.errorLight
+                  : HousepitalColors.successLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _recommendedDoctor == 'icu'
+                    ? HousepitalColors.error
+                    : HousepitalColors.success,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _recommendedDoctor == 'icu'
+                      ? Icons.local_hospital
+                      : Icons.person,
+                  size: 28,
+                  color: _recommendedDoctor == 'icu'
+                      ? HousepitalColors.error
+                      : HousepitalColors.success,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _recommendedDoctor == 'icu'
+                            ? 'ICU Specialist Recommended'
+                            : 'General Physician Recommended',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _recommendedDoctor == 'icu'
+                              ? HousepitalColors.error
+                              : HousepitalColors.success,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _recommendedDoctor == 'icu'
+                            ? 'Based on your concern, an ICU specialist (₹5,000) is best suited for this visit.'
+                            : 'A general physician (₹3,500) can handle this visit.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _recommendedDoctor == 'icu'
+                              ? HousepitalColors.error
+                              : HousepitalColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
 
       // Diagnostic: What's Included
       if (isDiag && _getDiagnosticInclusions(s.id).isNotEmpty) ...[
@@ -559,21 +733,45 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.attach_file_rounded,
+                  const Icon(Icons.attach_file_rounded,
                       size: 20, color: HousepitalColors.orange),
-                  SizedBox(width: 8),
-                  Text('Prescription & Notes',
-                      style: TextStyle(
+                  const SizedBox(width: 8),
+                  Text(
+                      _isVisitService
+                          ? 'Reason & Prescription'
+                          : 'Prescription & Notes',
+                      style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w600)),
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Attach prescription or add notes for the visiting professional',
-                style: TextStyle(
+              Text(
+                _isVisitService
+                    ? 'Tell us why you need this visit and attach the prescription'
+                    : 'Attach prescription or add notes for the visiting professional',
+                style: const TextStyle(
                     fontSize: 12, color: HousepitalColors.greyLight),
+              ),
+              const SizedBox(height: 14),
+
+              // Notes / Reason field (shown first for visit services)
+              TextFormField(
+                controller: _notesController,
+                decoration: InputDecoration(
+                  labelText: _isVisitService
+                      ? 'Reason for Visit *'
+                      : 'Notes for the professional',
+                  hintText: _isVisitService
+                      ? 'e.g. Doctor prescribed 3 days IV antibiotics for UTI...'
+                      : 'e.g. Patient is on blood thinners, allergic to latex...',
+                  border: const OutlineInputBorder(),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                maxLines: 3,
+                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 14),
 
@@ -606,22 +804,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                 ),
-              ),
-              const SizedBox(height: 14),
-
-              // Notes field
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes for the professional',
-                  hintText:
-                      'e.g. Patient is on blood thinners, allergic to latex...',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-                maxLines: 3,
-                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 14),
 
@@ -824,6 +1006,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             _infoRow('Patient', app.currentPatient?.name ?? ''),
+            if (_isDoctorVisit && _recommendedDoctor != null)
+              _infoRow('Doctor Type', _recommendedDoctor == 'icu'
+                  ? 'ICU Specialist'
+                  : 'General Physician'),
+            if (_isDoctorVisit && _selectedConcernCategory != null)
+              _infoRow('Concern', _concernCategories
+                  .firstWhere((c) => c['id'] == _selectedConcernCategory)['label']!),
             _infoRow('Date', _selectedDate != null
                 ? DateHelper.formatDate(_selectedDate!)
                 : ''),

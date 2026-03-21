@@ -543,7 +543,7 @@ class ServiceItem {
     this.iconName,
   });
 
-  bool get isInstant => bookingType == 'instant';
+  bool get isInstant => bookingType != 'assessment';
 
   factory ServiceItem.fromJson(Map<String, dynamic> json) => ServiceItem(
         id: json['id'],

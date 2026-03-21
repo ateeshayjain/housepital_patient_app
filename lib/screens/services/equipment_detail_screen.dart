@@ -16,6 +16,7 @@ class EquipmentDetailScreen extends StatefulWidget {
 
 class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   EquipmentItem? _catalogItem;
+  bool _descriptionExpanded = false;
 
   // ── Fallback feature lists per equipment ID ──────────────────
   static const _fallbackFeatures = <String, List<String>>{
@@ -173,15 +174,20 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     return null;
   }
 
+  /// Splits catalog text by `|` or newline — catalog uses both formats.
+  static List<String> _splitCatalogText(String text) {
+    final sep = text.contains('|') ? '|' : '\n';
+    return text
+        .split(sep)
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
   List<String> get _features {
-    // Prefer catalog key features
     if (_catalogItem?.keyFeatures != null &&
         _catalogItem!.keyFeatures!.isNotEmpty) {
-      return _catalogItem!.keyFeatures!
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return _splitCatalogText(_catalogItem!.keyFeatures!);
     }
     return _fallbackFeatures[widget.service.id] ??
         ['Quality medical equipment'];
@@ -219,17 +225,17 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   List<_FaqEntry> get _faqs {
     if (_catalogItem?.faqs == null || _catalogItem!.faqs!.isEmpty) return [];
-    // FAQs are stored as "Q: ... \n A: ... \n Q: ..." format
-    final lines = _catalogItem!.faqs!.split('\n');
+    // FAQs may use | or \n as separator between entries
+    final sep = _catalogItem!.faqs!.contains('|') ? '|' : '\n';
+    final parts = _catalogItem!.faqs!.split(sep).map((e) => e.trim()).where((e) => e.isNotEmpty);
     final faqs = <_FaqEntry>[];
     String? currentQ;
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.startsWith('Q:') || trimmed.startsWith('Q.')) {
-        currentQ = trimmed.substring(2).trim();
-      } else if ((trimmed.startsWith('A:') || trimmed.startsWith('A.')) &&
+    for (final part in parts) {
+      if (part.startsWith('Q:') || part.startsWith('Q.')) {
+        currentQ = part.substring(2).trim();
+      } else if ((part.startsWith('A:') || part.startsWith('A.')) &&
           currentQ != null) {
-        faqs.add(_FaqEntry(question: currentQ, answer: trimmed.substring(2).trim()));
+        faqs.add(_FaqEntry(question: currentQ, answer: part.substring(2).trim()));
         currentQ = null;
       }
     }
@@ -529,6 +535,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   // ── Description ──────────────────────────────────────────────
 
   Widget _buildDescriptionSection() {
+    final isLong = _description!.length > 200;
     return Container(
       color: HousepitalColors.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -539,12 +546,29 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           const SizedBox(height: 10),
           Text(
             _description!,
+            maxLines: _descriptionExpanded ? null : 3,
+            overflow: _descriptionExpanded ? null : TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 14,
               color: HousepitalColors.grey,
               height: 1.6,
             ),
           ),
+          if (isLong) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => setState(() =>
+                  _descriptionExpanded = !_descriptionExpanded),
+              child: Text(
+                _descriptionExpanded ? 'Read less' : 'Read more',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: HousepitalColors.orange,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -603,11 +627,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   // ── Ideal For ────────────────────────────────────────────────
 
   Widget _buildIdealForSection() {
-    final items = _idealFor!
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+    final items = _splitCatalogText(_idealFor!);
 
     return Container(
       color: HousepitalColors.white,
@@ -617,28 +637,27 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         children: [
           const _SectionTitle(title: 'Ideal For'),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: items
-                .map((item) => Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: HousepitalColors.orangeLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+          ...items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle_outline,
+                        size: 18, color: HousepitalColors.success),
+                    const SizedBox(width: 10),
+                    Expanded(
                       child: Text(
                         item,
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: HousepitalColors.orangeText,
+                          fontSize: 14,
+                          color: HousepitalColors.grey,
+                          height: 1.4,
                         ),
                       ),
-                    ))
-                .toList(),
-          ),
+                    ),
+                  ],
+                ),
+              )),
         ],
       ),
     );
@@ -739,11 +758,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   // ── How to Use ───────────────────────────────────────────────
 
   Widget _buildHowToUseSection() {
-    final steps = _howToUse!
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+    final steps = _splitCatalogText(_howToUse!);
 
     return Container(
       color: HousepitalColors.white,

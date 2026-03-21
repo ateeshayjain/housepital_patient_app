@@ -93,17 +93,73 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     'other': 'Other',
   };
 
-  final List<String> _careNeedOptions = [
+  // Care needs categorised by required staff level
+  static const _basicCareNeeds = [
     'Bathing',
     'Feeding',
     'Medication reminders',
     'Walking support',
     'Diaper changing',
     'Companionship',
-    'Wound dressing',
-    'Injection',
-    'Catheter care',
   ];
+  static const _advancedCareNeeds = [
+    'Wound dressing',
+    'Injection (IV/IM)',
+    'Catheter care',
+    'RT feeding',
+    'Sugar & BP monitoring',
+    'Oxygen support',
+  ];
+  static const _criticalCareNeeds = [
+    'Tracheostomy care',
+    'Ventilator management',
+    'Suctioning',
+    'Bed sore care',
+    'Post-ICU monitoring',
+    'Central line care',
+  ];
+
+  /// Returns 'basic', 'advanced', or 'critical' based on selected care needs.
+  String get _recommendedNurseLevel {
+    if (_careNeeds.any((n) => _criticalCareNeeds.contains(n))) {
+      return 'critical';
+    }
+    if (_careNeeds.any((n) => _advancedCareNeeds.contains(n))) {
+      return 'advanced';
+    }
+    return 'basic';
+  }
+
+  static const _nurseLevelLabels = {
+    'basic': 'Basic Nurse',
+    'advanced': 'Advanced Nurse',
+    'critical': 'Critical Care Nurse',
+  };
+
+  static const _nurseLevelDescriptions = {
+    'basic': 'Handles vitals monitoring, oral medication, feeding, hygiene & companionship.',
+    'advanced': 'All basic duties + IV/IM injections, catheter care, RT feeding, wound dressing.',
+    'critical': 'All advanced duties + tracheostomy, ventilator management, suctioning, post-ICU care.',
+  };
+
+  // What a lower-level nurse CANNOT do
+  static const _cannotDoWarnings = {
+    'basic': [
+      'IV/IM injections',
+      'Catheter care',
+      'Wound dressing',
+      'RT feeding',
+      'Tracheostomy care',
+      'Ventilator management',
+    ],
+    'advanced': [
+      'Tracheostomy care',
+      'Ventilator management',
+      'Suctioning',
+      'Central line care',
+      'Post-ICU monitoring',
+    ],
+  };
 
   final List<String> _japaNeedOptions = [
     'Baby massage',
@@ -409,105 +465,365 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   }
 
   // ──────────────────────────────────────────────
+  //  Section card wrapper
+  // ──────────────────────────────────────────────
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: HousepitalColors.orange),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(subtitle,
+                style: const TextStyle(
+                    fontSize: 12, color: HousepitalColors.greyLight)),
+          ],
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _careNeedChipGroup({
+    required String groupLabel,
+    required List<String> options,
+    required Color badgeColor,
+    required String levelTag,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(levelTag,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: badgeColor)),
+            ),
+            const SizedBox(width: 8),
+            Text(groupLabel,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: HousepitalColors.greyLight)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((need) {
+            final isSelected = _careNeeds.contains(need);
+            return FilterChip(
+              label: Text(need),
+              selected: isSelected,
+              selectedColor: HousepitalColors.orangeLight,
+              checkmarkColor: HousepitalColors.orange,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _careNeeds.add(need);
+                  } else {
+                    _careNeeds.remove(need);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────────────
   //  Nurse / Caretaker / Generic form
   // ──────────────────────────────────────────────
   List<Widget> _buildNurseCaretakerForm() {
+    final recommended = _careNeeds.isNotEmpty ? _recommendedNurseLevel : null;
+    final isNurse = _serviceType == _ServiceType.nurse;
+
     return [
-      // Primary condition
-      DropdownButtonFormField<String>(
-        value: _condition,
-        decoration: const InputDecoration(labelText: 'Primary Condition'),
-        items: _conditions.map((c) {
-          return DropdownMenuItem(
-            value: c,
-            child: Text(_conditionLabels[c] ?? c),
-          );
-        }).toList(),
-        onChanged: (v) {
-          if (v != null) setState(() => _condition = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Mobility
-      DropdownButtonFormField<String>(
-        value: _mobility,
-        decoration: const InputDecoration(labelText: 'Mobility Status'),
-        items: const [
-          DropdownMenuItem(value: 'ambulatory', child: Text('Ambulatory')),
-          DropdownMenuItem(
-              value: 'needs_support', child: Text('Needs support')),
-          DropdownMenuItem(value: 'wheelchair', child: Text('Wheelchair')),
-          DropdownMenuItem(value: 'bedridden', child: Text('Bedridden')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _mobility = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Care needs
-      const Text('Care Needs (select all that apply)',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: _careNeedOptions.map((need) {
-          final isSelected = _careNeeds.contains(need);
-          return FilterChip(
-            label: Text(need),
-            selected: isSelected,
-            selectedColor: HousepitalColors.orangeLight,
-            checkmarkColor: HousepitalColors.orange,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  _careNeeds.add(need);
-                } else {
-                  _careNeeds.remove(need);
-                }
-              });
+      // ── Section 1: Patient Condition ──
+      _sectionCard(
+        icon: Icons.person_outline,
+        title: 'Patient Condition',
+        subtitle: 'Helps us understand the patient\'s current state',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _condition,
+            decoration:
+                const InputDecoration(labelText: 'Primary Condition'),
+            items: _conditions.map((c) {
+              return DropdownMenuItem(
+                value: c,
+                child: Text(_conditionLabels[c] ?? c),
+              );
+            }).toList(),
+            onChanged: (v) {
+              if (v != null) setState(() => _condition = v);
             },
-          );
-        }).toList(),
-      ),
-      const SizedBox(height: 16),
-
-      // Shift type
-      DropdownButtonFormField<String>(
-        value: _shiftType,
-        decoration: const InputDecoration(labelText: 'Shift Type'),
-        items: const [
-          DropdownMenuItem(value: '12hr_day', child: Text('12hr Day')),
-          DropdownMenuItem(value: '12hr_night', child: Text('12hr Night')),
-          DropdownMenuItem(value: '24hr', child: Text('24hr')),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _mobility,
+            decoration:
+                const InputDecoration(labelText: 'Mobility Status'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'ambulatory', child: Text('Ambulatory')),
+              DropdownMenuItem(
+                  value: 'needs_support', child: Text('Needs support')),
+              DropdownMenuItem(
+                  value: 'wheelchair', child: Text('Wheelchair')),
+              DropdownMenuItem(
+                  value: 'bedridden', child: Text('Bedridden')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _mobility = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _shiftType = v);
-        },
       ),
-      const SizedBox(height: 16),
 
-      // Staff gender
-      DropdownButtonFormField<String>(
-        value: _staffGender,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Staff Gender'),
-        items: const [
-          DropdownMenuItem(value: 'female', child: Text('Female')),
-          DropdownMenuItem(value: 'male', child: Text('Male')),
-          DropdownMenuItem(value: 'any', child: Text('No preference')),
+      // ── Section 2: Care Requirements ──
+      _sectionCard(
+        icon: Icons.checklist_rounded,
+        title: 'What care does the patient need?',
+        subtitle: isNurse
+            ? 'Select all that apply — we\'ll recommend the right nurse level'
+            : 'Select all that apply',
+        children: [
+          _careNeedChipGroup(
+            groupLabel: 'Daily care',
+            options: _basicCareNeeds,
+            badgeColor: HousepitalColors.success,
+            levelTag: 'BASIC',
+          ),
+          const SizedBox(height: 14),
+          _careNeedChipGroup(
+            groupLabel: 'Clinical care',
+            options: _advancedCareNeeds,
+            badgeColor: HousepitalColors.warning,
+            levelTag: 'ADVANCED',
+          ),
+          const SizedBox(height: 14),
+          _careNeedChipGroup(
+            groupLabel: 'Critical care',
+            options: _criticalCareNeeds,
+            badgeColor: HousepitalColors.error,
+            levelTag: 'CRITICAL',
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _staffGender = v);
-        },
       ),
-      const SizedBox(height: 16),
 
-      // Start date
-      _buildDatePicker('Preferred Start Date'),
+      // ── Recommendation card ──
+      if (isNurse && recommended != null) ...[
+        _buildNurseRecommendation(recommended),
+        const SizedBox(height: 16),
+      ],
+
+      // ── Section 3: Schedule & Preference ──
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Schedule & Preference',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _shiftType,
+            decoration:
+                const InputDecoration(labelText: 'Shift Type'),
+            items: const [
+              DropdownMenuItem(
+                  value: '12hr_day', child: Text('12hr Day')),
+              DropdownMenuItem(
+                  value: '12hr_night', child: Text('12hr Night')),
+              DropdownMenuItem(value: '24hr', child: Text('24hr')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _shiftType = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _staffGender,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Staff Gender'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'female', child: Text('Female')),
+              DropdownMenuItem(value: 'male', child: Text('Male')),
+              DropdownMenuItem(
+                  value: 'any', child: Text('No preference')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _staffGender = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          _buildDatePicker('Preferred Start Date'),
+        ],
+      ),
     ];
+  }
+
+  Widget _buildNurseRecommendation(String recommended) {
+    final label = _nurseLevelLabels[recommended]!;
+    final desc = _nurseLevelDescriptions[recommended]!;
+    final color = recommended == 'critical'
+        ? HousepitalColors.error
+        : recommended == 'advanced'
+            ? HousepitalColors.warning
+            : HousepitalColors.success;
+    final bgColor = recommended == 'critical'
+        ? HousepitalColors.errorLight
+        : recommended == 'advanced'
+            ? HousepitalColors.warningLight
+            : HousepitalColors.successLight;
+
+    // Check if the service they tapped is a lower level than recommended
+    final serviceId = widget.service.id;
+    String? tappedLevel;
+    if (serviceId.contains('-basic-')) tappedLevel = 'basic';
+    if (serviceId.contains('-adv-')) tappedLevel = 'advanced';
+    if (serviceId.contains('-crit-')) tappedLevel = 'critical';
+
+    final levels = ['basic', 'advanced', 'critical'];
+    final tappedIdx = tappedLevel != null ? levels.indexOf(tappedLevel) : -1;
+    final recIdx = levels.indexOf(recommended);
+    final isUnderqualified = tappedIdx >= 0 && tappedIdx < recIdx;
+
+    return Column(
+      children: [
+        // Recommendation
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color, width: 1.5),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome, size: 24, color: color),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$label Recommended',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        )),
+                    const SizedBox(height: 4),
+                    Text(desc,
+                        style: TextStyle(fontSize: 13, color: color)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Warning if they picked a lower level
+        if (isUnderqualified) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HousepitalColors.warningLight,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: HousepitalColors.warning.withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        size: 18, color: HousepitalColors.warning),
+                    const SizedBox(width: 8),
+                    Text('A ${_nurseLevelLabels[tappedLevel]} cannot do:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: HousepitalColors.warning,
+                        )),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...(_cannotDoWarnings[tappedLevel] ?? [])
+                    .where((item) {
+                      // Only show warnings relevant to what they selected
+                      return _careNeeds.any((need) =>
+                          need.toLowerCase().contains(
+                              item.toLowerCase().split('/').first.trim()) ||
+                          item.toLowerCase().contains(
+                              need.toLowerCase().split(' ').first));
+                    })
+                    .map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.close,
+                                  size: 14,
+                                  color: HousepitalColors.error),
+                              const SizedBox(width: 8),
+                              Text(item,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      color: HousepitalColors.grey)),
+                            ],
+                          ),
+                        )),
+                const SizedBox(height: 6),
+                Text(
+                  'We recommend upgrading to $label for the care you need.',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: HousepitalColors.greyLight,
+                      fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   // ──────────────────────────────────────────────
@@ -515,82 +831,88 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   // ──────────────────────────────────────────────
   List<Widget> _buildJapaForm() {
     return [
-      // Baby's age
-      TextFormField(
-        initialValue: _babyAge,
-        decoration: const InputDecoration(
-          labelText: 'Baby\'s Age (in months)',
-          hintText: 'e.g. 2',
-        ),
-        keyboardType: TextInputType.number,
-        onChanged: (v) => _babyAge = v,
-        validator: (v) =>
-            (v == null || v.isEmpty) ? 'Please enter baby\'s age' : null,
-      ),
-      const SizedBox(height: 16),
-
-      // Mother's condition
-      DropdownButtonFormField<String>(
-        value: _motherCondition,
-        decoration: const InputDecoration(labelText: 'Mother\'s Condition'),
-        items: const [
-          DropdownMenuItem(
-              value: 'normal_delivery', child: Text('Normal delivery')),
-          DropdownMenuItem(
-              value: 'c_section', child: Text('Post C-section')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _motherCondition = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Feeding type
-      DropdownButtonFormField<String>(
-        value: _feedingType,
-        decoration: const InputDecoration(labelText: 'Feeding Type'),
-        items: const [
-          DropdownMenuItem(
-              value: 'breastfeeding', child: Text('Breastfeeding')),
-          DropdownMenuItem(value: 'formula', child: Text('Formula')),
-          DropdownMenuItem(value: 'both', child: Text('Both')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _feedingType = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Specific needs
-      const Text('Specific Needs (select all that apply)',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: _japaNeedOptions.map((need) {
-          final isSelected = _japaNeeds.contains(need);
-          return FilterChip(
-            label: Text(need),
-            selected: isSelected,
-            selectedColor: HousepitalColors.orangeLight,
-            checkmarkColor: HousepitalColors.orange,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  _japaNeeds.add(need);
-                } else {
-                  _japaNeeds.remove(need);
-                }
-              });
+      _sectionCard(
+        icon: Icons.child_care,
+        title: 'Baby & Mother Details',
+        children: [
+          TextFormField(
+            initialValue: _babyAge,
+            decoration: const InputDecoration(
+              labelText: 'Baby\'s Age (in months)',
+              hintText: 'e.g. 2',
+            ),
+            keyboardType: TextInputType.number,
+            onChanged: (v) => _babyAge = v,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Please enter baby\'s age' : null,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _motherCondition,
+            decoration:
+                const InputDecoration(labelText: 'Mother\'s Condition'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'normal_delivery', child: Text('Normal delivery')),
+              DropdownMenuItem(
+                  value: 'c_section', child: Text('Post C-section')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _motherCondition = v);
             },
-          );
-        }).toList(),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _feedingType,
+            decoration: const InputDecoration(labelText: 'Feeding Type'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'breastfeeding', child: Text('Breastfeeding')),
+              DropdownMenuItem(value: 'formula', child: Text('Formula')),
+              DropdownMenuItem(value: 'both', child: Text('Both')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _feedingType = v);
+            },
+          ),
+        ],
       ),
-      const SizedBox(height: 16),
-
-      // Start date
-      _buildDatePicker('Preferred Start Date'),
+      _sectionCard(
+        icon: Icons.checklist_rounded,
+        title: 'What help do you need?',
+        subtitle: 'Select all that apply',
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _japaNeedOptions.map((need) {
+              final isSelected = _japaNeeds.contains(need);
+              return FilterChip(
+                label: Text(need),
+                selected: isSelected,
+                selectedColor: HousepitalColors.orangeLight,
+                checkmarkColor: HousepitalColors.orange,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _japaNeeds.add(need);
+                    } else {
+                      _japaNeeds.remove(need);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Schedule',
+        children: [
+          _buildDatePicker('Preferred Start Date'),
+        ],
+      ),
       const SizedBox(height: 16),
 
       // Staff gender
@@ -615,95 +937,105 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   // ──────────────────────────────────────────────
   List<Widget> _buildNannyForm() {
     return [
-      // Child's age
-      TextFormField(
-        initialValue: _childAge,
-        decoration: const InputDecoration(
-          labelText: 'Child\'s Age',
-          hintText: 'e.g. 3 years or 8 months',
-        ),
-        onChanged: (v) => _childAge = v,
-        validator: (v) =>
-            (v == null || v.isEmpty) ? 'Please enter child\'s age' : null,
-      ),
-      const SizedBox(height: 16),
-
-      // Number of children
-      DropdownButtonFormField<String>(
-        value: _numberOfChildren,
-        decoration: const InputDecoration(labelText: 'Number of Children'),
-        items: const [
-          DropdownMenuItem(value: '1', child: Text('1')),
-          DropdownMenuItem(value: '2', child: Text('2')),
-          DropdownMenuItem(value: '3', child: Text('3')),
-          DropdownMenuItem(value: '4+', child: Text('4 or more')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _numberOfChildren = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Care schedule
-      DropdownButtonFormField<String>(
-        value: _careSchedule,
-        decoration: const InputDecoration(labelText: 'Care Schedule'),
-        items: const [
-          DropdownMenuItem(value: 'daytime', child: Text('Daytime')),
-          DropdownMenuItem(value: 'overnight', child: Text('Overnight')),
-          DropdownMenuItem(value: '24hr', child: Text('24 hours')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _careSchedule = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Activities needed
-      const Text('Activities Needed (select all that apply)',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: _nannyActivityOptions.map((activity) {
-          final isSelected = _nannyActivities.contains(activity);
-          return FilterChip(
-            label: Text(activity),
-            selected: isSelected,
-            selectedColor: HousepitalColors.orangeLight,
-            checkmarkColor: HousepitalColors.orange,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  _nannyActivities.add(activity);
-                } else {
-                  _nannyActivities.remove(activity);
-                }
-              });
+      _sectionCard(
+        icon: Icons.child_friendly,
+        title: 'Child Details',
+        children: [
+          TextFormField(
+            initialValue: _childAge,
+            decoration: const InputDecoration(
+              labelText: 'Child\'s Age',
+              hintText: 'e.g. 3 years or 8 months',
+            ),
+            onChanged: (v) => _childAge = v,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Please enter child\'s age' : null,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _numberOfChildren,
+            decoration:
+                const InputDecoration(labelText: 'Number of Children'),
+            items: const [
+              DropdownMenuItem(value: '1', child: Text('1')),
+              DropdownMenuItem(value: '2', child: Text('2')),
+              DropdownMenuItem(value: '3', child: Text('3')),
+              DropdownMenuItem(value: '4+', child: Text('4 or more')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _numberOfChildren = v);
             },
-          );
-        }).toList(),
-      ),
-      const SizedBox(height: 16),
-
-      // Start date
-      _buildDatePicker('Preferred Start Date'),
-      const SizedBox(height: 16),
-
-      // Staff gender
-      DropdownButtonFormField<String>(
-        value: _staffGender,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Staff Gender'),
-        items: const [
-          DropdownMenuItem(value: 'female', child: Text('Female')),
-          DropdownMenuItem(value: 'male', child: Text('Male')),
-          DropdownMenuItem(value: 'any', child: Text('No preference')),
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _staffGender = v);
-        },
+      ),
+      _sectionCard(
+        icon: Icons.checklist_rounded,
+        title: 'Activities Needed',
+        subtitle: 'Select all that apply',
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _nannyActivityOptions.map((activity) {
+              final isSelected = _nannyActivities.contains(activity);
+              return FilterChip(
+                label: Text(activity),
+                selected: isSelected,
+                selectedColor: HousepitalColors.orangeLight,
+                checkmarkColor: HousepitalColors.orange,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _nannyActivities.add(activity);
+                    } else {
+                      _nannyActivities.remove(activity);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Schedule & Preference',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _careSchedule,
+            decoration:
+                const InputDecoration(labelText: 'Care Schedule'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'daytime', child: Text('Daytime')),
+              DropdownMenuItem(
+                  value: 'overnight', child: Text('Overnight')),
+              DropdownMenuItem(
+                  value: '24hr', child: Text('24 hours')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _careSchedule = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _staffGender,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Staff Gender'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'female', child: Text('Female')),
+              DropdownMenuItem(value: 'male', child: Text('Male')),
+              DropdownMenuItem(
+                  value: 'any', child: Text('No preference')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _staffGender = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          _buildDatePicker('Preferred Start Date'),
+        ],
       ),
     ];
   }
@@ -713,95 +1045,110 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   // ──────────────────────────────────────────────
   List<Widget> _buildPhysioForm() {
     return [
-      // Condition type
-      DropdownButtonFormField<String>(
-        value: _physioConditionType,
-        decoration: const InputDecoration(labelText: 'Condition Type'),
-        items: const [
-          DropdownMenuItem(
-              value: 'post_surgery', child: Text('Post-surgery rehab')),
-          DropdownMenuItem(
-              value: 'chronic_pain', child: Text('Chronic pain')),
-          DropdownMenuItem(
-              value: 'neuro_rehab', child: Text('Neuro rehabilitation')),
-          DropdownMenuItem(
-              value: 'sports_injury', child: Text('Sports injury')),
-          DropdownMenuItem(value: 'other', child: Text('Other')),
+      _sectionCard(
+        icon: Icons.accessibility_new,
+        title: 'Condition Details',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _physioConditionType,
+            decoration:
+                const InputDecoration(labelText: 'Condition Type'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'post_surgery',
+                  child: Text('Post-surgery rehab')),
+              DropdownMenuItem(
+                  value: 'chronic_pain', child: Text('Chronic pain')),
+              DropdownMenuItem(
+                  value: 'neuro_rehab',
+                  child: Text('Neuro rehabilitation')),
+              DropdownMenuItem(
+                  value: 'sports_injury',
+                  child: Text('Sports injury')),
+              DropdownMenuItem(
+                  value: 'other', child: Text('Other')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _physioConditionType = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _affectedArea,
+            decoration:
+                const InputDecoration(labelText: 'Affected Area'),
+            items: const [
+              DropdownMenuItem(value: 'knee', child: Text('Knee')),
+              DropdownMenuItem(value: 'hip', child: Text('Hip')),
+              DropdownMenuItem(
+                  value: 'shoulder', child: Text('Shoulder')),
+              DropdownMenuItem(value: 'back', child: Text('Back')),
+              DropdownMenuItem(value: 'ankle', child: Text('Ankle')),
+              DropdownMenuItem(value: 'other', child: Text('Other')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _affectedArea = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            initialValue: _issueDuration,
+            decoration: const InputDecoration(
+              labelText: 'Duration of Issue',
+              hintText: 'e.g. 3 months, 1 year',
+            ),
+            onChanged: (v) => _issueDuration = v,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _currentMobilityLevel,
+            decoration: const InputDecoration(
+                labelText: 'Current Mobility Level'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'full', child: Text('Full mobility')),
+              DropdownMenuItem(
+                  value: 'moderate',
+                  child: Text('Moderate - some difficulty')),
+              DropdownMenuItem(
+                  value: 'limited',
+                  child: Text('Limited - needs assistance')),
+              DropdownMenuItem(
+                  value: 'minimal',
+                  child: Text('Minimal - mostly immobile')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _currentMobilityLevel = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _physioConditionType = v);
-        },
       ),
-      const SizedBox(height: 16),
-
-      // Affected area
-      DropdownButtonFormField<String>(
-        value: _affectedArea,
-        decoration: const InputDecoration(labelText: 'Affected Area'),
-        items: const [
-          DropdownMenuItem(value: 'knee', child: Text('Knee')),
-          DropdownMenuItem(value: 'hip', child: Text('Hip')),
-          DropdownMenuItem(value: 'shoulder', child: Text('Shoulder')),
-          DropdownMenuItem(value: 'back', child: Text('Back')),
-          DropdownMenuItem(value: 'ankle', child: Text('Ankle')),
-          DropdownMenuItem(value: 'other', child: Text('Other')),
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Schedule',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _preferredVisitTime,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Visit Time'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'morning',
+                  child: Text('Morning (8am - 12pm)')),
+              DropdownMenuItem(
+                  value: 'afternoon',
+                  child: Text('Afternoon (12pm - 4pm)')),
+              DropdownMenuItem(
+                  value: 'evening',
+                  child: Text('Evening (4pm - 8pm)')),
+              DropdownMenuItem(
+                  value: 'any', child: Text('No preference')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _preferredVisitTime = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _affectedArea = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Duration of issue
-      TextFormField(
-        initialValue: _issueDuration,
-        decoration: const InputDecoration(
-          labelText: 'Duration of Issue',
-          hintText: 'e.g. 3 months, 1 year',
-        ),
-        onChanged: (v) => _issueDuration = v,
-      ),
-      const SizedBox(height: 16),
-
-      // Current mobility level
-      DropdownButtonFormField<String>(
-        value: _currentMobilityLevel,
-        decoration:
-            const InputDecoration(labelText: 'Current Mobility Level'),
-        items: const [
-          DropdownMenuItem(value: 'full', child: Text('Full mobility')),
-          DropdownMenuItem(
-              value: 'moderate', child: Text('Moderate - some difficulty')),
-          DropdownMenuItem(
-              value: 'limited',
-              child: Text('Limited - needs assistance')),
-          DropdownMenuItem(
-              value: 'minimal',
-              child: Text('Minimal - mostly immobile')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _currentMobilityLevel = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Preferred visit time
-      DropdownButtonFormField<String>(
-        value: _preferredVisitTime,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Visit Time'),
-        items: const [
-          DropdownMenuItem(
-              value: 'morning', child: Text('Morning (8am - 12pm)')),
-          DropdownMenuItem(
-              value: 'afternoon', child: Text('Afternoon (12pm - 4pm)')),
-          DropdownMenuItem(
-              value: 'evening', child: Text('Evening (4pm - 8pm)')),
-          DropdownMenuItem(value: 'any', child: Text('No preference')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _preferredVisitTime = v);
-        },
       ),
     ];
   }
@@ -811,75 +1158,87 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   // ──────────────────────────────────────────────
   List<Widget> _buildGriefCounsellingForm() {
     return [
-      // Type of loss
-      DropdownButtonFormField<String>(
-        value: _lossType,
-        decoration: const InputDecoration(labelText: 'Type of Loss'),
-        items: const [
-          DropdownMenuItem(
-              value: 'recent_bereavement',
-              child: Text('Recent bereavement')),
-          DropdownMenuItem(
-              value: 'terminal_diagnosis',
-              child: Text('Terminal diagnosis')),
-          DropdownMenuItem(
-              value: 'caregiver_burnout',
-              child: Text('Caregiver burnout')),
-          DropdownMenuItem(value: 'other', child: Text('Other')),
+      _sectionCard(
+        icon: Icons.favorite_border,
+        title: 'About Your Situation',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _lossType,
+            decoration:
+                const InputDecoration(labelText: 'Type of Loss'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'recent_bereavement',
+                  child: Text('Recent bereavement')),
+              DropdownMenuItem(
+                  value: 'terminal_diagnosis',
+                  child: Text('Terminal diagnosis')),
+              DropdownMenuItem(
+                  value: 'caregiver_burnout',
+                  child: Text('Caregiver burnout')),
+              DropdownMenuItem(
+                  value: 'other', child: Text('Other')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _lossType = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _previousCounselling,
+            decoration: const InputDecoration(
+                labelText: 'Any Previous Counselling?'),
+            items: const [
+              DropdownMenuItem(value: 'yes', child: Text('Yes')),
+              DropdownMenuItem(value: 'no', child: Text('No')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _previousCounselling = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _lossType = v);
-        },
       ),
-      const SizedBox(height: 16),
-
-      // Preferred session format
-      DropdownButtonFormField<String>(
-        value: _sessionFormat,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Session Format'),
-        items: const [
-          DropdownMenuItem(value: 'in_person', child: Text('In-person')),
-          DropdownMenuItem(value: 'video', child: Text('Video call')),
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Session Preference',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _sessionFormat,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Session Format'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'in_person', child: Text('In-person')),
+              DropdownMenuItem(
+                  value: 'video', child: Text('Video call')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _sessionFormat = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _preferredTiming,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Timing'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'morning',
+                  child: Text('Morning (8am - 12pm)')),
+              DropdownMenuItem(
+                  value: 'afternoon',
+                  child: Text('Afternoon (12pm - 4pm)')),
+              DropdownMenuItem(
+                  value: 'evening',
+                  child: Text('Evening (4pm - 8pm)')),
+              DropdownMenuItem(
+                  value: 'any', child: Text('No preference')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _preferredTiming = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _sessionFormat = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Preferred timing
-      DropdownButtonFormField<String>(
-        value: _preferredTiming,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Timing'),
-        items: const [
-          DropdownMenuItem(
-              value: 'morning', child: Text('Morning (8am - 12pm)')),
-          DropdownMenuItem(
-              value: 'afternoon', child: Text('Afternoon (12pm - 4pm)')),
-          DropdownMenuItem(
-              value: 'evening', child: Text('Evening (4pm - 8pm)')),
-          DropdownMenuItem(value: 'any', child: Text('No preference')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _preferredTiming = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Previous counselling
-      DropdownButtonFormField<String>(
-        value: _previousCounselling,
-        decoration:
-            const InputDecoration(labelText: 'Any Previous Counselling?'),
-        items: const [
-          DropdownMenuItem(value: 'yes', child: Text('Yes')),
-          DropdownMenuItem(value: 'no', child: Text('No')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _previousCounselling = v);
-        },
       ),
     ];
   }
@@ -889,64 +1248,76 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   // ──────────────────────────────────────────────
   List<Widget> _buildPsychiatryForm() {
     return [
-      // Primary concern
-      DropdownButtonFormField<String>(
-        value: _primaryConcern,
-        decoration: const InputDecoration(labelText: 'Primary Concern'),
-        items: const [
-          DropdownMenuItem(value: 'anxiety', child: Text('Anxiety')),
-          DropdownMenuItem(value: 'depression', child: Text('Depression')),
-          DropdownMenuItem(
-              value: 'sleep', child: Text('Sleep issues')),
-          DropdownMenuItem(
-              value: 'medication_review',
-              child: Text('Medication review')),
-          DropdownMenuItem(value: 'other', child: Text('Other')),
+      _sectionCard(
+        icon: Icons.psychology,
+        title: 'About Your Concern',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _primaryConcern,
+            decoration:
+                const InputDecoration(labelText: 'Primary Concern'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'anxiety', child: Text('Anxiety')),
+              DropdownMenuItem(
+                  value: 'depression', child: Text('Depression')),
+              DropdownMenuItem(
+                  value: 'sleep', child: Text('Sleep issues')),
+              DropdownMenuItem(
+                  value: 'medication_review',
+                  child: Text('Medication review')),
+              DropdownMenuItem(
+                  value: 'other', child: Text('Other')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _primaryConcern = v);
+            },
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            initialValue: _symptomDuration,
+            decoration: const InputDecoration(
+              labelText: 'Duration of Symptoms',
+              hintText: 'e.g. 2 weeks, 6 months',
+            ),
+            onChanged: (v) => _symptomDuration = v,
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            value: _currentlyOnMedication,
+            decoration: const InputDecoration(
+                labelText: 'Currently on Medication?'),
+            items: const [
+              DropdownMenuItem(value: 'yes', child: Text('Yes')),
+              DropdownMenuItem(value: 'no', child: Text('No')),
+            ],
+            onChanged: (v) {
+              if (v != null) setState(() => _currentlyOnMedication = v);
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _primaryConcern = v);
-        },
       ),
-      const SizedBox(height: 16),
-
-      // Duration of symptoms
-      TextFormField(
-        initialValue: _symptomDuration,
-        decoration: const InputDecoration(
-          labelText: 'Duration of Symptoms',
-          hintText: 'e.g. 2 weeks, 6 months',
-        ),
-        onChanged: (v) => _symptomDuration = v,
-      ),
-      const SizedBox(height: 16),
-
-      // Currently on medication
-      DropdownButtonFormField<String>(
-        value: _currentlyOnMedication,
-        decoration:
-            const InputDecoration(labelText: 'Currently on Medication?'),
-        items: const [
-          DropdownMenuItem(value: 'yes', child: Text('Yes')),
-          DropdownMenuItem(value: 'no', child: Text('No')),
+      _sectionCard(
+        icon: Icons.schedule,
+        title: 'Session Preference',
+        children: [
+          DropdownButtonFormField<String>(
+            value: _psychiatrySessionFormat,
+            decoration: const InputDecoration(
+                labelText: 'Preferred Session Format'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'in_person', child: Text('In-person')),
+              DropdownMenuItem(
+                  value: 'video', child: Text('Video call')),
+            ],
+            onChanged: (v) {
+              if (v != null) {
+                setState(() => _psychiatrySessionFormat = v);
+              }
+            },
+          ),
         ],
-        onChanged: (v) {
-          if (v != null) setState(() => _currentlyOnMedication = v);
-        },
-      ),
-      const SizedBox(height: 16),
-
-      // Preferred session format
-      DropdownButtonFormField<String>(
-        value: _psychiatrySessionFormat,
-        decoration:
-            const InputDecoration(labelText: 'Preferred Session Format'),
-        items: const [
-          DropdownMenuItem(value: 'in_person', child: Text('In-person')),
-          DropdownMenuItem(value: 'video', child: Text('Video call')),
-        ],
-        onChanged: (v) {
-          if (v != null) setState(() => _psychiatrySessionFormat = v);
-        },
       ),
     ];
   }
