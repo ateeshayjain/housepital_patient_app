@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/constants.dart';
 import '../models/models.dart';
+import '../models/my_care_models.dart';
+import '../models/medication_models.dart';
 
 class ApiService {
   final String baseUrl;
@@ -41,6 +43,14 @@ class ApiService {
       Uri.parse('$baseUrl$path'),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> _delete(String path) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl$path'),
+      headers: _headers,
     );
     return _handleResponse(response);
   }
@@ -452,6 +462,94 @@ class ApiService {
     return (data['items'] as List)
         .map((e) => EquipmentItem.fromJson(e))
         .toList();
+  }
+
+  // ==================== MY CARE ====================
+
+  Future<List<ActiveService>> getActiveServices(String patientId) async {
+    final data = await _get('/patients/$patientId/active-services');
+    return (data['services'] as List)
+        .map((s) => ActiveService.fromJson(s))
+        .toList();
+  }
+
+  Future<HealthManager?> getHealthManager(String patientId) async {
+    try {
+      final data = await _get('/patients/$patientId/health-manager');
+      return HealthManager.fromJson(data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  Future<ServiceDetail> getDeploymentServiceDetail(String deploymentId) async {
+    final data = await _get('/deployments/$deploymentId/service-detail');
+    return ServiceDetail.fromJson(data);
+  }
+
+  Future<List<Attendance>> getAttendanceHistoryPaginated(
+    String deploymentId, {
+    int page = 1,
+    int pageSize = 30,
+  }) async {
+    final data = await _get(
+      '/deployments/$deploymentId/attendance',
+      queryParams: {'page': '$page', 'page_size': '$pageSize'},
+    );
+    return (data['records'] as List)
+        .map((a) => Attendance.fromJson(a))
+        .toList();
+  }
+
+  // ==================== MEDICATIONS ====================
+
+  Future<List<MedicationFull>> getMedications(String patientId) async {
+    final data = await _get('/patients/$patientId/medications');
+    return (data['medications'] as List)
+        .map((m) => MedicationFull.fromJson(m))
+        .toList();
+  }
+
+  Future<MedicationFull> addMedication(
+      String patientId, Map<String, dynamic> body) async {
+    final data =
+        await _post('/patients/$patientId/medications', body: body);
+    return MedicationFull.fromJson(data);
+  }
+
+  Future<MedicationFull> updateMedication(
+      String patientId, String medicationId, Map<String, dynamic> body) async {
+    final data = await _put(
+        '/patients/$patientId/medications/$medicationId',
+        body: body);
+    return MedicationFull.fromJson(data);
+  }
+
+  Future<void> deleteMedication(
+      String patientId, String medicationId) async {
+    await _delete('/patients/$patientId/medications/$medicationId');
+  }
+
+  Future<List<MedicationLog>> getMedicationLogs(
+    String patientId, {
+    String? date, // YYYY-MM-DD, defaults to today on backend
+  }) async {
+    final params = <String, String>{};
+    if (date != null) params['date'] = date;
+    final data = await _get('/patients/$patientId/medication-logs',
+        queryParams: params.isNotEmpty ? params : null);
+    return (data['logs'] as List)
+        .map((l) => MedicationLog.fromJson(l))
+        .toList();
+  }
+
+  /// Note: Spec says /medication-logs/{id}/stock but stock belongs on the medication
+  /// entity, not on a log entry. Using /medications/{id}/stock instead.
+  Future<void> updateMedicationStock(
+      String patientId, String medicationId, int stockCount) async {
+    await _put('/patients/$patientId/medications/$medicationId/stock',
+        body: {'stock_count': stockCount});
   }
 }
 
