@@ -227,21 +227,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     if (_catalogItem?.faqs == null || _catalogItem!.faqs!.isEmpty) return [];
     final raw = _catalogItem!.faqs!;
 
-    // Strategy: split on 'Q:' boundaries to get individual QA blocks,
-    // then extract the answer from each block by splitting on ' A:'
-    final qBlocks = raw.split(RegExp(r'(?:^|\|)\s*Q:\s*')).where((e) => e.trim().isNotEmpty);
+    // Use regex to find all Q: ... A: ... pairs anywhere in the text
+    final pattern = RegExp(r'Q:\s*(.+?)\s*A:\s*(.+?)(?=\s*\|\s*Q:|\s*Q:|$)');
+    final matches = pattern.allMatches(raw);
     final faqs = <_FaqEntry>[];
-    for (final block in qBlocks) {
-      // Each block looks like: "How often...? A: Replace after..."
-      final aIndex = block.indexOf(RegExp(r'\s+A:\s'));
-      if (aIndex > 0) {
-        final question = block.substring(0, aIndex).trim();
-        final answer = block.substring(aIndex).replaceFirst(RegExp(r'^\s*A:\s*'), '').trim();
-        // Remove trailing pipe if present
-        final cleanAnswer = answer.endsWith('|') ? answer.substring(0, answer.length - 1).trim() : answer;
-        if (question.isNotEmpty && cleanAnswer.isNotEmpty) {
-          faqs.add(_FaqEntry(question: question, answer: cleanAnswer));
-        }
+    for (final m in matches) {
+      final q = m.group(1)?.trim() ?? '';
+      final a = m.group(2)?.trim().replaceAll(RegExp(r'\|$'), '').trim() ?? '';
+      if (q.isNotEmpty && a.isNotEmpty) {
+        faqs.add(_FaqEntry(question: q, answer: a));
       }
     }
     return faqs;
@@ -583,49 +577,44 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   Widget _buildFeaturesSection() {
     final features = _features;
-    return Container(
-      color: HousepitalColors.white,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle(title: 'Key Features'),
-          const SizedBox(height: 14),
-          ...features.map((feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: HousepitalColors.successLight,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: HousepitalColors.success,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: HousepitalColors.grey,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
+    return _CollapsibleSection(
+      icon: Icons.star_outline,
+      iconColor: HousepitalColors.success,
+      title: 'Key Features',
+      initiallyExpanded: true,
+      children: features.map((feature) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.successLight,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    size: 14,
+                    color: HousepitalColors.success,
+                  ),
                 ),
-              )),
-        ],
-      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    feature,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: HousepitalColors.grey,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
     );
   }
 
@@ -634,37 +623,31 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   Widget _buildIdealForSection() {
     final items = _splitCatalogText(_idealFor!);
 
-    return Container(
-      color: HousepitalColors.white,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle(title: 'Ideal For'),
-          const SizedBox(height: 12),
-          ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle_outline,
-                        size: 18, color: HousepitalColors.success),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: HousepitalColors.grey,
-                          height: 1.4,
-                        ),
-                      ),
+    return _CollapsibleSection(
+      icon: Icons.check_circle_outline,
+      iconColor: HousepitalColors.success,
+      title: 'Ideal For',
+      children: items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    size: 18, color: HousepitalColors.success),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: HousepitalColors.grey,
+                      height: 1.4,
                     ),
-                  ],
+                  ),
                 ),
-              )),
-        ],
-      ),
+              ],
+            ),
+          )).toList(),
     );
   }
 
@@ -765,107 +748,95 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   Widget _buildHowToUseSection() {
     final steps = _splitCatalogText(_howToUse!);
 
-    return Container(
-      color: HousepitalColors.white,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle(title: 'How to Use'),
-          const SizedBox(height: 14),
-          ...List.generate(steps.length, (i) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    margin: const EdgeInsets.only(top: 2),
-                    decoration: BoxDecoration(
-                      color: HousepitalColors.orangeLight,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${i + 1}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: HousepitalColors.orangeText,
-                        ),
-                      ),
+    return _CollapsibleSection(
+      icon: Icons.help_outline,
+      iconColor: HousepitalColors.orange,
+      title: 'How to Use',
+      children: List.generate(steps.length, (i) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(top: 2),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.orangeLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '${i + 1}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: HousepitalColors.orangeText,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      steps[i],
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: HousepitalColors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          }),
-        ],
-      ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  steps[i],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: HousepitalColors.grey,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
   // ── FAQs ─────────────────────────────────────────────────────
 
   Widget _buildFaqsSection() {
-    return Container(
-      color: HousepitalColors.white,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle(title: 'FAQs'),
-          const SizedBox(height: 10),
-          ...List.generate(_faqs.length, (i) {
-            final faq = _faqs[i];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${i + 1}. ${faq.question}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Text(
-                      faq.answer,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: HousepitalColors.greyLight,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  if (i < _faqs.length - 1) ...[
-                    const SizedBox(height: 12),
-                    const Divider(height: 1),
-                  ],
-                ],
+    return _CollapsibleSection(
+      icon: Icons.question_answer_outlined,
+      iconColor: HousepitalColors.orange,
+      title: 'FAQs',
+      children: List.generate(_faqs.length, (i) {
+        final faq = _faqs[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${i + 1}. ${faq.question}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: HousepitalColors.black,
+                ),
               ),
-            );
-          }),
-        ],
-      ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Text(
+                  faq.answer,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: HousepitalColors.greyLight,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              if (i < _faqs.length - 1) ...[
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+              ],
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -979,6 +950,115 @@ class _SectionTitle extends StatelessWidget {
         fontWeight: FontWeight.w700,
         color: HousepitalColors.black,
         letterSpacing: -0.2,
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatefulWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final bool initiallyExpanded;
+  final List<Widget> children;
+
+  const _CollapsibleSection({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.initiallyExpanded = false,
+    required this.children,
+  });
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection>
+    with SingleTickerProviderStateMixin {
+  late bool _expanded;
+  late final AnimationController _controller;
+  late final Animation<double> _heightFactor;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+      value: _expanded ? 1.0 : 0.0,
+    );
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      _expanded = !_expanded;
+      if (_expanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: HousepitalColors.white,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: _toggle,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              child: Row(
+                children: [
+                  Icon(widget.icon, color: widget.iconColor, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: HousepitalColors.black,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 250),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: HousepitalColors.orange,
+                      size: 28,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizeTransition(
+            sizeFactor: _heightFactor,
+            axisAlignment: -1.0,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.children,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
