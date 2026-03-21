@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../data/care_packages.dart';
 import '../../utils/helpers.dart';
 
 class ServiceCatalogScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class ServiceCatalogScreen extends StatefulWidget {
       GlobalKey<_ServiceCatalogScreenState>();
 
   /// Switch to a specific sub-tab by index.
-  /// 0=Manpower, 1=Equipment, 2=Consultations, 3=Diagnostics, 4=Sleep Therapy
+  /// 0=Manpower, 1=Equipment, 2=Consultations, 3=Visits, 4=Diagnostics, 5=Lab Tests, 6=Packages
   static void switchToSubTab(int index) {
     catalogKey.currentState?.switchSubTab(index);
   }
@@ -242,8 +243,8 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     ),
   ];
 
+  // ── Diagnostics (at-home tests with equipment) ──
   static final List<ServiceItem> _diagnosticServices = [
-    // ── Diagnostic Tests ──
     ServiceItem(
       id: 'dx-ecg', name: 'ECG at Home',
       category: 'diagnostics', bookingType: 'instant',
@@ -262,73 +263,76 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       description: '24-hour Holter monitor fitted at home. Technician visits for setup & removal. Report in 48 hours.',
       basePriceMin: 2500, durationMinutes: 45, leadTimeHours: 12, iconName: 'monitor_heart',
     ),
-    // ── Lab Panels (from HPL Lab Panel pricing) ──
+  ];
+
+  // ── Lab Tests (panels + sample collection) ──
+  static final List<ServiceItem> _labServices = [
     ServiceItem(
       id: 'lab-fever', name: 'Fever Panel',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'CBC, CRP, Procalcitonin, Peripheral Smear, Typhidot, Dengue NS1, COVID test, Urine Routine — comprehensive fever workup.',
       basePriceMin: 4999, basePriceMax: 4999, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-wellness', name: 'Wellness Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'CBC, LFT, KFT, Uric Acid, Thyroid, Lipid Profile, Vitamin B12 & D, Iron, ESR, HbA1C, Folate — 14 tests for complete health check.',
       basePriceMin: 7599, basePriceMax: 7599, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-immunity', name: 'Immunity Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'CRP, ESR, Vitamin D & B12, Iron Profile, Folate, Phosphorus, Calcium, Total Proteins — immune health assessment.',
       basePriceMin: 4599, basePriceMax: 4599, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-bone', name: 'Bone Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'Alkaline Phosphatase, LDH, PTH, Calcium, Vitamin D — bone health and osteoporosis screening.',
       basePriceMin: 2999, basePriceMax: 2999, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-metabolic', name: 'Metabolic Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'Random Sugar, HbA1C, GGT, Lipid Profile, CRP, Liver Profile — metabolic syndrome screening.',
       basePriceMin: 1799, basePriceMax: 1799, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-adolescent', name: 'Adolescent Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'HbA1C, CBC, Vitamin D, TSH, Iron Profile — health check for young adults.',
       basePriceMin: 2499, basePriceMax: 2499, iconName: 'science',
     ),
     ServiceItem(
       id: 'lab-anemia', name: 'Anemia Package',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'CBC, Peripheral Smear, ESR, HPLC, Ferritin, Iron Profile, Reticulocyte Count, B12, Folate — complete anemia workup.',
       basePriceMin: 4599, basePriceMax: 4599, iconName: 'science',
     ),
-    // ── Blood sample collection ──
     ServiceItem(
       id: 'dx-sample-5km', name: 'Blood Sample Collection (0-5 km)',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'Phlebotomist visits your home to collect blood samples. Reports shared digitally.',
       basePriceMin: 150, basePriceMax: 150, iconName: 'science',
     ),
     ServiceItem(
       id: 'dx-sample-10km', name: 'Blood Sample Collection (5-10 km)',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'Phlebotomist visits your home to collect blood samples. Reports shared digitally.',
       basePriceMin: 200, basePriceMax: 200, iconName: 'science',
     ),
     ServiceItem(
       id: 'dx-sample-15km', name: 'Blood Sample Collection (10-15 km)',
-      category: 'diagnostics', bookingType: 'instant',
+      category: 'lab', bookingType: 'instant',
       description: 'Phlebotomist visits your home to collect blood samples. Reports shared digitally.',
       basePriceMin: 250, basePriceMax: 250, iconName: 'science',
     ),
   ];
 
+  // Sleep Therapy moved to _consultationServices
   static final List<ServiceItem> _therapyServices = [
     ServiceItem(
-      id: 'th-sleep',
+      id: 'th-sleep-legacy',
       name: 'Sleep Therapy',
       nameHi: '\u0938\u094d\u0932\u0940\u092a \u0925\u0947\u0930\u0947\u092a\u0940',
       category: 'therapy',
@@ -344,8 +348,8 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     ),
   ];
 
+  // ── Consultations (doctor visits, mental health, therapy) ──
   static final List<ServiceItem> _consultationServices = [
-    // ── Doctor Visits ──
     ServiceItem(
       id: 'con-doctor-gp', name: 'Doctor Visit – General Physician',
       category: 'consultation', bookingType: 'scheduled',
@@ -372,67 +376,73 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       description: 'Compassionate support for loss, bereavement & emotional recovery. In-person or video.',
       basePriceMin: 1200, durationMinutes: 60, leadTimeHours: 24, iconName: 'favorite',
     ),
-    // ── IV Visits ──
+    ServiceItem(
+      id: 'th-sleep', name: 'Sleep Therapy',
+      category: 'consultation', bookingType: 'instant',
+      description: 'Certified sleep therapist visit — assessment, sleep hygiene counselling & personalised routine.',
+      basePriceMin: 1500, durationMinutes: 60, leadTimeHours: 24, iconName: 'bedtime',
+    ),
+  ];
+
+  // ── Visits (nursing procedures at home) ──
+  static final List<ServiceItem> _visitServices = [
     ServiceItem(
       id: 'visit-iv-basic', name: 'IV Visit (Basic)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Basic IV administration visit (0-1 hour) — IV fluid, single medication push.',
       basePriceMin: 900, basePriceMax: 900, durationMinutes: 60, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-iv-adv', name: 'IV Visit (Advanced)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Advanced IV visit (1-4 hours) — multiple IV medications, observation required.',
       basePriceMin: 1200, basePriceMax: 1200, durationMinutes: 240, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-iv-crit', name: 'IV Visit (Critical)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Critical IV visit (4-8 hours) — prolonged infusion, blood products, close monitoring.',
       basePriceMin: 1500, basePriceMax: 1500, durationMinutes: 480, iconName: 'medical_services',
     ),
-    // ── IM Visit ──
     ServiceItem(
       id: 'visit-im', name: 'IM Injection Visit',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Intramuscular injection visit — nurse administers prescribed IM medication at home.',
       basePriceMin: 500, basePriceMax: 500, durationMinutes: 30, iconName: 'medical_services',
     ),
-    // ── Dressing Visits ──
     ServiceItem(
       id: 'visit-dressing-basic', name: 'Dressing Visit (Basic)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Basic wound dressing — simple wounds, surgical site care, suture line dressing.',
       basePriceMin: 1200, basePriceMax: 1200, durationMinutes: 45, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-dressing-adv', name: 'Dressing Visit (Advanced)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Advanced dressing — complex wounds, drain site care, negative pressure wound care.',
       basePriceMin: 1500, basePriceMax: 1500, durationMinutes: 60, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-dressing-crit', name: 'Dressing Visit (Critical)',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Critical dressing — deep wound debridement, extensive burn care, multi-site dressing.',
       basePriceMin: 2000, basePriceMax: 2000, durationMinutes: 90, iconName: 'medical_services',
     ),
-    // ── Specialized Short Visits ──
     ServiceItem(
       id: 'visit-catheter', name: 'Catheter Change',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Urinary catheter insertion or change by trained nurse at home.',
       basePriceMin: 1200, basePriceMax: 1200, durationMinutes: 30, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-rt-change', name: 'RT (Ryles Tube) Change',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Nasogastric / Ryles tube insertion or change by trained nurse.',
       basePriceMin: 1200, basePriceMax: 1200, durationMinutes: 30, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'visit-tracheostomy', name: 'Tracheostomy Change',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'visit', bookingType: 'scheduled',
       description: 'Tracheostomy tube change by experienced critical care nurse.',
       basePriceMin: 5000, basePriceMax: 5000, durationMinutes: 60, iconName: 'medical_services',
     ),
@@ -463,7 +473,7 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -513,8 +523,10 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             Tab(text: 'Manpower'),
             Tab(text: 'Equipment'),
             Tab(text: 'Consultations'),
+            Tab(text: 'Visits'),
             Tab(text: 'Diagnostics'),
-            Tab(text: 'Sleep Therapy'),
+            Tab(text: 'Lab Tests'),
+            Tab(text: 'Packages'),
           ],
         ),
       ),
@@ -542,6 +554,16 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             filterBySearch: _filterBySearch,
             onNavigate: _navigateToService,
           ),
+          _ConsultationsTab(
+            services: _visitServices,
+            iconMap: _iconMap,
+            searchQuery: _searchQuery,
+            searchController: _searchController,
+            searchFocusNode: _searchFocusNode,
+            onSearchChanged: _onSearchChanged,
+            filterBySearch: _filterBySearch,
+            onNavigate: _navigateToService,
+          ),
           _DiagnosticsTab(
             services: _diagnosticServices,
             iconMap: _iconMap,
@@ -552,8 +574,8 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             filterBySearch: _filterBySearch,
             onNavigate: _navigateToService,
           ),
-          _TherapyTab(
-            services: _therapyServices,
+          _DiagnosticsTab(
+            services: _labServices,
             iconMap: _iconMap,
             searchQuery: _searchQuery,
             searchController: _searchController,
@@ -562,6 +584,7 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             filterBySearch: _filterBySearch,
             onNavigate: _navigateToService,
           ),
+          const _PackagesTab(),
         ],
       ),
     );
@@ -1863,8 +1886,8 @@ class _EquipmentItemCard extends StatelessWidget {
               Row(
                 children: [
                   if (item.availableForRent) ...[
-                    _typeBadge('Rent', Colors.blue.shade50,
-                        Colors.blue.shade700),
+                    _typeBadge('Rent', HousepitalColors.infoLight,
+                        HousepitalColors.info),
                     const SizedBox(width: 4),
                   ],
                   if (item.availableForSale)
@@ -1987,7 +2010,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: item.category == 'Equipment'
-                      ? Colors.blue.shade50
+                      ? HousepitalColors.infoLight
                       : HousepitalColors.successLight,
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -1997,7 +2020,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: item.category == 'Equipment'
-                        ? Colors.blue.shade700
+                        ? HousepitalColors.info
                         : HousepitalColors.success,
                   ),
                 ),
@@ -2289,21 +2312,21 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: HousepitalColors.infoLight,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.blue.shade100),
+                border: Border.all(color: HousepitalColors.infoLight),
               ),
               child: Row(
                 children: [
                   Icon(Icons.lightbulb_outline,
-                      color: Colors.blue.shade700, size: 20),
+                      color: HousepitalColors.info, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.blue.shade700,
+                          color: HousepitalColors.info,
                           height: 1.3,
                         ),
                         children: [
@@ -2397,17 +2420,17 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: HousepitalColors.infoLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                  Icon(Icons.info_outline, size: 16, color: HousepitalColors.info),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'This device requires a complimentary clinical assessment to determine the right settings and fit for the patient.',
-                      style: TextStyle(fontSize: 12, color: Colors.blue.shade700, height: 1.3),
+                      style: TextStyle(fontSize: 12, color: HousepitalColors.info, height: 1.3),
                     ),
                   ),
                 ],
@@ -3095,6 +3118,169 @@ class _QuantityButton extends StatelessWidget {
         ),
         child: Icon(icon, size: 18, color: HousepitalColors.orange),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Packages Tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PackagesTab extends StatelessWidget {
+  const _PackagesTab();
+
+  static final _iconMap = <String, IconData>{
+    'local_hospital': Icons.local_hospital,
+    'medical_services': Icons.medical_services,
+    'home': Icons.home,
+    'healing': Icons.healing,
+    'bedtime': Icons.bedtime,
+    'child_care': Icons.child_care,
+    'psychology': Icons.psychology,
+    'elderly': Icons.elderly,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: carePackages.length,
+      itemBuilder: (context, index) {
+        final pkg = carePackages[index];
+        final icon = _iconMap[pkg.icon] ?? Icons.local_hospital;
+        final isDailyRate = pkg.pricePerDay != null && pkg.pricePerDay! > 0;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Material(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(14),
+            elevation: 1,
+            shadowColor: Colors.black12,
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/package-detail', arguments: pkg),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.orangeLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(icon, color: HousepitalColors.orange, size: 26),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                pkg.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: HousepitalColors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                pkg.condition,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: HousepitalColors.greyLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.success,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${pkg.discountPercent.toInt()}% OFF',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Price or item count
+                    if (isDailyRate)
+                      Row(
+                        children: [
+                          Text(
+                            '₹${pkg.pricePerDay!.toStringAsFixed(0)}/day',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.orangeText,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '· Min ${pkg.minDays} days',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: HousepitalColors.greyLight,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        '${pkg.items.length} items + ${pkg.services.length} ${pkg.services.length == 1 ? "service" : "services"}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: HousepitalColors.orange,
+                        ),
+                      ),
+                    const SizedBox(height: 10),
+                    // Highlights chips (first 3)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: pkg.highlights.take(3).map((h) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: HousepitalColors.greyLighter,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          h,
+                          style: const TextStyle(fontSize: 11, color: HousepitalColors.grey),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    // Arrow indicator
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(Icons.arrow_forward_ios, size: 14, color: HousepitalColors.greyLight),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

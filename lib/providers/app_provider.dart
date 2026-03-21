@@ -41,6 +41,16 @@ class AppProvider extends ChangeNotifier {
       'dietary_restrictions': 'Low sodium diet',
       'doctor_name': 'Dr. Anita Sharma',
       'doctor_phone': '+919876543210',
+      'height': '5\'7"',
+      'weight': '68 kg',
+      'diagnosis': 'Post-stroke rehabilitation, Hypertension',
+      'iv_central_line': 'IV line (right hand)',
+      'discharge_summary_available': true,
+      'feeding_type': 'Oral',
+      'mental_condition': 'Mild cognitive impairment',
+      'motion_status': 'Diaper',
+      'bp_sugar_insulin': 'BP: Amlodipine 5mg, Sugar: controlled, no insulin',
+      'requirement': '24-hour nursing care with physiotherapy support',
     });
     _patients = [_currentPatient!];
 

@@ -165,21 +165,21 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: HousepitalColors.infoLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.verified_user,
-                      color: Colors.blue.shade700, size: 18),
+                      color: HousepitalColors.info, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Your payment information is secured with bank-grade encryption. Auto-pay follows RBI e-mandate guidelines. You will receive a notification before every debit and can cancel anytime.',
                       style: TextStyle(
                           fontSize: 12,
-                          color: Colors.blue.shade700,
+                          color: HousepitalColors.info,
                           height: 1.4),
                     ),
                   ),

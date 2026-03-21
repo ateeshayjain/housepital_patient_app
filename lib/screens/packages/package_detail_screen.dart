@@ -279,7 +279,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: pi.isRental
-                        ? Colors.blue.shade700
+                        ? HousepitalColors.info
                         : HousepitalColors.success,
                   ),
                 ),
@@ -313,10 +313,10 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: HousepitalColors.infoLight,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.person, color: Colors.blue.shade700, size: 20),
+            child: Icon(Icons.person, color: HousepitalColors.info, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(

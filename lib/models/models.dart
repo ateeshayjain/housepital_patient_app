@@ -16,6 +16,17 @@ class Patient {
   final String? address;
   final String? city;
   final DateTime? createdAt;
+  // Clinical fields
+  final String? height;
+  final String? weight;
+  final String? diagnosis;
+  final String? ivCentralLine;
+  final bool? dischargeSummaryAvailable;
+  final String? feedingType;
+  final String? mentalCondition;
+  final String? motionStatus;
+  final String? bpSugarInsulin;
+  final String? requirement;
 
   Patient({
     required this.id,
@@ -34,6 +45,16 @@ class Patient {
     this.address,
     this.city,
     this.createdAt,
+    this.height,
+    this.weight,
+    this.diagnosis,
+    this.ivCentralLine,
+    this.dischargeSummaryAvailable,
+    this.feedingType,
+    this.mentalCondition,
+    this.motionStatus,
+    this.bpSugarInsulin,
+    this.requirement,
   });
 
   factory Patient.fromJson(Map<String, dynamic> json) {
@@ -68,6 +89,16 @@ class Patient {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
+      height: json['height'],
+      weight: json['weight'],
+      diagnosis: json['diagnosis'],
+      ivCentralLine: json['iv_central_line'],
+      dischargeSummaryAvailable: json['discharge_summary_available'],
+      feedingType: json['feeding_type'],
+      mentalCondition: json['mental_condition'],
+      motionStatus: json['motion_status'],
+      bpSugarInsulin: json['bp_sugar_insulin'],
+      requirement: json['requirement'],
     );
   }
 
@@ -88,6 +119,16 @@ class Patient {
             emergencyContacts?.map((e) => e.toJson()).toList(),
         'address': address,
         'city': city,
+        'height': height,
+        'weight': weight,
+        'diagnosis': diagnosis,
+        'iv_central_line': ivCentralLine,
+        'discharge_summary_available': dischargeSummaryAvailable,
+        'feeding_type': feedingType,
+        'mental_condition': mentalCondition,
+        'motion_status': motionStatus,
+        'bp_sugar_insulin': bpSugarInsulin,
+        'requirement': requirement,
       };
 }
 

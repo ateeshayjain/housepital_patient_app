@@ -177,7 +177,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
               ? Icons.medical_services
               : Icons.inventory_2,
           iconColor: item.category == 'Equipment'
-              ? Colors.blue.shade700
+              ? HousepitalColors.info
               : HousepitalColors.success,
           data: item,
         ));

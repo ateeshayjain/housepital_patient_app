@@ -1,15 +1,24 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../utils/helpers.dart';
 
-class EquipmentDetailScreen extends StatelessWidget {
+class EquipmentDetailScreen extends StatefulWidget {
   final ServiceItem service;
 
   const EquipmentDetailScreen({super.key, required this.service});
 
-  // ── Feature lists per equipment ID ────────────────────────────
-  static const _equipmentFeatures = <String, List<String>>{
+  @override
+  State<EquipmentDetailScreen> createState() => _EquipmentDetailScreenState();
+}
+
+class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
+  EquipmentItem? _catalogItem;
+
+  // ── Fallback feature lists per equipment ID ──────────────────
+  static const _fallbackFeatures = <String, List<String>>{
     'eq-hospital-bed': [
       'Motorised head & foot adjustment',
       'Side rails for safety',
@@ -47,8 +56,8 @@ class EquipmentDetailScreen extends StatelessWidget {
     ],
   };
 
-  // ── Specifications per equipment ID ───────────────────────────
-  static const _equipmentSpecs = <String, Map<String, String>>{
+  // ── Fallback specifications per equipment ID ─────────────────
+  static const _fallbackSpecs = <String, Map<String, String>>{
     'eq-hospital-bed': {
       'Brand': 'Housepital Certified',
       'Model': 'HB-200M',
@@ -91,257 +100,495 @@ class EquipmentDetailScreen extends StatelessWidget {
     },
   };
 
-  // ── Mock reviews ──────────────────────────────────────────────
-  static const _mockReviews = [
-    _Review(
-      name: 'Priya S.',
-      rating: 5,
-      date: '12 Mar 2026',
-      comment:
-          'Delivered within 6 hours! The equipment was well-maintained and the delivery person explained everything clearly.',
-    ),
-    _Review(
-      name: 'Rajesh K.',
-      rating: 4,
-      date: '28 Feb 2026',
-      comment:
-          'Good quality product. Setup was easy. Only giving 4 stars because the delivery took a bit longer than promised.',
-    ),
-    _Review(
-      name: 'Anita M.',
-      rating: 5,
-      date: '15 Feb 2026',
-      comment:
-          'Excellent service by Housepital. The equipment is genuine and works perfectly. Highly recommended for home care.',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalogItem();
+  }
+
+  Future<void> _loadCatalogItem() async {
+    try {
+      final raw =
+          await rootBundle.loadString('assets/equipment_catalog.json');
+      final list = json.decode(raw) as List;
+      final items = list.map((e) => EquipmentItem.fromJson(e)).toList();
+
+      // Try to match by ID or name
+      EquipmentItem? match;
+      for (final item in items) {
+        if (item.name.toLowerCase() == widget.service.name.toLowerCase()) {
+          match = item;
+          break;
+        }
+      }
+      // Fallback: partial name match
+      match ??= items.cast<EquipmentItem?>().firstWhere(
+            (item) => widget.service.name
+                .toLowerCase()
+                .contains(item!.name.toLowerCase().split(' ').first),
+            orElse: () => null,
+          );
+
+      if (mounted) {
+        setState(() {
+          _catalogItem = match;
+        });
+      }
+    } catch (_) {
+      // Catalog unavailable — fallback data will be used.
+    }
+  }
+
+  // ── Derived data ─────────────────────────────────────────────
+
+  String get _name => _catalogItem?.name ?? widget.service.name;
+
+  String get _brand => _catalogItem?.brand ?? 'Medical Equipment';
+
+  String? get _description =>
+      _catalogItem?.description ?? widget.service.description;
+
+  bool get _canRent =>
+      _catalogItem?.availableForRent ??
+      (widget.service.id == 'eq-hospital-bed' ||
+          widget.service.id == 'eq-oxygen-concentrator' ||
+          widget.service.id == 'eq-wheelchair');
+
+  bool get _canBuy => _catalogItem?.availableForSale ?? true;
+
+  String? get _priceText {
+    if (_catalogItem?.price != null) {
+      return '\u20B9${_catalogItem!.price!.toStringAsFixed(0)}';
+    }
+    if (widget.service.basePriceMin != null) {
+      return DateHelper.formatCurrency(widget.service.basePriceMin!);
+    }
+    return null;
+  }
+
+  String? get _rentalPriceText {
+    if (_catalogItem?.rentalPrice != null) {
+      return '\u20B9${_catalogItem!.rentalPrice!.toStringAsFixed(0)}/mo';
+    }
+    return null;
+  }
+
+  List<String> get _features {
+    // Prefer catalog key features
+    if (_catalogItem?.keyFeatures != null &&
+        _catalogItem!.keyFeatures!.isNotEmpty) {
+      return _catalogItem!.keyFeatures!
+          .split('\n')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return _fallbackFeatures[widget.service.id] ??
+        ['Quality medical equipment'];
+  }
+
+  Map<String, String> get _specs {
+    final specs = <String, String>{};
+    final cat = _catalogItem;
+    if (cat != null) {
+      specs['Brand'] = cat.brand;
+      specs['Category'] = cat.category;
+      if (cat.price != null) {
+        specs['Sale Price'] = '\u20B9${cat.price!.toStringAsFixed(0)}';
+      }
+      if (cat.rentalPrice != null) {
+        specs['Rental Price'] =
+            '\u20B9${cat.rentalPrice!.toStringAsFixed(0)}/month';
+      }
+      if (cat.breakevenDays != null) {
+        specs['Rent vs Buy'] =
+            'Buying saves after ${cat.breakevenDays} days rental';
+      }
+      if (cat.variantType != null) {
+        specs[cat.variantType!] = cat.variantValue ?? '-';
+      }
+    }
+    if (specs.isEmpty) {
+      return _fallbackSpecs[widget.service.id] ?? {};
+    }
+    return specs;
+  }
+
+  String? get _idealFor => _catalogItem?.idealFor;
+  String? get _howToUse => _catalogItem?.howToUse;
+
+  List<_FaqEntry> get _faqs {
+    if (_catalogItem?.faqs == null || _catalogItem!.faqs!.isEmpty) return [];
+    // FAQs are stored as "Q: ... \n A: ... \n Q: ..." format
+    final lines = _catalogItem!.faqs!.split('\n');
+    final faqs = <_FaqEntry>[];
+    String? currentQ;
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('Q:') || trimmed.startsWith('Q.')) {
+        currentQ = trimmed.substring(2).trim();
+      } else if ((trimmed.startsWith('A:') || trimmed.startsWith('A.')) &&
+          currentQ != null) {
+        faqs.add(_FaqEntry(question: currentQ, answer: trimmed.substring(2).trim()));
+        currentQ = null;
+      }
+    }
+    return faqs;
+  }
+
+  IconData get _equipmentIcon {
+    final id = widget.service.id;
+    final name = _name.toLowerCase();
+    if (id == 'eq-hospital-bed' || name.contains('bed')) {
+      return Icons.hotel;
+    }
+    if (id == 'eq-oxygen-concentrator' || name.contains('oxygen')) {
+      return Icons.air;
+    }
+    if (id == 'eq-wheelchair' || name.contains('wheelchair')) {
+      return Icons.accessible;
+    }
+    if (id == 'eq-bp-monitor' || name.contains('bp') || name.contains('monitor')) {
+      return Icons.monitor_heart;
+    }
+    if (id == 'eq-consumables' || name.contains('consumable') || name.contains('diaper')) {
+      return Icons.medical_services;
+    }
+    if (name.contains('ventilator') || name.contains('bipap') || name.contains('cpap')) {
+      return Icons.masks;
+    }
+    if (name.contains('nebulizer') || name.contains('nebuliser')) {
+      return Icons.blur_on;
+    }
+    if (name.contains('thermometer') || name.contains('temp')) {
+      return Icons.thermostat;
+    }
+    if (name.contains('glucometer') || name.contains('sugar')) {
+      return Icons.bloodtype;
+    }
+    if (name.contains('mattress')) return Icons.single_bed;
+    if (name.contains('walker') || name.contains('crutch')) {
+      return Icons.assist_walker;
+    }
+    return Icons.inventory_2_outlined;
+  }
+
+  // ── Build ────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final features =
-        _equipmentFeatures[service.id] ?? ['Quality medical equipment'];
-    final specs = _equipmentSpecs[service.id] ?? {};
-    final priceText = service.basePriceMin != null
-        ? DateHelper.formatCurrency(service.basePriceMin!)
-        : 'Contact for price';
-    final isRental = service.id == 'eq-hospital-bed' ||
-        service.id == 'eq-oxygen-concentrator' ||
-        service.id == 'eq-wheelchair';
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(service.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () {},
-            tooltip: 'Share',
-          ),
+      backgroundColor: HousepitalColors.background,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          SliverToBoxAdapter(child: _buildBody()),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 1. Hero image section
-                  _buildHeroSection(),
-
-                  // 2. Product info section
-                  _buildProductInfoSection(priceText, isRental),
-
-                  const Divider(
-                      height: 1, color: HousepitalColors.divider),
-
-                  // 3. Key features
-                  _buildFeaturesSection(features),
-
-                  const Divider(
-                      height: 1, color: HousepitalColors.divider),
-
-                  // 4. Delivery info card
-                  _buildDeliveryInfoCard(),
-
-                  const Divider(
-                      height: 1, color: HousepitalColors.divider),
-
-                  // 5. Specifications table
-                  if (specs.isNotEmpty) ...[
-                    _buildSpecificationsSection(specs),
-                    const Divider(
-                        height: 1, color: HousepitalColors.divider),
-                  ],
-
-                  // 6. Reviews section
-                  _buildReviewsSection(),
-
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-
-          // 7. Bottom sticky bar
-          _buildBottomBar(context, priceText),
-        ],
-      ),
+      bottomNavigationBar: _buildBottomBar(context),
     );
   }
 
-  // ── 1. Hero image ─────────────────────────────────────────────
+  // ── SliverAppBar with gradient hero ──────────────────────────
 
-  Widget _buildHeroSection() {
-    return Container(
-      height: 280,
-      color: HousepitalColors.orangeLight,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.inventory_2,
-              size: 80,
-              color: HousepitalColors.orange,
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 260,
+      pinned: true,
+      backgroundColor: HousepitalColors.white,
+      foregroundColor: HousepitalColors.black,
+      elevation: 0,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.share_outlined),
+          onPressed: () {},
+          tooltip: 'Share',
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFFFF3E0), // orangeLight
+                Color(0xFFFFE0B2),
+                HousepitalColors.white,
+              ],
+              stops: [0.0, 0.5, 1.0],
             ),
-            const SizedBox(height: 12),
-            Text(
-              service.name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: HousepitalColors.greyLight,
+          ),
+          child: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: HousepitalColors.orange.withValues(alpha: 0.15),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _equipmentIcon,
+                    size: 56,
+                    color: HousepitalColors.orange,
+                  ),
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // ── 2. Product info ───────────────────────────────────────────
+  // ── Body content ─────────────────────────────────────────────
 
-  Widget _buildProductInfoSection(String priceText, bool isRental) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  Widget _buildBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildProductInfoSection(),
+        const _SectionDivider(),
+        if (_description != null && _description!.isNotEmpty) ...[
+          _buildDescriptionSection(),
+          const _SectionDivider(),
+        ],
+        _buildFeaturesSection(),
+        const _SectionDivider(),
+        if (_idealFor != null && _idealFor!.isNotEmpty) ...[
+          _buildIdealForSection(),
+          const _SectionDivider(),
+        ],
+        _buildDeliveryPromiseRow(),
+        const _SectionDivider(),
+        if (_specs.isNotEmpty) ...[
+          _buildSpecificationsSection(),
+          const _SectionDivider(),
+        ],
+        if (_howToUse != null && _howToUse!.isNotEmpty) ...[
+          _buildHowToUseSection(),
+          const _SectionDivider(),
+        ],
+        if (_faqs.isNotEmpty) ...[
+          _buildFaqsSection(),
+          const _SectionDivider(),
+        ],
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  // ── Product info ─────────────────────────────────────────────
+
+  Widget _buildProductInfoSection() {
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Name
           Text(
-            service.name,
+            _name,
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: HousepitalColors.black,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Medical Equipment',
-            style: TextStyle(
+          const SizedBox(height: 6),
+
+          // Brand / subcategory
+          Text(
+            _brand,
+            style: const TextStyle(
               fontSize: 14,
+              fontWeight: FontWeight.w500,
               color: HousepitalColors.greyLight,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
 
-          // Star rating row
+          // Availability badges
           Row(
             children: [
-              ...List.generate(
-                  4,
-                  (_) => const Icon(Icons.star,
-                      size: 18, color: Color(0xFFE65100))),
-              const Icon(Icons.star_half,
-                  size: 18, color: Color(0xFFE65100)),
-              const SizedBox(width: 6),
-              const Text(
-                '4.5',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: HousepitalColors.grey,
+              if (_canRent)
+                _AvailabilityBadge(
+                  label: 'Rent',
+                  color: HousepitalColors.info,
+                  bgColor: HousepitalColors.infoLight,
                 ),
+              if (_canRent && _canBuy) const SizedBox(width: 8),
+              if (_canBuy)
+                _AvailabilityBadge(
+                  label: 'Buy',
+                  color: HousepitalColors.success,
+                  bgColor: HousepitalColors.successLight,
+                ),
+              if (_catalogItem?.needsAssessment == true) ...[
+                const SizedBox(width: 8),
+                _AvailabilityBadge(
+                  label: 'Assessment Required',
+                  color: HousepitalColors.warning,
+                  bgColor: HousepitalColors.warningLight,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Pricing row
+          _buildPriceRow(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow() {
+    final hasBuyPrice = _priceText != null;
+    final hasRentPrice = _rentalPriceText != null;
+
+    if (!hasBuyPrice && !hasRentPrice) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: HousepitalColors.orangeLight,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.phone_outlined, size: 16, color: HousepitalColors.orangeText),
+            SizedBox(width: 8),
+            Text(
+              'Contact for pricing',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: HousepitalColors.orangeText,
               ),
-              const SizedBox(width: 4),
-              const Text(
-                '(142 reviews)',
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        if (hasBuyPrice)
+          Text(
+            _priceText!,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: HousepitalColors.orangeText,
+            ),
+          ),
+        if (hasBuyPrice && hasRentPrice) ...[
+          const SizedBox(width: 16),
+          Container(height: 24, width: 1, color: HousepitalColors.divider),
+          const SizedBox(width: 16),
+        ],
+        if (hasRentPrice)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasBuyPrice)
+                const Text(
+                  'or rent at',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: HousepitalColors.greyLight,
+                  ),
+                ),
+              Text(
+                _rentalPriceText!,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: HousepitalColors.greyLight,
+                  fontSize: hasBuyPrice ? 16 : 24,
+                  fontWeight: FontWeight.w700,
+                  color: HousepitalColors.info,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+      ],
+    );
+  }
 
-          // Price
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                priceText,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: HousepitalColors.orangeText,
-                ),
-              ),
-              if (isRental) ...[
-                const SizedBox(width: 4),
-                const Text(
-                  '/ month',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.orangeText,
-                  ),
-                ),
-              ],
-            ],
+  // ── Description ──────────────────────────────────────────────
+
+  Widget _buildDescriptionSection() {
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(title: 'Description'),
+          const SizedBox(height: 10),
+          Text(
+            _description!,
+            style: const TextStyle(
+              fontSize: 14,
+              color: HousepitalColors.grey,
+              height: 1.6,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ── 3. Key features ───────────────────────────────────────────
+  // ── Key Features ─────────────────────────────────────────────
 
-  Widget _buildFeaturesSection(List<String> features) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  Widget _buildFeaturesSection() {
+    final features = _features;
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Key Features',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: HousepitalColors.black,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const _SectionTitle(title: 'Key Features'),
+          const SizedBox(height: 14),
           ...features.map((feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(Icons.check_circle,
-                          size: 18, color: HousepitalColors.success),
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: HousepitalColors.successLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 14,
+                        color: HousepitalColors.success,
+                      ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         feature,
                         style: const TextStyle(
                           fontSize: 14,
                           color: HousepitalColors.grey,
-                          height: 1.4,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -353,218 +600,257 @@ class EquipmentDetailScreen extends StatelessWidget {
     );
   }
 
-  // ── 4. Delivery info card ─────────────────────────────────────
+  // ── Ideal For ────────────────────────────────────────────────
 
-  Widget _buildDeliveryInfoCard() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: HousepitalColors.infoLight,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Column(
-          children: [
-            _DeliveryInfoRow(
-              icon: Icons.local_shipping,
-              text: 'Free delivery in Delhi NCR',
-            ),
-            SizedBox(height: 10),
-            _DeliveryInfoRow(
-              icon: Icons.inventory_2,
-              text: 'Delivered within 24 hours',
-            ),
-            SizedBox(height: 10),
-            _DeliveryInfoRow(
-              icon: Icons.replay,
-              text: 'Easy returns within 7 days',
-            ),
-          ],
-        ),
+  Widget _buildIdealForSection() {
+    final items = _idealFor!
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(title: 'Ideal For'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: items
+                .map((item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: HousepitalColors.orangeLight,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: HousepitalColors.orangeText,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
       ),
     );
   }
 
-  // ── 5. Specifications table ───────────────────────────────────
+  // ── Delivery promise ─────────────────────────────────────────
 
-  Widget _buildSpecificationsSection(Map<String, String> specs) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  Widget _buildDeliveryPromiseRow() {
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Row(
+        children: const [
+          Expanded(
+            child: _DeliveryPromiseItem(
+              icon: Icons.local_shipping_outlined,
+              label: 'Free\nDelivery',
+            ),
+          ),
+          Expanded(
+            child: _DeliveryPromiseItem(
+              icon: Icons.schedule,
+              label: '24hr\nDelivery',
+            ),
+          ),
+          Expanded(
+            child: _DeliveryPromiseItem(
+              icon: Icons.replay,
+              label: '7-day\nReturns',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Specifications ───────────────────────────────────────────
+
+  Widget _buildSpecificationsSection() {
+    final specs = _specs;
+    final entries = specs.entries.toList();
+
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Specifications',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: HousepitalColors.black,
+          const _SectionTitle(title: 'Specifications'),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Column(
+              children: List.generate(entries.length, (index) {
+                final entry = entries[index];
+                final isEven = index % 2 == 0;
+                return Container(
+                  color: isEven
+                      ? HousepitalColors.greyLighter
+                      : HousepitalColors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: Text(
+                          entry.key,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: HousepitalColors.greyLight,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entry.value,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: HousepitalColors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
           ),
-          const SizedBox(height: 12),
-          Table(
-            columnWidths: const {
-              0: FlexColumnWidth(2),
-              1: FlexColumnWidth(3),
-            },
-            children: specs.entries.map((entry) {
-              return TableRow(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color:
-                          HousepitalColors.divider.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
+        ],
+      ),
+    );
+  }
+
+  // ── How to Use ───────────────────────────────────────────────
+
+  Widget _buildHowToUseSection() {
+    final steps = _howToUse!
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle(title: 'How to Use'),
+          const SizedBox(height: 14),
+          ...List.generate(steps.length, (i) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: HousepitalColors.greyLight,
+                  Container(
+                    width: 24,
+                    height: 24,
+                    margin: const EdgeInsets.only(top: 2),
+                    decoration: BoxDecoration(
+                      color: HousepitalColors.orangeLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${i + 1}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: HousepitalColors.orangeText,
+                        ),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Text(
-                      entry.value,
+                      steps[i],
                       style: const TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: HousepitalColors.black,
+                        color: HousepitalColors.grey,
+                        height: 1.5,
                       ),
                     ),
                   ),
                 ],
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  // ── 6. Reviews section ────────────────────────────────────────
+  // ── FAQs ─────────────────────────────────────────────────────
 
-  Widget _buildReviewsSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  Widget _buildFaqsSection() {
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Customer Reviews',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Text(
-                    'See all reviews',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: HousepitalColors.orangeText,
+          const _SectionTitle(title: 'FAQs'),
+          const SizedBox(height: 10),
+          ..._faqs.map((faq) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      faq.question,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: HousepitalColors.black,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      faq.answer,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: HousepitalColors.greyLight,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ..._mockReviews.map((review) => _buildReviewCard(review)),
+              )),
         ],
       ),
     );
   }
 
-  Widget _buildReviewCard(_Review review) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: HousepitalColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  review.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  review.date,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: HousepitalColors.greyLight,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: List.generate(
-                5,
-                (i) => Icon(
-                  i < review.rating ? Icons.star : Icons.star_border,
-                  size: 16,
-                  color: const Color(0xFFE65100),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              review.comment,
-              style: const TextStyle(
-                fontSize: 13,
-                color: HousepitalColors.grey,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ── Bottom bar ───────────────────────────────────────────────
 
-  // ── 7. Bottom sticky bar ──────────────────────────────────────
-
-  Widget _buildBottomBar(BuildContext context, String priceText) {
+  Widget _buildBottomBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
         color: HousepitalColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -572,33 +858,36 @@ class EquipmentDetailScreen extends StatelessWidget {
         top: false,
         child: Row(
           children: [
+            // Add to Cart button
             Expanded(
               child: SizedBox(
                 height: 52,
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Added to cart')),
+                      const SnackBar(content: Text('Added to cart')),
                     );
                   },
+                  icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                  label: const Text('Add to Cart'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: HousepitalColors.orange,
                     side: const BorderSide(
-                        color: HousepitalColors.orange, width: 2),
+                        color: HousepitalColors.orange, width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     textStyle: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Add to Cart'),
                 ),
               ),
             ),
             const SizedBox(width: 12),
+
+            // Primary action button
             Expanded(
               child: SizedBox(
                 height: 52,
@@ -614,15 +903,16 @@ class EquipmentDetailScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HousepitalColors.orange,
                     foregroundColor: HousepitalColors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     textStyle: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: Text('Buy Now \u2014 $priceText'),
+                  child: Text(_canRent ? 'Rent Now' : 'Buy Now'),
                 ),
               ),
             ),
@@ -633,28 +923,96 @@ class EquipmentDetailScreen extends StatelessWidget {
   }
 }
 
-// ── Helper widgets & data classes ─────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// Helper widgets
+// ══════════════════════════════════════════════════════════════════
 
-class _DeliveryInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _DeliveryInfoRow({required this.icon, required this.text});
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Container(height: 8, color: HousepitalColors.background);
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        color: HousepitalColors.black,
+        letterSpacing: -0.2,
+      ),
+    );
+  }
+}
+
+class _AvailabilityBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color bgColor;
+
+  const _AvailabilityBadge({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _DeliveryPromiseItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _DeliveryPromiseItem({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: [
-        Icon(icon, size: 20, color: HousepitalColors.info),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: HousepitalColors.info,
-            ),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: HousepitalColors.successLight,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 22, color: HousepitalColors.success),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: HousepitalColors.grey,
+            height: 1.3,
           ),
         ),
       ],
@@ -662,16 +1020,8 @@ class _DeliveryInfoRow extends StatelessWidget {
   }
 }
 
-class _Review {
-  final String name;
-  final int rating;
-  final String date;
-  final String comment;
-
-  const _Review({
-    required this.name,
-    required this.rating,
-    required this.date,
-    required this.comment,
-  });
+class _FaqEntry {
+  final String question;
+  final String answer;
+  const _FaqEntry({required this.question, required this.answer});
 }

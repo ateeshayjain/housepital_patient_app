@@ -337,7 +337,7 @@ class _CartItemCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: cartItem.isRental
-                        ? Colors.blue.shade50
+                        ? HousepitalColors.infoLight
                         : HousepitalColors.successLight,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -349,7 +349,7 @@ class _CartItemCard extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: cartItem.isRental
-                          ? Colors.blue.shade700
+                          ? HousepitalColors.info
                           : HousepitalColors.success,
                     ),
                   ),

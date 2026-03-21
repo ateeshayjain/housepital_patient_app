@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/document_attach_widgets.dart';
 
 class ServiceBookingScreen extends StatefulWidget {
   final ServiceItem service;
@@ -18,16 +19,49 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   DateTime? _selectedDate;
   String? _selectedSlot;
   final _promoController = TextEditingController();
+  final _notesController = TextEditingController();
   int _step = 0; // 0: detail, 1: slot, 2: review
   bool _autoRenew = true; // default ON for manpower services
   String _billingCycle = 'monthly'; // monthly, quarterly
+  bool _requestOnlineAssessment = false;
+  final List<String> _attachedFiles = [];
+  int _selectedAddressIndex = 0;
+
+  // Mock saved addresses — in production, fetched from user profile
+  static const List<Map<String, String>> _savedAddresses = [
+    {
+      'label': 'Home',
+      'address': 'B-42, Sector 15, Noida, UP 201301',
+      'icon': 'home',
+    },
+    {
+      'label': 'Parent\'s Home',
+      'address': '12/3 Lajpat Nagar II, New Delhi 110024',
+      'icon': 'family',
+    },
+    {
+      'label': 'Office',
+      'address': '5th Floor, Tower B, Cyber City, Gurugram 122002',
+      'icon': 'work',
+    },
+  ];
 
   final List<String> _slots = ['Morning (9-12)', 'Afternoon (12-4)', 'Evening (4-7)'];
   final List<String> _slotValues = ['morning', 'afternoon', 'evening'];
 
+  bool get _showPrescriptionSection {
+    final id = widget.service.id;
+    return id.startsWith('con-') ||
+        id.startsWith('visit-') ||
+        id.startsWith('th-');
+  }
+
+  bool get _isVisitService => widget.service.id.startsWith('visit-');
+
   @override
   void dispose() {
     _promoController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -66,7 +100,168 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     );
   }
 
+  bool get _isDiagnosticService =>
+      widget.service.category == 'diagnostics' ||
+      widget.service.id.startsWith('dx-') ||
+      widget.service.id.startsWith('lab-');
+
+  List<String> _getVisitInclusions(String id) {
+    if (id.startsWith('visit-iv-basic')) {
+      return [
+        'Trained nurse at your doorstep',
+        'IV fluid / single medication push',
+        'Up to 1 hour observation',
+        'Vitals check (BP, SpO2, Pulse)',
+        'Post-administration monitoring',
+      ];
+    } else if (id.startsWith('visit-iv-adv')) {
+      return [
+        'Experienced nurse for complex IV',
+        'Multiple IV medications administration',
+        'Up to 4 hours observation',
+        'Continuous vitals monitoring',
+        'Adverse reaction management',
+      ];
+    } else if (id.startsWith('visit-iv-crit')) {
+      return [
+        'ICU-trained nurse',
+        'Prolonged infusion / blood products',
+        'Up to 8 hours monitoring',
+        'Continuous vitals & SpO2 tracking',
+        'Emergency response readiness',
+        'Detailed administration report',
+      ];
+    } else if (id == 'visit-im') {
+      return [
+        'Certified nurse for IM injection',
+        'Proper site selection & preparation',
+        'Post-injection observation (15 min)',
+        'Allergy/reaction monitoring',
+      ];
+    } else if (id.startsWith('visit-dressing-basic')) {
+      return [
+        'Trained nurse for wound care',
+        'Sterile dressing materials included',
+        'Simple wound / surgical site care',
+        'Wound assessment & documentation',
+      ];
+    } else if (id.startsWith('visit-dressing-adv')) {
+      return [
+        'Experienced wound care nurse',
+        'Advanced sterile dressing materials',
+        'Deep wound / drain site management',
+        'Infection assessment',
+        'Wound measurement & photo documentation',
+      ];
+    } else if (id.startsWith('visit-dressing-crit')) {
+      return [
+        'Specialist wound care nurse',
+        'Surgical-grade dressing materials',
+        'Bed sore / complex wound management',
+        'Negative pressure wound therapy setup',
+        'Detailed wound progression report',
+      ];
+    } else if (id == 'visit-catheter') {
+      return [
+        'Certified nurse for catheter change',
+        'Sterile catheter kit included',
+        'Post-procedure observation',
+        'Infection risk assessment',
+        'Care instructions provided',
+      ];
+    } else if (id == 'visit-rt-change') {
+      return [
+        'Trained nurse for Ryles tube change',
+        'Sterile RT kit included',
+        'Position verification',
+        'Post-procedure feeding trial',
+        'Care instructions provided',
+      ];
+    } else if (id == 'visit-tracheostomy') {
+      return [
+        'ICU-trained nurse',
+        'Sterile tracheostomy kit included',
+        'Stoma assessment & cleaning',
+        'Post-change airway verification',
+        'Emergency equipment on standby',
+      ];
+    }
+    return [];
+  }
+
+  String? _getVisitPreparation(String id) {
+    if (id.startsWith('visit-iv')) {
+      return 'Keep the prescription ready. Ensure a comfortable seating/lying area near a power outlet. Inform if you have a known allergy to any medication.';
+    } else if (id == 'visit-im') {
+      return 'Keep the prescription and medication ready. Wear loose clothing for easy access to the injection site.';
+    } else if (id.startsWith('visit-dressing')) {
+      return 'Do not remove existing dressing before the nurse arrives. Keep the wound area dry. Have previous discharge/wound care instructions available.';
+    } else if (id == 'visit-catheter') {
+      return 'Empty the current catheter bag. Keep the area clean. Inform the nurse of any discomfort or signs of infection.';
+    } else if (id == 'visit-rt-change') {
+      return 'Do not feed through the tube for 2 hours before the visit. Keep the area around the nose/mouth clean.';
+    } else if (id == 'visit-tracheostomy') {
+      return 'Do not remove the existing tube. Keep suctioning equipment nearby. Ensure a calm, well-lit environment.';
+    }
+    return null;
+  }
+
+  List<String> _getDiagnosticInclusions(String id) {
+    if (id == 'dx-ecg') {
+      return [
+        '12-lead ECG recording',
+        'Trained technician at your doorstep',
+        'Digital report within 2 hours',
+        'Cardiologist interpretation included',
+      ];
+    } else if (id == 'dx-xray') {
+      return [
+        'Portable digital X-Ray machine',
+        'Certified radiographer',
+        'Digital report within 4 hours',
+        'Radiologist interpretation included',
+      ];
+    } else if (id == 'dx-holter') {
+      return [
+        '24-hour Holter monitor device',
+        'Technician for setup & removal (2 visits)',
+        'Cardiologist-reviewed report in 48 hours',
+        'Real-time arrhythmia detection',
+      ];
+    } else if (id.startsWith('lab-')) {
+      return [
+        'Certified phlebotomist visit',
+        'Home sample collection',
+        'Digital reports on app',
+        'NABL-accredited lab processing',
+      ];
+    } else if (id.startsWith('dx-sample-')) {
+      return [
+        'Trained phlebotomist',
+        'Home blood draw',
+        'Proper sample handling & transport',
+        'Results shared digitally',
+      ];
+    }
+    return [];
+  }
+
+  String? _getDiagnosticPreparation(String id) {
+    if (id.startsWith('lab-')) {
+      return 'Fasting for 10-12 hours recommended for accurate results. Water is allowed.';
+    } else if (id == 'dx-ecg') {
+      return 'Wear loose, comfortable clothing. Avoid applying lotion on chest area.';
+    } else if (id == 'dx-holter') {
+      return 'Wear a button-down shirt. Device will be attached for 24 hours — avoid showers during monitoring.';
+    } else if (id == 'dx-xray') {
+      return 'Remove jewellery or metal objects near the area being X-rayed. Inform if pregnant.';
+    }
+    return null;
+  }
+
   List<Widget> _buildDetailStep(ServiceItem s, AppLocalizations l) {
+    final isDiag = _isDiagnosticService;
+
     return [
       Container(
         padding: const EdgeInsets.all(16),
@@ -110,7 +305,235 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           ],
         ),
       ),
-      if (s.preparationNotes != null) ...[
+
+      // Diagnostic: What's Included
+      if (isDiag && _getDiagnosticInclusions(s.id).isNotEmpty) ...[
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.checklist_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text("What's Included",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ..._getDiagnosticInclusions(s.id).map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle,
+                            size: 18, color: HousepitalColors.success),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(item,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  color: HousepitalColors.black)),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ],
+
+      // Diagnostic: Preparation Instructions
+      if (isDiag && _getDiagnosticPreparation(s.id) != null) ...[
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.amber.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline,
+                      size: 20, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  const Text('Preparation Instructions',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(_getDiagnosticPreparation(s.id)!,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.amber.shade900)),
+            ],
+          ),
+        ),
+      ],
+
+      // Diagnostic: How it Works
+      if (isDiag) ...[
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.route_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('How it Works',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _howItWorksStep(1, 'Book a convenient slot', Icons.calendar_today),
+              _howItWorksDivider(),
+              _howItWorksStep(2, 'Technician visits your home', Icons.home_outlined),
+              _howItWorksDivider(),
+              _howItWorksStep(3, 'Get digital reports on app', Icons.description_outlined),
+            ],
+          ),
+        ),
+      ],
+
+      // Visit services: What's Included
+      if (_isVisitService && _getVisitInclusions(s.id).isNotEmpty) ...[
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.checklist_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text("What's Included",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ..._getVisitInclusions(s.id).map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle,
+                            size: 18, color: HousepitalColors.success),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(item,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  color: HousepitalColors.black)),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ],
+
+      // Visit services: Preparation Instructions
+      if (_isVisitService && _getVisitPreparation(s.id) != null) ...[
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.amber.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline,
+                      size: 20, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  const Text('Before the Visit',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(_getVisitPreparation(s.id)!,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.amber.shade900)),
+            ],
+          ),
+        ),
+      ],
+
+      // Visit services: How it Works
+      if (_isVisitService) ...[
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.route_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('How it Works',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _howItWorksStep(1, 'Book a convenient slot', Icons.calendar_today),
+              _howItWorksDivider(),
+              _howItWorksStep(2, 'Nurse arrives with equipment', Icons.medical_services_outlined),
+              _howItWorksDivider(),
+              _howItWorksStep(3, 'Procedure & monitoring at home', Icons.monitor_heart_outlined),
+              _howItWorksDivider(),
+              _howItWorksStep(4, 'Report updated on app', Icons.description_outlined),
+            ],
+          ),
+        ),
+      ],
+
+      // Non-diagnostic preparation notes (existing behavior)
+      if (!isDiag && !_isVisitService && s.preparationNotes != null) ...[
         const SizedBox(height: 16),
         const Text('What to Prepare',
             style: TextStyle(
@@ -122,6 +545,97 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             style: const TextStyle(
                 fontSize: 14, color: HousepitalColors.grey)),
       ],
+
+      // Prescription / Notes / Online Assessment section
+      if (_showPrescriptionSection) ...[
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.attach_file_rounded,
+                      size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('Prescription & Notes',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Attach prescription or add notes for the visiting professional',
+                style: TextStyle(
+                    fontSize: 12, color: HousepitalColors.greyLight),
+              ),
+              const SizedBox(height: 14),
+
+              // Attached files
+              AttachedFilesList(
+                files: _attachedFiles,
+                onRemove: (i) =>
+                    setState(() => _attachedFiles.removeAt(i)),
+              ),
+
+              // Attach button
+              OutlinedButton.icon(
+                onPressed: () => showAttachOptionsSheet(
+                  context,
+                  title: 'Attach Prescription',
+                  attachedFiles: _attachedFiles,
+                  onFileAdded: (f) =>
+                      setState(() => _attachedFiles.add(f)),
+                ),
+                icon: const Icon(Icons.add_photo_alternate_outlined,
+                    size: 20),
+                label: Text(_attachedFiles.isEmpty
+                    ? 'Attach Prescription'
+                    : 'Add Another'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: HousepitalColors.orange,
+                  side: const BorderSide(color: HousepitalColors.orange),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Notes field
+              TextFormField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes for the professional',
+                  hintText:
+                      'e.g. Patient is on blood thinners, allergic to latex...',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                maxLines: 3,
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 14),
+
+              // Request online assessment toggle
+              OnlineAssessmentToggle(
+                value: _requestOnlineAssessment,
+                onChanged: (v) =>
+                    setState(() => _requestOnlineAssessment = v),
+              ),
+            ],
+          ),
+        ),
+      ],
+
       const SizedBox(height: 24),
       SizedBox(
         height: 52,
@@ -131,6 +645,50 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ),
       ),
     ];
+  }
+
+  Widget _howItWorksStep(int number, String label, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: const BoxDecoration(
+            color: HousepitalColors.orangeLight,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '$number',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: HousepitalColors.orange,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: HousepitalColors.greyLight),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(label,
+              style: const TextStyle(
+                  fontSize: 14, color: HousepitalColors.black)),
+        ),
+      ],
+    );
+  }
+
+  Widget _howItWorksDivider() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 15),
+      child: Container(
+        width: 2,
+        height: 20,
+        color: HousepitalColors.divider,
+      ),
+    );
   }
 
   List<Widget> _buildSlotStep(AppLocalizations l) {
@@ -246,9 +804,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   List<Widget> _buildReviewStep(ServiceItem s, AppLocalizations l) {
     final app = context.read<AppProvider>();
-    final price = s.basePriceMin ?? 0;
-    final gst = (price * 0.18).toInt();
-    final total = price + gst;
+    final price = s.basePriceMin;
+    final gst = price != null ? (price * 0.18).toInt() : null;
+    final total = price != null ? price + gst! : null;
 
     return [
       Container(
@@ -270,28 +828,148 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ? DateHelper.formatDate(_selectedDate!)
                 : ''),
             _infoRow('Slot', _selectedSlot ?? ''),
-            _infoRow(
-                'Address', app.currentPatient?.address ?? 'On file'),
-            const Divider(height: 20),
-            _infoRow('Service Fee', DateHelper.formatCurrency(price)),
-            _infoRow('GST (18%)', DateHelper.formatCurrency(gst)),
-            const Divider(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
-                Text(DateHelper.formatCurrency(total),
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: HousepitalColors.orange)),
-              ],
-            ),
+            if (_attachedFiles.isNotEmpty)
+              _infoRow('Attachments', '${_attachedFiles.length} file(s)'),
+            if (_notesController.text.isNotEmpty)
+              _infoRow('Notes', 'Included'),
+            if (_requestOnlineAssessment)
+              _infoRow('Online Assessment', 'Requested'),
+            if (price != null) ...[
+              const Divider(height: 20),
+              _infoRow('Service Fee', DateHelper.formatCurrency(price)),
+              _infoRow('GST (18%)', DateHelper.formatCurrency(gst!)),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+                  Text(DateHelper.formatCurrency(total!),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: HousepitalColors.orange)),
+                ],
+              ),
+            ] else ...[
+              const Divider(height: 20),
+              const Text('Pricing will be confirmed after assessment',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: HousepitalColors.greyLight,
+                      fontStyle: FontStyle.italic)),
+            ],
           ],
         ),
       ),
+      // Service address selection
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: HousepitalColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HousepitalColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined,
+                    size: 20, color: HousepitalColors.orange),
+                const SizedBox(width: 8),
+                const Text('Service Address',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600)),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Add new address coming soon')),
+                    );
+                  },
+                  child: const Text('+ Add New',
+                      style: TextStyle(fontSize: 13)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ..._savedAddresses.asMap().entries.map((entry) {
+              final i = entry.key;
+              final addr = entry.value;
+              final isSelected = _selectedAddressIndex == i;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: GestureDetector(
+                  onTap: () =>
+                      setState(() => _selectedAddressIndex = i),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? HousepitalColors.orangeLight
+                          : HousepitalColors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? HousepitalColors.orange
+                            : HousepitalColors.divider,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          color: isSelected
+                              ? HousepitalColors.orange
+                              : HousepitalColors.greyLight,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Icon(
+                          addr['icon'] == 'home'
+                              ? Icons.home_outlined
+                              : addr['icon'] == 'work'
+                                  ? Icons.business_outlined
+                                  : Icons.family_restroom_outlined,
+                          size: 18,
+                          color: HousepitalColors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(addr['label']!,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text(addr['address']!,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color:
+                                          HousepitalColors.greyLight)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+
       // Auto-renew section for manpower services
       const SizedBox(height: 16),
       Container(
@@ -351,13 +1029,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: HousepitalColors.infoLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.info_outline,
-                        color: Colors.blue.shade700, size: 18),
+                        color: HousepitalColors.info, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -365,7 +1043,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                             ? 'Next payment will be auto-charged on ${DateHelper.formatDate(DateTime.now().add(const Duration(days: 30)))}'
                             : 'Next payment will be auto-charged on ${DateHelper.formatDate(DateTime.now().add(const Duration(days: 90)))}. You save 5% with quarterly billing.',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.blue.shade700),
+                            fontSize: 12, color: HousepitalColors.info),
                       ),
                     ),
                   ],

@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
-import '../../data/care_packages.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -109,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildStaffSection(context, l, app),
                   _buildDailyReportSection(context, l, app),
                   _buildServicesSection(context, l),
-                  _buildCarePackagesSection(context),
                   _buildPaymentBanner(context, l, app),
                   const SizedBox(height: 16),
                   SOSButton(onTap: () => Navigator.pushNamed(context, '/sos')),
@@ -787,7 +785,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _serviceChip(
                     context, Icons.biotech, 'Lab Tests', () {
                       MainShell.switchToTab(2);
-                      ServiceCatalogScreen.switchToSubTab(3);
+                      ServiceCatalogScreen.switchToSubTab(5);
                     }),
                 const SizedBox(width: 12),
                 _serviceChip(
@@ -845,126 +843,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
-  // Care Packages Section
-  // ---------------------------------------------------------------------------
-  Widget _buildCarePackagesSection(BuildContext context) {
-    final iconMap = <String, IconData>{
-      'healing': Icons.healing,
-      'bedtime': Icons.bedtime,
-      'child_care': Icons.child_care,
-      'psychology': Icons.psychology,
-      'elderly': Icons.elderly,
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Care Packages',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700)),
-              TextButton(
-                onPressed: () {
-                  // Switch to Services tab and show packages
-                  MainShell.switchToTab(2);
-                },
-                child: const Text('See All',
-                    style: TextStyle(color: HousepitalColors.orange)),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: 170,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: carePackages.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final pkg = carePackages[index];
-              return GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/package-detail',
-                    arguments: pkg),
-                child: Container(
-                  width: 220,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: HousepitalColors.orangeLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              iconMap[pkg.icon] ?? Icons.local_hospital,
-                              color: HousepitalColors.orange,
-                              size: 22,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HousepitalColors.success,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${pkg.discountPercent.toInt()}% OFF',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(pkg.name,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 4),
-                      Text(pkg.condition,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: HousepitalColors.greyLight)),
-                      const Spacer(),
-                      Text(
-                        '${pkg.items.length} items + ${pkg.services.length} ${pkg.services.length == 1 ? "service" : "services"}',
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HousepitalColors.orange),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   // Payment Reminders Section (Airtel-style)
   // ---------------------------------------------------------------------------
   Widget _buildPaymentBanner(

@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../config/constants.dart';
 
 /// Razorpay payment gateway integration.
 ///
@@ -19,8 +20,8 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 class PaymentService {
   late final Razorpay _razorpay;
 
-  // TODO: Move to backend / environment config
-  static const _testKey = 'rzp_test_XXXXXXXXXXXXXXX';
+  // Key sourced from constants — move to env config before production.
+  static const _testKey = AppConstants.razorpayKey;
 
   VoidCallback? _onSuccessCallback;
   void Function(String)? _onFailureCallback;
@@ -70,13 +71,13 @@ class PaymentService {
     try {
       _razorpay.open(options);
     } catch (e) {
-      debugPrint('Razorpay error: $e');
+      if (kDebugMode) debugPrint('Razorpay open error: $e');
       _onFailureCallback?.call('Failed to open payment gateway');
     }
   }
 
   void _handleSuccess(PaymentSuccessResponse response) {
-    debugPrint('Payment success: ${response.paymentId}');
+    if (kDebugMode) debugPrint('Payment success');
     // TODO: Verify payment on backend using:
     //   response.paymentId
     //   response.orderId
@@ -85,12 +86,12 @@ class PaymentService {
   }
 
   void _handleError(PaymentFailureResponse response) {
-    debugPrint('Payment error: ${response.code} – ${response.message}');
+    if (kDebugMode) debugPrint('Payment error: ${response.code}');
     _onFailureCallback?.call(response.message ?? 'Payment failed');
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
-    debugPrint('External wallet: ${response.walletName}');
+    if (kDebugMode) debugPrint('External wallet selected');
   }
 
   void dispose() {

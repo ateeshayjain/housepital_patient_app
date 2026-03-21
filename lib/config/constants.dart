@@ -11,7 +11,7 @@ class AppConstants {
   static const String supportPhone = '9990911911';
   static const String website = 'www.housepital.in';
 
-  // Razorpay - Update with your key
+  // Razorpay — TODO: load from --dart-define or .env before production
   static const String razorpayKey = 'rzp_test_XXXXXXXXXX';
 
   // Pagination
