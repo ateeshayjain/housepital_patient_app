@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_localizations.dart';
 import 'home/home_screen.dart';
-import 'reports/vitals_screen.dart';
+import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
 import 'billing/billing_screen.dart';
 import 'settings/settings_screen.dart';
@@ -27,7 +27,7 @@ class _MainShellState extends State<MainShell> {
 
   final _screens = [
     const HomeScreen(),
-    const VitalsScreen(),
+    const MyCareScreen(),
     ServiceCatalogScreen(key: ServiceCatalogScreen.catalogKey),
     const BillingScreen(),
     const SettingsScreen(),
@@ -58,9 +58,9 @@ class _MainShellState extends State<MainShell> {
             label: l.t('tab_home'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.bar_chart_outlined),
-            activeIcon: const Icon(Icons.bar_chart),
-            label: l.t('tab_reports'),
+            icon: const Icon(Icons.favorite_outline),
+            activeIcon: const Icon(Icons.favorite),
+            label: l.t('tab_my_care'),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.medical_services_outlined),
