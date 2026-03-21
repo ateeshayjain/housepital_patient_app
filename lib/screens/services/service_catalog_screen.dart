@@ -380,22 +380,10 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   // ── Visits (nursing procedures at home) ──
   static final List<ServiceItem> _visitServices = [
     ServiceItem(
-      id: 'visit-iv-basic', name: 'IV Visit (Basic)',
+      id: 'visit-iv', name: 'IV Visit',
       category: 'visit', bookingType: 'scheduled',
-      description: 'Basic IV administration visit (0-1 hour) — IV fluid, single medication push.',
-      basePriceMin: 900, basePriceMax: 900, durationMinutes: 60, iconName: 'medical_services',
-    ),
-    ServiceItem(
-      id: 'visit-iv-adv', name: 'IV Visit (Advanced)',
-      category: 'visit', bookingType: 'scheduled',
-      description: 'Advanced IV visit (1-4 hours) — multiple IV medications, observation required.',
-      basePriceMin: 1200, basePriceMax: 1200, durationMinutes: 240, iconName: 'medical_services',
-    ),
-    ServiceItem(
-      id: 'visit-iv-crit', name: 'IV Visit (Critical)',
-      category: 'visit', bookingType: 'scheduled',
-      description: 'Critical IV visit (4-8 hours) — prolonged infusion, blood products, close monitoring.',
-      basePriceMin: 1500, basePriceMax: 1500, durationMinutes: 480, iconName: 'medical_services',
+      description: 'Tell us the type of IV procedure — we\'ll assign the right nurse level and bill accordingly.',
+      basePriceMin: 900, basePriceMax: 1500, iconName: 'vaccines',
     ),
     ServiceItem(
       id: 'visit-im', name: 'IM Injection Visit',
@@ -1946,12 +1934,17 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
     final hasRental = item.availableForRent;
     final breakeven = item.breakevenDays;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => SingleChildScrollView(
+        controller: scrollController,
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header
           Row(
             children: [
@@ -2020,49 +2013,61 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               ),
             ],
           ),
-          // Description
+          // Description (collapsible if long)
           if (item.description != null) ...[
             const SizedBox(height: 14),
-            Text(item.description!,
-                style: const TextStyle(
-                    fontSize: 13, color: HousepitalColors.grey, height: 1.4)),
+            _CollapsibleText(text: item.description!),
           ],
 
-          // Key Features as chips
+          // Key Features as checklist
           if (item.keyFeatures != null) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: item.keyFeatures!.split(RegExp(r'[|,]')).map((f) => Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(f.trim(),
-                        style: const TextStyle(fontSize: 11)),
-                  )).toList(),
-            ),
+            const SizedBox(height: 16),
+            const Text('Key Features',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+            const SizedBox(height: 10),
+            ..._splitCatalogText(item.keyFeatures!).map((f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: HousepitalColors.successLight,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Icon(Icons.check, size: 12, color: HousepitalColors.success),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(f, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4)),
+                      ),
+                    ],
+                  ),
+                )),
           ],
 
-          // Ideal For
+          // Ideal For as checklist
           if (item.idealFor != null) ...[
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 16, color: HousepitalColors.success),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text('Ideal for: ${item.idealFor}',
-                      style: const TextStyle(
-                          fontSize: 12, color: HousepitalColors.grey)),
-                ),
-              ],
-            ),
+            const SizedBox(height: 16),
+            const Text('Ideal For',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+            const SizedBox(height: 10),
+            ..._splitCatalogText(item.idealFor!).map((use) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle_outline, size: 16, color: HousepitalColors.success),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(use, style: const TextStyle(fontSize: 12, color: HousepitalColors.grey, height: 1.4)),
+                      ),
+                    ],
+                  ),
+                )),
           ],
 
           // How to Use (expandable)
@@ -2078,37 +2083,26 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       color: HousepitalColors.black)),
               leading: const Icon(Icons.help_outline,
                   size: 18, color: HousepitalColors.orange),
-              children: [
-                Text(item.howToUse!,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: HousepitalColors.grey,
-                        height: 1.4)),
-                if (item.youtubeUrl != null) ...[
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      // TODO: Launch URL using url_launcher
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Opening tutorial video...')),
-                      );
-                    },
+              children: _splitCatalogText(item.howToUse!).asMap().entries.map((entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.play_circle_fill,
-                            color: Colors.red.shade600, size: 20),
-                        const SizedBox(width: 6),
-                        Text('Watch Tutorial',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red.shade600)),
+                        Container(
+                          width: 22, height: 22,
+                          margin: const EdgeInsets.only(top: 1),
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.orangeLight,
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: Center(child: Text('${entry.key + 1}',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(entry.value, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4))),
                       ],
                     ),
-                  ),
-                ],
-              ],
+                  )).toList(),
             ),
           ],
 
@@ -2125,13 +2119,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       color: HousepitalColors.black)),
               leading: const Icon(Icons.question_answer_outlined,
                   size: 18, color: HousepitalColors.orange),
-              children: [
-                Text(item.faqs!,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: HousepitalColors.grey,
-                        height: 1.4)),
-              ],
+              children: _buildFaqItems(item.faqs!),
             ),
           ],
 
@@ -2497,13 +2485,117 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
             ),
         ],
       ),
+      ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  DIAGNOSTICS TAB
-// ═══════════════════════════════════════════════════════════════
+/// Splits catalog text by `|` or newline — catalog uses both formats.
+List<String> _splitCatalogText(String text) {
+  final sep = text.contains('|') ? '|' : '\n';
+  return text.split(sep).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+}
+
+/// Parses FAQ text into Q/A pairs.
+/// Handles formats: "Q: ... | A: ... | Q: ..." or "Q: ... A: ... Q: ..."
+List<Widget> _buildFaqItems(String faqs) {
+  // Split by Q: to get each question block, handling both pipe and inline formats
+  // First normalize: replace " | Q:" with "\nQ:" and " | A:" with "\nA:"
+  var normalized = faqs
+      .replaceAll(RegExp(r'\s*\|\s*Q:'), '\nQ:')
+      .replaceAll(RegExp(r'\s*\|\s*A:'), '\nA:');
+  // Also split inline "A: ... Q:" where there's no separator
+  normalized = normalized.replaceAllMapped(
+    RegExp(r'(A:.*?\.)\s+(Q:)'),
+    (m) => '${m.group(1)}\n${m.group(2)}',
+  );
+
+  final lines = normalized.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  final items = <Widget>[];
+  String? currentQ;
+  int qNumber = 0;
+
+  for (final line in lines) {
+    if (line.startsWith('Q:') || line.startsWith('Q.')) {
+      currentQ = line.substring(2).trim();
+    } else if ((line.startsWith('A:') || line.startsWith('A.')) && currentQ != null) {
+      qNumber++;
+      items.add(Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 22, height: 22,
+                  margin: const EdgeInsets.only(top: 1),
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.orangeLight,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Center(child: Text('$qNumber',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(currentQ, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.black))),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 32, top: 4),
+              child: Text(line.substring(2).trim(), style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight, height: 1.4)),
+            ),
+          ],
+        ),
+      ));
+      currentQ = null;
+    }
+  }
+  if (items.isEmpty) {
+    return [Text(faqs, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4))];
+  }
+  return items;
+}
+
+/// Collapsible text widget — shows 3 lines with "Read more" toggle.
+class _CollapsibleText extends StatefulWidget {
+  final String text;
+  const _CollapsibleText({required this.text});
+
+  @override
+  State<_CollapsibleText> createState() => _CollapsibleTextState();
+}
+
+class _CollapsibleTextState extends State<_CollapsibleText> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLong = widget.text.length > 150;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.text,
+          maxLines: _expanded ? null : 3,
+          overflow: _expanded ? null : TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4),
+        ),
+        if (isLong) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Text(
+              _expanded ? 'Read less' : 'Read more',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: HousepitalColors.orange),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  CONSULTATIONS TAB — Doctor, Psychiatrist, Grief Counselling

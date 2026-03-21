@@ -58,11 +58,52 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   bool get _isVisitService => widget.service.id.startsWith('visit-');
   bool get _isDoctorVisit => widget.service.id == 'con-doctor';
+  bool get _isIvVisit => widget.service.id == 'visit-iv';
 
   // Doctor visit concern & recommendation
   final _concernController = TextEditingController();
   String? _selectedConcernCategory;
   String? _recommendedDoctor; // 'gp' or 'icu'
+
+  // IV Visit state
+  String? _selectedIvType;
+  final _medicationController = TextEditingController();
+  final _allergiesController = TextEditingController();
+  final _referringDoctorController = TextEditingController();
+  String _ivAccess = 'fresh'; // 'fresh', 'picc', 'port'
+  int _ivSessions = 1;
+
+  // IV infusion types → nurse level mapping
+  static const List<Map<String, String>> _ivInfusionTypes = [
+    {'id': 'iv_push', 'label': 'Single IV Push', 'desc': 'Single medication push (~30 min)', 'level': 'basic', 'price': '900'},
+    {'id': 'iv_drip_short', 'label': 'IV Drip — Short', 'desc': 'Hydration, antibiotics (1-2 hrs)', 'level': 'advanced', 'price': '1200'},
+    {'id': 'iv_drip_extended', 'label': 'IV Drip — Extended', 'desc': 'Extended infusion (3-4 hrs)', 'level': 'advanced', 'price': '1200'},
+    {'id': 'iv_multiple', 'label': 'Multiple IV Medications', 'desc': '2+ meds in one visit (2-4 hrs)', 'level': 'advanced', 'price': '1200'},
+    {'id': 'iv_prolonged', 'label': 'Prolonged Infusion', 'desc': 'Iron, chemo supportive — up to 8 hrs', 'level': 'critical', 'price': '1500'},
+    {'id': 'iv_central_line', 'label': 'Central Line / PICC Access', 'desc': 'Requires central line management', 'level': 'critical', 'price': '1500'},
+  ];
+
+  static const _nurseLevelLabel = {
+    'basic': 'Basic Nurse',
+    'advanced': 'Advanced Nurse',
+    'critical': 'Critical Care Nurse',
+  };
+
+  static const _nurseLevelColor = {
+    'basic': HousepitalColors.success,
+    'advanced': HousepitalColors.warning,
+    'critical': HousepitalColors.error,
+  };
+
+  String? get _ivNurseLevel {
+    if (_selectedIvType == null) return null;
+    return _ivInfusionTypes.firstWhere((t) => t['id'] == _selectedIvType)['level'];
+  }
+
+  int? get _ivPrice {
+    if (_selectedIvType == null) return null;
+    return int.parse(_ivInfusionTypes.firstWhere((t) => t['id'] == _selectedIvType)['price']!);
+  }
 
   static const List<Map<String, String>> _concernCategories = [
     {'id': 'fever', 'label': 'Fever / Cold / Flu', 'type': 'gp'},
@@ -92,6 +133,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     _concernController.dispose();
     _promoController.dispose();
     _notesController.dispose();
+    _medicationController.dispose();
+    _allergiesController.dispose();
+    _referringDoctorController.dispose();
     super.dispose();
   }
 
@@ -136,30 +180,34 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       widget.service.id.startsWith('lab-');
 
   List<String> _getVisitInclusions(String id) {
-    if (id.startsWith('visit-iv-basic')) {
+    if (id == 'visit-iv') {
+      // Dynamic inclusions based on selected IV type
+      final level = _ivNurseLevel;
+      if (level == 'critical') {
+        return [
+          'ICU-trained critical care nurse',
+          'Prolonged infusion / central line management',
+          'Up to 8 hours monitoring',
+          'Continuous vitals & SpO2 tracking',
+          'Emergency response readiness',
+          'Detailed administration report',
+        ];
+      } else if (level == 'advanced') {
+        return [
+          'Experienced nurse for IV procedures',
+          'IV drip / multiple medications',
+          'Up to 4 hours observation',
+          'Continuous vitals monitoring',
+          'Adverse reaction management',
+        ];
+      }
+      // basic or not yet selected
       return [
         'Trained nurse at your doorstep',
         'IV fluid / single medication push',
         'Up to 1 hour observation',
         'Vitals check (BP, SpO2, Pulse)',
         'Post-administration monitoring',
-      ];
-    } else if (id.startsWith('visit-iv-adv')) {
-      return [
-        'Experienced nurse for complex IV',
-        'Multiple IV medications administration',
-        'Up to 4 hours observation',
-        'Continuous vitals monitoring',
-        'Adverse reaction management',
-      ];
-    } else if (id.startsWith('visit-iv-crit')) {
-      return [
-        'ICU-trained nurse',
-        'Prolonged infusion / blood products',
-        'Up to 8 hours monitoring',
-        'Continuous vitals & SpO2 tracking',
-        'Emergency response readiness',
-        'Detailed administration report',
       ];
     } else if (id == 'visit-im') {
       return [
@@ -480,6 +528,310 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ],
       ],
 
+      // IV Visit: Infusion type selection & details
+      if (_isIvVisit) ...[
+        const SizedBox(height: 20),
+        // Infusion type selector
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.vaccines, size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('Type of IV Procedure',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Select the procedure — nurse level and pricing are assigned automatically',
+                style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+              ),
+              const SizedBox(height: 14),
+              ..._ivInfusionTypes.map((type) {
+                final selected = _selectedIvType == type['id'];
+                final level = type['level']!;
+                final levelColor = _nurseLevelColor[level]!;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedIvType = type['id']),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: selected ? HousepitalColors.orange : HousepitalColors.divider,
+                          width: selected ? 2 : 1,
+                        ),
+                        color: selected ? HousepitalColors.orangeLight : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                            size: 20,
+                            color: selected ? HousepitalColors.orange : HousepitalColors.greyLight,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(type['label']!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                                      color: HousepitalColors.black,
+                                    )),
+                                const SizedBox(height: 2),
+                                Text(type['desc']!,
+                                    style: const TextStyle(
+                                        fontSize: 12, color: HousepitalColors.greyLight)),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: levelColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              level.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: levelColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+
+        // Nurse level recommendation card (shown after selection)
+        if (_selectedIvType != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _nurseLevelColor[_ivNurseLevel]!.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _nurseLevelColor[_ivNurseLevel]!,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.verified_user,
+                    size: 28, color: _nurseLevelColor[_ivNurseLevel]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_nurseLevelLabel[_ivNurseLevel]} Assigned',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _nurseLevelColor[_ivNurseLevel],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (₹${_ivPrice}/visit). Nurse level cannot be changed.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _nurseLevelColor[_ivNurseLevel],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // Additional IV visit details
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.assignment_outlined, size: 20, color: HousepitalColors.orange),
+                  SizedBox(width: 8),
+                  Text('Visit Details',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Medication name(s)
+              TextFormField(
+                controller: _medicationController,
+                decoration: const InputDecoration(
+                  labelText: 'Medication Name(s) *',
+                  hintText: 'e.g. Ceftriaxone 1g, NS 500ml...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                maxLines: 2,
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 14),
+
+              // IV Access type
+              const Text('IV Access',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: HousepitalColors.grey)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Fresh Cannulation'),
+                    selected: _ivAccess == 'fresh',
+                    onSelected: (_) => setState(() => _ivAccess = 'fresh'),
+                    selectedColor: HousepitalColors.orangeLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: _ivAccess == 'fresh' ? HousepitalColors.orange : HousepitalColors.divider),
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 13,
+                      color: _ivAccess == 'fresh' ? HousepitalColors.orange : HousepitalColors.grey,
+                      fontWeight: _ivAccess == 'fresh' ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  ChoiceChip(
+                    label: const Text('PICC Line'),
+                    selected: _ivAccess == 'picc',
+                    onSelected: (_) => setState(() => _ivAccess = 'picc'),
+                    selectedColor: HousepitalColors.orangeLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: _ivAccess == 'picc' ? HousepitalColors.orange : HousepitalColors.divider),
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 13,
+                      color: _ivAccess == 'picc' ? HousepitalColors.orange : HousepitalColors.grey,
+                      fontWeight: _ivAccess == 'picc' ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Port'),
+                    selected: _ivAccess == 'port',
+                    onSelected: (_) => setState(() => _ivAccess = 'port'),
+                    selectedColor: HousepitalColors.orangeLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: _ivAccess == 'port' ? HousepitalColors.orange : HousepitalColors.divider),
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 13,
+                      color: _ivAccess == 'port' ? HousepitalColors.orange : HousepitalColors.grey,
+                      fontWeight: _ivAccess == 'port' ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Number of sessions
+              const Text('Number of Sessions',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: HousepitalColors.grey)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _ivSessions > 1 ? () => setState(() => _ivSessions--) : null,
+                    icon: const Icon(Icons.remove_circle_outline),
+                    color: HousepitalColors.orange,
+                    iconSize: 28,
+                  ),
+                  Container(
+                    width: 48,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: HousepitalColors.divider),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$_ivSessions',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => setState(() => _ivSessions++),
+                    icon: const Icon(Icons.add_circle_outline),
+                    color: HousepitalColors.orange,
+                    iconSize: 28,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _ivSessions == 1 ? 'session' : 'sessions',
+                    style: const TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Known drug allergies
+              TextFormField(
+                controller: _allergiesController,
+                decoration: const InputDecoration(
+                  labelText: 'Known Drug Allergies',
+                  hintText: 'e.g. Penicillin, Sulfa drugs... (leave blank if none)',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 14),
+
+              // Referring doctor
+              TextFormField(
+                controller: _referringDoctorController,
+                decoration: const InputDecoration(
+                  labelText: 'Referring Doctor / Hospital (optional)',
+                  hintText: 'e.g. Dr. Sharma, Max Hospital',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ],
+
       // Diagnostic: What's Included
       if (isDiag && _getDiagnosticInclusions(s.id).isNotEmpty) ...[
         const SizedBox(height: 20),
@@ -748,11 +1100,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                _isVisitService
-                    ? 'Tell us why you need this visit and attach the prescription'
-                    : 'Attach prescription or add notes for the visiting professional',
-                style: const TextStyle(
-                    fontSize: 12, color: HousepitalColors.greyLight),
+                _isIvVisit
+                    ? 'Prescription upload is mandatory for IV visits'
+                    : _isVisitService
+                        ? 'Tell us why you need this visit and attach the prescription'
+                        : 'Attach prescription or add notes for the visiting professional',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: _isIvVisit ? HousepitalColors.error : HousepitalColors.greyLight,
+                    fontWeight: _isIvVisit ? FontWeight.w500 : FontWeight.w400),
               ),
               const SizedBox(height: 14),
 
@@ -822,7 +1178,30 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       SizedBox(
         height: 52,
         child: ElevatedButton(
-          onPressed: () => setState(() => _step = 1),
+          onPressed: () {
+            // IV Visit validation
+            if (_isIvVisit) {
+              if (_selectedIvType == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select the type of IV procedure')),
+                );
+                return;
+              }
+              if (_medicationController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter the medication name(s)')),
+                );
+                return;
+              }
+              if (_attachedFiles.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Prescription upload is mandatory for IV visits')),
+                );
+                return;
+              }
+            }
+            setState(() => _step = 1);
+          },
           child: const Text('Select Slot'),
         ),
       ),
@@ -986,9 +1365,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   List<Widget> _buildReviewStep(ServiceItem s, AppLocalizations l) {
     final app = context.read<AppProvider>();
-    final price = s.basePriceMin;
-    final gst = price != null ? (price * 0.18).toInt() : null;
-    final total = price != null ? price + gst! : null;
+    // For IV visits, use the dynamically determined price
+    final price = _isIvVisit ? _ivPrice : s.basePriceMin;
+    // For IV visits with multiple sessions, multiply
+    final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
+    final subtotal = price != null ? price * sessionMultiplier : null;
+    final gst = subtotal != null ? (subtotal * 0.18).toInt() : null;
+    final total = subtotal != null ? subtotal + gst! : null;
 
     return [
       Container(
@@ -1013,6 +1396,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             if (_isDoctorVisit && _selectedConcernCategory != null)
               _infoRow('Concern', _concernCategories
                   .firstWhere((c) => c['id'] == _selectedConcernCategory)['label']!),
+            // IV Visit details in review
+            if (_isIvVisit && _selectedIvType != null) ...[
+              _infoRow('Procedure', _ivInfusionTypes
+                  .firstWhere((t) => t['id'] == _selectedIvType)['label']!),
+              _infoRow('Nurse Level', _nurseLevelLabel[_ivNurseLevel] ?? ''),
+              _infoRow('Medication', _medicationController.text),
+              _infoRow('IV Access', _ivAccess == 'fresh' ? 'Fresh Cannulation'
+                  : _ivAccess == 'picc' ? 'PICC Line' : 'Port'),
+              if (_ivSessions > 1)
+                _infoRow('Sessions', '$_ivSessions sessions'),
+              if (_allergiesController.text.isNotEmpty)
+                _infoRow('Allergies', _allergiesController.text),
+              if (_referringDoctorController.text.isNotEmpty)
+                _infoRow('Referring Doctor', _referringDoctorController.text),
+            ],
             _infoRow('Date', _selectedDate != null
                 ? DateHelper.formatDate(_selectedDate!)
                 : ''),
@@ -1023,9 +1421,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               _infoRow('Notes', 'Included'),
             if (_requestOnlineAssessment)
               _infoRow('Online Assessment', 'Requested'),
-            if (price != null) ...[
+            if (subtotal != null) ...[
               const Divider(height: 20),
-              _infoRow('Service Fee', DateHelper.formatCurrency(price)),
+              if (_isIvVisit && _ivSessions > 1) ...[
+                _infoRow('Per Session', DateHelper.formatCurrency(price!)),
+                _infoRow('Sessions', '× $_ivSessions'),
+              ],
+              _infoRow('Service Fee', DateHelper.formatCurrency(subtotal)),
               _infoRow('GST (18%)', DateHelper.formatCurrency(gst!)),
               const Divider(height: 20),
               Row(
