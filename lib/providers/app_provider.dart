@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 
 class AppProvider extends ChangeNotifier {
   final ApiService _apiService;
+  ApiService get apiService => _apiService;
 
   // Current patient context
   Patient? _currentPatient;

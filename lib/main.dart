@@ -36,6 +36,8 @@ import 'screens/billing/payment_methods_screen.dart';
 import 'screens/billing/payment_screen.dart';
 import 'screens/documents/document_repository_screen.dart';
 import 'screens/search/universal_search_screen.dart';
+import 'providers/my_care_provider.dart';
+import 'providers/medication_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +59,12 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => CartProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MyCareProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MedicationProvider(apiService),
         ),
       ],
       child: const HousepitalApp(),
