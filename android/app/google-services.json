@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "536139461614",
+    "project_id": "housepital-patient",
+    "storage_bucket": "housepital-patient.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536139461614:android:26f4013abc21cd1c2754ff",
+        "android_client_info": {
+          "package_name": "com.housepital.patient"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKK2NxRuvZsIGrBdpugnePy9zA7g13TLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
