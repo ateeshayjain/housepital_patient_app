@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -38,6 +39,9 @@ class DocumentRepositoryScreen extends StatefulWidget {
 
 class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
   String _selectedCategory = 'all';
+  String _searchQuery = '';
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
   final _picker = ImagePicker();
 
   static final _categories = [
@@ -123,22 +127,47 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
   ];
 
   List<MedicalDocument> get _filteredDocs {
-    if (_selectedCategory == 'all') return _documents;
-    return _documents.where((d) => d.category == _selectedCategory).toList();
+    var docs = _documents.toList();
+    if (_selectedCategory != 'all') {
+      docs = docs.where((d) => d.category == _selectedCategory).toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      docs = docs
+          .where((d) =>
+              d.name.toLowerCase().contains(q) ||
+              (d.description?.toLowerCase().contains(q) ?? false))
+          .toList();
+    }
+    return docs;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Medical Documents'),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search documents...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              )
+            : const Text('Medical Documents'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search coming soon')),
-              );
+              setState(() {
+                if (_isSearching) {
+                  _searchQuery = '';
+                  _searchController.clear();
+                }
+                _isSearching = !_isSearching;
+              });
             },
           ),
         ],
@@ -377,8 +406,12 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Share feature coming soon')),
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: '${doc.name}\nCategory: ${_categoryLabels[doc.category] ?? doc.category}'
+                              '${doc.description != null ? '\n${doc.description}' : ''}'
+                              '\nUploaded: ${DateHelper.formatDate(doc.uploadedAt)}',
+                        ),
                       );
                     },
                     icon: const Icon(Icons.share),
@@ -391,7 +424,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opening document...')),
+                        const SnackBar(
+                          content: Text('Document viewer coming soon'),
+                          backgroundColor: HousepitalColors.info,
+                        ),
                       );
                     },
                     icon: const Icon(Icons.open_in_new),
@@ -527,7 +563,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             onTap: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('PDF picker coming soon')),
+                const SnackBar(
+                  content: Text('PDF upload coming soon'),
+                  backgroundColor: HousepitalColors.info,
+                ),
               );
             },
           ),

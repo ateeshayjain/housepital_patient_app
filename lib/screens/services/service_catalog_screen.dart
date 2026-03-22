@@ -1525,9 +1525,11 @@ class _EquipmentTabState extends State<_EquipmentTab> {
   bool _isLoading = true;
   String _selectedCategory = 'All';
   String _searchQuery = '';
+  String _sortBy = 'Relevance';
   final _searchController = TextEditingController();
 
   static const _categories = ['All', 'Equipment', 'Consumable'];
+  static const _sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Name A-Z'];
 
   @override
   void initState() {
@@ -1571,6 +1573,23 @@ class _EquipmentTabState extends State<_EquipmentTab> {
               i.name.toLowerCase().contains(q) ||
               i.brand.toLowerCase().contains(q))
           .toList();
+    }
+    // Apply sorting
+    switch (_sortBy) {
+      case 'Price: Low to High':
+        items = List.of(items)
+          ..sort((a, b) => (a.price ?? double.infinity).compareTo(b.price ?? double.infinity));
+        break;
+      case 'Price: High to Low':
+        items = List.of(items)
+          ..sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+        break;
+      case 'Name A-Z':
+        items = List.of(items)
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+      default: // Relevance — keep original order
+        break;
     }
     return items;
   }
@@ -1646,23 +1665,27 @@ class _EquipmentTabState extends State<_EquipmentTab> {
           ),
         ),
         const SizedBox(height: 8),
-        // Category chips
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final cat = _categories[index];
-              final isSelected = cat == _selectedCategory;
-              final count = cat == 'All'
-                  ? _allItems.length
-                  : _allItems.where((i) => i.category == cat).length;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedCategory = cat),
-                child: Container(
+        // Category chips + sort dropdown
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final cat = _categories[index];
+                      final isSelected = cat == _selectedCategory;
+                      final count = cat == 'All'
+                          ? _allItems.length
+                          : _allItems.where((i) => i.category == cat).length;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedCategory = cat),
+                        child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
@@ -1689,6 +1712,55 @@ class _EquipmentTabState extends State<_EquipmentTab> {
                 ),
               );
             },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Sort dropdown
+              PopupMenuButton<String>(
+                initialValue: _sortBy,
+                onSelected: (v) => setState(() => _sortBy = v),
+                itemBuilder: (_) => _sortOptions
+                    .map((s) => PopupMenuItem(
+                          value: s,
+                          child: Row(
+                            children: [
+                              if (s == _sortBy)
+                                const Icon(Icons.check, size: 16, color: HousepitalColors.orange)
+                              else
+                                const SizedBox(width: 16),
+                              const SizedBox(width: 8),
+                              Text(s, style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: s == _sortBy ? FontWeight.w600 : FontWeight.w400,
+                                color: s == _sortBy ? HousepitalColors.orange : HousepitalColors.black,
+                              )),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.sort, size: 16, color: HousepitalColors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        _sortBy == 'Relevance' ? 'Sort' : _sortBy.split(':').first.trim(),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: HousepitalColors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 10),

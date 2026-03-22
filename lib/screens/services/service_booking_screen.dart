@@ -6,6 +6,7 @@ import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/document_attach_widgets.dart';
+import '../checkout/address_selection_screen.dart';
 
 class ServiceBookingScreen extends StatefulWidget {
   final ServiceItem service;
@@ -26,25 +27,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   bool _requestOnlineAssessment = false;
   final List<String> _attachedFiles = [];
   int _selectedAddressIndex = 0;
+  List<SavedAddress> _savedAddressObjects = [];
+  bool _addressesLoaded = false;
 
-  // Mock saved addresses — in production, fetched from user profile
-  static const List<Map<String, String>> _savedAddresses = [
-    {
-      'label': 'Home',
-      'address': 'B-42, Sector 15, Noida, UP 201301',
-      'icon': 'home',
-    },
-    {
-      'label': 'Parent\'s Home',
-      'address': '12/3 Lajpat Nagar II, New Delhi 110024',
-      'icon': 'family',
-    },
-    {
-      'label': 'Office',
-      'address': '5th Floor, Tower B, Cyber City, Gurugram 122002',
-      'icon': 'work',
-    },
-  ];
+  List<Map<String, String>> get _savedAddresses =>
+      _savedAddressObjects.map((a) => a.toMapCompat()).toList();
 
   // TODO: Slots are currently mock data. In production, these should be
   // fetched from the backend API based on service type, date, and availability.
@@ -127,6 +114,24 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     setState(() {
       _selectedConcernCategory = categoryId;
       _recommendedDoctor = cat['type'];
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddresses();
+  }
+
+  Future<void> _loadAddresses() async {
+    final addresses = await AddressHelper.loadAddresses();
+    if (!mounted) return;
+    setState(() {
+      _savedAddressObjects = addresses;
+      _addressesLoaded = true;
+      // Select default address
+      final defaultIndex = addresses.indexWhere((a) => a.isDefault);
+      if (defaultIndex >= 0) _selectedAddressIndex = defaultIndex;
     });
   }
 
@@ -729,6 +734,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ),
                 maxLines: 2,
                 style: const TextStyle(fontSize: 14),
+                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter medication name(s)' : null,
               ),
               const SizedBox(height: 14),
 
@@ -1504,13 +1510,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 const Spacer(),
                 TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Add new address coming soon')),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddressSelectionScreen()),
                     );
+                    _loadAddresses();
                   },
-                  child: const Text('+ Add New',
+                  child: const Text('Change',
                       style: TextStyle(fontSize: 13)),
                 ),
               ],
@@ -1696,13 +1703,22 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         height: 52,
         child: ElevatedButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_autoRenew
-                    ? 'Service booked with auto-renewal (${_billingCycle}). Payment will be processed.'
-                    : 'Service booked. Payment will be processed.'),
-                backgroundColor: HousepitalColors.success,
-              ),
+            // For IV visits, use the dynamically determined price
+            final price = _isIvVisit ? _ivPrice : widget.service.basePriceMin;
+            final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
+            final subtotal = price != null ? price * sessionMultiplier : 0;
+            final gst = (subtotal * 0.18).toInt();
+            final total = subtotal + gst;
+
+            Navigator.pushNamed(
+              context,
+              '/booking-confirmation',
+              arguments: {
+                'serviceName': widget.service.name,
+                'scheduledDate': _selectedDate ?? DateTime.now(),
+                'scheduledSlot': _selectedSlot ?? 'morning',
+                'totalAmount': total,
+              },
             );
           },
           child: Text(l.t('pay_now')),

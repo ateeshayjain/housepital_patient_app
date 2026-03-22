@@ -2,8 +2,8 @@
 ///
 /// Roles:
 /// - PRIMARY_CONTACT: Full access — can book, pay, edit patient, manage family.
-/// - FAMILY_MEMBER: View + limited actions — can view, rate, raise concern.
-///   CANNOT book, pay, or edit patient details.
+/// - FAMILY_MEMBER: View + limited actions — can view, book, rate, raise concern.
+///   CANNOT pay, edit patient, or manage family.
 /// - PATIENT_SELF: View-only access.
 
 /// All known roles.
@@ -37,6 +37,7 @@ const Map<String, Set<String>> _permissions = {
   },
   'FAMILY_MEMBER': {
     'view',
+    'book',
     'rate',
     'raise_concern',
   },

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 
 class PatientProfileScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class PatientProfileScreen extends StatefulWidget {
 }
 
 class _PatientProfileScreenState extends State<PatientProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _doctorNameController;
@@ -22,7 +25,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   late TextEditingController _addressController;
   String _gender = 'male';
   String _mobility = 'ambulatory';
-  String _city = 'Delhi NCR';
+  String _city = 'Delhi';
 
   // Emergency contacts
   late List<_EmergencyContactEntry> _emergencyContacts;
@@ -35,12 +38,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   late List<_MedicationEntry> _medications;
 
   static const _cities = [
-    'Delhi NCR',
-    'Mumbai',
-    'Bangalore',
-    'Hyderabad',
-    'Chennai',
-    'Other',
+    'Delhi',
+    'Faridabad',
+    'Gurgaon',
+    'Noida',
+    'Ghaziabad',
   ];
 
   @override
@@ -62,8 +64,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         TextEditingController(text: patient?.address ?? '');
     _gender = patient?.gender ?? 'male';
     _mobility = patient?.mobilityStatus ?? 'ambulatory';
-    _city = patient?.city ?? 'Delhi NCR';
-    if (!_cities.contains(_city)) _city = 'Other';
+    _city = patient?.city ?? 'Delhi';
+    if (!_cities.contains(_city)) _city = 'Delhi';
 
     // Initialize emergency contacts from patient data
     _emergencyContacts = (patient?.emergencyContacts ?? [])
@@ -156,14 +158,75 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     });
   }
 
-  void _saveProfile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully'),
-        backgroundColor: HousepitalColors.success,
-      ),
-    );
-    Navigator.pop(context);
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final patient = context.read<AppProvider>().currentPatient;
+    if (patient == null) return;
+
+    setState(() => _isSaving = true);
+
+    final updates = <String, dynamic>{
+      'name': _nameController.text.trim(),
+      'age': int.tryParse(_ageController.text.trim()),
+      'gender': _gender,
+      'mobility_status': _mobility,
+      'address': _addressController.text.trim(),
+      'city': _city,
+      'doctor_name': _doctorNameController.text.trim(),
+      'doctor_phone': _doctorPhoneController.text.trim(),
+      'allergies': _allergiesController.text
+          .split(',')
+          .map((a) => a.trim())
+          .where((a) => a.isNotEmpty)
+          .toList(),
+      'dietary_restrictions': _dietaryController.text.trim(),
+      'conditions': _conditions,
+      'emergency_contacts': _emergencyContacts
+          .map((ec) => {
+                'name': ec.nameController.text.trim(),
+                'phone': ec.phoneController.text.trim(),
+                'relation': ec.relationController.text.trim(),
+              })
+          .toList(),
+      'medications': _medications
+          .map((m) => {
+                'name': m.nameController.text.trim(),
+                'dosage': m.dosageController.text.trim(),
+                'schedule': m.scheduleController.text.trim(),
+              })
+          .toList(),
+    };
+
+    try {
+      await context.read<AppProvider>().apiService.updatePatient(patient.id, updates);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: HousepitalColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: ${e.message}'),
+          backgroundColor: HousepitalColors.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          backgroundColor: HousepitalColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -174,22 +237,36 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       appBar: AppBar(
         title: Text(l.t('patient_profile')),
         actions: [
-          TextButton(
-            onPressed: _saveProfile,
-            child: Text(l.t('save'),
-                style: const TextStyle(color: HousepitalColors.orange)),
-          ),
+          _isSaving
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _saveProfile,
+                  child: Text(l.t('save'),
+                      style: const TextStyle(color: HousepitalColors.orange)),
+                ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ==================== Basic Info ====================
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Patient Name'),
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? 'Name is required'
+                  : null,
             ),
             const SizedBox(height: 16),
             Row(
@@ -199,6 +276,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     controller: _ageController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Age'),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return null;
+                      final age = int.tryParse(v.trim());
+                      if (age == null) return 'Must be a number';
+                      if (age < 0 || age > 150) return 'Invalid age';
+                      return null;
+                    },
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -501,6 +585,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             // Bottom spacing for scroll comfort
             const SizedBox(height: 40),
           ],
+        ),
         ),
       ),
     );

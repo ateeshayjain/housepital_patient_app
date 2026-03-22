@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/payment_service.dart';
 import '../../utils/helpers.dart';
 
@@ -16,6 +17,11 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   late PaymentService _paymentService;
+  final _couponController = TextEditingController();
+  String? _couponError;
+  String? _appliedCouponCode;
+  int _discountAmount = 0;
+  bool _validatingCoupon = false;
 
   @override
   void initState() {
@@ -26,7 +32,68 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void dispose() {
     _paymentService.dispose();
+    _couponController.dispose();
     super.dispose();
+  }
+
+  Future<void> _applyCoupon(CartProvider cart) async {
+    final code = _couponController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() => _couponError = 'Please enter a coupon code');
+      return;
+    }
+
+    setState(() {
+      _validatingCoupon = true;
+      _couponError = null;
+    });
+
+    // Check hardcoded test coupon first (offline support)
+    if (code == 'WELCOME10') {
+      final subtotal = cart.subtotal.toInt();
+      int discount = (subtotal * 10 / 100).round();
+      if (discount > 500) discount = 500;
+      setState(() {
+        _validatingCoupon = false;
+        _appliedCouponCode = code;
+        _discountAmount = discount;
+        _couponError = null;
+      });
+      return;
+    }
+
+    // Try backend validation
+    try {
+      final coupon = await ApiService().validateCoupon(code, 'equipment', cart.subtotal.toInt());
+      final discount = coupon.calculateDiscount(cart.subtotal.toInt());
+      if (discount > 0) {
+        setState(() {
+          _validatingCoupon = false;
+          _appliedCouponCode = code;
+          _discountAmount = discount;
+          _couponError = null;
+        });
+      } else {
+        setState(() {
+          _validatingCoupon = false;
+          _couponError = 'Coupon not applicable to this order';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _validatingCoupon = false;
+        _couponError = 'Invalid or expired coupon code';
+      });
+    }
+  }
+
+  void _removeCoupon() {
+    setState(() {
+      _appliedCouponCode = null;
+      _discountAmount = 0;
+      _couponError = null;
+      _couponController.clear();
+    });
   }
 
   @override
@@ -141,7 +208,115 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Widget _buildCouponSection(CartProvider cart) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: HousepitalColors.orangeLight.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.local_offer_outlined, size: 18, color: HousepitalColors.orange),
+              SizedBox(width: 8),
+              Text('Have a coupon?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (_appliedCouponCode != null)
+            // Applied coupon display
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: HousepitalColors.successLight,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: HousepitalColors.success.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, size: 18, color: HousepitalColors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_appliedCouponCode!,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
+                        Text('You save ${DateHelper.formatCurrency(_discountAmount)}',
+                            style: const TextStyle(fontSize: 12, color: HousepitalColors.success)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _removeCoupon,
+                    child: const Icon(Icons.close, size: 18, color: HousepitalColors.greyLight),
+                  ),
+                ],
+              ),
+            )
+          else
+            // Coupon input
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _couponController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Enter coupon code',
+                      hintStyle: const TextStyle(fontSize: 13),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: _validatingCoupon ? null : () => _applyCoupon(cart),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HousepitalColors.orange,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: _validatingCoupon
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Apply', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          if (_couponError != null) ...[
+            const SizedBox(height: 6),
+            Text(_couponError!, style: const TextStyle(fontSize: 12, color: HousepitalColors.error)),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderSummary(BuildContext context, CartProvider cart) {
+    final adjustedTotal = cart.subtotal - _discountAmount + cart.deliveryCharge;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
@@ -159,11 +334,22 @@ class _CartScreenState extends State<CartScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Coupon section
+            _buildCouponSection(cart),
             // Subtotal
             _summaryRow(
                 'Subtotal (${cart.itemCount} items)',
                 DateHelper.formatCurrency(cart.subtotal.toInt())),
             const SizedBox(height: 6),
+            // Discount
+            if (_discountAmount > 0) ...[
+              _summaryRow(
+                'Coupon Discount',
+                '- ${DateHelper.formatCurrency(_discountAmount)}',
+                valueColor: HousepitalColors.success,
+              ),
+              const SizedBox(height: 6),
+            ],
             // Delivery
             _summaryRow(
               'Delivery',
@@ -196,7 +382,7 @@ class _CartScreenState extends State<CartScreen> {
                     style:
                         TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                 Text(
-                  DateHelper.formatCurrency(cart.total.toInt()),
+                  DateHelper.formatCurrency(adjustedTotal.toInt()),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -248,7 +434,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _checkout(BuildContext context, CartProvider cart) {
-    final amountInPaise = (cart.total * 100).toInt();
+    final adjustedTotal = cart.subtotal - _discountAmount + cart.deliveryCharge;
+    final amountInPaise = (adjustedTotal * 100).toInt();
     final itemNames = cart.items.values
         .map((ci) => ci.item.name)
         .take(3)
@@ -298,6 +485,7 @@ class _CartScreenState extends State<CartScreen> {
           TextButton(
             onPressed: () {
               cart.clear();
+              _removeCoupon();
               Navigator.pop(ctx);
             },
             child: const Text('Clear',
@@ -382,7 +570,7 @@ class _CartItemCard extends StatelessWidget {
                   ),
                   child: Text(
                     cartItem.isRental
-                        ? 'Rent · ${cartItem.rentalMonths} ${cartItem.rentalMonths == 1 ? "month" : "months"}'
+                        ? 'Rent \u00b7 ${cartItem.rentalMonths} ${cartItem.rentalMonths == 1 ? "month" : "months"}'
                         : 'Buy',
                     style: TextStyle(
                       fontSize: 11,

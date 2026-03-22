@@ -1048,6 +1048,28 @@ class EquipmentItem {
 
   bool get isVariant => parentProductId != null;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'brand': brand,
+        'category': category,
+        'available_for_sale': availableForSale,
+        'available_for_rent': availableForRent,
+        'price': price,
+        'rental_price': rentalPrice,
+        'status': status,
+        'image_url': imageUrl,
+        'description': description,
+        'how_to_use': howToUse,
+        'key_features': keyFeatures,
+        'ideal_for': idealFor,
+        'youtube_url': youtubeUrl,
+        'faqs': faqs,
+        'parent_product_id': parentProductId,
+        'variant_type': variantType,
+        'variant_value': variantValue,
+      };
+
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
         id: json['id']?.toString() ?? '',
         name: json['name'] ?? '',
