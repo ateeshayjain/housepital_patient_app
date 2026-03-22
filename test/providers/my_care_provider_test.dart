@@ -85,12 +85,12 @@ void main() {
       expect(provider.healthManager, isNull);
     });
 
-    test('generic error: sets "Failed to load care data"', () async {
+    test('generic error: sets unable to load message', () async {
       mock.shouldThrowGenericError = true;
 
       await provider.loadMyCareData('patient1');
 
-      expect(provider.error, 'Failed to load care data');
+      expect(provider.error, 'Unable to load services. Pull down to retry.');
       expect(provider.activeServices, isEmpty);
     });
 
