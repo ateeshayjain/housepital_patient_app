@@ -4,6 +4,69 @@ Session-by-session diary of what was built, decisions made, and context for the 
 
 ---
 
+## Session 2026-03-22 (Session 2) -- 24 Issues Fixed: New Screens + Bug Fixes + Permission Update
+
+### What was built:
+- 6 new screens: BookingConfirmationScreen, BookingHistoryScreen, AddressSelectionScreen, NotificationPreferencesScreen, HelpFaqScreen, AboutScreen
+- Real Razorpay integration in PaymentScreen (replaced Random() stub)
+- Cart persistence via SharedPreferences in CartProvider
+- Coupon/promo code system in CartScreen
+- Equipment rental selector, share button, sorting in EquipmentDetailScreen
+- Real API save in PatientProfileScreen with city dropdown
+- Evidence upload and real API submission in RaiseConcernScreen
+- Document search, share, open in DocumentRepositoryScreen
+- All dead ends in SettingsScreen wired to real screens
+- FAMILY_MEMBER can now book services (permissions.dart updated)
+- Form validators in AssessmentRequestScreen
+- Booking flow now goes to confirmation screen, address loading, IV validator in ServiceBookingScreen
+
+### Files created:
+- lib/screens/services/booking_confirmation_screen.dart (NEW)
+- lib/screens/services/booking_history_screen.dart (NEW)
+- lib/screens/checkout/address_selection_screen.dart (NEW)
+- lib/screens/settings/notification_preferences_screen.dart (NEW)
+- lib/screens/settings/help_faq_screen.dart (NEW)
+- lib/screens/settings/about_screen.dart (NEW)
+
+### Files modified:
+- lib/screens/billing/payment_screen.dart
+- lib/providers/cart_provider.dart
+- lib/screens/cart/cart_screen.dart
+- lib/screens/services/equipment_detail_screen.dart
+- lib/screens/settings/patient_profile_screen.dart
+- lib/screens/support/raise_concern_screen.dart
+- lib/screens/documents/document_repository_screen.dart
+- lib/screens/settings/settings_screen.dart
+- lib/utils/permissions.dart
+- lib/screens/services/assessment_request_screen.dart
+- lib/screens/services/service_booking_screen.dart
+- lib/main.dart (new routes)
+
+### Database changes:
+- None
+
+### Known issues resolved:
+- BUG-03, BUG-04, BUG-05, BUG-06, BUG-15 (see KNOWN_ISSUES.md)
+
+### Decisions made:
+- FAMILY_MEMBER can now book services -- business decision to allow family members to initiate bookings
+- Notification preferences use SharedPreferences (local) rather than backend API -- simpler for MVP
+- Address selection uses SharedPreferences persistence with pincode validation for NCR cities
+- BookingConfirmationScreen generates booking number client-side (HPL-BOOK-XXXXX) -- should eventually come from backend
+- HelpFaqScreen uses static FAQ data (20 items) -- should migrate to CMS/backend for easy updates
+
+### Dependencies added:
+- None (all dependencies already in pubspec.yaml)
+
+### Next session should:
+- Add test coverage for the 6 new screens
+- Move FAQ content to backend/CMS for non-dev updates
+- Replace client-side booking number generation with backend-issued IDs
+- Fix BUG-16: /services route still maps to empty Scaffold
+- Add integration tests for the full booking -> confirmation -> history flow
+
+---
+
 ## Session 2026-03-22 -- My Care Tab + Medications + Test Suite + Layer 1 Docs
 
 ### What was built:

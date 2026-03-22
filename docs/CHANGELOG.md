@@ -4,6 +4,66 @@
 
 ---
 
+## [2026-03-22 (Session 2)] -- 24 Issues Fixed: New Screens, Bug Fixes, Permissions Update
+
+### New Screens (6)
+- **BookingConfirmationScreen:** Animated confirmation with booking ID, next steps, share via share_plus
+- **BookingHistoryScreen:** Filter by status, cancel bookings, rate completed services, re-book
+- **AddressSelectionScreen:** Saved addresses with SharedPreferences persistence, pincode validation, add/edit/delete
+- **NotificationPreferencesScreen:** Toggleable notification types + forced-ON for critical alerts (late check-in, vitals RED, payment)
+- **HelpFaqScreen:** 20 FAQs across 5 categories (Booking, Payments, Staff, Equipment, Account), search, contact support
+- **AboutScreen:** Company info, app version, social links, terms/privacy policy links
+
+### Bug Fixes (18)
+- **PaymentScreen:** Replaced `Random()` stub with real Razorpay integration
+- **CartProvider:** Added SharedPreferences persistence so cart survives app restart
+- **CartScreen:** Added coupon/promo code system with discount display
+- **EquipmentDetailScreen:** Added rental duration selector, share button, sorting options
+- **PatientProfileScreen:** Wired real API save (PUT /patients/:id), added city dropdown list
+- **RaiseConcernScreen:** Fixed evidence upload, wired real API submission (POST /concerns)
+- **DocumentRepositoryScreen:** Implemented search, share, open document functionality
+- **SettingsScreen:** All dead-end navigation items now wired to real screens
+- **permissions.dart:** FAMILY_MEMBER role can now book services (added 'book' to permission set)
+- **AssessmentRequestScreen:** Added form field validators to prevent empty submissions
+- **ServiceBookingScreen:** Booking now navigates to BookingConfirmationScreen, address loading from saved addresses, IV line validator added
+
+### Permission Changes
+- FAMILY_MEMBER can now perform 'book' action (was previously PRIMARY_CONTACT only)
+
+### Files Created
+- `lib/screens/services/booking_confirmation_screen.dart` (NEW)
+- `lib/screens/services/booking_history_screen.dart` (NEW)
+- `lib/screens/checkout/address_selection_screen.dart` (NEW)
+- `lib/screens/settings/notification_preferences_screen.dart` (NEW)
+- `lib/screens/settings/help_faq_screen.dart` (NEW)
+- `lib/screens/settings/about_screen.dart` (NEW)
+
+### Files Modified
+- `lib/screens/billing/payment_screen.dart` (MODIFIED -- real Razorpay)
+- `lib/providers/cart_provider.dart` (MODIFIED -- SharedPreferences persistence)
+- `lib/screens/cart/cart_screen.dart` (MODIFIED -- coupon system)
+- `lib/screens/services/equipment_detail_screen.dart` (MODIFIED -- rental selector, share, sorting)
+- `lib/screens/settings/patient_profile_screen.dart` (MODIFIED -- real API, city list)
+- `lib/screens/support/raise_concern_screen.dart` (MODIFIED -- evidence upload, real API)
+- `lib/screens/documents/document_repository_screen.dart` (MODIFIED -- search, share, open)
+- `lib/screens/settings/settings_screen.dart` (MODIFIED -- dead ends wired)
+- `lib/utils/permissions.dart` (MODIFIED -- FAMILY_MEMBER can book)
+- `lib/screens/services/assessment_request_screen.dart` (MODIFIED -- form validators)
+- `lib/screens/services/service_booking_screen.dart` (MODIFIED -- confirmation flow, address, IV validator)
+- `lib/main.dart` (MODIFIED -- new routes added)
+
+### Known Issues Resolved
+- BUG-03: Share button on booking confirmation (now wired)
+- BUG-04: Promo code stub (coupon system added)
+- BUG-05: Payment stub in booking wizard (real Razorpay flow)
+- BUG-06: Form validation gaps in assessment request (validators added)
+- BUG-15: Document repository placeholder (search/share/open implemented)
+
+### Breaking Changes
+- None
+
+---
+
 ## [2026-03-22] -- My Care Tab, Medications, Test Infrastructure, Documentation Framework
 
 ### Features Built

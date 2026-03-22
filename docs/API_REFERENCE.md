@@ -438,9 +438,59 @@ Paginated booking history.
 
 **Auth:** Bearer token + verifyPatientAccess
 
-**Query:** `page`, `page_size`
+**Query:** `page`, `page_size`, `status` (optional filter)
 
 **Response:** `{ "bookings": [...], "total": 12, "page": 1, "page_size": 20 }`
+
+---
+
+### `PUT /bookings/:id/cancel`
+
+Cancel a booking. Refund policy depends on time before scheduled date.
+
+**Auth:** Bearer token + verifyPatientAccess
+
+**Input:**
+```json
+{
+  "reason": "string (optional)"
+}
+```
+
+**Response:** `{ "success": true, "booking": { ...updated booking with status "cancelled" } }`
+
+**Refund rules:**
+- More than 24hr before scheduled date: full refund
+- Less than 24hr before scheduled date: 50% refund
+
+**Errors:**
+- `400` -- Booking already cancelled or completed
+- `403` -- Access denied
+- `404` -- Booking not found
+
+---
+
+### `POST /bookings/:id/rate`
+
+Submit a rating for a completed booking.
+
+**Auth:** Bearer token + verifyPatientAccess
+
+**Input:**
+```json
+{
+  "rating": "1-5 (required)",
+  "comment": "string (optional)"
+}
+```
+
+**Response:** `{ "success": true, "id": "uuid" }`
+
+**Errors:**
+- `400` -- Invalid rating (must be 1-5), or booking not completed
+- `403` -- Access denied
+- `404` -- Booking not found
+- `409` -- Already rated
 
 ---
 

@@ -52,6 +52,12 @@
 | Home Screen | -- | 0 | MISSING | NO |
 | Billing screens | -- | 0 | MISSING | YES |
 | Settings screens | -- | 0 | MISSING | NO |
+| Booking Confirmation | -- | 0 | MISSING | YES |
+| Booking History | -- | 0 | MISSING | YES |
+| Address Selection | -- | 0 | MISSING | NO |
+| Notification Preferences | -- | 0 | MISSING | NO |
+| Help / FAQ | -- | 0 | MISSING | NO |
+| About | -- | 0 | MISSING | NO |
 
 ### SERVICES (target: 60%+)
 
@@ -103,9 +109,12 @@
 
 | Gap | Recommended Test File | What to Test |
 |-----|-----------------------|--------------|
+| Booking confirmation | `test/screens/services/booking_confirmation_test.dart` | Render, share action, booking ID display |
+| Booking history | `test/screens/services/booking_history_test.dart` | Filter, cancel, rate, re-book flows |
+| Address selection | `test/screens/checkout/address_selection_test.dart` | Add/edit/delete, pincode validation |
 | Firebase service | `test/services/firebase_service_test.dart` | Firestore CRUD, offline queue |
 | Sync service | `test/services/sync_service_test.dart` | Offline queue, reconnect sync |
-| Cart screen widget | `test/screens/cart/cart_screen_test.dart` | Render, quantity controls |
+| Cart screen widget | `test/screens/cart/cart_screen_test.dart` | Render, quantity controls, coupon |
 | Billing screens | `test/screens/billing/billing_test.dart` | Invoice display, payment methods |
 
 ### P2 -- Nice to have
@@ -115,6 +124,9 @@
 | App localizations | `test/utils/app_localizations_test.dart` | Hindi string keys exist |
 | Helpers (formatting) | `test/utils/helpers_test.dart` | Currency, date, time formatting |
 | Settings screens | `test/screens/settings/settings_test.dart` | Profile edit, family management |
+| Notification prefs | `test/screens/settings/notification_preferences_test.dart` | Toggle states, forced-ON |
+| Help / FAQ | `test/screens/settings/help_faq_test.dart` | Search, category filter |
+| About screen | `test/screens/settings/about_test.dart` | Render, link taps |
 
 ---
 

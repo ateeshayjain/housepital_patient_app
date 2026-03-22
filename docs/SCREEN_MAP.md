@@ -52,6 +52,8 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Assessment Request  | /assessment-request  | AssessmentRequestScreen  | ServiceItem argument          | Fill questionnaire, submit       | PRIMARY only |
 | Equipment Detail    | /equipment-detail    | EquipmentDetailScreen    | ServiceItem argument          | View details, rent               | PRIMARY only |
 | Package Detail      | /package-detail      | PackageDetailScreen      | CarePackage argument          | View package benefits            | All roles    |
+| Booking Confirmation| /booking-confirmation| BookingConfirmationScreen| Map args (serviceName, date, slot, amount) | View booking ID, share, next steps | All roles |
+| Booking History     | /booking-history     | BookingHistoryScreen     | API: GET /patients/:id/bookings | Filter, cancel, rate, re-book  | All roles    |
 
 **Manpower price rule:** Services with `hide_price = true` (caretaker, nursing, japa, nanny) show no prices. Users must submit an assessment request to receive a personalized quote.
 
@@ -76,7 +78,18 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Settings           | (tab)              | SettingsScreen           | AppProvider, AuthProvider       | Navigate to sub-screens    | All roles    |
 | Patient Profile    | /patient-profile   | PatientProfileScreen     | API: /patients/:id              | View/edit patient info     | PRIMARY only (edit) |
 | Family Members     | /family-members    | FamilyMembersScreen      | API: /patients/:id/family       | Add, remove, edit members  | PRIMARY only (write) |
-| Documents          | /documents         | DocumentRepositoryScreen | (TBD)                           | View/upload documents      | PRIMARY only (upload) |
+| Documents          | /documents         | DocumentRepositoryScreen | (TBD)                           | Search, share, open docs   | PRIMARY only (upload) |
+| Notification Prefs | /notification-preferences | NotificationPreferencesScreen | SharedPreferences       | Toggle notification types  | All roles (own prefs) |
+| Help / FAQ         | /help-faq          | HelpFaqScreen            | Static (20 FAQs)                | Search, filter by category, contact support | All roles |
+| About              | /about             | AboutScreen              | Static                          | View version, company info, links | All roles |
+
+---
+
+### CHECKOUT SCREENS (Accessible from booking flow)
+
+| Screen             | Route              | Widget                   | Data Source                     | Actions                    | Permissions  |
+|--------------------|--------------------|--------------------------|---------------------------------|----------------------------|--------------|
+| Address Selection  | (pushed directly)  | AddressSelectionScreen   | SharedPreferences (saved addresses) | Select, add, edit, delete addresses; pincode validation | All roles |
 
 ---
 
@@ -132,6 +145,11 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | `/add-medication`    | `MedicationFull?`         | AddEditMedicationScreen    |
 | `/report-history`    | `String` (deploymentId)   | ReportHistoryScreen        |
 | `/attendance-history`| `String` (deploymentId)   | AttendanceHistoryScreen    |
+| `/booking-confirmation` | `Map<String, dynamic>` (serviceName, scheduledDate, scheduledSlot, totalAmount) | BookingConfirmationScreen |
+| `/booking-history`   | none                      | BookingHistoryScreen       |
+| `/notification-preferences` | none               | NotificationPreferencesScreen |
+| `/help-faq`          | none                      | HelpFaqScreen              |
+| `/about`             | none                      | AboutScreen                |
 | (default)            | none                      | MainShell                  |
 
 ---
