@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/helpers.dart';
 
@@ -12,12 +13,26 @@ class PaymentMethodsScreen extends StatefulWidget {
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   List<SavedPaymentMethod> _methods = [];
+  List<PaymentReminder> _reminders = [];
   bool _autoPayEnabled = false;
+  late final PaymentReminderService _reminderService;
 
   @override
   void initState() {
     super.initState();
-    _methods = PaymentReminderService.getSavedMethods();
+    _reminderService = PaymentReminderService(apiService: ApiService());
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final methods = await _reminderService.getSavedMethods();
+    final reminders = await _reminderService.getUpcomingReminders();
+    if (mounted) {
+      setState(() {
+        _methods = methods;
+        _reminders = reminders;
+      });
+    }
   }
 
   @override
@@ -156,8 +171,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
-            ...PaymentReminderService.getUpcomingReminders()
-                .map((r) => _buildScheduleRow(r)),
+            ..._reminders.map((r) => _buildScheduleRow(r)),
 
             const SizedBox(height: 24),
 

@@ -33,10 +33,22 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   List<Map<String, String>> get _savedAddresses =>
       _savedAddressObjects.map((a) => a.toMapCompat()).toList();
 
-  // TODO: Slots are currently mock data. In production, these should be
-  // fetched from the backend API based on service type, date, and availability.
-  final List<String> _slots = ['Morning (9-12)', 'Afternoon (12-4)', 'Evening (4-7)'];
-  final List<String> _slotValues = ['morning', 'afternoon', 'evening'];
+  List<Map<String, String>> _availableSlots = [];
+  bool _slotsLoading = false;
+
+  /// TODO: Replace with API call to get available slots for the selected date.
+  /// Currently returns static slots for all dates.
+  Future<List<Map<String, String>>> _getAvailableSlots(DateTime date) async {
+    // Will call: ApiService().getAvailableSlots(serviceId, date)
+    return [
+      {'label': 'Morning (9-12)', 'value': 'morning'},
+      {'label': 'Afternoon (12-4)', 'value': 'afternoon'},
+      {'label': 'Evening (4-7)', 'value': 'evening'},
+    ];
+  }
+
+  List<String> get _slots => _availableSlots.map((s) => s['label']!).toList();
+  List<String> get _slotValues => _availableSlots.map((s) => s['value']!).toList();
 
   bool get _showPrescriptionSection {
     final id = widget.service.id;
@@ -121,6 +133,19 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   void initState() {
     super.initState();
     _loadAddresses();
+    _loadSlotsForDate(DateTime.now());
+  }
+
+  Future<void> _loadSlotsForDate(DateTime date) async {
+    setState(() => _slotsLoading = true);
+    final slots = await _getAvailableSlots(date);
+    if (!mounted) return;
+    setState(() {
+      _availableSlots = slots;
+      _slotsLoading = false;
+      // Reset slot selection when date changes
+      _selectedSlot = null;
+    });
   }
 
   Future<void> _loadAddresses() async {
@@ -1300,7 +1325,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         children: nextDays.map((date) {
           final isSelected = _selectedDate?.day == date.day;
           return GestureDetector(
-            onTap: () => setState(() => _selectedDate = date),
+            onTap: () {
+              setState(() => _selectedDate = date);
+              _loadSlotsForDate(date);
+            },
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

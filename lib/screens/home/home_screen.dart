@@ -3,16 +3,20 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/constants.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
+import '../support/raise_concern_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _dutyTimer;
   Duration _onDutySince = Duration.zero;
+  List<PaymentReminder> _paymentReminders = [];
 
   @override
   void initState() {
@@ -34,6 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
     _startDutyTimer();
+    _loadPaymentReminders();
+  }
+
+  Future<void> _loadPaymentReminders() async {
+    final service = PaymentReminderService(apiService: ApiService());
+    final reminders = await service.getUpcomingReminders();
+    if (mounted) {
+      setState(() => _paymentReminders = reminders);
+    }
   }
 
   void _startDutyTimer() {
@@ -508,7 +522,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         label: 'Call',
                         semanticsLabel: 'Call ${deployment.staffName ?? "staff"}',
                         onTap: () {
-                          // TODO: launch phone call
+                          // Dial Housepital support (staff phone not in model yet)
+                          launchUrl(Uri.parse('tel:${AppConstants.supportPhone}'));
                         },
                       ),
                     ),
@@ -520,7 +535,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         semanticsLabel:
                             'Message ${deployment.staffName ?? "staff"}',
                         onTap: () {
-                          // TODO: open messaging
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RaiseConcernScreen(),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -532,7 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         semanticsLabel:
                             'Rate ${deployment.staffName ?? "staff"}',
                         onTap: () {
-                          // TODO: open rating sheet
+                          _showRatingDialog(context, deployment);
                         },
                       ),
                     ),
@@ -557,6 +577,59 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return shiftType;
     }
+  }
+
+  void _showRatingDialog(BuildContext context, Deployment deployment) {
+    double selectedRating = 0;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Rate ${deployment.staffName ?? "Staff"}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('How was your experience?'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  return IconButton(
+                    icon: Icon(
+                      i < selectedRating ? Icons.star : Icons.star_border,
+                      color: HousepitalColors.orange,
+                      size: 36,
+                    ),
+                    onPressed: () =>
+                        setDialogState(() => selectedRating = (i + 1).toDouble()),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: selectedRating > 0
+                  ? () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Thank you for your feedback!'),
+                        ),
+                      );
+                    }
+                  : null,
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildRatingStars(double rating) {
@@ -847,7 +920,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildPaymentBanner(
       BuildContext context, AppLocalizations l, AppProvider app) {
-    final reminders = PaymentReminderService.getUpcomingReminders();
+    final reminders = _paymentReminders;
     final urgentReminders =
         reminders.where((r) => r.shouldShowReminder).toList();
 
