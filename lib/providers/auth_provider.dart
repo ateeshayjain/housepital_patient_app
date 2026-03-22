@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
@@ -14,7 +15,6 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   FamilyMember? _currentUser;
   String? _phone;
-
   AuthProvider(this._firebaseService, this._apiService) {
     _checkAuthState();
   }

@@ -25,112 +25,14 @@ class AppProvider extends ChangeNotifier {
   int _amountDue = 0;
   DateTime? _dueDate;
 
+  String? _dashboardError;
+
   AppProvider(this._apiService) {
     _loadLanguage();
-    _loadMockData(); // TODO: Remove after backend is ready
   }
 
-  void _loadMockData() {
-    _currentPatient = Patient.fromJson({
-      'id': 'p1',
-      'name': 'Ramesh Kumar',
-      'age': 72,
-      'gender': 'male',
-      'mobility_status': 'needs_support',
-      'allergies': ['Penicillin', 'Dust'],
-      'dietary_restrictions': 'Low sodium diet',
-      'doctor_name': 'Dr. Anita Sharma',
-      'doctor_phone': '+919876543210',
-      'height': '5\'7"',
-      'weight': '68 kg',
-      'diagnosis': 'Post-stroke rehabilitation, Hypertension',
-      'iv_central_line': 'IV line (right hand)',
-      'discharge_summary_available': true,
-      'feeding_type': 'Oral',
-      'mental_condition': 'Mild cognitive impairment',
-      'motion_status': 'Diaper',
-      'bp_sugar_insulin': 'BP: Amlodipine 5mg, Sugar: controlled, no insulin',
-      'requirement': '24-hour nursing care with physiotherapy support',
-    });
-    _patients = [_currentPatient!];
-
-    _activeDeployment = Deployment.fromJson({
-      'id': 'd1',
-      'patient_id': 'p1',
-      'staff_id': 's1',
-      'staff_name': 'Priya Mehra',
-      'staff_role': 'Nurse',
-      'staff_rating': 4.8,
-      'start_date': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-      'shift_start': '08:00',
-      'shift_end': '20:00',
-      'total_days': 90,
-    });
-
-    _todayAttendance = Attendance.fromJson({
-      'id': 'a1',
-      'deployment_id': 'd1',
-      'date': DateTime.now().toIso8601String(),
-      'status': 'checked_in',
-      'check_in_time': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
-      'staff_name': 'Priya Mehra',
-    });
-
-    _latestVitals = VitalReading.fromJson({
-      'id': 'v1',
-      'patient_id': 'p1',
-      'recorded_at': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
-      'systolic': 128.0,
-      'diastolic': 82.0,
-      'pulse': 74.0,
-      'spo2': 97.0,
-      'temperature': 98.4,
-      'sugar': 110.0,
-    });
-
-    _todayReport = DailyReport.fromJson({
-      'id': 'r1',
-      'deployment_id': 'd1',
-      'staff_id': 's1',
-      'patient_id': 'p1',
-      'date': DateTime.now().toIso8601String(),
-      'staff_name': 'Priya Mehra',
-      'status': 'in_progress',
-      'completed_tasks': 5,
-      'total_tasks': 8,
-      'sections': [
-        {
-          'name': 'Morning Routine',
-          'status': 'done',
-          'tasks': [
-            {'name': 'Bath & Hygiene', 'completed': true},
-            {'name': 'Breakfast', 'completed': true},
-            {'name': 'Morning Medication', 'completed': true},
-          ]
-        },
-        {
-          'name': 'Afternoon Care',
-          'status': 'partial',
-          'tasks': [
-            {'name': 'Lunch', 'completed': true},
-            {'name': 'Physiotherapy', 'completed': false},
-            {'name': 'Afternoon Vitals', 'completed': true},
-          ]
-        },
-        {
-          'name': 'Evening Routine',
-          'status': 'pending',
-          'tasks': [
-            {'name': 'Dinner', 'completed': false},
-            {'name': 'Night Medication', 'completed': false},
-          ]
-        },
-      ],
-    });
-
-    _amountDue = 24500;
-    _dueDate = DateTime.now().add(const Duration(days: 5));
-  }
+  /// Error message if dashboard failed to load.
+  String? get dashboardError => _dashboardError;
 
   // Getters
   Patient? get currentPatient => _currentPatient;
@@ -179,7 +81,7 @@ class AppProvider extends ChangeNotifier {
     loadDashboard();
   }
 
-  // Load dashboard data
+  // Load dashboard data from API
   Future<void> loadDashboard() async {
     if (_currentPatient == null) return;
 
@@ -208,8 +110,11 @@ class AppProvider extends ChangeNotifier {
       _dueDate = billing['due_date'] != null
           ? DateTime.parse(billing['due_date'])
           : null;
+
+      _dashboardError = null;
     } catch (e) {
       debugPrint('Error loading dashboard: $e');
+      _dashboardError = 'Unable to connect. Pull down to retry.';
     }
 
     _isDashboardLoading = false;
