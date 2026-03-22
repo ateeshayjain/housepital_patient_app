@@ -149,6 +149,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(s.name),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_step > 0) {
+              setState(() => _step--);
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

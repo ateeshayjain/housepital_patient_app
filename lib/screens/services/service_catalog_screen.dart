@@ -324,13 +324,13 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     ),
     ServiceItem(
       id: 'con-psychiatrist', name: 'Psychiatrist Consultation',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'consultation', bookingType: 'assessment',
       description: 'Licensed psychiatrist for mental health assessment, medication management & therapy referrals.',
       basePriceMin: 1500, durationMinutes: 45, leadTimeHours: 24, iconName: 'psychology',
     ),
     ServiceItem(
       id: 'con-grief', name: 'Grief Counselling',
-      category: 'consultation', bookingType: 'scheduled',
+      category: 'consultation', bookingType: 'assessment',
       description: 'Compassionate support for loss, bereavement & emotional recovery. In-person or video.',
       basePriceMin: 1200, durationMinutes: 60, leadTimeHours: 24, iconName: 'favorite',
     ),

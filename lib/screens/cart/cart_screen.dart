@@ -48,24 +48,63 @@ class _CartScreenState extends State<CartScreen> {
       ),
       body: Consumer<CartProvider>(
         builder: (context, cart, _) {
-          if (cart.isEmpty) return _buildEmptyCart(context);
+          if (cart.isEmpty && !cart.hasSavedItems) {
+            return _buildEmptyCart(context);
+          }
           return Column(
             children: [
               Expanded(
-                child: ListView.separated(
+                child: ListView(
                   padding: const EdgeInsets.all(16),
-                  itemCount: cart.items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final entry = cart.items.entries.elementAt(index);
-                    return _CartItemCard(
-                      cartKey: entry.key,
-                      cartItem: entry.value,
-                    );
-                  },
+                  children: [
+                    // Cart items
+                    if (cart.isEmpty && cart.hasSavedItems)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: Text('Your cart is empty, but you have saved items below.',
+                            style: TextStyle(color: HousepitalColors.greyLight)),
+                      ),
+                    ...cart.items.entries.map((entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _CartItemCard(
+                        cartKey: entry.key,
+                        cartItem: entry.value,
+                      ),
+                    )),
+
+                    // Saved for Later section
+                    if (cart.hasSavedItems) ...[
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.bookmark_outline,
+                                size: 20, color: HousepitalColors.greyLight),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Saved for Later (${cart.savedCount})',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ...cart.savedForLater.entries.map((entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _SavedItemCard(
+                          savedKey: entry.key,
+                          cartItem: entry.value,
+                        ),
+                      )),
+                    ],
+                  ],
                 ),
               ),
-              _buildOrderSummary(context, cart),
+              if (!cart.isEmpty) _buildOrderSummary(context, cart),
             ],
           );
         },
@@ -419,6 +458,102 @@ class _CartItemCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: Icon(icon, size: 16, color: HousepitalColors.orange),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SAVED FOR LATER CARD
+// ═══════════════════════════════════════════════════════════════
+
+class _SavedItemCard extends StatelessWidget {
+  final String savedKey;
+  final CartItem cartItem;
+
+  const _SavedItemCard({required this.savedKey, required this.cartItem});
+
+  @override
+  Widget build(BuildContext context) {
+    final item = cartItem.item;
+    final cart = Provider.of<CartProvider>(context, listen: false);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Image
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: HousepitalColors.greyLighter,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: item.imageUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: item.imageUrl!,
+                      fit: BoxFit.contain,
+                      errorWidget: (_, __, ___) => const Icon(
+                          Icons.medical_services_outlined,
+                          color: HousepitalColors.greyLight),
+                    ),
+                  )
+                : const Icon(Icons.medical_services_outlined,
+                    color: HousepitalColors.greyLight, size: 24),
+          ),
+          const SizedBox(width: 12),
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.name,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(item.brand,
+                    style: const TextStyle(
+                        fontSize: 12, color: HousepitalColors.greyLight)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Move to Cart button
+          SizedBox(
+            height: 34,
+            child: OutlinedButton(
+              onPressed: () => cart.moveToCart(savedKey),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: HousepitalColors.orange,
+                side: const BorderSide(color: HousepitalColors.orange),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                textStyle: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              child: const Text('Move to Cart'),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Remove
+          GestureDetector(
+            onTap: () => cart.removeSaved(savedKey),
+            child: const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.close, size: 16, color: HousepitalColors.greyLight),
+            ),
+          ),
+        ],
       ),
     );
   }
