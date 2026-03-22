@@ -46,6 +46,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     },
   ];
 
+  // TODO: Slots are currently mock data. In production, these should be
+  // fetched from the backend API based on service type, date, and availability.
   final List<String> _slots = ['Morning (9-12)', 'Afternoon (12-4)', 'Evening (4-7)'];
   final List<String> _slotValues = ['morning', 'afternoon', 'evening'];
 
@@ -443,6 +445,19 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   );
                 }).toList(),
               ),
+              // Hint text when no concern is selected yet
+              if (_selectedConcernCategory == null)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Select your concern to continue',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: HousepitalColors.greyLight,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
               if (_selectedConcernCategory == 'other') ...[
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1178,7 +1193,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       SizedBox(
         height: 52,
         child: ElevatedButton(
-          onPressed: () {
+          // Doctor Visit: concern must be selected before proceeding to slot selection
+          onPressed: (_isDoctorVisit && _selectedConcernCategory == null)
+              ? null
+              : () {
             // IV Visit validation
             if (_isIvVisit) {
               if (_selectedIvType == null) {

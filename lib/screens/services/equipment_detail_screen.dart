@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/cart_provider.dart';
+import '../../screens/cart/cart_screen.dart';
 import '../../utils/helpers.dart';
 
 class EquipmentDetailScreen extends StatefulWidget {
@@ -17,6 +20,8 @@ class EquipmentDetailScreen extends StatefulWidget {
 class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   EquipmentItem? _catalogItem;
   bool _descriptionExpanded = false;
+  bool _showAddedConfirmation = false;
+  bool _showSavedConfirmation = false;
 
   // ── Fallback feature lists per equipment ID ──────────────────
   static const _fallbackFeatures = <String, List<String>>{
@@ -842,7 +847,31 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   // ── Bottom bar ───────────────────────────────────────────────
 
+  void _addToCart(BuildContext context) {
+    if (_catalogItem == null) return;
+    final cart = context.read<CartProvider>();
+    cart.addItem(_catalogItem!, isRental: _canRent);
+    setState(() => _showAddedConfirmation = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showAddedConfirmation = false);
+    });
+  }
+
+  void _saveForLater(BuildContext context) {
+    if (_catalogItem == null) return;
+    final cart = context.read<CartProvider>();
+    cart.saveForLater(_catalogItem!, isRental: _canRent);
+    setState(() => _showSavedConfirmation = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _showSavedConfirmation = false);
+    });
+  }
+
   Widget _buildBottomBar(BuildContext context) {
+    final cart = context.watch<CartProvider>();
+    final inCart = _catalogItem != null && cart.isInCart(_catalogItem!.id);
+    final isSaved = _catalogItem != null && cart.isSaved(_catalogItem!.id);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
@@ -857,65 +886,129 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Add to Cart button
-            Expanded(
-              child: SizedBox(
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Added to cart')),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                  label: const Text('Add to Cart'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: HousepitalColors.orange,
-                    side: const BorderSide(
-                        color: HousepitalColors.orange, width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+            // Save for Later text button
+            if (!isSaved && !_showSavedConfirmation)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TextButton.icon(
+                  onPressed: () => _saveForLater(context),
+                  icon: const Icon(Icons.bookmark_border, size: 16),
+                  label: const Text('Save for Later'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: HousepitalColors.greyLight,
+                    textStyle: const TextStyle(fontSize: 13),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+            if (_showSavedConfirmation)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '✓ Saved for later',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: HousepitalColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            Row(
+              children: [
+                // Add to Cart / Go to Cart button
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: _showAddedConfirmation
+                        ? OutlinedButton.icon(
+                            onPressed: null,
+                            icon: const Icon(Icons.check_circle, size: 18,
+                                color: HousepitalColors.success),
+                            label: const Text('Added!',
+                                style: TextStyle(color: HousepitalColors.success)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                  color: HousepitalColors.success, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          )
+                        : inCart
+                            ? OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (_) => const CartScreen(),
+                                  ));
+                                },
+                                icon: const Icon(Icons.shopping_cart, size: 18),
+                                label: const Text('Go to Cart'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: HousepitalColors.success,
+                                  side: const BorderSide(
+                                      color: HousepitalColors.success, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            : OutlinedButton.icon(
+                                onPressed: () => _addToCart(context),
+                                icon: const Icon(Icons.shopping_cart_outlined,
+                                    size: 18),
+                                label: const Text('Add to Cart'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: HousepitalColors.orange,
+                                  side: const BorderSide(
+                                      color: HousepitalColors.orange, width: 1.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-            // Primary action button
-            Expanded(
-              child: SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Razorpay payment integration \u2014 connect your API'),
+                // Primary action button
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Add to cart first, then navigate
+                        if (!inCart) _addToCart(context);
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const CartScreen(),
+                        ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HousepitalColors.orange,
+                        foregroundColor: HousepitalColors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HousepitalColors.orange,
-                    foregroundColor: HousepitalColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      child: Text(_canRent ? 'Rent Now' : 'Buy Now'),
                     ),
                   ),
-                  child: Text(_canRent ? 'Rent Now' : 'Buy Now'),
                 ),
-              ),
+              ],
             ),
           ],
         ),
