@@ -53,8 +53,8 @@ void main() {
       expect(canUserPerform('FAMILY_MEMBER', 'raise_concern'), isTrue);
     });
 
-    test('CANNOT book', () {
-      expect(canUserPerform('FAMILY_MEMBER', 'book'), isFalse);
+    test('can book', () {
+      expect(canUserPerform('FAMILY_MEMBER', 'book'), isTrue);
     });
 
     test('CANNOT pay', () {
@@ -132,10 +132,10 @@ void main() {
       ]));
     });
 
-    test('FAMILY_MEMBER has 3 actions', () {
+    test('FAMILY_MEMBER has 4 actions', () {
       final actions = getAllowedActions('FAMILY_MEMBER');
-      expect(actions.length, 3);
-      expect(actions, containsAll(['view', 'rate', 'raise_concern']));
+      expect(actions.length, 4);
+      expect(actions, containsAll(['view', 'book', 'rate', 'raise_concern']));
     });
 
     test('PATIENT_SELF has 1 action', () {

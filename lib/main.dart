@@ -32,6 +32,9 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/settings/patient_profile_screen.dart';
 import 'screens/settings/family_members_screen.dart';
+import 'screens/settings/notification_preferences_screen.dart';
+import 'screens/settings/help_faq_screen.dart';
+import 'screens/settings/about_screen.dart';
 import 'screens/billing/invoice_detail_screen.dart';
 import 'screens/billing/transaction_log_screen.dart';
 import 'screens/billing/payment_methods_screen.dart';
@@ -44,6 +47,8 @@ import 'screens/my_care/medication_schedule_screen.dart';
 import 'screens/my_care/add_edit_medication_screen.dart';
 import 'screens/my_care/report_history_screen.dart';
 import 'screens/my_care/attendance_history_screen.dart';
+import 'screens/services/booking_confirmation_screen.dart';
+import 'screens/services/booking_history_screen.dart';
 import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
@@ -190,6 +195,15 @@ class HousepitalApp extends StatelessWidget {
           case '/family-members':
             return MaterialPageRoute(
                 builder: (_) => const FamilyMembersScreen());
+          case '/notification-preferences':
+            return MaterialPageRoute(
+                builder: (_) => const NotificationPreferencesScreen());
+          case '/help-faq':
+            return MaterialPageRoute(
+                builder: (_) => const HelpFaqScreen());
+          case '/about':
+            return MaterialPageRoute(
+                builder: (_) => const AboutScreen());
           case '/cart':
             return MaterialPageRoute(
                 builder: (_) => const CartScreen());
@@ -236,6 +250,18 @@ class HousepitalApp extends StatelessWidget {
             return MaterialPageRoute(
                 builder: (_) =>
                     AttendanceHistoryScreen(deploymentId: deploymentId));
+          case '/booking-confirmation':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => BookingConfirmationScreen(
+                      serviceName: args['serviceName'] as String,
+                      scheduledDate: args['scheduledDate'] as DateTime,
+                      scheduledSlot: args['scheduledSlot'] as String,
+                      totalAmount: args['totalAmount'] as int,
+                    ));
+          case '/booking-history':
+            return MaterialPageRoute(
+                builder: (_) => const BookingHistoryScreen());
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));

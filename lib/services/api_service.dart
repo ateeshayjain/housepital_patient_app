@@ -224,6 +224,21 @@ class ApiService {
         .toList();
   }
 
+  Future<void> cancelBooking(String bookingId, String reason) async {
+    await _post('/bookings/$bookingId/cancel', body: {'reason': reason});
+  }
+
+  Future<void> submitRating({
+    required String bookingId,
+    required int rating,
+    String? comment,
+  }) async {
+    await _post('/bookings/$bookingId/rate', body: {
+      'rating': rating,
+      if (comment != null) 'comment': comment,
+    });
+  }
+
   // ==================== ASSESSMENTS ====================
 
   Future<AssessmentRequest> createAssessmentRequest({

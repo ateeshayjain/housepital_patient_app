@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
@@ -22,6 +23,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   bool _descriptionExpanded = false;
   bool _showAddedConfirmation = false;
   bool _showSavedConfirmation = false;
+  int _selectedRentalMonths = 1;
 
   // ── Fallback feature lists per equipment ID ──────────────────
   static const _fallbackFeatures = <String, List<String>>{
@@ -311,7 +313,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       actions: [
         IconButton(
           icon: const Icon(Icons.share_outlined),
-          onPressed: () {},
+          onPressed: () {
+            final text = '$_name\n\n${_description ?? ''}\n\nCheck it out on Housepital!';
+            SharePlus.instance.share(ShareParams(text: text));
+          },
           tooltip: 'Share',
         ),
       ],
@@ -849,7 +854,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   void _addToCart(BuildContext context) {
     if (_catalogItem == null) return;
     final cart = context.read<CartProvider>();
-    cart.addItem(_catalogItem!, isRental: _canRent);
+    cart.addItem(_catalogItem!, isRental: _canRent, rentalMonths: _canRent ? _selectedRentalMonths : 1);
     setState(() => _showAddedConfirmation = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _showAddedConfirmation = false);
@@ -859,7 +864,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   void _saveForLater(BuildContext context) {
     if (_catalogItem == null) return;
     final cart = context.read<CartProvider>();
-    cart.saveForLater(_catalogItem!, isRental: _canRent);
+    cart.saveForLater(_catalogItem!, isRental: _canRent, rentalMonths: _canRent ? _selectedRentalMonths : 1);
     setState(() => _showSavedConfirmation = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _showSavedConfirmation = false);
@@ -888,6 +893,47 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Rental duration selector
+            if (_canRent) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Rental Duration',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.grey)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [1, 3, 6, 12].map((months) {
+                      final isSelected = _selectedRentalMonths == months;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text('$months ${months == 1 ? "mo" : "mo"}'),
+                          selected: isSelected,
+                          selectedColor: HousepitalColors.orangeLight,
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? HousepitalColors.orange : HousepitalColors.grey,
+                          ),
+                          side: BorderSide(
+                            color: isSelected ? HousepitalColors.orange : Colors.grey.shade300,
+                          ),
+                          onSelected: (_) => setState(() => _selectedRentalMonths = months),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (_catalogItem?.rentalPrice != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      '${DateHelper.formatCurrency(_catalogItem!.rentalPrice!.toInt())}/mo x $_selectedRentalMonths = ${DateHelper.formatCurrency((_catalogItem!.rentalPrice! * _selectedRentalMonths).toInt())}',
+                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
             // Save for Later text button
             if (!isSaved && !_showSavedConfirmation)
               Padding(

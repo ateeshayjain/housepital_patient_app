@@ -82,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
             context,
             icon: Icons.notifications_outlined,
             title: l.t('notification_settings'),
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/notification-preferences'),
           ),
           _settingsTile(
             context,
@@ -96,14 +96,14 @@ class SettingsScreen extends StatelessWidget {
             context,
             icon: Icons.help_outline,
             title: l.t('help_faq'),
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/help-faq'),
           ),
           _settingsTile(
             context,
             icon: Icons.info_outline,
             title: l.t('about'),
             subtitle: 'Housepital v1.0.0',
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/about'),
           ),
           const Divider(height: 1),
           _settingsTile(

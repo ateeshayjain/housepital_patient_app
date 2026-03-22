@@ -1098,6 +1098,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               hintText: 'e.g. 3 months, 1 year',
             ),
             onChanged: (v) => _issueDuration = v,
+            validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the duration of your issue' : null,
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
@@ -1281,6 +1282,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               hintText: 'e.g. 2 weeks, 6 months',
             ),
             onChanged: (v) => _symptomDuration = v,
+            validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the duration of your symptoms' : null,
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
@@ -1354,6 +1356,27 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
 
   void _submitRequest(BuildContext context, AppLocalizations l) {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validate start date
+    if (_startDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a preferred start date'),
+          backgroundColor: HousepitalColors.error,
+        ),
+      );
+      return;
+    }
+    if (_startDate!.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Start date must be in the future'),
+          backgroundColor: HousepitalColors.error,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

@@ -1,8 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -67,6 +67,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   @override
   void initState() {
     super.initState();
+    _initPaymentService();
     _checkAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -91,6 +92,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     _couponController.dispose();
     _checkAnimController.dispose();
     _fadeAnimController.dispose();
+    _paymentService.dispose();
     super.dispose();
   }
 
@@ -137,35 +139,47 @@ class _PaymentScreenState extends State<PaymentScreen>
     });
   }
 
+  late final PaymentService _paymentService;
+
+  void _initPaymentService() {
+    _paymentService = PaymentService();
+  }
+
   Future<void> _processPayment() async {
     setState(() => _isProcessing = true);
 
-    // Simulate payment processing
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    // Simulate success (90% chance) or failure (10% chance)
-    final success = Random().nextDouble() > 0.1;
-    final txnId =
-        'pay_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999).toString().padLeft(4, '0')}';
-
-    setState(() {
-      _isProcessing = false;
-      _showResult = true;
-      _paymentSuccess = success;
-      _transactionId = txnId;
-      _failureMessage = success ? null : 'Payment declined by bank. Please try again.';
-    });
-
-    if (success) {
-      HapticFeedback.mediumImpact();
-    } else {
-      HapticFeedback.heavyImpact();
-    }
-
-    _fadeAnimController.forward();
-    _checkAnimController.forward();
+    _paymentService.openCheckout(
+      amount: _totalAmount,
+      description: widget.description,
+      onSuccess: () {
+        if (!mounted) return;
+        final txnId =
+            'pay_${DateTime.now().millisecondsSinceEpoch}';
+        setState(() {
+          _isProcessing = false;
+          _showResult = true;
+          _paymentSuccess = true;
+          _transactionId = txnId;
+          _failureMessage = null;
+        });
+        HapticFeedback.mediumImpact();
+        _fadeAnimController.forward();
+        _checkAnimController.forward();
+      },
+      onFailure: (message) {
+        if (!mounted) return;
+        setState(() {
+          _isProcessing = false;
+          _showResult = true;
+          _paymentSuccess = false;
+          _transactionId = null;
+          _failureMessage = message;
+        });
+        HapticFeedback.heavyImpact();
+        _fadeAnimController.forward();
+        _checkAnimController.forward();
+      },
+    );
   }
 
   void _retryPayment() {
