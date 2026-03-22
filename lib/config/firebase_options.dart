@@ -36,13 +36,11 @@ class DefaultFirebaseOptions {
     storageBucket: 'housepital-patient.firebasestorage.app',
   );
 
-  // TODO: Register iOS app in Firebase Console and add config here
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'TODO_IOS_API_KEY',
-    appId: 'TODO_IOS_APP_ID',
-    messagingSenderId: '536139461614',
-    projectId: 'housepital-patient',
-    storageBucket: 'housepital-patient.firebasestorage.app',
-    iosBundleId: 'com.housepital.patient',
-  );
+  static FirebaseOptions get ios {
+    throw UnsupportedError(
+      'iOS Firebase not configured. Register the iOS app at '
+      'https://console.firebase.google.com/project/housepital-patient/settings/general '
+      'and update this file with the real config.',
+    );
+  }
 }

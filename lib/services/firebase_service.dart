@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +10,7 @@ class FirebaseService {
   FirebaseAuth? _auth;
   FirebaseMessaging? _messaging;
   bool _initialized = false;
+  StreamSubscription<String>? _tokenRefreshSub;
 
   String? _verificationId;
 
@@ -24,7 +27,8 @@ class FirebaseService {
   User? get currentUser {
     try {
       return auth.currentUser;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FirebaseService: currentUser failed: $e');
       return null;
     }
   }
@@ -32,7 +36,8 @@ class FirebaseService {
   bool get isLoggedIn {
     try {
       return currentUser != null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FirebaseService: isLoggedIn failed: $e');
       return false;
     }
   }
@@ -84,7 +89,9 @@ class FirebaseService {
   Future<void> signOut() async {
     try {
       await auth.signOut();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: signOut failed: $e');
+    }
   }
 
   // ==================== FCM ====================
@@ -92,7 +99,8 @@ class FirebaseService {
   Future<String?> getFcmToken() async {
     try {
       return await messaging.getToken();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FirebaseService: getFcmToken failed: $e');
       return null;
     }
   }
@@ -105,26 +113,35 @@ class FirebaseService {
         sound: true,
         provisional: false,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: requestNotificationPermission failed: $e');
+    }
   }
 
   void onTokenRefresh(Function(String token) callback) {
     try {
-      messaging.onTokenRefresh.listen(callback);
-    } catch (_) {}
+      _tokenRefreshSub?.cancel();
+      _tokenRefreshSub = messaging.onTokenRefresh.listen(callback);
+    } catch (e) {
+      debugPrint('FirebaseService: onTokenRefresh failed: $e');
+    }
   }
 
   void setupForegroundHandler(
       Function(RemoteMessage message) onMessage) {
     try {
       FirebaseMessaging.onMessage.listen(onMessage);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: setupForegroundHandler failed: $e');
+    }
   }
 
   void setupBackgroundHandler() {
     try {
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: setupBackgroundHandler failed: $e');
+    }
   }
 
   static Future<void> _firebaseBackgroundHandler(
@@ -134,13 +151,16 @@ class FirebaseService {
       Function(RemoteMessage message) onMessageOpenedApp) {
     try {
       FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: setupMessageOpenedApp failed: $e');
+    }
   }
 
   Future<RemoteMessage?> getInitialMessage() async {
     try {
       return await messaging.getInitialMessage();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FirebaseService: getInitialMessage failed: $e');
       return null;
     }
   }
@@ -148,13 +168,17 @@ class FirebaseService {
   Future<void> subscribeToTopic(String topic) async {
     try {
       await messaging.subscribeToTopic(topic);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: subscribeToTopic failed: $e');
+    }
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await messaging.unsubscribeFromTopic(topic);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FirebaseService: unsubscribeFromTopic failed: $e');
+    }
   }
 
   // ==================== FIRESTORE REAL-TIME LISTENERS ====================
@@ -272,5 +296,11 @@ class FirebaseService {
     } catch (e) {
       debugPrint('FCM setup skipped: $e');
     }
+  }
+
+  /// Cancel stream subscriptions to prevent memory leaks.
+  void dispose() {
+    _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = null;
   }
 }

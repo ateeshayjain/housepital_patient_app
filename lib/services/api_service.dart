@@ -69,6 +69,11 @@ class ApiService {
     }
   }
 
+  /// Public GET — used by services that build their own API paths.
+  Future<Map<String, dynamic>> get(String path,
+      {Map<String, String>? queryParams}) =>
+      _get(path, queryParams: queryParams);
+
   // ==================== AUTH ====================
 
   Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {

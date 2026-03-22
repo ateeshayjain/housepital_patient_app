@@ -109,11 +109,16 @@ class PaymentService {
     }
   }
 
-  void _handleSuccess(PaymentSuccessResponse response) {
+  void _handleSuccess(PaymentSuccessResponse response) async {
     if (kDebugMode) debugPrint('Payment success');
 
-    // Verify payment on backend
-    _verifyPaymentOnBackend(response);
+    // Verify payment on backend before calling success callback
+    try {
+      await _verifyPaymentOnBackend(response);
+    } catch (e) {
+      // Payment went through on Razorpay side — backend can reconcile later.
+      debugPrint('WARNING: Payment succeeded but backend verification failed: $e');
+    }
 
     _onSuccessCallback?.call();
   }

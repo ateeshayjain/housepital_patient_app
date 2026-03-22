@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api_service.dart';
 
 /// Represents a saved payment method for auto-pay.
 class SavedPaymentMethod {
@@ -63,51 +64,60 @@ class PaymentReminder {
 
 /// Service to manage payment reminders and saved payment methods.
 ///
-/// In production, this would:
-/// - Fetch upcoming payments from the backend
-/// - Use Razorpay Subscriptions API for auto-debit
-/// - Schedule push notifications via Firebase Cloud Messaging
-/// - Store tokenized cards via Razorpay's token hub
+/// Fetches upcoming payments from the backend API.
+/// Future enhancements:
+/// - Razorpay Subscriptions API for auto-debit
+/// - Firebase Cloud Messaging for push notifications
+/// - Tokenized cards via Razorpay's token hub
 class PaymentReminderService {
-  // Mock saved payment methods
-  static List<SavedPaymentMethod> getSavedMethods() {
-    return [
-      // Empty by default — user needs to add their card/UPI
-    ];
+  final ApiService _apiService;
+
+  PaymentReminderService({required ApiService apiService})
+      : _apiService = apiService;
+
+  /// Returns saved payment methods from the backend.
+  /// Falls back to empty list on error.
+  Future<List<SavedPaymentMethod>> getSavedMethods() async {
+    try {
+      final result = await _apiService.get('/payments/saved-methods');
+      final items = result['data'] as List<dynamic>? ?? [];
+      return items
+          .map((json) => SavedPaymentMethod(
+                id: json['id'] as String,
+                type: json['type'] as String,
+                displayName: json['display_name'] as String,
+                cardNetwork: json['card_network'] as String?,
+                isDefault: json['is_default'] as bool? ?? false,
+                autoPayEnabled: json['auto_pay_enabled'] as bool? ?? false,
+              ))
+          .toList();
+    } catch (e) {
+      debugPrint('PaymentReminderService: getSavedMethods failed: $e');
+      return [];
+    }
   }
 
-  // Mock upcoming payment reminders based on active deployments
-  static List<PaymentReminder> getUpcomingReminders() {
-    final now = DateTime.now();
-    return [
-      PaymentReminder(
-        id: 'rem_1',
-        serviceName: 'Nurse — Priya Mehra (24-hr)',
-        billingCycle: 'monthly',
-        amount: 36000, // ₹1,200/day × 30 days
-        dueDate: now.add(const Duration(days: 2)),
-        status: 'upcoming',
-        autoPayEnabled: false,
-      ),
-      PaymentReminder(
-        id: 'rem_2',
-        serviceName: 'Hospital Bed Rental',
-        billingCycle: 'monthly',
-        amount: 18000, // ₹600/day × 30 days
-        dueDate: now.add(const Duration(days: 5)),
-        status: 'upcoming',
-        autoPayEnabled: false,
-      ),
-      PaymentReminder(
-        id: 'rem_3',
-        serviceName: 'Air Mattress Rental',
-        billingCycle: 'monthly',
-        amount: 9000, // ₹300/day × 30 days
-        dueDate: now.add(const Duration(days: 5)),
-        status: 'upcoming',
-        autoPayEnabled: false,
-      ),
-    ];
+  /// Fetches upcoming payment reminders from the backend.
+  /// Falls back to empty list on error.
+  Future<List<PaymentReminder>> getUpcomingReminders() async {
+    try {
+      final result = await _apiService.get('/payments/upcoming-reminders');
+      final items = result['data'] as List<dynamic>? ?? [];
+      return items
+          .map((json) => PaymentReminder(
+                id: json['id'] as String,
+                serviceName: json['service_name'] as String,
+                billingCycle: json['billing_cycle'] as String? ?? 'monthly',
+                amount: (json['amount'] as num).toDouble(),
+                dueDate: DateTime.parse(json['due_date'] as String),
+                status: json['status'] as String? ?? 'upcoming',
+                autoPayEnabled: json['auto_pay_enabled'] as bool? ?? false,
+              ))
+          .toList();
+    } catch (e) {
+      debugPrint('PaymentReminderService: getUpcomingReminders failed: $e');
+      return [];
+    }
   }
 
   /// Notification messages for payment reminders (Airtel-style).
