@@ -586,7 +586,6 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       icon: Icons.star_outline,
       iconColor: HousepitalColors.success,
       title: 'Key Features',
-      initiallyExpanded: true,
       children: features.map((feature) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
