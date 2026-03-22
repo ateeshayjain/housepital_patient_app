@@ -77,13 +77,16 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 3 | Assessment Request Flow             | AssessmentRequestScreen  | POST /assessments    | Done           | Dynamic questionnaire per category           |
 | 4 | Equipment Detail Page               | EquipmentDetailScreen    | GET /equipment       | Done           | Variant selection, rent/buy, add-to-cart     |
 | 5 | Package Detail Page                 | PackageDetailScreen      | --                   | Done           | Static care package info                     |
-| 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | API validates, but discount display is a stub|
-| 7 | Cart System                         | CartScreen               | --                   | Done           | Frontend-only cart with CartProvider         |
+| 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | Coupon system fully wired in cart + booking  |
+| 7 | Cart System                         | CartScreen               | --                   | Done           | CartProvider with SharedPreferences persistence, coupon support |
 | 8 | Universal Search                    | UniversalSearchScreen    | --                   | Done           | Local search across services                 |
 | 9 | Manpower Price Hiding               | ServiceCatalogScreen     | hide_price flag      | Done           | Prices hidden per business rule              |
 | 10| Slot Availability Check             | --                       | --                   | Not Started    | Currently accepts any slot without checking  |
-| 11| Booking Cancellation                | --                       | --                   | Not Started    | No cancel flow in app                        |
-| 12| Post-Service Rating                 | --                       | POST /ratings exists | Not Started    | Backend ready, no UI trigger from booking    |
+| 11| Booking Cancellation                | BookingHistoryScreen     | PUT /bookings/:id/cancel | Done       | Cancel from booking history with confirmation dialog |
+| 12| Post-Service Rating                 | BookingHistoryScreen     | POST /ratings        | Done           | Rate completed bookings from booking history |
+| 13| Booking Confirmation Screen         | BookingConfirmationScreen| --                   | Done           | Animated confirmation with booking ID, share, next steps |
+| 14| Booking History                     | BookingHistoryScreen     | GET /patients/:id/bookings | Done     | Filter by status, cancel, rate, re-book      |
+| 15| Address Selection (checkout)        | AddressSelectionScreen   | SharedPreferences    | Done           | Saved addresses, pincode validation, add/edit/delete |
 
 ---
 
@@ -95,7 +98,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 2 | Invoice List                        | BillingScreen          | /patients/:id/invoices           | Done           | Paginated invoices                       |
 | 3 | Invoice Detail                      | InvoiceDetailScreen    | /invoices/:id                    | Done           | Line items, amounts, status              |
 | 4 | Transaction Log                     | TransactionLogScreen   | /patients/:id/transactions       | Done           | Payment history with status badges       |
-| 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Test mode only (see KNOWN_ISSUES BUG-01) |
+| 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Real Razorpay integration (Random() stub replaced) |
 | 6 | Payment Webhook Handler             | --                     | /payments/webhook                | Done           | payment.captured, payment.failed, refund |
 | 7 | Invoice PDF Download                | InvoiceDetailScreen    | --                               | Not Started    | Button exists, shows "Coming soon"       |
 | 8 | Payment Methods Management          | PaymentMethodsScreen   | --                               | Not Started    | Placeholder screen                       |
@@ -122,7 +125,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend               | Backend                  | Status         | Notes                                    |
 |---|-------------------------------------|------------------------|--------------------------|----------------|------------------------------------------|
-| 1 | Raise a Concern                     | RaiseConcernScreen     | POST /concerns           | Done           | Category, urgency, evidence upload       |
+| 1 | Raise a Concern                     | RaiseConcernScreen     | POST /concerns           | Done           | Evidence upload fixed, real API submission |
 | 2 | Concern History                     | --                     | GET /patients/:id/concerns | Done (API)   | API exists, no dedicated history screen  |
 | 3 | Staff Profile                       | StaffProfileScreen     | /staff/:id/profile       | Done           | Verification badges, reviews             |
 | 4 | SOS Emergency                       | SOSScreen              | --                       | Done           | Call ambulance + 112                     |
@@ -136,15 +139,15 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend                  | Backend                        | Status         | Notes                                 |
 |---|-------------------------------------|---------------------------|--------------------------------|----------------|---------------------------------------|
-| 1 | Settings Hub                        | SettingsScreen            | --                             | Done           | Navigation to sub-screens             |
-| 2 | Patient Profile (view/edit)         | PatientProfileScreen      | GET/PUT /patients/:id          | Done           | PRIMARY_CONTACT can edit              |
+| 1 | Settings Hub                        | SettingsScreen            | --                             | Done           | All dead ends wired to real screens   |
+| 2 | Patient Profile (view/edit)         | PatientProfileScreen      | GET/PUT /patients/:id          | Done           | Real API save, city dropdown list     |
 | 3 | Family Members Management           | FamilyMembersScreen       | /patients/:id/family           | Done           | Add, edit, remove (not PRIMARY)       |
-| 4 | Document Repository                 | DocumentRepositoryScreen  | --                             | Not Started    | Placeholder screen exists             |
-| 5 | Notification Preferences            | --                        | notification_preferences JSON  | Not Started    | Schema supports it, no UI            |
+| 4 | Document Repository                 | DocumentRepositoryScreen  | --                             | Done           | Search, share, open documents         |
+| 5 | Notification Preferences            | NotificationPreferencesScreen | SharedPreferences          | Done           | Toggleable + forced-ON notification types |
 | 6 | Language Toggle (EN/HI)             | SettingsScreen            | preferred_language in DB       | Done           | AppProvider.locale + AppLocalizations |
-| 7 | Help / FAQ                          | --                        | --                             | Not Started    |                                       |
-| 8 | Terms & Privacy Policy              | --                        | --                             | Not Started    |                                       |
-| 9 | App Version Info                    | --                        | --                             | Not Started    |                                       |
+| 7 | Help / FAQ                          | HelpFaqScreen             | --                             | Done           | 20 FAQs, search, categories, contact support |
+| 8 | Terms & Privacy Policy              | AboutScreen               | --                             | Done           | Links to terms/privacy in About screen |
+| 9 | App Version Info                    | AboutScreen               | --                             | Done           | Company info, version, social links   |
 | 10| Logout                             | SettingsScreen            | --                             | Done           | Firebase Auth sign out                |
 
 ---

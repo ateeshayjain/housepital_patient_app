@@ -91,7 +91,7 @@ Commission is non-refundable WHEN ALL THREE conditions are met:
 | View dashboard              | Yes | Yes | Yes |
 | View vitals/reports         | Yes | Yes | Yes |
 | View service catalog        | Yes | Yes | Yes |
-| Book services               | Yes | No  | No  |
+| Book services               | Yes | Yes | No  |
 | Make payments               | Yes | No  | No  |
 | Add/remove family members   | Yes | No  | No  |
 | Edit patient profile        | Yes | No  | No  |
@@ -106,10 +106,15 @@ Commission is non-refundable WHEN ALL THREE conditions are met:
 | Submit assessment request   | Yes | No  | No  |
 | Apply promo codes           | Yes | No  | No  |
 | Remove family member        | Yes | No  | No  |
+| Cancel booking              | Yes | Yes | No  |
+| Rate booking                | Yes | Yes | No  |
+| View booking history        | Yes | Yes | Yes |
 
-**Enforcement:** Backend uses `requirePrimary` middleware. Frontend should disable/hide actions for non-primary users.
+**Enforcement:** Backend uses `requirePrimary` middleware for write operations. Frontend uses `canUserPerform()` from `permissions.dart` to disable/hide actions for non-primary users.
 
 **Special rule:** Cannot remove a PRIMARY_CONTACT member (backend returns 400).
+
+**Change log (2026-03-22):** FAMILY_MEMBER can now book services. Previously this was PRIMARY_CONTACT only. The `permissions.dart` matrix was updated to include 'book' in the FAMILY_MEMBER action set.
 
 ---
 

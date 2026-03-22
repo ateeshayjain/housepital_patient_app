@@ -19,10 +19,10 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 
 | ID     | Description                                                              | Found      | Status   |
 |--------|--------------------------------------------------------------------------|------------|----------|
-| BUG-03 | Share button on booking confirmation is a no-op -- `share_plus` is imported but the share action is not wired to actual share intent | 2026-03-21 | Open |
-| BUG-04 | Promo code field in booking wizard is a stub -- API validates the code but discount is not visually reflected in the order summary before payment | 2026-03-21 | Open |
-| BUG-05 | Payment stub in booking wizard -- booking wizard creates the booking but payment flow is not fully integrated into the booking confirmation lifecycle | 2026-03-21 | Open |
-| BUG-06 | Form validation gaps -- assessment request questionnaire allows empty submissions in some categories | 2026-03-21 | Open |
+| BUG-03 | ~~Share button on booking confirmation is a no-op~~ | 2026-03-21 | Resolved 2026-03-22 |
+| BUG-04 | ~~Promo code field in booking wizard is a stub~~ | 2026-03-21 | Resolved 2026-03-22 |
+| BUG-05 | ~~Payment stub in booking wizard~~ | 2026-03-21 | Resolved 2026-03-22 |
+| BUG-06 | ~~Form validation gaps in assessment request~~ | 2026-03-21 | Resolved 2026-03-22 |
 | BUG-07 | 3 pre-existing widget test failures in `test/screens/my_care/my_care_widgets_test.dart` -- cause unknown, needs triage | 2026-03-22 | Open |
 | BUG-08 | AuthProvider has no test coverage -- login flow, session management, token refresh are untested | 2026-03-22 | Open |
 | BUG-09 | PaymentService has no test coverage -- Razorpay integration, amount calculations untested | 2026-03-22 | Open |
@@ -38,7 +38,7 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 | BUG-12 | Hard-coded colors in some screens instead of using `HousepitalColors` constants -- inconsistent theming | 2026-03-21 | Open |
 | BUG-13 | Hindi translations incomplete -- some screens still show English text when Hindi locale is selected | 2026-03-20 | Open |
 | BUG-14 | Invoice PDF download is a stub -- button exists but PDF generation/download not implemented | 2026-03-21 | Open |
-| BUG-15 | Document repository screen is a placeholder -- upload and document management not implemented | 2026-03-20 | Open |
+| BUG-15 | ~~Document repository screen is a placeholder~~ -- search, share, open implemented | 2026-03-20 | Resolved 2026-03-22 |
 | BUG-16 | `/services` route maps to an empty `Scaffold()` -- no fallback content | 2026-03-21 | Open |
 | BUG-17 | Family member invite sends no actual SMS/WhatsApp -- backend records the intention but MSG91 integration is not connected | 2026-03-20 | Open |
 | BUG-18 | Notification routing not implemented -- tapping a push notification does not navigate to the relevant screen | 2026-03-20 | Open |
@@ -89,6 +89,20 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 | Hindi incomplete | Fallback to English for missing keys via `AppLocalizations` | Complete all Hindi string translations |
 | Invoice PDF | "Download" button shows a snackbar saying "Coming soon" | Integrate pdfkit on backend or Razorpay Invoice API |
 | Family invite | Invite is recorded in DB but no actual message sent | Connect MSG91 SMS/WhatsApp API |
+
+---
+
+---
+
+## Resolved
+
+| ID     | Description                                                              | Found      | Resolved   | Fix                                           |
+|--------|--------------------------------------------------------------------------|------------|------------|-----------------------------------------------|
+| BUG-03 | Share button on booking confirmation was a no-op                         | 2026-03-21 | 2026-03-22 | BookingConfirmationScreen now uses share_plus correctly |
+| BUG-04 | Promo code field was a stub -- discount not reflected in UI              | 2026-03-21 | 2026-03-22 | Coupon system added to CartScreen + booking flow |
+| BUG-05 | Payment stub in booking wizard                                          | 2026-03-21 | 2026-03-22 | Booking now flows to real Razorpay + confirmation screen |
+| BUG-06 | Form validation gaps in assessment request questionnaire                 | 2026-03-21 | 2026-03-22 | Form validators added to AssessmentRequestScreen |
+| BUG-15 | Document repository screen was a placeholder                            | 2026-03-20 | 2026-03-22 | Search, share, open functionality implemented  |
 
 ---
 
