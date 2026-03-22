@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
+import 'config/firebase_options.dart';
 import 'config/theme.dart';
 import 'models/models.dart';
 import 'providers/app_provider.dart';
@@ -50,8 +52,7 @@ import 'providers/medication_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase — uncomment after adding google-services.json / GoogleService-Info.plist
-  // await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final firebaseService = FirebaseService();
   final apiService = ApiService();
@@ -102,22 +103,20 @@ class HousepitalApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // TODO: Restore auth gate after Firebase is configured
-      // home: Consumer<AuthProvider>(
-      //   builder: (context, auth, _) {
-      //     switch (auth.state) {
-      //       case AuthState.authenticated:
-      //         return const MainShell();
-      //       case AuthState.onboarding:
-      //         return const OnboardingScreen();
-      //       case AuthState.otpSent:
-      //         return const OtpScreen();
-      //       default:
-      //         return const LoginScreen();
-      //     }
-      //   },
-      // ),
-      home: MainShell(key: MainShell.shellKey),
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          switch (auth.state) {
+            case AuthState.authenticated:
+              return MainShell(key: MainShell.shellKey);
+            case AuthState.onboarding:
+              return const OnboardingScreen();
+            case AuthState.otpSent:
+              return const OtpScreen();
+            default:
+              return const LoginScreen();
+          }
+        },
+      ),
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/otp':
