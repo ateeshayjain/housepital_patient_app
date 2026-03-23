@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/medication_models.dart';
 import '../services/api_service.dart';
+import '../services/medication_reminder_service.dart';
 
 class MedicationProvider extends ChangeNotifier {
   final ApiService _apiService;
@@ -36,6 +38,10 @@ class MedicationProvider extends ChangeNotifier {
 
     try {
       _medications = await _apiService.getMedications(patientId);
+      // Reschedule all local reminders after loading
+      if (!kIsWeb) {
+        MedicationReminderService().rescheduleAll(activeMedications);
+      }
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
@@ -79,6 +85,10 @@ class MedicationProvider extends ChangeNotifier {
     try {
       final med = await _apiService.addMedication(patientId, body);
       _medications.add(med);
+      // Schedule reminders for the new medication
+      if (!kIsWeb) {
+        MedicationReminderService().scheduleMedicationReminders(med);
+      }
       _isSaving = false;
       notifyListeners();
       return true;
@@ -101,6 +111,12 @@ class MedicationProvider extends ChangeNotifier {
           await _apiService.updateMedication(patientId, medicationId, body);
       final index = _medications.indexWhere((m) => m.id == medicationId);
       if (index != -1) _medications[index] = updated;
+      // Reschedule reminders for the updated medication
+      if (!kIsWeb) {
+        final svc = MedicationReminderService();
+        await svc.cancelReminders(medicationId);
+        await svc.scheduleMedicationReminders(updated);
+      }
       _isSaving = false;
       notifyListeners();
       return true;
@@ -117,6 +133,10 @@ class MedicationProvider extends ChangeNotifier {
     try {
       await _apiService.deleteMedication(patientId, medicationId);
       _medications.removeWhere((m) => m.id == medicationId);
+      // Cancel reminders for the deleted medication
+      if (!kIsWeb) {
+        MedicationReminderService().cancelReminders(medicationId);
+      }
       notifyListeners();
       return true;
     } on ApiException catch (e) {

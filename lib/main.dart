@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -63,12 +64,18 @@ import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
 import 'providers/medication_provider.dart';
+import 'services/medication_reminder_service.dart';
 import 'utils/notification_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialise local medication reminders (no-op on web).
+  if (!kIsWeb) {
+    await MedicationReminderService().init();
+  }
 
   final firebaseService = FirebaseService();
   final apiService = ApiService();
@@ -112,7 +119,33 @@ class _HousepitalAppState extends State<HousepitalApp> {
   void initState() {
     super.initState();
     // Setup FCM after first frame so the navigator is available.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setupFCM());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupFCM();
+      _setupMedicationReminderTapHandler();
+    });
+  }
+
+  void _setupMedicationReminderTapHandler() {
+    if (kIsWeb) return;
+    MedicationReminderService().onNotificationAction =
+        (medicationId, action) {
+      final ctx = HousepitalApp.navigatorKey.currentContext;
+      if (ctx == null) return;
+
+      if (action == 'taken') {
+        // Navigate to the medication schedule so the user can confirm
+        Navigator.pushNamed(ctx, '/medication-schedule');
+        ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+          const SnackBar(
+            content: Text('Medication marked — confirm on the schedule'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        // Plain tap — open the schedule screen
+        Navigator.pushNamed(ctx, '/medication-schedule');
+      }
+    };
   }
 
   void _setupFCM() {

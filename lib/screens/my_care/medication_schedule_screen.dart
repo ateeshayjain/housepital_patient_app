@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
+import '../../services/medication_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -49,13 +50,80 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                           await medProv.loadTodaySchedule(patientId);
                         }
                       },
-                      child: ListView.builder(
+                      child: ListView(
                         padding: const EdgeInsets.all(16),
-                        itemCount: medProv.schedule.length,
-                        itemBuilder: (context, index) =>
-                            _slotSection(medProv.schedule[index], l),
+                        children: [
+                          _nextReminderCard(medProv),
+                          ...medProv.schedule
+                              .map((slot) => _slotSection(slot, l)),
+                        ],
                       ),
                     ),
+    );
+  }
+
+  Widget _nextReminderCard(MedicationProvider medProv) {
+    final nextReminder = MedicationReminderService.getNextReminder(
+      medProv.activeMedications,
+    );
+
+    if (nextReminder == null) {
+      // Check if all slots are in the past — show "All done" card
+      final allTaken = medProv.schedule.every((s) => s.allGiven);
+      if (medProv.schedule.isNotEmpty && allTaken) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'All medications taken for today!',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green[800],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_active,
+              color: Color(0xFFF97316), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Next reminder: ${nextReminder.medicationName} ${nextReminder.dosage} at ${_formatSlotTime(nextReminder.time)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF9A3412),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

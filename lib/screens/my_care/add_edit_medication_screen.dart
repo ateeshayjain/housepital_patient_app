@@ -27,6 +27,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
   late String _frequency;
   late String _stockUnit;
   late List<String> _timeSlots;
+  late bool _remindersEnabled;
 
   bool get isEditing => widget.medication != null;
 
@@ -62,6 +63,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
     _stockUnit = med?.stockUnit ?? 'tablets';
     _timeSlots =
         med?.timeSlots ?? List.from(_defaultSlots[_frequency] ?? ['08:00']);
+    _remindersEnabled = med?.remindersEnabled ?? true;
   }
 
   @override
@@ -184,6 +186,14 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              title: const Text('Enable Reminders'),
+              subtitle: const Text('Get notified when it\'s time to take this medication'),
+              value: _remindersEnabled,
+              contentPadding: EdgeInsets.zero,
+              onChanged: (v) => setState(() => _remindersEnabled = v),
+            ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: medProv.isSaving ? null : () => _save(medProv),
@@ -223,6 +233,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
           ? null
           : int.tryParse(_stockCtrl.text.trim()),
       'stock_unit': _stockUnit,
+      'reminders_enabled': _remindersEnabled,
     };
 
     bool success;

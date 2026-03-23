@@ -16,6 +16,7 @@ class MedicationFull {
   final String? stockUnit; // tablets, units, ml, puffs
   final String? prescriptionPhotoUrl;
   final bool isActive;
+  final bool remindersEnabled;
 
   MedicationFull({
     required this.id,
@@ -33,6 +34,7 @@ class MedicationFull {
     this.stockUnit,
     this.prescriptionPhotoUrl,
     this.isActive = true,
+    this.remindersEnabled = true,
   });
 
   /// Estimate days of supply remaining based on frequency.
@@ -98,6 +100,7 @@ class MedicationFull {
         stockUnit: json['stock_unit'],
         prescriptionPhotoUrl: json['prescription_photo_url'],
         isActive: json['is_active'] ?? true,
+        remindersEnabled: json['reminders_enabled'] ?? true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -112,6 +115,7 @@ class MedicationFull {
         'end_date': endDate?.toIso8601String().split('T').first,
         'stock_count': stockCount,
         'stock_unit': stockUnit,
+        'reminders_enabled': remindersEnabled,
       };
 }
 
