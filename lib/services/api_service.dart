@@ -1,17 +1,28 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/constants.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
+import 'i_api_service.dart';
 
-class ApiService {
+class ApiService implements IApiService {
   final String baseUrl;
   String? _authToken;
 
+  /// Maximum number of automatic retries for transient failures.
+  static const int _maxRetries = 2;
+
+  /// Base delay between retries (doubles on each attempt).
+  static const Duration _retryDelay = Duration(seconds: 1);
+
   ApiService({this.baseUrl = AppConstants.apiBaseUrl});
 
+  @override
   void setAuthToken(String token) {
     _authToken = token;
   }
@@ -21,38 +32,77 @@ class ApiService {
         if (_authToken != null) 'Authorization': 'Bearer $_authToken',
       };
 
+  /// Wraps an HTTP call with retry logic for transient failures
+  /// (SocketException, TimeoutException, 5xx status codes).
+  Future<http.Response> _withRetry(
+      Future<http.Response> Function() request) async {
+    int attempt = 0;
+    while (true) {
+      try {
+        final response = await request();
+        // Retry on 5xx server errors
+        if (response.statusCode >= 500 && attempt < _maxRetries) {
+          attempt++;
+          if (kDebugMode) {
+            debugPrint(
+                'Retrying request (attempt $attempt/$_maxRetries) after ${response.statusCode}');
+          }
+          await Future.delayed(_retryDelay * attempt);
+          continue;
+        }
+        return response;
+      } on SocketException {
+        if (attempt >= _maxRetries) rethrow;
+        attempt++;
+        if (kDebugMode) {
+          debugPrint(
+              'Network error, retrying (attempt $attempt/$_maxRetries)');
+        }
+        await Future.delayed(_retryDelay * attempt);
+      } on TimeoutException {
+        if (attempt >= _maxRetries) rethrow;
+        attempt++;
+        if (kDebugMode) {
+          debugPrint(
+              'Timeout, retrying (attempt $attempt/$_maxRetries)');
+        }
+        await Future.delayed(_retryDelay * attempt);
+      }
+    }
+  }
+
   Future<Map<String, dynamic>> _get(String path,
       {Map<String, String>? queryParams}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: _headers);
+    final response = await _withRetry(() => http.get(uri, headers: _headers));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _post(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await http.post(
+    final response = await _withRetry(() => http.post(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
-    );
+    ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _put(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await http.put(
+    final response = await _withRetry(() => http.put(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
-    );
+    ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _delete(String path) async {
-    final response = await http.delete(
+    final response = await _withRetry(() => http.delete(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
-    );
+    ));
     return _handleResponse(response);
   }
 

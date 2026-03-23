@@ -162,6 +162,13 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
                     controller: _stockCtrl,
                     decoration: const InputDecoration(labelText: 'Stock count'),
                     keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v != null && v.isNotEmpty) {
+                        final n = int.tryParse(v);
+                        if (n == null || n < 0) return 'Enter a valid number';
+                      }
+                      return null;
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),

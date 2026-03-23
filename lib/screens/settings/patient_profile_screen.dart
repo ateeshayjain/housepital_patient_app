@@ -330,6 +330,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               controller: _addressController,
               decoration: const InputDecoration(labelText: 'Address'),
               maxLines: 2,
+              validator: (v) => v == null || v.trim().isEmpty ? 'Address is required' : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(

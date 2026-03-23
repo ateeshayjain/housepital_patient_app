@@ -125,6 +125,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Name'),
                   textCapitalization: TextCapitalization.words,
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -134,12 +135,23 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     prefixText: '+91 ',
                   ),
                   keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Phone is required';
+                    if (v.trim().length != 10) return 'Enter a valid 10-digit number';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: emailController,
                   decoration: const InputDecoration(labelText: 'Email (optional)'),
                   keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v != null && v.isNotEmpty && !v.contains('@')) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(

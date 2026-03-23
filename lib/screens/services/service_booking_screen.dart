@@ -541,6 +541,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   ),
                   maxLines: 2,
                   style: const TextStyle(fontSize: 14),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Please describe your concern' : null,
                 ),
               ],
             ],
