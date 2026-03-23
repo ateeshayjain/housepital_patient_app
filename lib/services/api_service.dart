@@ -267,25 +267,6 @@ class ApiService {
         .toList();
   }
 
-  // ==================== EQUIPMENT ORDERS ====================
-
-  Future<List<EquipmentOrder>> getEquipmentOrders(String patientId) async {
-    final data = await _get('/patients/$patientId/equipment-orders');
-    return (data['equipment_orders'] as List)
-        .map((o) => EquipmentOrder.fromJson(o))
-        .toList();
-  }
-
-  // ==================== ASSESSMENT ACTIONS ====================
-
-  Future<void> acceptAssessment(String assessmentId) async {
-    await _put('/assessments/$assessmentId/accept', body: {});
-  }
-
-  Future<void> declineAssessment(String assessmentId) async {
-    await _put('/assessments/$assessmentId/decline', body: {});
-  }
-
   // ==================== BILLING ====================
 
   Future<Map<String, dynamic>> getBillingSummary(String patientId) async {

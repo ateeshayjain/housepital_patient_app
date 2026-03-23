@@ -48,7 +48,7 @@ import 'screens/my_care/add_edit_medication_screen.dart';
 import 'screens/my_care/report_history_screen.dart';
 import 'screens/my_care/attendance_history_screen.dart';
 import 'screens/services/booking_confirmation_screen.dart';
-import 'screens/services/booking_history_screen.dart';
+import 'screens/services/my_orders_screen.dart';
 import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
@@ -108,20 +108,9 @@ class HousepitalApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          switch (auth.state) {
-            case AuthState.authenticated:
-              return MainShell(key: MainShell.shellKey);
-            case AuthState.onboarding:
-              return const OnboardingScreen();
-            case AuthState.otpSent:
-              return const OtpScreen();
-            default:
-              return const LoginScreen();
-          }
-        },
-      ),
+      // TODO: Restore auth gate before production
+      // home: Consumer<AuthProvider>(...),
+      home: MainShell(key: MainShell.shellKey),
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/otp':
@@ -260,8 +249,9 @@ class HousepitalApp extends StatelessWidget {
                       totalAmount: args['totalAmount'] as int,
                     ));
           case '/booking-history':
+            final tab = settings.arguments as int? ?? 0;
             return MaterialPageRoute(
-                builder: (_) => const BookingHistoryScreen());
+                builder: (_) => MyOrdersScreen(initialTab: tab));
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));
