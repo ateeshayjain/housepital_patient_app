@@ -97,6 +97,13 @@ class SettingsScreen extends StatelessWidget {
             subtitle: app.locale.languageCode == 'en' ? 'English' : 'हिंदी',
             onTap: () => _showLanguagePicker(context, app),
           ),
+          _settingsTile(
+            context,
+            icon: Icons.card_giftcard,
+            title: 'Refer & Earn',
+            subtitle: 'Earn \u20B9500 per referral',
+            onTap: () => Navigator.pushNamed(context, '/referrals'),
+          ),
           const Divider(height: 1),
           _settingsTile(
             context,

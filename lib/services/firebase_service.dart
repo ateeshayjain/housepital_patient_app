@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'api_service.dart';
 
 class FirebaseService {
@@ -249,10 +250,14 @@ class FirebaseService {
 
   /// Full FCM setup — request permission, get token, register handlers.
   /// Wrapped in try-catch so the app doesn't crash without Firebase.
+  ///
+  /// [navigatorKey] – a GlobalKey<NavigatorState> so we can push routes from
+  /// notification taps without a local BuildContext.
   Future<void> setupFCM({
     ApiService? apiService,
     Function(RemoteMessage message)? onForegroundMessage,
     Function(RemoteMessage message)? onMessageOpenedApp,
+    GlobalKey<NavigatorState>? navigatorKey,
   }) async {
     try {
       // Request permission
@@ -292,10 +297,40 @@ class FirebaseService {
         setupMessageOpenedApp(onMessageOpenedApp);
       }
 
+      // Handle cold-start (getInitialMessage)
+      if (navigatorKey != null) {
+        final initialMessage = await getInitialMessage();
+        if (initialMessage != null) {
+          _routeFromMessage(initialMessage, navigatorKey);
+        }
+      }
+
       debugPrint('FCM setup completed successfully');
     } catch (e) {
       debugPrint('FCM setup skipped: $e');
     }
+  }
+
+  /// Convenience: extract data payload from a RemoteMessage and route.
+  void _routeFromMessage(
+      RemoteMessage message, GlobalKey<NavigatorState> navigatorKey) {
+    final data = message.data;
+    if (data.isEmpty) return;
+    // Defer until the navigator is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = navigatorKey.currentContext;
+      if (ctx == null) return;
+      // Use NotificationRouter (imported at call-site in main.dart)
+      _pendingNotificationData = data;
+    });
+  }
+
+  /// Pending notification data from cold-start that main.dart can pick up.
+  Map<String, dynamic>? _pendingNotificationData;
+  Map<String, dynamic>? consumePendingNotification() {
+    final data = _pendingNotificationData;
+    _pendingNotificationData = null;
+    return data;
   }
 
   /// Cancel stream subscriptions to prevent memory leaks.

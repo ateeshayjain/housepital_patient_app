@@ -1003,6 +1003,7 @@ class EquipmentItem {
   final String? parentProductId;
   final String? variantType;
   final String? variantValue;
+  final List<String>? imageUrls; // Multiple product images for gallery
 
   EquipmentItem({
     required this.id,
@@ -1024,6 +1025,7 @@ class EquipmentItem {
     this.parentProductId,
     this.variantType,
     this.variantValue,
+    this.imageUrls,
   });
 
   /// Legacy getter — derives type from availability flags.
@@ -1068,6 +1070,7 @@ class EquipmentItem {
         'parent_product_id': parentProductId,
         'variant_type': variantType,
         'variant_value': variantValue,
+        'image_urls': imageUrls,
       };
 
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
@@ -1090,6 +1093,9 @@ class EquipmentItem {
         parentProductId: json['parent_product_id'],
         variantType: json['variant_type'],
         variantValue: json['variant_value'],
+        imageUrls: json['image_urls'] != null
+            ? List<String>.from(json['image_urls'])
+            : null,
       );
 }
 
@@ -1384,4 +1390,30 @@ class CarePackage {
     this.pricePerDay,
     this.minDays,
   });
+}
+
+// Equipment Review Model
+class EquipmentReview {
+  final String id;
+  final String userName;
+  final int rating;
+  final String? text;
+  final DateTime date;
+
+  EquipmentReview({
+    required this.id,
+    required this.userName,
+    required this.rating,
+    this.text,
+    required this.date,
+  });
+
+  factory EquipmentReview.fromJson(Map<String, dynamic> json) =>
+      EquipmentReview(
+        id: json['id'],
+        userName: json['user_name'] ?? 'Anonymous',
+        rating: json['rating'] ?? 5,
+        text: json['text'],
+        date: DateTime.parse(json['date']),
+      );
 }

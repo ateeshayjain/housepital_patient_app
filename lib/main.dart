@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
 import 'config/firebase_options.dart';
@@ -47,12 +48,22 @@ import 'screens/my_care/medication_schedule_screen.dart';
 import 'screens/my_care/add_edit_medication_screen.dart';
 import 'screens/my_care/report_history_screen.dart';
 import 'screens/my_care/attendance_history_screen.dart';
+import 'screens/my_care/staff_otp_verification_screen.dart';
 import 'screens/services/booking_confirmation_screen.dart';
 import 'screens/services/my_orders_screen.dart';
+import 'screens/consultation/video_consultation_screen.dart';
+import 'screens/chat/chat_screen.dart';
+import 'screens/orders/order_tracking_screen.dart';
+import 'screens/rental/rental_agreement_screen.dart';
+import 'screens/rental/return_screen.dart';
+import 'screens/billing/emi_screen.dart';
+import 'screens/support/staff_replacement_screen.dart';
+import 'screens/settings/referral_screen.dart';
 import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
 import 'providers/medication_provider.dart';
+import 'utils/notification_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,8 +97,58 @@ void main() async {
   );
 }
 
-class HousepitalApp extends StatelessWidget {
+class HousepitalApp extends StatefulWidget {
   const HousepitalApp({super.key});
+
+  /// Global navigator key for notification routing from cold-start.
+  static final navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  State<HousepitalApp> createState() => _HousepitalAppState();
+}
+
+class _HousepitalAppState extends State<HousepitalApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Setup FCM after first frame so the navigator is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setupFCM());
+  }
+
+  void _setupFCM() {
+    final authProvider = context.read<AuthProvider>();
+    final firebaseService = authProvider.firebaseService;
+    final apiService = authProvider.apiService;
+
+    firebaseService.setupFCM(
+      apiService: apiService,
+      navigatorKey: HousepitalApp.navigatorKey,
+      onForegroundMessage: (message) {
+        final ctx = HousepitalApp.navigatorKey.currentContext;
+        if (ctx == null) return;
+        NotificationRouter.showForegroundSnackBar(
+          ctx,
+          message.notification?.title,
+          message.notification?.body,
+          message.data,
+        );
+      },
+      onMessageOpenedApp: (message) {
+        final ctx = HousepitalApp.navigatorKey.currentContext;
+        if (ctx == null) return;
+        NotificationRouter.handleNotification(ctx, message.data);
+      },
+    );
+
+    // Handle cold-start pending notification
+    final pending = firebaseService.consumePendingNotification();
+    if (pending != null) {
+      final ctx = HousepitalApp.navigatorKey.currentContext;
+      if (ctx != null) {
+        NotificationRouter.handleNotification(ctx, pending);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +156,7 @@ class HousepitalApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Housepital',
+      navigatorKey: HousepitalApp.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: HousepitalTheme.lightTheme,
       locale: appProvider.locale,
@@ -252,6 +314,77 @@ class HousepitalApp extends StatelessWidget {
             final tab = settings.arguments as int? ?? 0;
             return MaterialPageRoute(
                 builder: (_) => MyOrdersScreen(initialTab: tab));
+          case '/video-consultation':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => VideoConsultationScreen(
+                      doctorName: args['doctorName'] as String,
+                      doctorPhotoUrl: args['doctorPhotoUrl'] as String?,
+                      roomId: args['roomId'] as String?,
+                      token: args['token'] as String?,
+                    ));
+          case '/chat':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                      patientId: args['patientId'] as String,
+                      coordinatorName: args['coordinatorName'] as String,
+                      coordinatorPhotoUrl:
+                          args['coordinatorPhotoUrl'] as String?,
+                    ));
+          case '/staff-otp':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => StaffOtpVerificationScreen(
+                      deploymentId: args['deploymentId'] as String,
+                      staffName: args['staffName'] as String,
+                      staffRole: args['staffRole'] as String,
+                      staffPhotoUrl: args['staffPhotoUrl'] as String?,
+                    ));
+          case '/order-tracking':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => OrderTrackingScreen(
+                      bookingId: args['bookingId'] as String,
+                      orderType: (args['orderType'] as String?) ?? 'booking',
+                    ));
+          case '/rental-agreement':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => RentalAgreementScreen(
+                      itemName: args['itemName'] as String,
+                      monthlyRate: args['monthlyRate'] as int,
+                      durationMonths: (args['durationMonths'] as int?) ?? 1,
+                    ));
+          case '/return-equipment':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => ReturnScreen(
+                      orderId: args['orderId'] as String,
+                      itemName: args['itemName'] as String,
+                      rentalStartDate: args['rentalStartDate'] as DateTime,
+                      monthlyRate: args['monthlyRate'] as int,
+                    ));
+          case '/emi-options':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => EmiScreen(
+                      totalAmount: args['totalAmount'] as int,
+                      itemName: args['itemName'] as String,
+                    ));
+          case '/staff-replacement':
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+                builder: (_) => StaffReplacementScreen(
+                      deploymentId: args['deploymentId'] as String,
+                      staffName: args['staffName'] as String,
+                      staffRole: args['staffRole'] as String,
+                      staffPhoto: args['staffPhoto'] as String?,
+                      assignedSince: args['assignedSince'] as DateTime?,
+                    ));
+          case '/referrals':
+            return MaterialPageRoute(
+                builder: (_) => const ReferralScreen());
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));

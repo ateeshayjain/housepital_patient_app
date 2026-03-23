@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 
 class AppProvider extends ChangeNotifier {
   final ApiService _apiService;
@@ -26,10 +28,13 @@ class AppProvider extends ChangeNotifier {
   DateTime? _dueDate;
 
   String? _dashboardError;
+  String? _lastUpdatedText;
 
   AppProvider(this._apiService) {
     _loadLanguage();
   }
+
+  String? get lastUpdatedText => _lastUpdatedText;
 
   /// Error message if dashboard failed to load.
   String? get dashboardError => _dashboardError;
@@ -81,16 +86,18 @@ class AppProvider extends ChangeNotifier {
     loadDashboard();
   }
 
-  // Load dashboard data from API
+  // Load dashboard data from API with offline caching
   Future<void> loadDashboard() async {
     if (_currentPatient == null) return;
 
     _isDashboardLoading = true;
     notifyListeners();
 
-    try {
-      final patientId = _currentPatient!.id;
+    final patientId = _currentPatient!.id;
+    final cacheKey = 'dashboard_$patientId';
+    final cache = CacheService.instance;
 
+    try {
       // Load all dashboard data in parallel
       final results = await Future.wait([
         _apiService.getActiveDeployment(patientId),
@@ -112,9 +119,26 @@ class AppProvider extends ChangeNotifier {
           : null;
 
       _dashboardError = null;
+      _lastUpdatedText = 'Last updated: just now';
+
+      // Cache the billing data for offline fallback
+      await cache.cache(cacheKey, billing);
     } catch (e) {
       debugPrint('Error loading dashboard: $e');
-      _dashboardError = 'Unable to connect. Pull down to retry.';
+
+      // Try to load from cache
+      final cached = await cache.get<Map<String, dynamic>>(cacheKey);
+      if (cached != null) {
+        _amountDue = cached['amount_due'] ?? 0;
+        _dueDate = cached['due_date'] != null
+            ? DateTime.parse(cached['due_date'])
+            : null;
+        _lastUpdatedText = await cache.getLastUpdatedText(cacheKey);
+        _dashboardError = null;
+      } else {
+        _dashboardError = 'Unable to connect. Pull down to retry.';
+        _lastUpdatedText = null;
+      }
     }
 
     _isDashboardLoading = false;

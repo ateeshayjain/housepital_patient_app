@@ -169,6 +169,19 @@ class ApiService {
         .toList();
   }
 
+  /// Paginated report history.
+  Future<List<DailyReport>> getReportHistoryPaginated(
+    String patientId, {
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _get('/patients/$patientId/reports',
+        queryParams: {'page': '$page', 'page_size': '$pageSize'});
+    return (data['reports'] as List)
+        .map((r) => DailyReport.fromJson(r))
+        .toList();
+  }
+
   Future<DailyReport> getReportDetail(String reportId) async {
     final data = await _get('/reports/$reportId');
     return DailyReport.fromJson(data['report']);
@@ -201,6 +214,20 @@ class ApiService {
   Future<ServiceItem> getServiceDetail(String serviceId) async {
     final data = await _get('/services/$serviceId');
     return ServiceItem.fromJson(data['service']);
+  }
+
+  // ==================== SLOT AVAILABILITY ====================
+
+  /// Fetches available slot hours for a service on a given date.
+  /// Returns a list of maps with 'hour' (int) and 'available' (bool).
+  Future<List<Map<String, dynamic>>> getAvailableSlots(
+      String serviceId, DateTime date) async {
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final data = await _get('/services/$serviceId/slots', queryParams: {
+      'date': dateStr,
+    });
+    return (data['slots'] as List).cast<Map<String, dynamic>>();
   }
 
   // ==================== BOOKINGS ====================
@@ -370,6 +397,18 @@ class ApiService {
         .toList();
   }
 
+  /// Paginated notifications.
+  Future<List<AppNotification>> getNotificationsPaginated({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _get('/notifications',
+        queryParams: {'page': '$page', 'page_size': '$pageSize'});
+    return (data['notifications'] as List)
+        .map((n) => AppNotification.fromJson(n))
+        .toList();
+  }
+
   Future<void> markNotificationRead(String notificationId) async {
     await _put('/notifications/$notificationId/read');
   }
@@ -425,6 +464,25 @@ class ApiService {
     if (limit != null) url += 'limit=$limit';
     final data = await _get(url);
     return (data as List).map((t) => PaymentTransaction.fromJson(t)).toList();
+  }
+
+  /// Paginated transaction list.
+  Future<List<PaymentTransaction>> getTransactionsPaginated(
+    String patientId, {
+    String? status,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final params = <String, String>{
+      'page': '$page',
+      'page_size': '$pageSize',
+    };
+    if (status != null && status != 'all') params['status'] = status;
+    final data = await _get('/patients/$patientId/transactions',
+        queryParams: params);
+    return ((data['transactions'] ?? data) as List)
+        .map((t) => PaymentTransaction.fromJson(t))
+        .toList();
   }
 
   Future<PaymentTransaction> getTransactionDetail(String transactionId) async {
@@ -590,6 +648,54 @@ class ApiService {
 
   Future<void> declineAssessment(String assessmentId) async {
     await _put('/assessments/$assessmentId/decline', body: {});
+  }
+
+  // ── Equipment Reviews ──────────────────────────────────────
+
+  Future<List<EquipmentReview>> getEquipmentReviews(String itemId) async {
+    final data = await _get('/equipment/$itemId/reviews');
+    return (data['reviews'] as List)
+        .map((r) => EquipmentReview.fromJson(r))
+        .toList();
+  }
+
+  Future<void> submitEquipmentReview(String itemId, int rating, String text) async {
+    await _post('/equipment/$itemId/reviews', body: {
+      'rating': rating,
+      'text': text,
+    });
+  }
+
+  // ── Staff Replacement ─────────────────────────────────────
+
+  Future<Map<String, dynamic>> requestReplacement(
+    String deploymentId,
+    String reason,
+    Map<String, dynamic> preferences,
+  ) async {
+    return _post('/deployments/$deploymentId/replacement', body: {
+      'reason': reason,
+      ...preferences,
+    });
+  }
+
+  // ── Equipment Returns ─────────────────────────────────────
+
+  Future<Map<String, dynamic>> scheduleReturn({
+    required String orderId,
+    required String reason,
+    required String pickupDate,
+    required String timeSlot,
+    required String condition,
+    String? photoUrl,
+  }) async {
+    return _post('/equipment-orders/$orderId/return', body: {
+      'reason': reason,
+      'pickup_date': pickupDate,
+      'time_slot': timeSlot,
+      'condition': condition,
+      if (photoUrl != null) 'photo_url': photoUrl,
+    });
   }
 }
 

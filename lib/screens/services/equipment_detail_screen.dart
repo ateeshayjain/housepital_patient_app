@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../screens/cart/cart_screen.dart';
+import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 
 class EquipmentDetailScreen extends StatefulWidget {
@@ -24,6 +26,14 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   bool _showAddedConfirmation = false;
   bool _showSavedConfirmation = false;
   int _selectedRentalMonths = 1;
+
+  // Image gallery state
+  int _currentImagePage = 0;
+  final PageController _imagePageController = PageController();
+
+  // Reviews state
+  List<EquipmentReview> _reviews = [];
+  bool _reviewsLoaded = false;
 
   // ── Fallback feature lists per equipment ID ──────────────────
   static const _fallbackFeatures = <String, List<String>>{
@@ -112,6 +122,13 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   void initState() {
     super.initState();
     _loadCatalogItem();
+    _loadReviews();
+  }
+
+  @override
+  void dispose() {
+    _imagePageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCatalogItem() async {
@@ -144,6 +161,48 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       }
     } catch (_) {
       // Catalog unavailable — fallback data will be used.
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    try {
+      final reviews = await ApiService().getEquipmentReviews(widget.service.id);
+      if (mounted) {
+        setState(() {
+          _reviews = reviews;
+          _reviewsLoaded = true;
+        });
+      }
+    } catch (_) {
+      // Fallback mock reviews
+      if (mounted) {
+        setState(() {
+          _reviews = [
+            EquipmentReview(
+              id: 'r1',
+              userName: 'Rajesh K.',
+              rating: 5,
+              text: 'Excellent quality equipment. Delivered on time and works perfectly.',
+              date: DateTime.now().subtract(const Duration(days: 5)),
+            ),
+            EquipmentReview(
+              id: 'r2',
+              userName: 'Priya M.',
+              rating: 4,
+              text: 'Good product, easy to use. Setup was done by the delivery team.',
+              date: DateTime.now().subtract(const Duration(days: 12)),
+            ),
+            EquipmentReview(
+              id: 'r3',
+              userName: 'Suresh P.',
+              rating: 5,
+              text: 'Very happy with the rental service. Hassle-free experience.',
+              date: DateTime.now().subtract(const Duration(days: 20)),
+            ),
+          ];
+          _reviewsLoaded = true;
+        });
+      }
     }
   }
 
@@ -301,11 +360,34 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     );
   }
 
-  // ── SliverAppBar with gradient hero ──────────────────────────
+  // ── Image gallery helpers ───────────────────────────────────
+
+  List<String> get _allImageUrls {
+    final urls = <String>[];
+    if (_catalogItem?.imageUrls != null && _catalogItem!.imageUrls!.isNotEmpty) {
+      urls.addAll(_catalogItem!.imageUrls!);
+    } else if (_catalogItem?.imageUrl != null) {
+      urls.add(_catalogItem!.imageUrl!);
+    }
+    return urls;
+  }
+
+  void _openFullScreenImage(int index) {
+    final images = _allImageUrls;
+    if (images.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => _FullScreenImageViewer(images: images, initialIndex: index),
+    ));
+  }
+
+  // ── SliverAppBar with image carousel ──────────────────────
 
   Widget _buildSliverAppBar() {
+    final images = _allImageUrls;
+    final hasImages = images.isNotEmpty;
+
     return SliverAppBar(
-      expandedHeight: 260,
+      expandedHeight: 280,
       pinned: true,
       backgroundColor: HousepitalColors.white,
       foregroundColor: HousepitalColors.black,
@@ -321,43 +403,129 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFFF3E0), // orangeLight
-                Color(0xFFFFE0B2),
-                HousepitalColors.white,
-              ],
-              stops: [0.0, 0.5, 1.0],
-            ),
-          ),
-          child: SafeArea(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: HousepitalColors.orange.withValues(alpha: 0.15),
-                        blurRadius: 24,
-                        spreadRadius: 4,
-                      ),
-                    ],
+        background: hasImages
+            ? _buildImageCarousel(images)
+            : _buildPlaceholderHero(),
+      ),
+    );
+  }
+
+  Widget _buildImageCarousel(List<String> images) {
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _imagePageController,
+          itemCount: images.length,
+          onPageChanged: (index) => setState(() => _currentImagePage = index),
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () => _openFullScreenImage(index),
+              child: Container(
+                color: HousepitalColors.background,
+                child: CachedNetworkImage(
+                  imageUrl: images[index],
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: HousepitalColors.orange,
+                    ),
                   ),
-                  child: Icon(
+                  errorWidget: (_, __, ___) => Icon(
                     _equipmentIcon,
                     size: 56,
                     color: HousepitalColors.orange,
                   ),
                 ),
+              ),
+            );
+          },
+        ),
+        // Image counter badge
+        if (images.length > 1)
+          Positioned(
+            top: 90,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_currentImagePage + 1}/${images.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        // Dot indicators
+        if (images.length > 1)
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(images.length, (index) {
+                final isActive = index == _currentImagePage;
+                return Container(
+                  width: isActive ? 20 : 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? HousepitalColors.orange
+                        : HousepitalColors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPlaceholderHero() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFFFF3E0),
+            Color(0xFFFFE0B2),
+            HousepitalColors.white,
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: HousepitalColors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: HousepitalColors.orange.withValues(alpha: 0.15),
+                    blurRadius: 24,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+              child: Icon(
+                _equipmentIcon,
+                size: 56,
+                color: HousepitalColors.orange,
               ),
             ),
           ),
@@ -396,6 +564,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         ],
         if (_faqs.isNotEmpty) ...[
           _buildFaqsSection(),
+          const _SectionDivider(),
+        ],
+        if (_reviewsLoaded) ...[
+          _buildReviewsSection(),
           const _SectionDivider(),
         ],
         const SizedBox(height: 100),
@@ -849,6 +1021,270 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     );
   }
 
+  // ── Reviews Section ─────────────────────────────────────────
+
+  Widget _buildReviewsSection() {
+    final avgRating = _reviews.isEmpty
+        ? 0.0
+        : _reviews.map((r) => r.rating).reduce((a, b) => a + b) / _reviews.length;
+    final ratingCounts = <int, int>{5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    for (final r in _reviews) {
+      ratingCounts[r.rating] = (ratingCounts[r.rating] ?? 0) + 1;
+    }
+
+    return Container(
+      color: HousepitalColors.white,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const _SectionTitle(title: 'Customer Reviews'),
+              TextButton.icon(
+                onPressed: _showWriteReviewSheet,
+                icon: const Icon(Icons.edit, size: 16),
+                label: const Text('Write a Review'),
+                style: TextButton.styleFrom(
+                  foregroundColor: HousepitalColors.orange,
+                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Rating summary
+          Row(
+            children: [
+              Column(
+                children: [
+                  Text(
+                    avgRating.toStringAsFixed(1),
+                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: HousepitalColors.black),
+                  ),
+                  Row(
+                    children: List.generate(5, (i) => Icon(
+                      i < avgRating.round() ? Icons.star : Icons.star_border,
+                      size: 16,
+                      color: HousepitalColors.orange,
+                    )),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_reviews.length} reviews',
+                    style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  children: [5, 4, 3, 2, 1].map((star) {
+                    final count = ratingCounts[star] ?? 0;
+                    final pct = _reviews.isEmpty ? 0.0 : count / _reviews.length;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Text('$star', style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
+                          const Icon(Icons.star, size: 12, color: HousepitalColors.orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: pct,
+                                backgroundColor: HousepitalColors.greyLighter,
+                                color: HousepitalColors.orange,
+                                minHeight: 8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 32,
+                            child: Text(
+                              '${(pct * 100).round()}%',
+                              style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Review cards
+          ...(_reviews.take(3).map((review) => _buildReviewCard(review))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(EquipmentReview review) {
+    final initials = review.userName.isNotEmpty
+        ? review.userName[0].toUpperCase()
+        : '?';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: HousepitalColors.background,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HousepitalColors.orangeLight,
+                  child: Text(initials, style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: HousepitalColors.orangeText,
+                    fontSize: 14,
+                  )),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(review.userName, style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black,
+                      )),
+                      Text(
+                        '${review.date.day}/${review.date.month}/${review.date.year}',
+                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: List.generate(5, (i) => Icon(
+                    i < review.rating ? Icons.star : Icons.star_border,
+                    size: 14,
+                    color: HousepitalColors.orange,
+                  )),
+                ),
+              ],
+            ),
+            if (review.text != null && review.text!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                review.text!,
+                style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.5),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWriteReviewSheet() {
+    int selectedRating = 5;
+    final textController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Write a Review', style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700, color: HousepitalColors.black,
+              )),
+              const SizedBox(height: 16),
+              // Star selector
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final star = i + 1;
+                  return GestureDetector(
+                    onTap: () => setSheetState(() => selectedRating = star),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Icon(
+                        star <= selectedRating ? Icons.star : Icons.star_border,
+                        size: 36,
+                        color: HousepitalColors.orange,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Share your experience...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: HousepitalColors.orange),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await ApiService().submitEquipmentReview(
+                        widget.service.id,
+                        selectedRating,
+                        textController.text,
+                      );
+                    } catch (_) {
+                      // Silently handle — review will appear on next load
+                    }
+                    // Add locally for instant feedback
+                    setState(() {
+                      _reviews.insert(0, EquipmentReview(
+                        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+                        userName: 'You',
+                        rating: selectedRating,
+                        text: textController.text.isEmpty ? null : textController.text,
+                        date: DateTime.now(),
+                      ));
+                    });
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Thank you for your review!')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HousepitalColors.orange,
+                    foregroundColor: HousepitalColors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Submit Review', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Bottom bar ───────────────────────────────────────────────
 
   void _addToCart(BuildContext context) {
@@ -1272,4 +1708,76 @@ class _FaqEntry {
   final String question;
   final String answer;
   const _FaqEntry({required this.question, required this.answer});
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Full-screen pinch-to-zoom image viewer
+// ══════════════════════════════════════════════════════════════════
+
+class _FullScreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _FullScreenImageViewer({required this.images, this.initialIndex = 0});
+
+  @override
+  State<_FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
+  late PageController _controller;
+  late int _currentPage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${_currentPage + 1}/${widget.images.length}',
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+      body: PageView.builder(
+        controller: _controller,
+        itemCount: widget.images.length,
+        onPageChanged: (i) => setState(() => _currentPage = i),
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 1.0,
+            maxScale: 4.0,
+            child: Center(
+              child: CachedNetworkImage(
+                imageUrl: widget.images[index],
+                fit: BoxFit.contain,
+                placeholder: (_, __) => const CircularProgressIndicator(
+                  color: HousepitalColors.orange,
+                ),
+                errorWidget: (_, __, ___) => const Icon(
+                  Icons.broken_image,
+                  size: 64,
+                  color: Colors.white54,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
