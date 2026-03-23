@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/document_attach_widgets.dart';
@@ -33,22 +35,57 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   List<Map<String, String>> get _savedAddresses =>
       _savedAddressObjects.map((a) => a.toMapCompat()).toList();
 
-  List<Map<String, String>> _availableSlots = [];
+  /// Each slot: { 'hour': 9, 'available': true }
+  List<Map<String, dynamic>> _availableSlots = [];
   bool _slotsLoading = false;
 
-  /// TODO: Replace with API call to get available slots for the selected date.
-  /// Currently returns static slots for all dates.
-  Future<List<Map<String, String>>> _getAvailableSlots(DateTime date) async {
-    // Will call: ApiService().getAvailableSlots(serviceId, date)
-    return [
-      {'label': 'Morning (9-12)', 'value': 'morning'},
-      {'label': 'Afternoon (12-4)', 'value': 'afternoon'},
-      {'label': 'Evening (4-7)', 'value': 'evening'},
-    ];
+  /// Lead time in hours — slots within this window from now are unavailable.
+  static const int _leadTimeHours = 2;
+
+  /// All possible 1-hour slot windows.
+  static const List<int> _allSlotHours = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+
+  /// Format a slot hour into a readable label.
+  String _slotLabel(int hour) {
+    final h = hour > 12 ? hour - 12 : hour;
+    final amPm = hour >= 12 ? 'PM' : 'AM';
+    final endHour = hour + 1 > 12 ? hour + 1 - 12 : hour + 1;
+    final endAmPm = (hour + 1) >= 12 ? 'PM' : 'AM';
+    return '$h:00 $amPm – $endHour:00 $endAmPm';
   }
 
-  List<String> get _slots => _availableSlots.map((s) => s['label']!).toList();
-  List<String> get _slotValues => _availableSlots.map((s) => s['value']!).toList();
+  /// Check if a slot hour is within lead time.
+  bool _isWithinLeadTime(DateTime date, int hour) {
+    final slotStart = DateTime(date.year, date.month, date.day, hour);
+    return slotStart.difference(DateTime.now()).inHours < _leadTimeHours;
+  }
+
+  /// Fetch slots from API; fall back to all-available on failure.
+  Future<void> _fetchSlots(DateTime date) async {
+    setState(() => _slotsLoading = true);
+    try {
+      final apiSlots = await ApiService().getAvailableSlots(
+        widget.service.id,
+        date,
+      );
+      if (!mounted) return;
+      setState(() {
+        _availableSlots = apiSlots;
+        _slotsLoading = false;
+        _selectedSlot = null;
+      });
+    } catch (_) {
+      // Fallback: all slots available
+      if (!mounted) return;
+      setState(() {
+        _availableSlots = _allSlotHours
+            .map((h) => <String, dynamic>{'hour': h, 'available': true})
+            .toList();
+        _slotsLoading = false;
+        _selectedSlot = null;
+      });
+    }
+  }
 
   bool get _showPrescriptionSection {
     final id = widget.service.id;
@@ -60,6 +97,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   bool get _isVisitService => widget.service.id.startsWith('visit-');
   bool get _isDoctorVisit => widget.service.id == 'con-doctor';
   bool get _isIvVisit => widget.service.id == 'visit-iv';
+  bool get _isConsultationType => widget.service.id.startsWith('con-');
 
   // Doctor visit concern & recommendation
   final _concernController = TextEditingController();
@@ -137,15 +175,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   }
 
   Future<void> _loadSlotsForDate(DateTime date) async {
-    setState(() => _slotsLoading = true);
-    final slots = await _getAvailableSlots(date);
-    if (!mounted) return;
-    setState(() {
-      _availableSlots = slots;
-      _slotsLoading = false;
-      // Reset slot selection when date changes
-      _selectedSlot = null;
-    });
+    await _fetchSlots(date);
   }
 
   Future<void> _loadAddresses() async {
@@ -1225,6 +1255,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 onChanged: (v) =>
                     setState(() => _requestOnlineAssessment = v),
               ),
+
+              // Video Consultation option (shown when online assessment ON + consultation type)
+              if (_requestOnlineAssessment && _isConsultationType)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: _buildVideoConsultationOption(),
+                ),
             ],
           ),
         ),
@@ -1315,6 +1352,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final nextDays = List.generate(
         7, (i) => DateTime.now().add(Duration(days: i + 1)));
 
+    // Determine which slots are truly available (API + lead-time check).
+    final bool allSlotsBooked = !_slotsLoading &&
+        _selectedDate != null &&
+        _availableSlots.every((s) {
+          final hour = s['hour'] as int;
+          final apiAvailable = s['available'] as bool? ?? true;
+          return !apiAvailable || _isWithinLeadTime(_selectedDate!, hour);
+        });
+
     return [
       const Text('Select Date',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -1323,7 +1369,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         spacing: 8,
         runSpacing: 8,
         children: nextDays.map((date) {
-          final isSelected = _selectedDate?.day == date.day;
+          final isSelected = _selectedDate?.day == date.day &&
+              _selectedDate?.month == date.month;
           return GestureDetector(
             onTap: () {
               setState(() => _selectedDate = date);
@@ -1365,52 +1412,116 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       const Text('Select Time Slot',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 12),
-      ...List.generate(_slots.length, (i) {
-        final isSelected = _selectedSlot == _slotValues[i];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: GestureDetector(
-            onTap: () =>
-                setState(() => _selectedSlot = _slotValues[i]),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? HousepitalColors.orangeLight
-                    : HousepitalColors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? HousepitalColors.orange
-                      : HousepitalColors.divider,
+
+      // Shimmer loading state
+      if (_slotsLoading)
+        Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 2.6,
+            children: List.generate(
+              9,
+              (_) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isSelected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: isSelected
-                        ? HousepitalColors.orange
-                        : HousepitalColors.greyLight,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _slots[i],
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: HousepitalColors.black,
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
-        );
-      }),
+        ),
+
+      // Empty state
+      if (!_slotsLoading && allSlotsBooked && _selectedDate != null)
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: HousepitalColors.warningLight,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              const Icon(Icons.event_busy, size: 40, color: HousepitalColors.warning),
+              const SizedBox(height: 12),
+              const Text(
+                'No slots available',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'All slots are booked for this date. Please try another date.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+              ),
+            ],
+          ),
+        ),
+
+      // Slot grid (3 columns)
+      if (!_slotsLoading && !allSlotsBooked && _selectedDate != null)
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 2.4,
+          children: _availableSlots.map((slot) {
+            final hour = slot['hour'] as int;
+            final apiAvailable = slot['available'] as bool? ?? true;
+            final withinLeadTime = _isWithinLeadTime(_selectedDate!, hour);
+            final isAvailable = apiAvailable && !withinLeadTime;
+            final slotValue = hour.toString();
+            final isSelected = _selectedSlot == slotValue;
+
+            return GestureDetector(
+              onTap: isAvailable
+                  ? () => setState(() => _selectedSlot = slotValue)
+                  : null,
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? HousepitalColors.orange
+                      : isAvailable
+                          ? HousepitalColors.white
+                          : HousepitalColors.greyLighter,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? HousepitalColors.orange
+                        : isAvailable
+                            ? HousepitalColors.divider
+                            : Colors.grey.shade300,
+                  ),
+                ),
+                child: Text(
+                  _slotLabel(hour),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? Colors.white
+                        : isAvailable
+                            ? HousepitalColors.black
+                            : Colors.grey,
+                    decoration: isAvailable
+                        ? TextDecoration.none
+                        : TextDecoration.lineThrough,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
       const SizedBox(height: 24),
       SizedBox(
         height: 52,
@@ -1476,7 +1587,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             _infoRow('Date', _selectedDate != null
                 ? DateHelper.formatDate(_selectedDate!)
                 : ''),
-            _infoRow('Slot', _selectedSlot ?? ''),
+            _infoRow('Slot', _selectedSlot != null
+                ? _slotLabel(int.tryParse(_selectedSlot!) ?? 9)
+                : ''),
             if (_attachedFiles.isNotEmpty)
               _infoRow('Attachments', '${_attachedFiles.length} file(s)'),
             if (_notesController.text.isNotEmpty)
@@ -1844,6 +1957,78 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       width: 24,
       height: 2,
       color: HousepitalColors.divider,
+    );
+  }
+
+  Widget _buildVideoConsultationOption() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: HousepitalColors.orangeLight,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: HousepitalColors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.videocam, color: HousepitalColors.orange, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Consultation Mode',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: HousepitalColors.orangeText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Home visit is the default — no extra action needed
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Home Visit selected'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.home, size: 18),
+                  label: const Text('Home Visit'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/video-consultation',
+                        arguments: {
+                          'doctorName': widget.service.name,
+                          'doctorPhotoUrl': null,
+                          'roomId': null,
+                          'token': null,
+                        });
+                  },
+                  icon: const Icon(Icons.videocam, size: 18),
+                  label: const Text('Video'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

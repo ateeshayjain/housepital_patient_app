@@ -128,6 +128,32 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('staff_profile'))),
+      bottomNavigationBar: _staff != null
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/staff-replacement', arguments: {
+                      'deploymentId': _staff!.id,
+                      'staffName': _staff!.name,
+                      'staffRole': _staff!.role,
+                      'staffPhoto': _staff!.photoUrl,
+                      'assignedSince': _staff!.assignedSince,
+                    });
+                  },
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text('Request Replacement'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HousepitalColors.warning,
+                    side: const BorderSide(color: HousepitalColors.warning),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: _isLoading
           ? const LoadingWidget()
           : _staff == null

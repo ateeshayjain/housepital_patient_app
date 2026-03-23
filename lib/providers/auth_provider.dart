@@ -23,6 +23,10 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   FamilyMember? get currentUser => _currentUser;
   String? get phone => _phone;
+
+  /// Expose services for FCM setup in main.dart.
+  FirebaseService get firebaseService => _firebaseService;
+  ApiService get apiService => _apiService;
   bool get isLoggedIn => _state == AuthState.authenticated;
   bool get isPrimaryContact => _currentUser?.isPrimaryContact ?? false;
 

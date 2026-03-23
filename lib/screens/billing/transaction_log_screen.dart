@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/paginated_list.dart';
 
 class TransactionLogScreen extends StatefulWidget {
   const TransactionLogScreen({super.key});
@@ -14,96 +18,18 @@ class TransactionLogScreen extends StatefulWidget {
 
 class _TransactionLogScreenState extends State<TransactionLogScreen> {
   String _selectedFilter = 'all';
-
-  static final _mockTransactions = [
-    PaymentTransaction.fromJson({
-      'id': 't1',
-      'patient_id': 'p1',
-      'invoice_id': 'inv1',
-      'amount': 24500,
-      'method': 'upi',
-      'status': 'completed',
-      'razorpay_payment_id': 'pay_ABC123',
-      'description': 'Invoice #INV-2026-001 — March billing',
-      'created_at':
-          DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-      'completed_at':
-          DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-    }),
-    PaymentTransaction.fromJson({
-      'id': 't2',
-      'patient_id': 'p1',
-      'booking_id': 'b1',
-      'amount': 1500,
-      'method': 'card',
-      'status': 'completed',
-      'razorpay_payment_id': 'pay_DEF456',
-      'description': 'Sleep Therapy session booking',
-      'created_at':
-          DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-      'completed_at':
-          DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
-    }),
-    PaymentTransaction.fromJson({
-      'id': 't3',
-      'patient_id': 'p1',
-      'amount': 800,
-      'method': 'upi',
-      'status': 'failed',
-      'failure_reason': 'Payment declined by bank',
-      'description': 'X-Ray at Home booking',
-      'created_at':
-          DateTime.now().subtract(const Duration(days: 7)).toIso8601String(),
-    }),
-    PaymentTransaction.fromJson({
-      'id': 't4',
-      'patient_id': 'p1',
-      'invoice_id': 'inv0',
-      'amount': 22000,
-      'method': 'netbanking',
-      'status': 'completed',
-      'razorpay_payment_id': 'pay_GHI789',
-      'description': 'Invoice #INV-2026-000 — February billing',
-      'created_at':
-          DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      'completed_at':
-          DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-    }),
-    PaymentTransaction.fromJson({
-      'id': 't5',
-      'patient_id': 'p1',
-      'booking_id': 'b2',
-      'amount': 500,
-      'method': 'upi',
-      'status': 'refunded',
-      'razorpay_payment_id': 'pay_JKL012',
-      'refund_amount': 500,
-      'refund_id': 'rfnd_001',
-      'description': 'ECG at Home — cancelled',
-      'created_at':
-          DateTime.now().subtract(const Duration(days: 14)).toIso8601String(),
-      'completed_at':
-          DateTime.now().subtract(const Duration(days: 14)).toIso8601String(),
-    }),
-  ];
-
-  List<PaymentTransaction> get _filteredTransactions {
-    if (_selectedFilter == 'all') return _mockTransactions;
-    return _mockTransactions
-        .where((t) => t.status == _selectedFilter)
-        .toList();
-  }
+  Key _listKey = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final transactions = _filteredTransactions;
+    final patientId = context.read<AppProvider>().currentPatient?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('transaction_history'))),
       body: Column(
         children: [
-          // Filter chips — 44pt minimum height
+          // Filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -122,17 +48,27 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
             ),
           ),
 
-          // Transaction list
+          // Paginated transaction list
           Expanded(
-            child: transactions.isEmpty
-                ? _buildEmptyState(l)
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: transactions.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) =>
-                        _buildTransactionCard(transactions[index], l),
-                  ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: PaginatedListView<PaymentTransaction>(
+                key: _listKey,
+                pageSize: 20,
+                fetchPage: (page, pageSize) =>
+                    ApiService().getTransactionsPaginated(
+                  patientId,
+                  status: _selectedFilter == 'all' ? null : _selectedFilter,
+                  page: page,
+                  pageSize: pageSize,
+                ),
+                itemBuilder: (txn) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildTransactionCard(txn, l),
+                ),
+                emptyWidget: _buildEmptyState(l),
+              ),
+            ),
           ),
         ],
       ),
@@ -146,7 +82,12 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
       child: ChoiceChip(
         label: Text(label),
         selected: isSelected,
-        onSelected: (_) => setState(() => _selectedFilter = value),
+        onSelected: (_) {
+          setState(() {
+            _selectedFilter = value;
+            _listKey = UniqueKey(); // force refresh
+          });
+        },
         selectedColor: HousepitalColors.orangeLight,
         checkmarkColor: HousepitalColors.orangeText,
         labelStyle: TextStyle(
@@ -170,7 +111,6 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
         onTap: () => _showTransactionDetail(txn, l),
         child: Row(
           children: [
-            // Method icon
             Container(
               width: 44,
               height: 44,
@@ -185,8 +125,6 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
               ),
             ),
             const SizedBox(width: 12),
-
-            // Description + date
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,8 +151,6 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
               ),
             ),
             const SizedBox(width: 8),
-
-            // Amount + status
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -283,7 +219,6 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 children: [
                   Icon(
@@ -305,14 +240,11 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-
               _buildDetailRow(l.t('description'), txn.description),
-              _buildDetailRow(
-                  l.t('amount'), DateHelper.formatCurrency(txn.amount)),
+              _buildDetailRow(l.t('amount'), DateHelper.formatCurrency(txn.amount)),
               _buildDetailRow(l.t('method'), _methodLabel(txn.method)),
               _buildDetailRow(l.t('status'), txn.status.toUpperCase()),
-              _buildDetailRow(
-                  l.t('date'), DateHelper.formatDate(txn.createdAt)),
+              _buildDetailRow(l.t('date'), DateHelper.formatDate(txn.createdAt)),
               if (txn.razorpayPaymentId != null)
                 _buildDetailRow(l.t('razorpay_id'), txn.razorpayPaymentId!),
               if (txn.failureReason != null)
@@ -331,8 +263,7 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(l.t('opening_receipt'))),
+                          SnackBar(content: Text(l.t('opening_receipt'))),
                         );
                       },
                       icon: const Icon(Icons.receipt_outlined, size: 18),
@@ -364,10 +295,7 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: HousepitalColors.greyLight,
-            ),
+            style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
           ),
           const SizedBox(height: 2),
           Text(
@@ -385,61 +313,41 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
 
   IconData _getMethodIcon(String method) {
     switch (method) {
-      case 'upi':
-        return Icons.account_balance;
-      case 'card':
-        return Icons.credit_card;
-      case 'netbanking':
-        return Icons.language;
-      case 'wallet':
-        return Icons.account_balance_wallet;
-      default:
-        return Icons.payment;
+      case 'upi': return Icons.account_balance;
+      case 'card': return Icons.credit_card;
+      case 'netbanking': return Icons.language;
+      case 'wallet': return Icons.account_balance_wallet;
+      default: return Icons.payment;
     }
   }
 
   Color _getMethodColor(String method) {
     switch (method) {
-      case 'upi':
-        return HousepitalColors.info;
-      case 'card':
-        return HousepitalColors.orange;
-      case 'netbanking':
-        return HousepitalColors.success;
-      case 'wallet':
-        return const Color(0xFF9C27B0);
-      default:
-        return HousepitalColors.grey;
+      case 'upi': return HousepitalColors.info;
+      case 'card': return HousepitalColors.orange;
+      case 'netbanking': return HousepitalColors.success;
+      case 'wallet': return const Color(0xFF9C27B0);
+      default: return HousepitalColors.grey;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'completed':
-        return HousepitalColors.success;
-      case 'pending':
-        return HousepitalColors.warning;
-      case 'failed':
-        return HousepitalColors.error;
-      case 'refunded':
-        return HousepitalColors.info;
-      default:
-        return HousepitalColors.greyLight;
+      case 'completed': return HousepitalColors.success;
+      case 'pending': return HousepitalColors.warning;
+      case 'failed': return HousepitalColors.error;
+      case 'refunded': return HousepitalColors.info;
+      default: return HousepitalColors.greyLight;
     }
   }
 
   String _methodLabel(String method) {
     switch (method) {
-      case 'upi':
-        return 'UPI';
-      case 'card':
-        return 'Credit/Debit Card';
-      case 'netbanking':
-        return 'Net Banking';
-      case 'wallet':
-        return 'Wallet';
-      default:
-        return method;
+      case 'upi': return 'UPI';
+      case 'card': return 'Credit/Debit Card';
+      case 'netbanking': return 'Net Banking';
+      case 'wallet': return 'Wallet';
+      default: return method;
     }
   }
 }

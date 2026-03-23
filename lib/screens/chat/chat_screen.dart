@@ -1,0 +1,418 @@
+// lib/screens/chat/chat_screen.dart
+
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../config/theme.dart';
+
+/// In-app chat screen backed by Firestore `chat_messages` collection.
+///
+/// Firestore path: chat_messages/{patientId}/messages
+/// Each document: { text, senderId, timestamp, type ('text'/'image'), imageUrl? }
+class ChatScreen extends StatefulWidget {
+  final String patientId;
+  final String coordinatorName;
+  final String? coordinatorPhotoUrl;
+
+  const ChatScreen({
+    super.key,
+    required this.patientId,
+    required this.coordinatorName,
+    this.coordinatorPhotoUrl,
+  });
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final _msgController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _imagePicker = ImagePicker();
+  late final CollectionReference _messagesRef;
+  StreamSubscription? _subscription;
+  bool _isOnline = true; // TODO: Replace with real presence check
+
+  @override
+  void initState() {
+    super.initState();
+    _messagesRef = FirebaseFirestore.instance
+        .collection('chat_messages')
+        .doc(widget.patientId)
+        .collection('messages');
+
+    // Listen for new messages to auto-scroll
+    _subscription = _messagesRef
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .listen((_) {
+      // Small delay to let list build first
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _msgController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Future<void> _sendMessage({String? text, String? imageUrl}) async {
+    final msg = text?.trim();
+    if ((msg == null || msg.isEmpty) && imageUrl == null) return;
+
+    await _messagesRef.add({
+      'text': msg ?? '',
+      'senderId': widget.patientId,
+      'timestamp': FieldValue.serverTimestamp(),
+      'type': imageUrl != null ? 'image' : 'text',
+      if (imageUrl != null) 'imageUrl': imageUrl,
+    });
+
+    _msgController.clear();
+  }
+
+  Future<void> _pickAndSendImage() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      imageQuality: 75,
+    );
+    if (picked == null) return;
+
+    // TODO: Upload image to Firebase Storage and get download URL.
+    // For now, send the local path as placeholder.
+    await _sendMessage(
+      text: '📷 Photo',
+      imageUrl: picked.path,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: HousepitalColors.orange,
+              backgroundImage: widget.coordinatorPhotoUrl != null
+                  ? NetworkImage(widget.coordinatorPhotoUrl!)
+                  : null,
+              child: widget.coordinatorPhotoUrl == null
+                  ? Text(
+                      widget.coordinatorName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .take(2)
+                          .join(),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.coordinatorName,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isOnline
+                              ? HousepitalColors.success
+                              : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isOnline ? 'Online' : 'Offline',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isOnline
+                              ? HousepitalColors.success
+                              : Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // Message list
+          Expanded(child: _buildMessageList()),
+
+          // Input bar
+          _buildInputBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _messagesRef
+          .orderBy('timestamp', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+                color: HousepitalColors.orange),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.chat_bubble_outline,
+                    size: 64, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                Text(
+                  'No messages yet',
+                  style: TextStyle(
+                      fontSize: 16, color: Colors.grey[500]),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Send a message to start the conversation',
+                  style: TextStyle(
+                      fontSize: 13, color: Colors.grey[400]),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(
+              horizontal: 12, vertical: 8),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final isSent = data['senderId'] == widget.patientId;
+            final text = data['text'] as String? ?? '';
+            final type = data['type'] as String? ?? 'text';
+            final timestamp = data['timestamp'] as Timestamp?;
+            final imageUrl = data['imageUrl'] as String?;
+
+            return _MessageBubble(
+              text: text,
+              isSent: isSent,
+              timestamp: timestamp?.toDate(),
+              isImage: type == 'image',
+              imageUrl: imageUrl,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildInputBar() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        8,
+        8,
+        8,
+        8 + MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Attach photo button
+          IconButton(
+            onPressed: _pickAndSendImage,
+            icon: const Icon(Icons.photo_outlined),
+            color: HousepitalColors.greyLight,
+          ),
+
+          // Text field
+          Expanded(
+            child: TextField(
+              controller: _msgController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 4,
+              minLines: 1,
+              decoration: InputDecoration(
+                hintText: 'Type a message...',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                filled: true,
+                fillColor: HousepitalColors.greyLighter,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 4),
+
+          // Send button
+          IconButton(
+            onPressed: () => _sendMessage(text: _msgController.text),
+            style: IconButton.styleFrom(
+              backgroundColor: HousepitalColors.orange,
+              shape: const CircleBorder(),
+            ),
+            icon: const Icon(Icons.send, color: Colors.white, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Message bubble widget
+// ---------------------------------------------------------------------------
+class _MessageBubble extends StatelessWidget {
+  final String text;
+  final bool isSent;
+  final DateTime? timestamp;
+  final bool isImage;
+  final String? imageUrl;
+
+  const _MessageBubble({
+    required this.text,
+    required this.isSent,
+    this.timestamp,
+    this.isImage = false,
+    this.imageUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isSent ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSent
+              ? HousepitalColors.orange
+              : const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isSent ? 16 : 4),
+            bottomRight: Radius.circular(isSent ? 4 : 16),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Image thumbnail placeholder
+            if (isImage && imageUrl != null)
+              Container(
+                width: 180,
+                height: 140,
+                margin: const EdgeInsets.only(bottom: 6),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(Icons.image, color: Colors.grey, size: 40),
+                ),
+              ),
+
+            // Text
+            if (text.isNotEmpty)
+              Text(
+                text,
+                style: TextStyle(
+                  color: isSent ? Colors.white : Colors.black87,
+                  fontSize: 15,
+                ),
+              ),
+
+            const SizedBox(height: 4),
+
+            // Timestamp + read receipt
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (timestamp != null)
+                  Text(
+                    _formatTime(timestamp!),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSent
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : Colors.grey[500],
+                    ),
+                  ),
+                if (isSent) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.done_all,
+                    size: 14,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}

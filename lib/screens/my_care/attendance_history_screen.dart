@@ -5,6 +5,7 @@ import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/paginated_list.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   final String deploymentId;
@@ -17,82 +18,44 @@ class AttendanceHistoryScreen extends StatefulWidget {
 }
 
 class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
-  List<Attendance> _records = [];
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      _records = await context.read<AppProvider>().apiService
-          .getAttendanceHistoryPaginated(widget.deploymentId);
-    } catch (e) {
-      _error = 'Failed to load attendance';
-    }
-
-    if (mounted) setState(() => _isLoading = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final apiService = context.read<AppProvider>().apiService;
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('attendance_history'))),
-      body: _isLoading
-          ? const Center(child: LoadingWidget())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(l.t('error_load_data')),
-                      TextButton(
-                          onPressed: _loadData,
-                          child: Text(l.t('tap_to_retry'))),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _records.length,
-                    itemBuilder: (context, index) {
-                      final a = _records[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Icon(
-                            AttendanceHelper.getStatusIcon(a.status),
-                            color:
-                                AttendanceHelper.getStatusColor(a.status),
-                          ),
-                          title: Text(a.checkInTime != null
-                              ? DateHelper.formatDate(a.checkInTime!)
-                              : 'No check-in'),
-                          subtitle: Text(
-                              '${a.status} · ${a.checkInTime != null ? "In: ${DateHelper.formatTime(a.checkInTime!)}" : ""} ${a.checkOutTime != null ? "· Out: ${DateHelper.formatTime(a.checkOutTime!)}" : ""}'),
-                          trailing: StatusBadge(
-                            text: a.status,
-                            color:
-                                AttendanceHelper.getStatusColor(a.status),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: PaginatedListView<Attendance>(
+          pageSize: 30,
+          fetchPage: (page, pageSize) =>
+              apiService.getAttendanceHistoryPaginated(
+            widget.deploymentId,
+            page: page,
+            pageSize: pageSize,
+          ),
+          itemBuilder: (a) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: Icon(
+                AttendanceHelper.getStatusIcon(a.status),
+                color: AttendanceHelper.getStatusColor(a.status),
+              ),
+              title: Text(a.checkInTime != null
+                  ? DateHelper.formatDate(a.checkInTime!)
+                  : 'No check-in'),
+              subtitle: Text(
+                  '${a.status} · ${a.checkInTime != null ? "In: ${DateHelper.formatTime(a.checkInTime!)}" : ""} ${a.checkOutTime != null ? "· Out: ${DateHelper.formatTime(a.checkOutTime!)}" : ""}'),
+              trailing: StatusBadge(
+                text: a.status,
+                color: AttendanceHelper.getStatusColor(a.status),
+              ),
+            ),
+          ),
+          emptyWidget: Center(child: Text(l.t('no_data'))),
+        ),
+      ),
     );
   }
 }

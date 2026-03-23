@@ -665,13 +665,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   }
 
   void _trackOrder(OrderItem order) {
-    final tracking = order.metadata['tracking_info'] as String?;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(tracking ?? 'Tracking info not available yet'),
-        backgroundColor: HousepitalColors.info,
-      ),
-    );
+    Navigator.pushNamed(context, '/order-tracking', arguments: {
+      'bookingId': order.id,
+      'orderType': order.type == 'equipment' ? 'equipment' : 'booking',
+    });
   }
 
   // ==================== ASSESSMENT ACTIONS ====================

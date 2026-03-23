@@ -4,6 +4,8 @@ import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/notification_router.dart';
+import '../../widgets/paginated_list.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -13,23 +15,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  List<AppNotification> _notifications = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNotifications();
-  }
-
-  Future<void> _loadNotifications() async {
-    try {
-      _notifications = await ApiService().getNotifications();
-    } catch (e) {
-      debugPrint('Error loading notifications: $e');
-    }
-    setState(() => _isLoading = false);
-  }
+  Key _listKey = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +28,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           TextButton(
             onPressed: () async {
               await ApiService().markAllNotificationsRead();
-              _loadNotifications();
+              setState(() => _listKey = UniqueKey());
             },
             child: Text(
               l.t('mark_all_read'),
@@ -52,33 +38,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                  color: HousepitalColors.orange))
-          : _notifications.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.notifications_none,
-                          size: 64, color: HousepitalColors.greyLighter),
-                      const SizedBox(height: 16),
-                      Text(l.t('no_data'),
-                          style: const TextStyle(
-                              color: HousepitalColors.greyLight)),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  itemCount: _notifications.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final n = _notifications[index];
-                    return _buildNotificationTile(n);
-                  },
-                ),
+      body: PaginatedListView<AppNotification>(
+        key: _listKey,
+        pageSize: 20,
+        fetchPage: (page, pageSize) =>
+            ApiService().getNotificationsPaginated(
+          page: page,
+          pageSize: pageSize,
+        ),
+        itemBuilder: (n) => _buildNotificationTile(n),
+        emptyWidget: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.notifications_none,
+                  size: 64, color: HousepitalColors.greyLighter),
+              const SizedBox(height: 16),
+              Text(l.t('no_data'),
+                  style: const TextStyle(
+                      color: HousepitalColors.greyLight)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -161,8 +143,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       onTap: () async {
         if (!n.isRead) {
           await ApiService().markNotificationRead(n.id);
-          _loadNotifications();
         }
+        if (!mounted) return;
+        // Route to relevant screen based on notification type
+        NotificationRouter.handleNotification(context, {
+          'type': n.type,
+          if (n.data != null && n.data!['id'] != null) 'id': n.data!['id'],
+        });
       },
     );
   }

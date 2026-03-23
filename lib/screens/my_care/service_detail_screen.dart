@@ -9,6 +9,7 @@ import '../../widgets/common_widgets.dart';
 import 'widgets/vitals_trend_grid.dart';
 import 'widgets/care_report_section.dart';
 import 'widgets/equipment_deployed_section.dart';
+import 'staff_otp_verification_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final ActiveService service;
@@ -83,6 +84,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         if (widget.service.showStaff &&
                             myCare.selectedServiceDetail != null)
                           _buildStaffSection(myCare.selectedServiceDetail!, l),
+
+                        // Verify Staff button (when staff checked in but not yet verified)
+                        if (widget.service.showStaff &&
+                            myCare.selectedServiceDetail != null &&
+                            myCare.selectedServiceDetail!.staffOnDuty.any(
+                                (s) => s.checkInTime != null))
+                          _buildVerifyStaffButton(
+                              myCare.selectedServiceDetail!),
 
                         // 7-day attendance
                         if (widget.service.showAttendance &&
@@ -421,5 +430,36 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
+  }
+
+  Widget _buildVerifyStaffButton(ServiceDetail detail) {
+    // Pick the first checked-in staff member for verification
+    final checkedInStaff =
+        detail.staffOnDuty.where((s) => s.checkInTime != null).first;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pushNamed(context, '/staff-otp', arguments: {
+              'deploymentId': widget.service.deploymentIds.isNotEmpty
+                  ? widget.service.deploymentIds.first
+                  : '',
+              'staffName': checkedInStaff.name,
+              'staffRole': checkedInStaff.role,
+              'staffPhotoUrl': checkedInStaff.photoUrl,
+            });
+          },
+          icon: const Icon(Icons.verified_user, size: 20),
+          label: const Text('Verify Staff'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: HousepitalColors.success,
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -72,8 +72,13 @@ class HealthManagerBanner extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
-            onPressed: () =>
-                launchUrl(Uri.parse('sms:${manager.phone}')),
+            onPressed: () {
+              Navigator.pushNamed(context, '/chat', arguments: {
+                'patientId': manager.staffId, // TODO: Replace with actual patient ID from auth
+                'coordinatorName': manager.name,
+                'coordinatorPhotoUrl': manager.photoUrl,
+              });
+            },
             style: IconButton.styleFrom(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
