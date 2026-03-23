@@ -1389,10 +1389,14 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // close dialog
+              Navigator.pushReplacementNamed(
+                context,
+                '/booking-history',
+                arguments: 1, // Assessment Requests tab
+              );
             },
-            child: const Text('OK'),
+            child: const Text('Track in My Orders'),
           ),
         ],
       ),

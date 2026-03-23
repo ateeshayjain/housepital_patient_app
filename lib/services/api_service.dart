@@ -4,6 +4,7 @@ import '../config/constants.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
+import '../models/equipment_order.dart';
 
 class ApiService {
   final String baseUrl;
@@ -570,6 +571,25 @@ class ApiService {
       String patientId, String medicationId, int stockCount) async {
     await _put('/patients/$patientId/medications/$medicationId/stock',
         body: {'stock_count': stockCount});
+  }
+
+  // ── Equipment Orders ────────────────────────────────────────
+
+  Future<List<EquipmentOrder>> getEquipmentOrders(String patientId) async {
+    final data = await _get('/patients/$patientId/equipment-orders');
+    return (data['equipment_orders'] as List)
+        .map((o) => EquipmentOrder.fromJson(o))
+        .toList();
+  }
+
+  // ── Assessment Actions ──────────────────────────────────────
+
+  Future<void> acceptAssessment(String assessmentId) async {
+    await _put('/assessments/$assessmentId/accept', body: {});
+  }
+
+  Future<void> declineAssessment(String assessmentId) async {
+    await _put('/assessments/$assessmentId/decline', body: {});
   }
 }
 

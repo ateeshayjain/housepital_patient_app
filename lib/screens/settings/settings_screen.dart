@@ -60,6 +60,12 @@ class SettingsScreen extends StatelessWidget {
 
           _settingsTile(
             context,
+            icon: Icons.receipt_long,
+            title: 'My Orders',
+            onTap: () => Navigator.pushNamed(context, '/booking-history'),
+          ),
+          _settingsTile(
+            context,
             icon: Icons.person_outline,
             title: l.t('patient_profile'),
             onTap: () => Navigator.pushNamed(context, '/patient-profile'),
