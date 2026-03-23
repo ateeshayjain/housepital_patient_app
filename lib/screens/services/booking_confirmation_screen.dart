@@ -249,7 +249,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                         );
                       },
                       icon: const Icon(Icons.list_alt),
-                      label: const Text('View My Bookings'),
+                      label: const Text('View My Orders'),
                     ),
                   ),
                   const SizedBox(height: 12),
