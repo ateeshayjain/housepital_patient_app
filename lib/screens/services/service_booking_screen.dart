@@ -99,6 +99,36 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   bool get _isIvVisit => widget.service.id == 'visit-iv';
   bool get _isConsultationType => widget.service.id.startsWith('con-');
 
+  /// Ongoing manpower: nurse (non-critical), caretaker, japa, nanny
+  /// These need start date (48hr advance) + period (7/30 days)
+  bool get _isOngoingManpower {
+    final id = widget.service.id;
+    return id.startsWith('mp-nurse-basic') ||
+        id.startsWith('mp-nurse-adv') ||
+        id.startsWith('mp-caretaker') ||
+        id.startsWith('mp-japa') ||
+        id.startsWith('mp-nanny');
+  }
+
+  /// Physio: pick a daytime slot + period (3/7/15/30 days)
+  bool get _isPhysio => widget.service.id.startsWith('mp-physio');
+
+  /// Whether this is any manpower service
+  bool get _isManpower => widget.service.category == 'manpower';
+
+  // Ongoing manpower state
+  String _servicePeriod = '30'; // '7' or '30' days
+  String _physioPeriod = '7'; // '3', '7', '15', '30' days
+  static const _daytimeSlots = [9, 10, 11, 12, 13, 14, 15, 16, 17]; // 9AM-5PM only
+
+  // Previous staff preference
+  String? _preferredStaffId;
+  String? _preferredStaffName;
+  bool _requestSameStaff = false;
+
+  // Autopay for recurring services
+  bool _enableAutopay = false;
+
   // Doctor visit concern & recommendation
   final _concernController = TextEditingController();
   String? _selectedConcernCategory;
@@ -1350,6 +1380,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   }
 
   List<Widget> _buildSlotStep(AppLocalizations l) {
+    // ── Ongoing manpower: start date (48hr+) + period (7/30 days) ──
+    if (_isOngoingManpower) return _buildOngoingManpowerSlot(l);
+
+    // ── Physio: daytime slot + period (3/7/15/30 days) ──
+    if (_isPhysio) return _buildPhysioSlot(l);
+
     final nextDays = List.generate(
         7, (i) => DateTime.now().add(Duration(days: i + 1)));
 
@@ -1528,12 +1564,385 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         height: 52,
         child: ElevatedButton(
           onPressed:
-              _selectedDate != null && _selectedSlot != null
-                  ? () => setState(() => _step = 2)
-                  : null,
+              _isOngoingManpower
+                  ? (_selectedDate != null ? () => setState(() => _step = 2) : null)
+                  : (_selectedDate != null && _selectedSlot != null
+                      ? () => setState(() => _step = 2)
+                      : null),
           child: const Text('Review & Pay'),
         ),
       ),
+    ];
+  }
+
+  // ── Ongoing manpower: start date (48hr min) + period (7/30 days) ──
+  List<Widget> _buildOngoingManpowerSlot(AppLocalizations l) {
+    // Start date must be at least 48 hours from now
+    final minDate = DateTime.now().add(const Duration(hours: 48));
+    final nextDays = List.generate(
+        14, (i) => minDate.add(Duration(days: i)));
+
+    return [
+      const Text('Select Start Date',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 4),
+      Text('Minimum 48 hours advance booking required',
+          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: nextDays.map((date) {
+          final isSelected = _selectedDate?.day == date.day &&
+              _selectedDate?.month == date.month;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedDate = date),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? HousepitalColors.orange
+                    : HousepitalColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected
+                      ? HousepitalColors.orange
+                      : HousepitalColors.divider,
+                ),
+              ),
+              child: Text(
+                DateHelper.formatDateShort(date),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : HousepitalColors.black,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 24),
+      const Text('Service Period',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _servicePeriod = '7'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: _servicePeriod == '7'
+                      ? HousepitalColors.orange
+                      : HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _servicePeriod == '7'
+                        ? HousepitalColors.orange
+                        : HousepitalColors.divider,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text('7 Days',
+                        style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700,
+                          color: _servicePeriod == '7'
+                              ? Colors.white : HousepitalColors.black,
+                        )),
+                    const SizedBox(height: 4),
+                    Text('Trial / Short-term',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _servicePeriod == '7'
+                              ? Colors.white70 : HousepitalColors.greyLight,
+                        )),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _servicePeriod = '30'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: _servicePeriod == '30'
+                      ? HousepitalColors.orange
+                      : HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _servicePeriod == '30'
+                        ? HousepitalColors.orange
+                        : HousepitalColors.divider,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text('30 Days',
+                        style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700,
+                          color: _servicePeriod == '30'
+                              ? Colors.white : HousepitalColors.black,
+                        )),
+                    const SizedBox(height: 4),
+                    Text('Monthly (Recommended)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _servicePeriod == '30'
+                              ? Colors.white70 : HousepitalColors.greyLight,
+                        )),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      // Price summary
+      if (widget.service.basePriceMin != null)
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: HousepitalColors.successLight,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${_servicePeriod} days × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}/day',
+                  style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
+              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)).toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
+            ],
+          ),
+        ),
+      const SizedBox(height: 20),
+
+      // ── Previous Staff Preference ──
+      const Text('Staff Preference',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: HousepitalColors.greyLighter,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HousepitalColors.divider),
+        ),
+        child: Column(
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Request same staff as before',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              subtitle: Text(
+                _requestSameStaff && _preferredStaffName != null
+                    ? 'Preferred: $_preferredStaffName'
+                    : 'We\'ll try to assign your previous caretaker/nurse',
+                style: const TextStyle(fontSize: 12),
+              ),
+              value: _requestSameStaff,
+              activeColor: HousepitalColors.orange,
+              onChanged: (v) => setState(() => _requestSameStaff = v),
+            ),
+            if (_requestSameStaff) ...[
+              const Divider(),
+              // TODO: Load previous staff from API — for now show placeholder
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: HousepitalColors.orangeLight,
+                  child: const Icon(Icons.person, color: HousepitalColors.orange),
+                ),
+                title: const Text('Your previous staff', style: TextStyle(fontSize: 14)),
+                subtitle: const Text('Based on past deployments', style: TextStyle(fontSize: 12)),
+                trailing: const Icon(Icons.chevron_right, color: HousepitalColors.greyLight),
+                onTap: () {
+                  // TODO: Show previous staff list from API
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Previous staff list coming from backend')),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(height: 20),
+
+      // ── Autopay for Recurring Service ──
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: HousepitalColors.infoLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HousepitalColors.info.withValues(alpha: 0.3)),
+        ),
+        child: SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Enable Auto-Pay',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          subtitle: const Text(
+            'Automatically renew and pay at the end of each period. Cancel anytime.',
+            style: TextStyle(fontSize: 12),
+          ),
+          value: _enableAutopay,
+          activeColor: HousepitalColors.info,
+          onChanged: (v) => setState(() => _enableAutopay = v),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Text('We\'ll call back immediately after booking to confirm requirements and assign staff.',
+          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight, fontStyle: FontStyle.italic)),
+    ];
+  }
+
+  // ── Physio: daytime slot + period (3/7/15/30 days) ──
+  List<Widget> _buildPhysioSlot(AppLocalizations l) {
+    final nextDays = List.generate(
+        7, (i) => DateTime.now().add(Duration(days: i + 1)));
+
+    return [
+      const Text('Select Start Date',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: nextDays.map((date) {
+          final isSelected = _selectedDate?.day == date.day &&
+              _selectedDate?.month == date.month;
+          return GestureDetector(
+            onTap: () {
+              setState(() => _selectedDate = date);
+              _loadSlotsForDate(date);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                ),
+              ),
+              child: Text(
+                DateHelper.formatDateShort(date),
+                style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : HousepitalColors.black,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 20),
+      const Text('Preferred Time',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 4),
+      const Text('Daytime slots only (9 AM – 5 PM)',
+          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+      const SizedBox(height: 12),
+      if (_slotsLoading)
+        const Center(child: CircularProgressIndicator(color: HousepitalColors.orange))
+      else
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 2.6,
+          children: _daytimeSlots.map((hour) {
+            final isSelected = _selectedSlot == '$hour:00';
+            return GestureDetector(
+              onTap: () => setState(() => _selectedSlot = '$hour:00'),
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                  ),
+                ),
+                child: Text(
+                  _slotLabel(hour),
+                  style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : HousepitalColors.black,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      const SizedBox(height: 20),
+      const Text('Number of Sessions',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 12),
+      Row(
+        children: ['3', '7', '15', '30'].map((days) {
+          final isSelected = _physioPeriod == days;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: GestureDetector(
+                onTap: () => setState(() => _physioPeriod = days),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text('$days',
+                          style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : HousepitalColors.black,
+                          )),
+                      Text('days',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isSelected ? Colors.white70 : HousepitalColors.greyLight,
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 16),
+      if (widget.service.basePriceMin != null)
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: HousepitalColors.successLight,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$_physioPeriod sessions × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
+              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)).toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
+            ],
+          ),
+        ),
     ];
   }
 

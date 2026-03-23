@@ -154,25 +154,36 @@ void main() {
   });
 
   // =========================================================================
-  // Assessment services should not show prices for manpower staff services
+  // Manpower pricing: all show prices except ICU/critical nurse (assessment)
   // =========================================================================
-  group('Service catalog — assessment manpower services hide prices', () {
-    // Manpower services with bookingType 'assessment' that are staff-based
-    // (nurse, caretaker, japa, nanny) should have basePriceMin == null.
-    final staffAssessmentIds = {
+  group('Service catalog — manpower pricing', () {
+    // Non-ICU manpower services should have prices (direct purchase)
+    final pricedManpowerIds = {
       'mp-nurse-basic-12', 'mp-nurse-basic-24',
       'mp-nurse-adv-12', 'mp-nurse-adv-24',
-      'mp-nurse-crit-12', 'mp-nurse-crit-24',
       'mp-caretaker-basic-12', 'mp-caretaker-basic-24',
       'mp-caretaker-adv-12', 'mp-caretaker-adv-24',
       'mp-caretaker-crit-12', 'mp-caretaker-crit-24',
       'mp-japa-24', 'mp-nanny-12',
+      'mp-physio-basic', 'mp-physio-advance', 'mp-physio-critical',
     };
 
-    for (final svc in _allServices.where((s) => staffAssessmentIds.contains(s.id))) {
-      test('${svc.id} (${svc.name}) has null basePriceMin', () {
+    for (final svc in _allServices.where((s) => pricedManpowerIds.contains(s.id))) {
+      test('${svc.id} (${svc.name}) has a price', () {
+        expect(svc.basePriceMin, isNotNull,
+            reason: 'Non-ICU manpower services should show prices');
+        expect(svc.bookingType, 'scheduled',
+            reason: 'Non-ICU manpower services should be directly bookable');
+      });
+    }
+
+    // ICU/critical nurse stays assessment-only (no price, needs assessment)
+    final icuAssessmentIds = {'mp-nurse-crit-12', 'mp-nurse-crit-24'};
+    for (final svc in _allServices.where((s) => icuAssessmentIds.contains(s.id))) {
+      test('${svc.id} (${svc.name}) is assessment-only (ICU setup)', () {
         expect(svc.basePriceMin, isNull,
-            reason: 'Staff manpower assessment services should not show prices');
+            reason: 'ICU nurse services require assessment');
+        expect(svc.bookingType, 'assessment');
       });
     }
   });

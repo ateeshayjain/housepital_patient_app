@@ -45,31 +45,32 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   // ── Real Housepital service catalog ──────────────────────────
 
   static final List<ServiceItem> _manpowerServices = [
-    // ── Nursing Staff (no prices shown — assessment first) ──
+    // ── Nursing Staff ──
     ServiceItem(
       id: 'mp-nurse-basic-12', name: 'Nurse (Basic) – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Basic nursing care — vitals monitoring, oral medication, feeding & personal hygiene assistance.',
-      iconName: 'medical_services',
+      basePriceMin: 900, durationMinutes: 720, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-basic-24', name: 'Nurse (Basic) – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock basic nursing for patients needing continuous monitoring and care.',
-      iconName: 'medical_services',
+      basePriceMin: 1200, durationMinutes: 1440, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-adv-12', name: 'Nurse (Advanced) – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Advanced nursing — IV/IM medication, catheter care, RT feeding, sugar & BP monitoring.',
-      iconName: 'medical_services',
+      basePriceMin: 1200, durationMinutes: 720, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-adv-24', name: 'Nurse (Advanced) – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock advanced nursing for patients needing clinical-grade care at home.',
-      iconName: 'medical_services',
+      basePriceMin: 1500, durationMinutes: 1440, iconName: 'medical_services',
     ),
+    // ── Critical Nurse — ICU setup, assessment required ──
     ServiceItem(
       id: 'mp-nurse-crit-12', name: 'Nurse (Critical) – 12 Hours',
       category: 'manpower', bookingType: 'assessment',
@@ -82,75 +83,75 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       description: 'Round-the-clock critical care nursing for ICU-like home setups and ventilator patients.',
       iconName: 'medical_services',
     ),
-    // ── Care-takers (no prices shown — assessment first) ──
+    // ── Care-takers ──
     ServiceItem(
       id: 'mp-caretaker-basic-12', name: 'Caretaker (Basic) – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Basic caretaker — bathing, mobility assistance, feeding, companionship & medication reminders.',
-      iconName: 'person',
+      basePriceMin: 600, durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-basic-24', name: 'Caretaker (Basic) – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock basic caretaker for daily living assistance and companionship.',
-      iconName: 'person',
+      basePriceMin: 800, durationMinutes: 1440, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-adv-12', name: 'Caretaker (Advanced) – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Advanced caretaker with IM injection & BP monitoring skills for patients needing medical support.',
-      iconName: 'person',
+      basePriceMin: 800, durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock advanced caretaker with medical assistance capabilities.',
-      iconName: 'person',
+      basePriceMin: 1000, durationMinutes: 1440, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Semi-nurse level caretaker for complex care needs — RT feeding, suctioning assistance.',
-      iconName: 'person',
+      basePriceMin: 1000, durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock semi-nurse caretaker for patients needing intensive daily care.',
-      iconName: 'person',
+      basePriceMin: 1200, durationMinutes: 1440, iconName: 'person',
     ),
-    // ── Japa Maid (no price shown — assessment first) ──
+    // ── Japa Maid ──
     ServiceItem(
       id: 'mp-japa-24', name: 'Japa Maid – 24 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Post-delivery care for mother & newborn (0-7 months) — breastfeeding support, baby massage, bathing, umbilical cord care & mother\'s diet preparation.',
-      iconName: 'child_friendly',
+      basePriceMin: 800, durationMinutes: 1440, iconName: 'child_friendly',
     ),
-    // ── Nanny (no price shown — assessment first) ──
+    // ── Nanny ──
     ServiceItem(
       id: 'mp-nanny-12', name: 'Nanny – 12 Hours',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Professional nanny for infants & toddlers (7 months–5 years) — feeding, sleep routine, developmental activities, hygiene & safety supervision.',
-      iconName: 'child_care',
+      basePriceMin: 600, durationMinutes: 720, iconName: 'child_care',
     ),
     // ── Physiotherapy ──
     ServiceItem(
       id: 'mp-physio-basic', name: 'Physiotherapy (Basic)',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Basic physiotherapy (30-40 min) for TKR, THR, frozen shoulder, lower back pain, posture correction, sciatica & sports injuries. Therapist: 1-2 years experience.',
-      iconName: 'fitness_center',
+      basePriceMin: 900, durationMinutes: 40, iconName: 'fitness_center',
     ),
     ServiceItem(
       id: 'mp-physio-advance', name: 'Physiotherapy (Advanced)',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Advanced physiotherapy (45-50 min) for neuro rehab, antenatal/postnatal, cardiac rehab, pulmo rehab (not on O2). Therapist: 2-4 years experience.',
-      iconName: 'fitness_center',
+      basePriceMin: 1200, durationMinutes: 50, iconName: 'fitness_center',
     ),
     ServiceItem(
       id: 'mp-physio-critical', name: 'Physiotherapy (Critical)',
-      category: 'manpower', bookingType: 'assessment',
+      category: 'manpower', bookingType: 'scheduled',
       description: 'Critical physiotherapy (50-60 min) for pulmo rehab on O2, neurosurgical cases, spinal cord injury & pediatric post-op. Therapist: 4+ years experience.',
-      iconName: 'fitness_center',
+      basePriceMin: 1500, durationMinutes: 60, iconName: 'fitness_center',
     ),
   ];
 
@@ -2494,19 +2495,23 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       isRental: _isRental,
                       rentalMonths: _isRental ? _rentalMonths : 1);
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${item.name} added to cart'),
-                      backgroundColor: HousepitalColors.success,
-                      action: SnackBarAction(
-                        label: 'VIEW CART',
-                        textColor: Colors.white,
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/cart');
-                        },
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text('${item.name} added to cart'),
+                        backgroundColor: HousepitalColors.success,
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                        action: SnackBarAction(
+                          label: 'VIEW CART',
+                          textColor: Colors.white,
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/cart');
+                          },
+                        ),
                       ),
-                    ),
-                  );
+                    );
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
                 label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),
