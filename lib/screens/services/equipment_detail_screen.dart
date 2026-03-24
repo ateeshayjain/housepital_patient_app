@@ -1509,8 +1509,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         : inCart
                             ? OutlinedButton.icon(
                                 onPressed: () {
+                                  final nav = Navigator.of(context, rootNavigator: true);
                                   Navigator.of(context).pop();
-                                  Navigator.of(context).pushNamed('/cart');
+                                  nav.pushNamed('/cart');
                                 },
                                 icon: const Icon(Icons.shopping_cart, size: 18),
                                 label: const Text('Go to Cart'),
@@ -1557,9 +1558,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       onPressed: () {
                         // Add to cart first, then navigate
                         if (!inCart) _addToCart(context);
-                        // Pop the bottom sheet first, then navigate
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pushNamed('/cart');
+                        // Capture root navigator before popping bottom sheet
+                        final nav = Navigator.of(context, rootNavigator: true);
+                        Navigator.of(context).pop(); // close bottom sheet
+                        nav.pushNamed('/cart');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HousepitalColors.orange,

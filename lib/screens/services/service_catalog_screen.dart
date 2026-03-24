@@ -2015,6 +2015,23 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+          // Close button
+          Align(
+            alignment: Alignment.topRight,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: HousepitalColors.greyLighter,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.close, size: 18, color: HousepitalColors.grey),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           // Header
           Row(
             children: [
