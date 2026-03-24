@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +17,7 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  late PaymentService _paymentService;
+  PaymentService? _paymentService;
   final _couponController = TextEditingController();
   String? _couponError;
   String? _appliedCouponCode;
@@ -26,12 +27,15 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    _paymentService = PaymentService();
+    // Razorpay doesn't work on web — guard initialization
+    if (!kIsWeb) {
+      _paymentService = PaymentService();
+    }
   }
 
   @override
   void dispose() {
-    _paymentService.dispose();
+    _paymentService?.dispose();
     _couponController.dispose();
     super.dispose();
   }
@@ -444,7 +448,18 @@ class _CartScreenState extends State<CartScreen> {
         ? itemNames
         : '$itemNames +${cart.itemCount - 3} more';
 
-    _paymentService.openCheckout(
+    if (_paymentService == null) {
+      // Web fallback — Razorpay not available
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payments require the mobile app. Use the Housepital app on Android/iOS.'),
+          backgroundColor: HousepitalColors.warning,
+        ),
+      );
+      return;
+    }
+
+    _paymentService!.openCheckout(
       amount: amountInPaise,
       description: description,
       onSuccess: () {

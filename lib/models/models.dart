@@ -1107,6 +1107,73 @@ class EquipmentItem {
       );
 }
 
+// Lab Test Item Model
+class LabTestItem {
+  final String id;
+  final String name;
+  final int? price;
+  final String? category;
+  final String? sampleType;
+  final String? tube;
+  final bool fastingRequired;
+  final String? reportTat;
+  final bool homeCollection;
+  final String? method;
+  final String? description;
+  final String? components;
+  final String? alsoKnownAs;
+  final String? commonlyPrescribedFor;
+  final String? relatedTests;
+
+  LabTestItem({
+    required this.id,
+    required this.name,
+    this.price,
+    this.category,
+    this.sampleType,
+    this.tube,
+    this.fastingRequired = false,
+    this.reportTat,
+    this.homeCollection = false,
+    this.method,
+    this.description,
+    this.components,
+    this.alsoKnownAs,
+    this.commonlyPrescribedFor,
+    this.relatedTests,
+  });
+
+  factory LabTestItem.fromJson(Map<String, dynamic> json) => LabTestItem(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        price: json['price'] as int?,
+        category: json['category'] as String?,
+        sampleType: json['sample_type'] as String?,
+        tube: json['tube'] as String?,
+        fastingRequired: json['fasting_required'] ?? false,
+        reportTat: json['report_tat'] as String?,
+        homeCollection: json['home_collection'] ?? false,
+        method: json['method'] as String?,
+        description: json['description'] as String?,
+        components: json['components'] as String?,
+        alsoKnownAs: json['also_known_as'] as String?,
+        commonlyPrescribedFor: json['commonly_prescribed_for'] as String?,
+        relatedTests: json['related_tests'] as String?,
+      );
+
+  /// Convert to a ServiceItem for booking flow compatibility.
+  ServiceItem toServiceItem() => ServiceItem(
+        id: id,
+        name: name,
+        category: 'lab',
+        bookingType: 'instant',
+        description: description,
+        basePriceMin: price,
+        basePriceMax: price,
+        iconName: 'science',
+      );
+}
+
 // Staff Attendance Model
 class StaffAttendance {
   final DateTime date;
