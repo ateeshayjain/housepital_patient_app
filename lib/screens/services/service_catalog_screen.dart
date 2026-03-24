@@ -2065,7 +2065,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               childrenPadding: const EdgeInsets.only(bottom: 8),
               title: const Text('Key Features',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
-              leading: const Icon(Icons.star_outline, size: 18, color: HousepitalColors.success),
+              leading: const Icon(Icons.star_outline, size: 18, color: HousepitalColors.orange),
               children: _splitCatalogText(item.keyFeatures!).map((f) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
@@ -2098,7 +2098,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               childrenPadding: const EdgeInsets.only(bottom: 8),
               title: const Text('Ideal For',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
-              leading: const Icon(Icons.check_circle_outline, size: 18, color: HousepitalColors.success),
+              leading: const Icon(Icons.check_circle_outline, size: 18, color: HousepitalColors.orange),
               children: _splitCatalogText(item.idealFor!).map((use) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
