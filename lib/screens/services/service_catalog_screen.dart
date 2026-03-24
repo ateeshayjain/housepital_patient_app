@@ -2057,55 +2057,62 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
             _CollapsibleText(text: item.description!),
           ],
 
-          // Key Features as checklist
+          // Key Features (collapsible)
           if (item.keyFeatures != null) ...[
-            const SizedBox(height: 16),
-            const Text('Key Features',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
             const SizedBox(height: 10),
-            ..._splitCatalogText(item.keyFeatures!).map((f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 2),
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: HousepitalColors.successLight,
-                          borderRadius: BorderRadius.circular(5),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              title: const Text('Key Features',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+              leading: const Icon(Icons.star_outline, size: 18, color: HousepitalColors.success),
+              children: _splitCatalogText(item.keyFeatures!).map((f) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          width: 18, height: 18,
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.successLight,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: const Icon(Icons.check, size: 12, color: HousepitalColors.success),
                         ),
-                        child: const Icon(Icons.check, size: 12, color: HousepitalColors.success),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(f, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4)),
-                      ),
-                    ],
-                  ),
-                )),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(f, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4)),
+                        ),
+                      ],
+                    ),
+                  )).toList(),
+            ),
           ],
 
-          // Ideal For as checklist
+          // Ideal For (collapsible)
           if (item.idealFor != null) ...[
-            const SizedBox(height: 16),
-            const Text('Ideal For',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
-            const SizedBox(height: 10),
-            ..._splitCatalogText(item.idealFor!).map((use) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.check_circle_outline, size: 16, color: HousepitalColors.success),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(use, style: const TextStyle(fontSize: 12, color: HousepitalColors.grey, height: 1.4)),
-                      ),
-                    ],
-                  ),
-                )),
+            const SizedBox(height: 4),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              title: const Text('Ideal For',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+              leading: const Icon(Icons.check_circle_outline, size: 18, color: HousepitalColors.success),
+              children: _splitCatalogText(item.idealFor!).map((use) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 16, color: HousepitalColors.success),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(use, style: const TextStyle(fontSize: 12, color: HousepitalColors.grey, height: 1.4)),
+                        ),
+                      ],
+                    ),
+                  )).toList(),
+            ),
           ],
 
           // How to Use (expandable)
