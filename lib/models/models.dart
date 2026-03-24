@@ -1004,6 +1004,8 @@ class EquipmentItem {
   final String? variantType;
   final String? variantValue;
   final List<String>? imageUrls; // Multiple product images for gallery
+  final double? mrp;
+  final String? useCase;
 
   EquipmentItem({
     required this.id,
@@ -1026,6 +1028,8 @@ class EquipmentItem {
     this.variantType,
     this.variantValue,
     this.imageUrls,
+    this.mrp,
+    this.useCase,
   });
 
   /// Legacy getter — derives type from availability flags.
@@ -1071,6 +1075,8 @@ class EquipmentItem {
         'variant_type': variantType,
         'variant_value': variantValue,
         'image_urls': imageUrls,
+        'mrp': mrp,
+        'use_case': useCase,
       };
 
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
@@ -1096,6 +1102,8 @@ class EquipmentItem {
         imageUrls: json['image_urls'] != null
             ? List<String>.from(json['image_urls'])
             : null,
+        mrp: (json['mrp'] as num?)?.toDouble(),
+        useCase: json['use_case'] as String?,
       );
 }
 

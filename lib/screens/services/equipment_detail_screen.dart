@@ -564,6 +564,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           _buildIdealForSection(),
           const _SectionDivider(),
         ],
+        if (_catalogItem?.useCase != null && _catalogItem!.useCase!.isNotEmpty) ...[
+          _buildUseCaseSection(),
+          const _SectionDivider(),
+        ],
         _buildDeliveryPromiseRow(),
         const _SectionDivider(),
         if (_specs.isNotEmpty) ...[
@@ -683,9 +687,31 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       );
     }
 
+    final hasMrp = _catalogItem?.mrp != null &&
+        _catalogItem!.mrp! > 0 &&
+        hasBuyPrice &&
+        _catalogItem!.mrp! > (_catalogItem!.price ?? 0);
+
+    final discountPct = hasMrp
+        ? ((_catalogItem!.mrp! - _catalogItem!.price!) / _catalogItem!.mrp! * 100).round()
+        : 0;
+
     return Row(
       children: [
-        if (hasBuyPrice)
+        if (hasBuyPrice) ...[
+          if (hasMrp) ...[
+            Text(
+              '\u20B9${_catalogItem!.mrp!.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: HousepitalColors.greyLight,
+                decoration: TextDecoration.lineThrough,
+                decorationColor: HousepitalColors.greyLight,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Text(
             _priceText!,
             style: const TextStyle(
@@ -694,6 +720,25 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               color: HousepitalColors.orangeText,
             ),
           ),
+          if (hasMrp && discountPct > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: HousepitalColors.successLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '$discountPct% off',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: HousepitalColors.success,
+                ),
+              ),
+            ),
+          ],
+        ],
         if (hasBuyPrice && hasRentPrice) ...[
           const SizedBox(width: 16),
           Container(height: 24, width: 1, color: HousepitalColors.divider),
@@ -827,6 +872,39 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               children: [
                 const Icon(Icons.check_circle_outline,
                     size: 18, color: HousepitalColors.success),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: HousepitalColors.grey,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
+    );
+  }
+
+  // ── Recommended For (Use Case) ───────────────────────────────
+
+  Widget _buildUseCaseSection() {
+    final items = _splitCatalogText(_catalogItem!.useCase!);
+
+    return _CollapsibleSection(
+      icon: Icons.medical_information,
+      iconColor: HousepitalColors.orange,
+      title: 'Recommended For',
+      children: items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.medical_information,
+                    size: 18, color: HousepitalColors.orange),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

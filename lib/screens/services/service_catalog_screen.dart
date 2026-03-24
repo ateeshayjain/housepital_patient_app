@@ -1572,7 +1572,8 @@ class _EquipmentTabState extends State<_EquipmentTab> {
       items = items
           .where((i) =>
               i.name.toLowerCase().contains(q) ||
-              i.brand.toLowerCase().contains(q))
+              i.brand.toLowerCase().contains(q) ||
+              i.useCase?.toLowerCase().contains(q) == true)
           .toList();
     }
     // Apply sorting
@@ -1881,8 +1882,40 @@ class _EquipmentItemCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // Price
-              if (item.price != null)
+              // Price with MRP strikethrough
+              if (item.price != null) ...[
+                if (item.mrp != null && item.mrp! > item.price!) ...[
+                  Row(
+                    children: [
+                      Text(
+                        DateHelper.formatCurrency(item.mrp!.toInt()),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: HousepitalColors.greyLight,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: HousepitalColors.greyLight,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: HousepitalColors.successLight,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: Text(
+                          '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: HousepitalColors.success,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                ],
                 Text(
                   DateHelper.formatCurrency(item.price!.toInt()),
                   style: const TextStyle(
@@ -1890,8 +1923,8 @@ class _EquipmentItemCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: HousepitalColors.orangeText,
                   ),
-                )
-              else
+                ),
+              ] else
                 const Text(
                   'Price on request',
                   style: TextStyle(
