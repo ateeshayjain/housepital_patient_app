@@ -773,7 +773,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     final features = _features;
     return _CollapsibleSection(
       icon: Icons.star_outline,
-      iconColor: HousepitalColors.success,
+      iconColor: HousepitalColors.orange,
       title: 'Key Features',
       children: features.map((feature) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
@@ -818,7 +818,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
     return _CollapsibleSection(
       icon: Icons.check_circle_outline,
-      iconColor: HousepitalColors.success,
+      iconColor: HousepitalColors.orange,
       title: 'Ideal For',
       children: items.map((item) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
