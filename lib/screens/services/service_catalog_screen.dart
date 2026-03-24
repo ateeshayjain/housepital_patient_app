@@ -1971,16 +1971,21 @@ class _EquipmentItemCard extends StatelessWidget {
     );
   }
 
-  void _showItemDetail(BuildContext context) {
-    showModalBottomSheet(
+  void _showItemDetail(BuildContext context) async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _EquipmentDetailSheet(item: item, icon: icon),
+      builder: (_) => _EquipmentDetailSheet(item: item, icon: icon),
     );
+    // Navigate AFTER bottom sheet is fully closed, using parent context
+    if (result != null && context.mounted) {
+      final route = result['route'] as String;
+      Navigator.of(context).pushNamed(route, arguments: result['args']);
+    }
   }
 }
 
@@ -2516,8 +2521,9 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.of(context).pushNamed('/assessment-request',
-                      arguments: ServiceItem(
+                  Navigator.of(context).pop<Map<String, dynamic>>({
+                    'route': '/assessment-request',
+                    'args': ServiceItem(
                         id: 'eq-${item.id}',
                         name: item.name,
                         category: 'equipment_assessment',
@@ -2525,7 +2531,8 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                         basePriceMin: (item.rentalPrice ?? item.price ?? 0).toInt(),
                         basePriceMax: (item.price ?? item.rentalPrice ?? 0).toInt(),
                         iconName: 'medical_services',
-                      ));
+                      ),
+                  });
                 },
                 icon: const Icon(Icons.assignment_outlined, size: 20),
                 label: const Text('Request Complimentary Assessment'),
@@ -2546,16 +2553,14 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   if (_isRental) {
-                    // Rental flow → navigate to Rental Agreement
-                    // Push BEFORE pop so context is still valid
-                    Navigator.of(context).pushNamed('/rental-agreement',
-                      arguments: {
+                    // Return result to parent — parent navigates after sheet closes
+                    Navigator.of(context).pop<Map<String, dynamic>>({
+                      'route': '/rental-agreement',
+                      'args': {
                         'itemName': item.name,
                         'monthlyRate': (item.rentalPrice ?? 0).toInt(),
                         'durationMonths': _rentalMonths,
                       },
-                    ).then((_) {
-                      // Bottom sheet auto-dismisses when we navigate away
                     });
                   } else {
                     // Buy flow → add to cart
