@@ -66,5 +66,6 @@ flutter:
     - assets/images/
     - assets/i18n/
     - assets/equipment_catalog.json
+    - assets/lab_tests_catalog.json
 
   # Archivo font loaded via google_fonts package at runtime

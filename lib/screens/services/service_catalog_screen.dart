@@ -521,15 +521,10 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             filterBySearch: _filterBySearch,
             onNavigate: _navigateToService,
           ),
-          _DiagnosticsTab(
-            services: _labServices,
+          _LabTestsTab(
+            packageServices: _labServices,
             iconMap: _iconMap,
-            searchQuery: _searchQuery,
-            searchController: _searchController,
-            searchFocusNode: _searchFocusNode,
-            onSearchChanged: _onSearchChanged,
-            filterBySearch: _filterBySearch,
-            onNavigate: _navigateToService,
+            onNavigateService: _navigateToService,
           ),
           const _PackagesTab(),
         ],
@@ -3306,6 +3301,781 @@ class _QuantityButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, size: 18, color: HousepitalColors.orange),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LAB TESTS TAB  (loads from assets/lab_tests_catalog.json)
+// ═══════════════════════════════════════════════════════════════
+
+class _LabTestsTab extends StatefulWidget {
+  /// The existing lab packages (Fever Panel, Wellness, etc.) shown as
+  /// "Popular Packages" at the top.
+  final List<ServiceItem> packageServices;
+  final Map<String, IconData> iconMap;
+  final void Function(BuildContext, ServiceItem) onNavigateService;
+
+  const _LabTestsTab({
+    required this.packageServices,
+    required this.iconMap,
+    required this.onNavigateService,
+  });
+
+  @override
+  State<_LabTestsTab> createState() => _LabTestsTabState();
+}
+
+class _LabTestsTabState extends State<_LabTestsTab> {
+  List<LabTestItem> _allTests = [];
+  bool _isLoading = true;
+  String _selectedCategory = 'All';
+  String _searchQuery = '';
+  String _sortBy = 'Name A-Z';
+  final _searchController = TextEditingController();
+
+  List<String> _categories = ['All'];
+
+  static const _sortOptions = [
+    'Name A-Z',
+    'Price: Low to High',
+    'Price: High to Low',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalog();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCatalog() async {
+    try {
+      final jsonStr =
+          await rootBundle.loadString('assets/lab_tests_catalog.json');
+      final List<dynamic> list = json.decode(jsonStr);
+      _allTests = list.map((e) => LabTestItem.fromJson(e)).toList();
+      // Build category list
+      final cats = <String>{};
+      for (final t in _allTests) {
+        if (t.category != null) cats.add(t.category!);
+      }
+      _categories = ['All', ...cats.toList()..sort()];
+    } catch (e) {
+      debugPrint('Error loading lab tests catalog: $e');
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  List<LabTestItem> get _filtered {
+    var items = _allTests;
+    // Category filter
+    if (_selectedCategory != 'All') {
+      items = items.where((i) => i.category == _selectedCategory).toList();
+    }
+    // Search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      items = items
+          .where((i) =>
+              i.name.toLowerCase().contains(q) ||
+              (i.alsoKnownAs?.toLowerCase().contains(q) ?? false) ||
+              (i.commonlyPrescribedFor?.toLowerCase().contains(q) ?? false) ||
+              (i.description?.toLowerCase().contains(q) ?? false))
+          .toList();
+    }
+    // Sort
+    switch (_sortBy) {
+      case 'Price: Low to High':
+        items = List.of(items)
+          ..sort((a, b) =>
+              (a.price ?? 999999).compareTo(b.price ?? 999999));
+        break;
+      case 'Price: High to Low':
+        items = List.of(items)
+          ..sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+        break;
+      default: // Name A-Z
+        items = List.of(items)
+          ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+    }
+    return items;
+  }
+
+  void _showLabTestDetail(BuildContext context, LabTestItem test) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _LabTestDetailSheet(
+        test: test,
+        onBook: () {
+          Navigator.pop(context);
+          widget.onNavigateService(context, test.toServiceItem());
+        },
+        onRelatedTap: (name) {
+          Navigator.pop(context);
+          setState(() {
+            _searchQuery = name.trim();
+            _searchController.text = name.trim();
+            _selectedCategory = 'All';
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: HousepitalColors.orange));
+    }
+
+    final filtered = _filtered;
+    final packages = widget.packageServices;
+
+    return Column(
+      children: [
+        // Search
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Search lab tests, symptoms...',
+              prefixIcon:
+                  const Icon(Icons.search, color: HousepitalColors.greyLight),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: HousepitalColors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        // Trust badges
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: _TrustBadgeBar(
+            badges: [
+              _TrustBadge(icon: Icons.workspace_premium, text: 'NABL Accredited Labs'),
+              _TrustBadge(icon: Icons.home, text: 'Home Collection'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Category chips + sort
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final cat = _categories[index];
+                      final isSelected = cat == _selectedCategory;
+                      final count = cat == 'All'
+                          ? _allTests.length
+                          : _allTests.where((i) => i.category == cat).length;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedCategory = cat),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? HousepitalColors.orange
+                                : HousepitalColors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? HousepitalColors.orange
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Text(
+                            '$cat ($count)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? HousepitalColors.white
+                                  : HousepitalColors.grey,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.sort, color: HousepitalColors.grey),
+                onSelected: (v) => setState(() => _sortBy = v),
+                itemBuilder: (_) => _sortOptions
+                    .map((o) => PopupMenuItem(
+                          value: o,
+                          child: Row(
+                            children: [
+                              if (o == _sortBy)
+                                const Icon(Icons.check,
+                                    size: 18, color: HousepitalColors.orange)
+                              else
+                                const SizedBox(width: 18),
+                              const SizedBox(width: 8),
+                              Text(o),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Results count
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${filtered.length} tests found',
+              style: const TextStyle(
+                  fontSize: 13, color: HousepitalColors.greyLight),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Content list
+        Expanded(
+          child: filtered.isEmpty
+              ? const _EmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  itemCount:
+                      (packages.isNotEmpty && _searchQuery.isEmpty && _selectedCategory == 'All')
+                          ? filtered.length + packages.length + 2
+                          : filtered.length,
+                  itemBuilder: (context, index) {
+                    // Show packages section at the top when no search/filter active
+                    if (packages.isNotEmpty &&
+                        _searchQuery.isEmpty &&
+                        _selectedCategory == 'All') {
+                      if (index == 0) {
+                        return const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Text(
+                            'Popular Packages',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black,
+                            ),
+                          ),
+                        );
+                      }
+                      if (index <= packages.length) {
+                        final pkg = packages[index - 1];
+                        return _DiagnosticCard(
+                          service: pkg,
+                          iconMap: widget.iconMap,
+                          onNavigate: widget.onNavigateService,
+                        );
+                      }
+                      if (index == packages.length + 1) {
+                        return const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Text(
+                            'All Individual Tests',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black,
+                            ),
+                          ),
+                        );
+                      }
+                      // Offset for individual tests
+                      final testIndex = index - packages.length - 2;
+                      final test = filtered[testIndex];
+                      return _LabTestCard(
+                        test: test,
+                        onTap: () => _showLabTestDetail(context, test),
+                      );
+                    }
+                    // No packages header — just individual tests
+                    final test = filtered[index];
+                    return _LabTestCard(
+                      test: test,
+                      onTap: () => _showLabTestDetail(context, test),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Lab Test Card ────────────────────────────────────────────────────────────
+
+class _LabTestCard extends StatelessWidget {
+  final LabTestItem test;
+  final VoidCallback onTap;
+
+  const _LabTestCard({required this.test, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Material(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(14),
+        elevation: 1,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.infoLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.science,
+                      color: HousepitalColors.info, size: 22),
+                ),
+                const SizedBox(width: 12),
+                // Name + badges
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        test.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: HousepitalColors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (test.sampleType != null)
+                            _MiniChip(
+                                icon: Icons.colorize, label: test.sampleType!),
+                          if (test.reportTat != null)
+                            _MiniChip(
+                                icon: Icons.schedule, label: test.reportTat!),
+                          if (test.fastingRequired)
+                            const _MiniChip(
+                                icon: Icons.no_food,
+                                label: 'Fasting',
+                                color: HousepitalColors.warning),
+                          if (test.homeCollection)
+                            const _MiniChip(
+                                icon: Icons.home,
+                                label: 'Home',
+                                color: HousepitalColors.success),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Price
+                if (test.price != null)
+                  Text(
+                    DateHelper.formatCurrency(test.price!),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: HousepitalColors.orangeText,
+                    ),
+                  ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right,
+                    color: HousepitalColors.greyLight, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _MiniChip({
+    required this.icon,
+    required this.label,
+    this.color = HousepitalColors.greyLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Lab Test Detail Bottom Sheet ─────────────────────────────────────────────
+
+class _LabTestDetailSheet extends StatelessWidget {
+  final LabTestItem test;
+  final VoidCallback onBook;
+  final void Function(String) onRelatedTap;
+
+  const _LabTestDetailSheet({
+    required this.test,
+    required this.onBook,
+    required this.onRelatedTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (_, controller) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Content
+              Expanded(
+                child: ListView(
+                  controller: controller,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // Name + Price header
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.infoLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.science,
+                              color: HousepitalColors.info, size: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                test.name,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: HousepitalColors.black,
+                                ),
+                              ),
+                              if (test.alsoKnownAs != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  test.alsoKnownAs!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: HousepitalColors.greyLight,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (test.price != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: HousepitalColors.orangeLight,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              DateHelper.formatCurrency(test.price!),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: HousepitalColors.orangeText,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Info chips row
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (test.sampleType != null)
+                          _InfoChip(
+                              icon: Icons.colorize, label: test.sampleType!),
+                        _InfoChip(
+                          icon: test.fastingRequired
+                              ? Icons.no_food
+                              : Icons.restaurant,
+                          label: test.fastingRequired
+                              ? 'Fasting Required'
+                              : 'No Fasting',
+                          color: test.fastingRequired
+                              ? HousepitalColors.warning
+                              : HousepitalColors.success,
+                        ),
+                        if (test.reportTat != null)
+                          _InfoChip(
+                              icon: Icons.schedule,
+                              label: 'Report: ${test.reportTat!}'),
+                        _InfoChip(
+                          icon: test.homeCollection
+                              ? Icons.home
+                              : Icons.local_hospital,
+                          label: test.homeCollection
+                              ? 'Home Collection'
+                              : 'Lab Visit',
+                          color: test.homeCollection
+                              ? HousepitalColors.success
+                              : HousepitalColors.greyLight,
+                        ),
+                        if (test.tube != null)
+                          _InfoChip(icon: Icons.science, label: test.tube!),
+                        if (test.category != null)
+                          _InfoChip(
+                              icon: Icons.category, label: test.category!),
+                      ],
+                    ),
+                    if (test.description != null) ...[
+                      const SizedBox(height: 20),
+                      const Text('Description',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black)),
+                      const SizedBox(height: 6),
+                      Text(test.description!,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: HousepitalColors.grey,
+                              height: 1.5)),
+                    ],
+                    if (test.components != null) ...[
+                      const SizedBox(height: 16),
+                      const Text('Components / Parameters',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black)),
+                      const SizedBox(height: 6),
+                      Text(test.components!,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: HousepitalColors.grey,
+                              height: 1.5)),
+                    ],
+                    if (test.method != null) ...[
+                      const SizedBox(height: 16),
+                      const Text('Method',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black)),
+                      const SizedBox(height: 6),
+                      Text(test.method!,
+                          style: const TextStyle(
+                              fontSize: 14, color: HousepitalColors.grey)),
+                    ],
+                    if (test.commonlyPrescribedFor != null) ...[
+                      const SizedBox(height: 16),
+                      const Text('Commonly Prescribed For',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black)),
+                      const SizedBox(height: 6),
+                      Text(test.commonlyPrescribedFor!,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: HousepitalColors.grey,
+                              height: 1.5)),
+                    ],
+                    if (test.relatedTests != null) ...[
+                      const SizedBox(height: 16),
+                      const Text('Related Tests',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: test.relatedTests!
+                            .split(',')
+                            .map((t) => t.trim())
+                            .where((t) => t.isNotEmpty)
+                            .map(
+                              (t) => ActionChip(
+                                label: Text(t,
+                                    style: const TextStyle(fontSize: 12)),
+                                onPressed: () => onRelatedTap(t),
+                                backgroundColor: HousepitalColors.infoLight,
+                                side: BorderSide.none,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 28),
+                  ],
+                ),
+              ),
+              // Book Now button
+              if (test.price != null)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: onBook,
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: Text(
+                            'Book Now  •  ${DateHelper.formatCurrency(test.price!)}'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HousepitalColors.orange,
+                          foregroundColor: HousepitalColors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          textStyle: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    this.color = HousepitalColors.info,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style:
+                TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }

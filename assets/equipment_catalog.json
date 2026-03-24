@@ -19,7 +19,7 @@
     "parent_product_id": "PP-050",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 18.0,
     "use_case": "General Consumables"
   },
   {
@@ -42,7 +42,7 @@
     "parent_product_id": "PP-051",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "General Care"
   },
   {
@@ -65,7 +65,7 @@
     "parent_product_id": "PP-052",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -88,7 +88,7 @@
     "parent_product_id": "PP-053",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -111,7 +111,7 @@
     "parent_product_id": "PP-054",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -134,7 +134,7 @@
     "parent_product_id": "PP-055",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 25000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -157,7 +157,7 @@
     "parent_product_id": "PP-056",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 20000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -180,7 +180,7 @@
     "parent_product_id": "PP-057",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 12000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -203,12 +203,12 @@
     "parent_product_id": "PP-058",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 165000.0,
     "rental_tiers": {
       "7d": 2599,
       "15d": 5299,
       "21d": 7099,
-      "30d": 8099
+      "30d": 14850
     },
     "use_case": "Respiratory"
   },
@@ -232,7 +232,7 @@
     "parent_product_id": "PP-059",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 7500.0,
     "use_case": "Respiratory"
   },
   {
@@ -255,7 +255,7 @@
     "parent_product_id": "PP-060",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Respiratory"
   },
   {
@@ -278,9 +278,9 @@
     "parent_product_id": "PP-061",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 95000.0,
     "rental_tiers": {
-      "30d": 8550.0
+      "30d": 8550
     },
     "use_case": "Respiratory"
   },
@@ -304,12 +304,12 @@
     "parent_product_id": "PP-062",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 90000.0,
     "rental_tiers": {
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 8100
     },
     "use_case": "Respiratory"
   },
@@ -333,12 +333,12 @@
     "parent_product_id": "PP-063",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 90000.0,
     "rental_tiers": {
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 8100
     },
     "use_case": "Respiratory"
   },
@@ -362,12 +362,12 @@
     "parent_product_id": "PP-064",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 90000.0,
     "rental_tiers": {
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 8100
     },
     "use_case": "Respiratory"
   },
@@ -379,7 +379,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 42000,
-    "rental_price": 299,
+    "rental_price": 257,
     "status": "Active",
     "image_url": null,
     "description": "ResMed AirSense 10 AutoSet CPAP — auto-adjusting CPAP machine with the clinically proven AutoSet algorithm that detects and responds to obstructive apnoea, hypopnoea, snoring, and airflow limitation events in real time, adjusting pressure breath-by-breath. Unlike fixed-pressure CPAP, AutoSet delivers only the minimum pressure needed at any given moment, improving comfort and therapy adherence. The Easy-Breathe motor operates at whisper-quiet levels, and EPR (Expiratory Pressure Relief) reduces pressure during exhalation for natural breathing. SmartStart technology turns the device on automatically when you breathe into the mask and off when you remove it. Built-in data tracking records therapy sessions on an SD card for physician review.",
@@ -395,9 +395,9 @@
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 8100
     },
-    "mrp": null,
+    "mrp": 90000.0,
     "use_case": "Respiratory"
   },
   {
@@ -420,9 +420,9 @@
     "parent_product_id": "PP-066",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 75000.0,
     "rental_tiers": {
-      "30d": 6750.0
+      "30d": 6750
     },
     "use_case": "Respiratory"
   },
@@ -446,9 +446,9 @@
     "parent_product_id": "PP-067",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 75000.0,
     "rental_tiers": {
-      "30d": 6750.0
+      "30d": 6750
     },
     "use_case": "Respiratory"
   },
@@ -472,9 +472,9 @@
     "parent_product_id": "PP-068",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 115000.0,
     "rental_tiers": {
-      "30d": 10350.0
+      "30d": 10350
     },
     "use_case": "Respiratory"
   },
@@ -498,9 +498,9 @@
     "parent_product_id": "PP-069",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 70000.0,
     "rental_tiers": {
-      "30d": 6300.0
+      "30d": 6300
     },
     "use_case": "Respiratory"
   },
@@ -512,7 +512,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 15000,
-    "rental_price": 299,
+    "rental_price": 286,
     "status": "Active",
     "image_url": null,
     "description": "ResMed AirStart 10 CPAP APAC — fixed-pressure CPAP device offering essential, reliable sleep apnoea therapy at an accessible price point. The AirStart 10 CPAP delivers a single prescribed pressure throughout the night, as set by the patient's sleep specialist after a diagnostic sleep study. Simple, intuitive interface with straightforward controls makes the device easy for patients of all ages and technical abilities to operate. Quiet motor operation minimises sleep disturbance for the patient and bed partner. Compatible with optional HumidAir humidifier. Compact design fits on any bedside table. An ideal choice for healthcare programmes, insurance packages, and patients who need effective fixed-pressure therapy without premium features.",
@@ -528,9 +528,9 @@
       "7d": 1999,
       "15d": 3899,
       "21d": 5299,
-      "30d": 5999
+      "30d": 6300
     },
-    "mrp": null,
+    "mrp": 70000.0,
     "use_case": "Respiratory"
   },
   {
@@ -553,9 +553,9 @@
     "parent_product_id": "PP-071",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 85000.0,
     "rental_tiers": {
-      "30d": 7650.0
+      "30d": 7650
     },
     "use_case": "Respiratory"
   },
@@ -579,9 +579,9 @@
     "parent_product_id": "PP-072",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 85000.0,
     "rental_tiers": {
-      "30d": 7650.0
+      "30d": 7650
     },
     "use_case": "Respiratory"
   },
@@ -605,9 +605,9 @@
     "parent_product_id": "PP-073",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 35000.0,
     "rental_tiers": {
-      "30d": 3150.0
+      "30d": 3150
     },
     "use_case": "Mobility & Patient Comfort"
   },
@@ -618,7 +618,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -631,7 +631,7 @@
     "parent_product_id": "PP-074",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 60000.0,
     "use_case": "Respiratory"
   },
   {
@@ -641,7 +641,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 65600,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -654,9 +654,9 @@
     "parent_product_id": "PP-075",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 90000.0,
     "rental_tiers": {
-      "30d": 8100.0
+      "30d": 8100
     },
     "use_case": "Respiratory"
   },
@@ -666,8 +666,8 @@
     "brand": "Philips",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 65600,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 1399,
     "status": "Active",
     "image_url": null,
@@ -680,7 +680,7 @@
     "parent_product_id": "PP-076",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 85000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 8899,
@@ -697,7 +697,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 41000,
-    "rental_price": 1399,
+    "rental_price": 1271,
     "status": "Active",
     "image_url": null,
     "description": "Philips BiPAP A40 (Rental) — advanced bilevel ventilator available for rental, providing the same AVAPS (Average Volume Assured Pressure Support) technology and multi-mode therapy capabilities as the purchased unit. Rental availability makes this hospital-grade device accessible for patients requiring temporary respiratory support during post-hospital recovery, trial therapy assessment, or transitional care periods. The device is professionally set up and programmed by the healthcare provider per physician orders. All rental devices are serviced, calibrated, and infection-control cleaned between patients. Comprehensive alarm system and detailed data logging support safe, monitored therapy throughout the rental period.",
@@ -713,9 +713,9 @@
       "7d": 8899,
       "15d": 17599,
       "21d": 23699,
-      "30d": 26999
+      "30d": 7650
     },
-    "mrp": null,
+    "mrp": 85000.0,
     "use_case": "Respiratory"
   },
   {
@@ -725,7 +725,7 @@
     "category": "Consumable",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 1050,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -738,7 +738,7 @@
     "parent_product_id": "PP-078",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Respiratory"
   },
   {
@@ -761,7 +761,7 @@
     "parent_product_id": "PP-079",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Respiratory"
   },
   {
@@ -771,7 +771,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 65600,
+    "price": 2500,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -784,9 +784,9 @@
     "parent_product_id": "PP-080",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150000.0,
     "rental_tiers": {
-      "30d": 13500.0
+      "30d": 13500
     },
     "use_case": "Respiratory"
   },
@@ -797,7 +797,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -810,7 +810,7 @@
     "parent_product_id": "PP-081",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 95000.0,
     "use_case": "Respiratory"
   },
   {
@@ -820,7 +820,7 @@
     "category": "Consumable",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 2500,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -833,7 +833,7 @@
     "parent_product_id": "PP-082",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -856,7 +856,7 @@
     "parent_product_id": "PP-083",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -879,7 +879,7 @@
     "parent_product_id": "PP-084",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -902,7 +902,7 @@
     "parent_product_id": "PP-001",
     "variant_type": "Type",
     "variant_value": "Vented",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -913,7 +913,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 65600,
-    "rental_price": 399,
+    "rental_price": 243,
     "status": "Active",
     "image_url": null,
     "description": "BMC BiPAP ST Machine (Rental) — bilevel positive airway pressure ventilator with Spontaneous/Timed (ST) mode available for rental. The ST mode delivers pressure-synchronised bilevel support during spontaneous breathing and automatically provides a backup breath at a preset rate if the patient fails to initiate a breath within the timed interval — providing a critical safety net for patients with unreliable respiratory drive. Rental availability makes advanced bilevel therapy accessible for patients requiring temporary respiratory support during post-hospitalisation recovery, therapy trials, or transitional care. Built-in data logging records therapy metrics for physician review. BMC quality construction for reliable home use.",
@@ -926,12 +926,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 2299,
+      "7d": 1699,
       "15d": 4599,
       "21d": 6199,
-      "30d": 6999
+      "30d": 7200
     },
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory"
   },
   {
@@ -942,7 +942,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 65600,
-    "rental_price": 399,
+    "rental_price": 328,
     "status": "Active",
     "image_url": null,
     "description": "ResMed BiPAP ST (Rental) — premium bilevel device with Spontaneous/Timed mode available for rental, providing ResMed's advanced bilevel therapy with backup breathing rate for patients needing temporary respiratory support. Auto-adjusting bilevel algorithm and heated humidification ensure comfortable, effective therapy throughout the rental period. Built-in wireless connectivity transmits therapy data to the AirView cloud platform, enabling your healthcare provider to monitor compliance and adjust therapy remotely. All rental devices are professionally serviced, calibrated, and infection-control cleaned between patients. Premium ResMed quality and support throughout the rental period.",
@@ -958,9 +958,9 @@
       "7d": 2299,
       "15d": 4599,
       "21d": 6199,
-      "30d": 6999
+      "30d": 13500
     },
-    "mrp": null,
+    "mrp": 150000.0,
     "use_case": "Respiratory"
   },
   {
@@ -970,7 +970,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 65600,
+    "price": 15000,
     "rental_price": 399,
     "status": "Active",
     "image_url": null,
@@ -983,12 +983,12 @@
     "parent_product_id": "PP-087",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 120000.0,
     "rental_tiers": {
       "7d": 2299,
       "15d": 4599,
       "21d": 6199,
-      "30d": 6999
+      "30d": 10800
     },
     "use_case": "Respiratory"
   },
@@ -998,8 +998,8 @@
     "brand": "BPL",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 65600,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 399,
     "status": "Active",
     "image_url": null,
@@ -1012,7 +1012,7 @@
     "parent_product_id": "PP-088",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 95000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2299,
@@ -1041,7 +1041,7 @@
     "parent_product_id": "PP-089",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -1064,7 +1064,7 @@
     "parent_product_id": "PP-090",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -1087,7 +1087,7 @@
     "parent_product_id": "PP-002",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1110,7 +1110,7 @@
     "parent_product_id": "PP-091",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1133,7 +1133,7 @@
     "parent_product_id": "PP-092",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1156,7 +1156,7 @@
     "parent_product_id": "PP-093",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1179,7 +1179,7 @@
     "parent_product_id": "PP-094",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1202,7 +1202,7 @@
     "parent_product_id": "PP-095",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1211,9 +1211,9 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15500,
-    "rental_price": 199,
+    "rental_price": 171,
     "status": "Active",
     "image_url": null,
     "description": "Manual Hospital Bed with Mattress — complete home healthcare bed package including a multi-position adjustable steel bed frame with manual crank mechanisms, side safety railings, and a medical-grade foam mattress. Manual cranks allow caregivers to adjust the head and foot sections independently for comfortable patient positioning — elevating the head for eating, reading, and respiratory comfort, or elevating the legs for circulation. Built on a heavy-duty steel frame with lockable castors for mobility and stability. Side railings fold down for patient access and raise for fall prevention during sleep. The included medical-grade mattress provides comfort and support for extended bed rest.",
@@ -1231,7 +1231,7 @@
       "21d": 3099,
       "30d": 3599
     },
-    "mrp": null,
+    "mrp": 30000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -1254,7 +1254,7 @@
     "parent_product_id": "PP-097",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -1263,7 +1263,7 @@
     "brand": "BPL",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 799,
     "status": "Active",
@@ -1277,7 +1277,7 @@
     "parent_product_id": "PP-003",
     "variant_type": "Capacity",
     "variant_value": "10L",
-    "mrp": null,
+    "mrp": 130000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 4899,
@@ -1292,7 +1292,7 @@
     "brand": "BPL",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -1306,7 +1306,7 @@
     "parent_product_id": "PP-003",
     "variant_type": "Capacity",
     "variant_value": "5L",
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -1335,12 +1335,12 @@
     "parent_product_id": "PP-098",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 90000.0,
     "rental_tiers": {
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 8100
     },
     "use_case": "Respiratory"
   },
@@ -1364,7 +1364,7 @@
     "parent_product_id": "PP-004",
     "variant_type": "Gauge",
     "variant_value": "18G",
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -1387,7 +1387,7 @@
     "parent_product_id": "PP-004",
     "variant_type": "Gauge",
     "variant_value": "20G",
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -1410,7 +1410,7 @@
     "parent_product_id": "PP-099",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -1433,7 +1433,7 @@
     "parent_product_id": "PP-004",
     "variant_type": "Gauge",
     "variant_value": "22G",
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -1456,7 +1456,7 @@
     "parent_product_id": "PP-100",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 100.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -1465,7 +1465,7 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 4300,
     "rental_price": 99,
     "status": "Active",
@@ -1485,7 +1485,7 @@
       "21d": 1399,
       "30d": 1499
     },
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1508,7 +1508,7 @@
     "parent_product_id": "PP-103",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -1531,7 +1531,7 @@
     "parent_product_id": "PP-104",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -1554,7 +1554,7 @@
     "parent_product_id": "PP-105",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -1577,7 +1577,7 @@
     "parent_product_id": "PP-106",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 7000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -1622,7 +1622,7 @@
     "parent_product_id": "PP-108",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -1632,7 +1632,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 28500,
+    "price": 15000,
     "rental_price": 499,
     "status": "Active",
     "image_url": null,
@@ -1645,12 +1645,12 @@
     "parent_product_id": "PP-110",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 48000.0,
     "rental_tiers": {
       "7d": 2699,
       "15d": 5299,
       "21d": 7099,
-      "30d": 8099
+      "30d": 4320
     },
     "use_case": "Cardiac & Vascular"
   },
@@ -1660,9 +1660,9 @@
     "brand": "Arjonhuntleigh",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 28500,
-    "rental_price": 499,
+    "rental_price": 386,
     "status": "Active",
     "image_url": null,
     "description": "Arjohuntleigh DVT Pump — hospital-grade sequential compression device from Arjohuntleigh (Huntleigh Healthcare), a globally recognised leader in venous thromboembolism prophylaxis. Features advanced compression algorithms developed through decades of clinical research for optimal venous blood flow enhancement. Multi-mode therapy options allow clinicians to select the most appropriate compression protocol for each patient's risk profile. Hospital-grade construction meets the demanding requirements of surgical wards, ICUs, and long-term care facilities. Compatible with Arjohuntleigh/Flow Tron proprietary compression sleeves designed to work specifically with this pump's compression profiles.",
@@ -1680,7 +1680,7 @@
       "21d": 7099,
       "30d": 8099
     },
-    "mrp": null,
+    "mrp": 55000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1689,8 +1689,8 @@
     "brand": "Cirona",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 28500,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 499,
     "status": "Active",
     "image_url": null,
@@ -1703,7 +1703,7 @@
     "parent_product_id": "PP-112",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 48000.0,
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {
       "7d": 2699,
@@ -1732,7 +1732,7 @@
     "parent_product_id": "PP-113",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1755,7 +1755,7 @@
     "parent_product_id": "PP-114",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1778,7 +1778,7 @@
     "parent_product_id": "PP-115",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1801,7 +1801,7 @@
     "parent_product_id": "PP-116",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1824,7 +1824,7 @@
     "parent_product_id": "PP-117",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -1945,7 +1945,7 @@
     "available_for_sale": true,
     "available_for_rent": false,
     "price": 65600,
-    "rental_price": 499,
+    "rental_price": 371,
     "status": "Active",
     "image_url": null,
     "description": "Philips DreamStation BiPAP AVAPS 30 — advanced bilevel ventilator with Average Volume Assured Pressure Support (AVAPS) technology, automatically adjusting inspiratory pressure breath-by-breath to deliver a consistent target tidal volume. The AVAPS algorithm ensures the patient receives adequate ventilation even as respiratory effort and lung mechanics change during sleep. Supports Spontaneous (S), Spontaneous/Timed (ST), and AVAPS modes for clinical flexibility. Compact, modern design with an intuitive colour touchscreen interface. DreamMapper app connectivity provides patients with therapy feedback, coaching, and data access on their smartphone. Compatible with Philips heated humidifier for optimal airway comfort.",
@@ -1958,12 +1958,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 2599.0,
+      "7d": 2599,
       "15d": 5299,
       "21d": 7099,
       "30d": 8099
     },
-    "mrp": null,
+    "mrp": 200000.0,
     "use_case": "Respiratory"
   },
   {
@@ -1973,7 +1973,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -1986,7 +1986,7 @@
     "parent_product_id": "PP-120",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150000.0,
     "use_case": "Respiratory"
   },
   {
@@ -2009,7 +2009,7 @@
     "parent_product_id": "PP-121",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Respiratory"
   },
   {
@@ -2018,7 +2018,7 @@
     "brand": "DeVilbiss",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 799,
     "status": "Active",
@@ -2032,7 +2032,7 @@
     "parent_product_id": "PP-006",
     "variant_type": "Capacity",
     "variant_value": "10L",
-    "mrp": null,
+    "mrp": 135000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 4899,
@@ -2047,7 +2047,7 @@
     "brand": "DeVilbiss",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -2061,7 +2061,7 @@
     "parent_product_id": "PP-006",
     "variant_type": "Capacity",
     "variant_value": "5L",
-    "mrp": null,
+    "mrp": 85000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -2090,7 +2090,7 @@
     "parent_product_id": "PP-122",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2113,7 +2113,7 @@
     "parent_product_id": "PP-123",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2136,7 +2136,7 @@
     "parent_product_id": "PP-124",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 180000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2159,7 +2159,7 @@
     "parent_product_id": "PP-125",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 250000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2182,7 +2182,7 @@
     "parent_product_id": "PP-126",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2205,7 +2205,7 @@
     "parent_product_id": "PP-127",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -2215,7 +2215,7 @@
     "category": "Consumable",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 400,
+    "price": 2000,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -2228,7 +2228,7 @@
     "parent_product_id": "PP-129",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -2251,7 +2251,7 @@
     "parent_product_id": "PP-130",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Infant & Maternity"
   },
   {
@@ -2262,7 +2262,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 25500,
-    "rental_price": 299,
+    "rental_price": 257,
     "status": "Active",
     "image_url": null,
     "description": "Electric Recliner Chair (Purchase) — motorised reclining chair for permanent home use, providing long-term comfortable, adjustable seating for patients with mobility limitations, chronic conditions, or post-surgical recovery needs. Electric motor with handheld remote control enables effortless adjustment of backrest recline, leg rest elevation, and headrest position. Sturdy frame construction with durable upholstery designed for daily use over many years. Multi-position capability supports various patient needs throughout the day: upright for meals and activities, semi-reclined for relaxation, and fully reclined for napping and rest. An essential comfort and independence aid for elderly patients and those with chronic mobility limitations.",
@@ -2278,9 +2278,9 @@
       "7d": 1799,
       "15d": 3599,
       "21d": 4899,
-      "30d": 5499
+      "30d": 3600
     },
-    "mrp": null,
+    "mrp": 40000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -2303,7 +2303,7 @@
     "parent_product_id": "PP-007",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 8500.0,
     "use_case": "Respiratory"
   },
   {
@@ -2326,7 +2326,7 @@
     "parent_product_id": "PP-007",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 8500.0,
     "use_case": "Respiratory"
   },
   {
@@ -2349,7 +2349,7 @@
     "parent_product_id": "PP-133",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8500.0,
     "use_case": "Respiratory"
   },
   {
@@ -2360,7 +2360,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 15000,
-    "rental_price": 699,
+    "rental_price": 643,
     "status": "Active",
     "image_url": null,
     "description": "Five-Function Electric Hospital Bed (Rental) — premium motorised hospital bed with five independent electric adjustment functions, available for rental for patients requiring comprehensive positioning capabilities during home recovery. The five functions — backrest angle, knee-rest elevation, overall bed height, Trendelenburg (head-down) position, and reverse Trendelenburg (head-up) position — provide clinicians and caregivers with the full range of patient positioning options typically found in ICU and high-dependency care beds. Handheld remote control allows easy adjustment without manual cranking. Built-in side railings, IV pole mount, and lockable castors. Rental availability makes ICU-level bed functionality accessible for home healthcare.",
@@ -2373,12 +2373,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 4499.0,
+      "7d": 4499,
       "15d": 8799,
       "21d": 11899,
-      "30d": 9000.0
+      "30d": 9000
     },
-    "mrp": null,
+    "mrp": 100000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -2387,7 +2387,7 @@
     "brand": "BPL",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 499,
     "status": "Active",
@@ -2401,7 +2401,7 @@
     "parent_product_id": "PP-135",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 135000.0,
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {
       "7d": 2699,
@@ -2416,7 +2416,7 @@
     "brand": "SKANRAY",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 499,
     "status": "Active",
@@ -2430,7 +2430,7 @@
     "parent_product_id": "PP-136",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 135000.0,
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {
       "7d": 2699,
@@ -2445,7 +2445,7 @@
     "brand": "Mindray",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 499,
     "status": "Active",
@@ -2459,7 +2459,7 @@
     "parent_product_id": "PP-137",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150000.0,
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {
       "7d": 2699,
@@ -2474,9 +2474,9 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 85000,
-    "rental_price": 499,
+    "rental_price": 386,
     "status": "Active",
     "image_url": null,
     "description": "Contec 5-Parameter Patient Monitor — cost-effective multi-parameter vital signs monitoring system for basic bedside monitoring. Displays ECG, SpO₂, NIBP, temperature, and respiratory rate on a colour LCD screen. Contec brand provides reliable monitoring functionality at an accessible price point, making patient monitoring technology available for home healthcare, nursing homes, small clinics, and budget-conscious healthcare settings. Built-in battery backup ensures monitoring continues during power outages. Portable, compact design with optional carrying handle for easy relocation between rooms or use during patient transport. Basic alarm system alerts caregivers to out-of-range vital signs.",
@@ -2494,7 +2494,7 @@
       "21d": 7099,
       "30d": 8099
     },
-    "mrp": null,
+    "mrp": 130000.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2517,7 +2517,7 @@
     "parent_product_id": "PP-139",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 250000.0,
     "use_case": "Respiratory"
   },
   {
@@ -2540,7 +2540,7 @@
     "parent_product_id": "PP-141",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -2563,7 +2563,7 @@
     "parent_product_id": "PP-142",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 250.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -2586,7 +2586,7 @@
     "parent_product_id": "PP-143",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2609,7 +2609,7 @@
     "parent_product_id": "PP-144",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2632,7 +2632,7 @@
     "parent_product_id": "PP-147",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Respiratory"
   },
   {
@@ -2655,7 +2655,7 @@
     "parent_product_id": "PP-149",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 12000.0,
     "use_case": "Respiratory"
   },
   {
@@ -2664,9 +2664,9 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 1500,
-    "rental_price": 99,
+    "available_for_rent": false,
+    "price": 6500,
+    "rental_price": 57,
     "status": "Active",
     "image_url": null,
     "description": "IV Stand (Intravenous Drip Stand) — adjustable-height stainless steel or chrome pole with hooks for suspending IV fluid bags, medication bags, enteral feeding bags, and drainage bags at the patient's bedside. Telescoping pole mechanism allows smooth height adjustment to position the fluid bag at the correct elevation above the patient for gravity-fed infusion. Multiple hooks (typically 2–4) accommodate simultaneous IV lines and feeding bags. Weighted five-leg base with smooth-rolling castors provides stability and easy mobility between rooms. Castors roll smoothly on both hard floors and carpet. Essential bedside equipment for any patient receiving intravenous therapy, TPN, or enteral feeding at home or in a healthcare facility.",
@@ -2684,7 +2684,7 @@
       "21d": 899,
       "30d": 999
     },
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -2693,7 +2693,7 @@
     "brand": "Generic",
     "category": "Consumable",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": null,
     "rental_price": 99,
     "status": "Active",
@@ -2707,7 +2707,7 @@
     "parent_product_id": "PP-151",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 399,
@@ -2736,7 +2736,7 @@
     "parent_product_id": "PP-153",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -2759,7 +2759,7 @@
     "parent_product_id": "PP-008",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -2782,7 +2782,7 @@
     "parent_product_id": "PP-008",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -2805,7 +2805,7 @@
     "parent_product_id": "PP-008",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -2828,7 +2828,7 @@
     "parent_product_id": "PP-008",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -2851,7 +2851,7 @@
     "parent_product_id": "PP-154",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2874,7 +2874,7 @@
     "parent_product_id": "PP-155",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2897,7 +2897,7 @@
     "parent_product_id": "PP-156",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -2920,9 +2920,9 @@
     "parent_product_id": "PP-157",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 180000.0,
     "rental_tiers": {
-      "30d": 16200.0
+      "30d": 16200
     },
     "use_case": "Respiratory"
   },
@@ -2946,9 +2946,9 @@
     "parent_product_id": "PP-158",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 180000.0,
     "rental_tiers": {
-      "30d": 16200.0
+      "30d": 16200
     },
     "use_case": "Respiratory"
   },
@@ -2972,9 +2972,9 @@
     "parent_product_id": "PP-159",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 220000.0,
     "rental_tiers": {
-      "30d": 19800.0
+      "30d": 19800
     },
     "use_case": "Respiratory"
   },
@@ -2998,9 +2998,9 @@
     "parent_product_id": "PP-160",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 220000.0,
     "rental_tiers": {
-      "30d": 19800.0
+      "30d": 19800
     },
     "use_case": "Respiratory"
   },
@@ -3024,9 +3024,9 @@
     "parent_product_id": "PP-161",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 220000.0,
     "rental_tiers": {
-      "30d": 19800.0
+      "30d": 19800
     },
     "use_case": "Respiratory"
   },
@@ -3050,9 +3050,9 @@
     "parent_product_id": "PP-162",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "rental_tiers": {
-      "30d": 720.0
+      "30d": 720
     },
     "use_case": "Mobility & Patient Comfort"
   },
@@ -3076,7 +3076,7 @@
     "parent_product_id": "PP-164",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -3099,7 +3099,7 @@
     "parent_product_id": "PP-166",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 250.0,
     "use_case": "Respiratory"
   },
   {
@@ -3122,7 +3122,7 @@
     "parent_product_id": "PP-167",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "Respiratory"
   },
   {
@@ -3132,7 +3132,7 @@
     "category": "Consumable",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 850,
+    "price": 400,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -3145,7 +3145,7 @@
     "parent_product_id": "PP-168",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "Respiratory"
   },
   {
@@ -3168,7 +3168,7 @@
     "parent_product_id": "PP-169",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Respiratory"
   },
   {
@@ -3191,7 +3191,7 @@
     "parent_product_id": "PP-170",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Respiratory"
   },
   {
@@ -3214,7 +3214,7 @@
     "parent_product_id": "PP-171",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 250.0,
     "use_case": "Respiratory"
   },
   {
@@ -3224,8 +3224,8 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 3300,
-    "rental_price": 799,
+    "price": 4200,
+    "rental_price": 700,
     "status": "Active",
     "image_url": null,
     "description": "Nidek nebulizer compressor for converting liquid medication into fine aerosol mist for inhalation therapy. Reliable piston-type compressor for home and clinical use.",
@@ -3238,12 +3238,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 4899.0,
+      "7d": 4899,
       "15d": 9799,
       "21d": 13199,
       "30d": 14999
     },
-    "mrp": null,
+    "mrp": 3200.0,
     "use_case": "Respiratory"
   },
   {
@@ -3253,7 +3253,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 3300,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -3266,7 +3266,7 @@
     "parent_product_id": "PP-173",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3276,7 +3276,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 3300,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -3289,7 +3289,7 @@
     "parent_product_id": "PP-174",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3299,7 +3299,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 3300,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -3312,7 +3312,7 @@
     "parent_product_id": "PP-175",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3321,9 +3321,9 @@
     "brand": "Philips",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 55000,
-    "rental_price": 399,
+    "rental_price": 371,
     "status": "Active",
     "image_url": null,
     "description": "Philips 5-litre oxygen concentrator providing continuous medical-grade oxygen delivery up to 5 LPM. Trusted Philips EverFlo technology for reliable home oxygen therapy.",
@@ -3341,7 +3341,7 @@
       "21d": 6799,
       "30d": 7799
     },
-    "mrp": null,
+    "mrp": 85000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3364,7 +3364,7 @@
     "parent_product_id": "PP-176",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Respiratory"
   },
   {
@@ -3374,7 +3374,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 1750,
+    "price": 5000,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -3387,7 +3387,7 @@
     "parent_product_id": "PP-177",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 7000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3410,7 +3410,7 @@
     "parent_product_id": "PP-178",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 7000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3419,7 +3419,7 @@
     "brand": "DEDAKJ",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 799,
     "status": "Active",
@@ -3433,7 +3433,7 @@
     "parent_product_id": "PP-179",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 120000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 4899,
@@ -3448,9 +3448,9 @@
     "brand": "Philips",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
-    "rental_price": 799,
+    "rental_price": 700,
     "status": "Active",
     "image_url": null,
     "description": "Philips 10-litre oxygen concentrator for high-flow continuous oxygen delivery. Premium Philips quality with reliable oxygen extraction up to 10 LPM.",
@@ -3468,7 +3468,7 @@
       "21d": 13199,
       "30d": 14999
     },
-    "mrp": null,
+    "mrp": 140000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3477,7 +3477,7 @@
     "brand": "Nidek",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 799,
     "status": "Active",
@@ -3491,7 +3491,7 @@
     "parent_product_id": "PP-010",
     "variant_type": "Capacity",
     "variant_value": "10L",
-    "mrp": null,
+    "mrp": 130000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 4899,
@@ -3506,7 +3506,7 @@
     "brand": "Visionaire",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -3520,7 +3520,7 @@
     "parent_product_id": "PP-180",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -3535,7 +3535,7 @@
     "brand": "Gez Oxynex",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -3549,7 +3549,7 @@
     "parent_product_id": "PP-181",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -3564,7 +3564,7 @@
     "brand": "Imported",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -3578,7 +3578,7 @@
     "parent_product_id": "PP-182",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -3593,7 +3593,7 @@
     "brand": "Deluxe Trading",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -3607,7 +3607,7 @@
     "parent_product_id": "PP-183",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -3636,12 +3636,12 @@
     "parent_product_id": "PP-184",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "rental_tiers": {
       "7d": 2599,
       "15d": 5099,
       "21d": 6799,
-      "30d": 7799
+      "30d": 7200
     },
     "use_case": "Respiratory"
   },
@@ -3651,7 +3651,7 @@
     "brand": "Nidek",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -3665,7 +3665,7 @@
     "parent_product_id": "PP-010",
     "variant_type": "Capacity",
     "variant_value": "5L",
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -3682,7 +3682,7 @@
     "available_for_sale": true,
     "available_for_rent": false,
     "price": 15000,
-    "rental_price": 499,
+    "rental_price": 414,
     "status": "Active",
     "image_url": null,
     "description": "Yuwell Yu-300 oxygen concentrator — Yuwell brand portable oxygen device for home respiratory therapy. Compact and user-friendly design for supplemental oxygen delivery.",
@@ -3695,12 +3695,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 2899.0,
+      "7d": 2899,
       "15d": 5699,
       "21d": 7599,
       "30d": 8699
     },
-    "mrp": null,
+    "mrp": 45000.0,
     "use_case": "Respiratory"
   },
   {
@@ -3723,7 +3723,7 @@
     "parent_product_id": "PP-186",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "Respiratory"
   },
   {
@@ -3746,7 +3746,7 @@
     "parent_product_id": "PP-187",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Respiratory"
   },
   {
@@ -3769,7 +3769,7 @@
     "parent_product_id": "PP-188",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -3792,7 +3792,7 @@
     "parent_product_id": "PP-190",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -3815,7 +3815,7 @@
     "parent_product_id": "PP-191",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -3838,7 +3838,7 @@
     "parent_product_id": "PP-192",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -3861,7 +3861,7 @@
     "parent_product_id": "PP-193",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -3884,7 +3884,7 @@
     "parent_product_id": "PP-011",
     "variant_type": "Length",
     "variant_value": "4\"",
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -3907,7 +3907,7 @@
     "parent_product_id": "PP-011",
     "variant_type": "Length",
     "variant_value": "6\"",
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -3930,7 +3930,7 @@
     "parent_product_id": "PP-194",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -3939,9 +3939,9 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 900,
-    "rental_price": 299,
+    "rental_price": 100,
     "status": "Active",
     "image_url": null,
     "description": "Recliner bed — adjustable bed with reclining backrest for patient comfort. Combines bed and recliner functionality for patients who need elevated positioning.",
@@ -3954,12 +3954,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 1799,
+      "7d": 699,
       "15d": 3599,
       "21d": 4899,
       "30d": 5499
     },
-    "mrp": null,
+    "mrp": 45000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -3968,9 +3968,9 @@
     "brand": "Karma",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 900,
-    "rental_price": 299,
+    "available_for_rent": false,
+    "price": 16500,
+    "rental_price": 286,
     "status": "Active",
     "image_url": null,
     "description": "Karma reclining wheelchair without commode — tilt-in-space wheelchair with reclining backrest for patients needing postural support. No commode function.",
@@ -3983,12 +3983,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 1799,
+      "7d": 1999,
       "15d": 3599,
       "21d": 4899,
       "30d": 5499
     },
-    "mrp": null,
+    "mrp": 28000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -3997,8 +3997,8 @@
     "brand": "Vissco",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 900,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 299,
     "status": "Active",
     "image_url": null,
@@ -4011,7 +4011,7 @@
     "parent_product_id": "PP-197",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 25000.0,
     "use_case": "Orthopaedic",
     "rental_tiers": {
       "7d": 1799,
@@ -4026,8 +4026,8 @@
     "brand": "Anrace",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 900,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 299,
     "status": "Active",
     "image_url": null,
@@ -4040,7 +4040,7 @@
     "parent_product_id": "PP-198",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 22000.0,
     "use_case": "Orthopaedic",
     "rental_tiers": {
       "7d": 1799,
@@ -4055,9 +4055,9 @@
     "brand": "Karma",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 16500,
-    "rental_price": 299,
+    "rental_price": 200,
     "status": "Active",
     "image_url": null,
     "description": "Karma reclining wheelchair with commode — multi-function wheelchair with reclining backrest and built-in commode seat. Serves as wheelchair, recliner, and bedside toilet.",
@@ -4070,12 +4070,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 1999,
+      "7d": 1399,
       "15d": 3899,
       "21d": 5299,
       "30d": 5999
     },
-    "mrp": null,
+    "mrp": 32000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -4098,7 +4098,7 @@
     "parent_product_id": "PP-200",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4121,7 +4121,7 @@
     "parent_product_id": "PP-201",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Respiratory"
   },
   {
@@ -4144,7 +4144,7 @@
     "parent_product_id": "PP-012",
     "variant_type": "Type",
     "variant_value": "Standard",
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Respiratory"
   },
   {
@@ -4167,7 +4167,7 @@
     "parent_product_id": "PP-202",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Respiratory"
   },
   {
@@ -4190,7 +4190,7 @@
     "parent_product_id": "PP-012",
     "variant_type": "Type",
     "variant_value": "Neonatal",
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Respiratory"
   },
   {
@@ -4213,7 +4213,7 @@
     "parent_product_id": "PP-203",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -4236,7 +4236,7 @@
     "parent_product_id": "PP-204",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -4259,7 +4259,7 @@
     "parent_product_id": "PP-206",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "General Care"
   },
   {
@@ -4270,7 +4270,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 15000,
-    "rental_price": 1499,
+    "rental_price": 1400,
     "status": "Active",
     "image_url": null,
     "description": "ResMed Stellar 100 v1.5 — versatile life-support ventilator for invasive and non-invasive respiratory support. Hospital-grade bilevel device for critical and long-term ventilation.",
@@ -4286,9 +4286,9 @@
       "7d": 9799,
       "15d": 19499,
       "21d": 26299,
-      "30d": 29999
+      "30d": 31500
     },
-    "mrp": null,
+    "mrp": 350000.0,
     "use_case": "Respiratory"
   },
   {
@@ -4311,12 +4311,12 @@
     "parent_product_id": "PP-208",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 400000.0,
     "rental_tiers": {
       "7d": 9799,
       "15d": 19499,
       "21d": 26299,
-      "30d": 29999
+      "30d": 36000
     },
     "use_case": "Respiratory"
   },
@@ -4340,7 +4340,7 @@
     "parent_product_id": "PP-209",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 100.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4363,7 +4363,7 @@
     "parent_product_id": "PP-210",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4386,7 +4386,7 @@
     "parent_product_id": "PP-013",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4409,7 +4409,7 @@
     "parent_product_id": "PP-013",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4432,7 +4432,7 @@
     "parent_product_id": "PP-013",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4455,7 +4455,7 @@
     "parent_product_id": "PP-211",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4478,7 +4478,7 @@
     "parent_product_id": "PP-013",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4501,7 +4501,7 @@
     "parent_product_id": "PP-014",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4524,7 +4524,7 @@
     "parent_product_id": "PP-014",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -4534,7 +4534,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 9300,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4547,12 +4547,12 @@
     "parent_product_id": "PP-212",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "rental_tiers": {
       "7d": 999,
       "15d": 1999,
       "21d": 2699,
-      "30d": 2999
+      "30d": 1350
     },
     "use_case": "Post-Surgical & Wound Care"
   },
@@ -4564,7 +4564,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 9300,
-    "rental_price": 199,
+    "rental_price": 143,
     "status": "Active",
     "image_url": null,
     "description": "Medical suction machine for rental — portable electric suction device for aspiration of airway secretions and fluids. Essential for patients with impaired cough reflex.",
@@ -4580,9 +4580,9 @@
       "7d": 999,
       "15d": 1999,
       "21d": 2699,
-      "30d": 2999
+      "30d": 1350
     },
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4591,8 +4591,8 @@
     "brand": "Electric Indian",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 9300,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4605,7 +4605,7 @@
     "parent_product_id": "PP-214",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 999,
@@ -4620,8 +4620,8 @@
     "brand": "Anand",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 9300,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4634,7 +4634,7 @@
     "parent_product_id": "PP-215",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 999,
@@ -4649,9 +4649,9 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 9300,
-    "rental_price": 199,
+    "rental_price": 143,
     "status": "Active",
     "image_url": null,
     "description": "Electric suction machine for purchase — electrically powered medical suction device for permanent home use. Continuous and intermittent suction modes for airway and wound management.",
@@ -4669,7 +4669,7 @@
       "21d": 2699,
       "30d": 2999
     },
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4678,8 +4678,8 @@
     "brand": "Crompton",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 9300,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4692,7 +4692,7 @@
     "parent_product_id": "PP-217",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 999,
@@ -4707,8 +4707,8 @@
     "brand": "Anand",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 9300,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4721,7 +4721,7 @@
     "parent_product_id": "PP-218",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 15000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 999,
@@ -4736,8 +4736,8 @@
     "brand": "Generic",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 9300,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 199,
     "status": "Active",
     "image_url": null,
@@ -4750,7 +4750,7 @@
     "parent_product_id": "PP-219",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 999,
@@ -4779,7 +4779,7 @@
     "parent_product_id": "PP-220",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4802,7 +4802,7 @@
     "parent_product_id": "PP-221",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4813,7 +4813,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 15000,
-    "rental_price": 299,
+    "rental_price": 286,
     "status": "Active",
     "image_url": null,
     "description": "BPL syringe pump for rental — programmable infusion device that delivers precise, controlled volumes of medication using a syringe. Essential for ICU-level medication delivery.",
@@ -4829,9 +4829,9 @@
       "7d": 1999,
       "15d": 3899,
       "21d": 5299,
-      "30d": 5999
+      "30d": 3600
     },
-    "mrp": null,
+    "mrp": 40000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -4840,7 +4840,7 @@
     "brand": "Smiths Medical",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 299,
     "status": "Active",
@@ -4854,7 +4854,7 @@
     "parent_product_id": "PP-223",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 40000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 1999,
@@ -4869,7 +4869,7 @@
     "brand": "BPL",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 299,
     "status": "Active",
@@ -4883,7 +4883,7 @@
     "parent_product_id": "PP-224",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 40000.0,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {
       "7d": 1999,
@@ -4912,7 +4912,7 @@
     "parent_product_id": "PP-225",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Neurological & Physiotherapy"
   },
   {
@@ -4935,7 +4935,7 @@
     "parent_product_id": "PP-226",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -4958,7 +4958,7 @@
     "parent_product_id": "PP-228",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Diagnostics & Monitoring"
   },
   {
@@ -4969,7 +4969,7 @@
     "available_for_sale": true,
     "available_for_rent": true,
     "price": 10000,
-    "rental_price": 499,
+    "rental_price": 471,
     "status": "Active",
     "image_url": null,
     "description": "Three-function electric hospital bed for purchase — motorized bed with backrest, knee section, and height adjustment. Long-term home healthcare bed solution.",
@@ -4982,12 +4982,12 @@
     "variant_type": null,
     "variant_value": null,
     "rental_tiers": {
-      "7d": 3299.0,
+      "7d": 3299,
       "15d": 6499,
       "21d": 8799,
-      "30d": 4950.0
+      "30d": 4950
     },
-    "mrp": null,
+    "mrp": 55000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -5010,7 +5010,7 @@
     "parent_product_id": "PP-231",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Respiratory"
   },
   {
@@ -5033,7 +5033,7 @@
     "parent_product_id": "PP-015",
     "variant_type": "Type",
     "variant_value": "Size 6",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -5056,7 +5056,7 @@
     "parent_product_id": "PP-015",
     "variant_type": "Type",
     "variant_value": "Size 7",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -5079,7 +5079,7 @@
     "parent_product_id": "PP-015",
     "variant_type": "Type",
     "variant_value": "Size 7.5",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -5102,7 +5102,7 @@
     "parent_product_id": "PP-015",
     "variant_type": "Type",
     "variant_value": "Size 8",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -5125,7 +5125,7 @@
     "parent_product_id": "PP-015",
     "variant_type": "Type",
     "variant_value": "Cuffed",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -5133,7 +5133,7 @@
     "name": "Ultrasonic Machine",
     "brand": "Hms Medical System",
     "category": "Equipment",
-    "available_for_sale": true,
+    "available_for_sale": false,
     "available_for_rent": true,
     "price": 15000,
     "rental_price": 1500,
@@ -5148,9 +5148,9 @@
     "parent_product_id": "PP-232",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 25000.0,
     "rental_tiers": {
-      "30d": 2250.0
+      "30d": 2250
     },
     "use_case": "Neurological & Physiotherapy"
   },
@@ -5174,7 +5174,7 @@
     "parent_product_id": "PP-233",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 350.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -5197,7 +5197,7 @@
     "parent_product_id": "PP-234",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 350.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -5220,7 +5220,7 @@
     "parent_product_id": "PP-235",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -5243,7 +5243,7 @@
     "parent_product_id": "PP-236",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -5252,8 +5252,8 @@
     "brand": "Philips",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 65600,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 1499,
     "status": "Active",
     "image_url": null,
@@ -5266,7 +5266,7 @@
     "parent_product_id": "PP-237",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 350000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 9799,
@@ -5281,7 +5281,7 @@
     "brand": "Airsep Oxy",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 15000,
     "rental_price": 399,
     "status": "Active",
@@ -5295,7 +5295,7 @@
     "parent_product_id": "PP-238",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 2599,
@@ -5311,7 +5311,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 1000,
+    "price": 1850,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -5324,7 +5324,7 @@
     "parent_product_id": "PP-239",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5334,7 +5334,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 1000,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -5347,7 +5347,7 @@
     "parent_product_id": "PP-240",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5357,7 +5357,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 1000,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -5370,7 +5370,7 @@
     "parent_product_id": "PP-241",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5380,7 +5380,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 1000,
+    "price": 15000,
     "rental_price": 1500,
     "status": "Active",
     "image_url": null,
@@ -5393,7 +5393,7 @@
     "parent_product_id": "PP-242",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 6000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5416,7 +5416,7 @@
     "parent_product_id": "PP-243",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5426,7 +5426,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 800,
+    "price": 1050,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -5439,7 +5439,7 @@
     "parent_product_id": "PP-244",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5449,8 +5449,8 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": true,
-    "price": 16500,
-    "rental_price": 99,
+    "price": 5700,
+    "rental_price": 57,
     "status": "Active",
     "image_url": null,
     "description": "Vissco standard wheelchair for patient mobility. Folding frame with removable footrests, armrests, and manual push-rim propulsion.",
@@ -5466,9 +5466,9 @@
       "7d": 399,
       "15d": 799,
       "21d": 1099,
-      "30d": 1199
+      "30d": 855
     },
-    "mrp": null,
+    "mrp": 9500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5477,8 +5477,8 @@
     "brand": "Anrace",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 16500,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 99,
     "status": "Active",
     "image_url": null,
@@ -5491,7 +5491,7 @@
     "parent_product_id": "PP-247",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Orthopaedic",
     "rental_tiers": {
       "7d": 399,
@@ -5506,8 +5506,8 @@
     "brand": "Anand",
     "category": "Equipment",
     "available_for_sale": true,
-    "available_for_rent": true,
-    "price": 16500,
+    "available_for_rent": false,
+    "price": 15000,
     "rental_price": 99,
     "status": "Active",
     "image_url": null,
@@ -5520,7 +5520,7 @@
     "parent_product_id": "PP-248",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Orthopaedic",
     "rental_tiers": {
       "7d": 399,
@@ -5549,7 +5549,7 @@
     "parent_product_id": "PP-016",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5572,7 +5572,7 @@
     "parent_product_id": "PP-016",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5595,7 +5595,7 @@
     "parent_product_id": "PP-016",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5618,7 +5618,7 @@
     "parent_product_id": "PP-016",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5641,7 +5641,7 @@
     "parent_product_id": "PP-016",
     "variant_type": "Size",
     "variant_value": "XXXL",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5664,7 +5664,7 @@
     "parent_product_id": "PP-017",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5687,7 +5687,7 @@
     "parent_product_id": "PP-017",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5710,7 +5710,7 @@
     "parent_product_id": "PP-249",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5733,7 +5733,7 @@
     "parent_product_id": "PP-250",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 6000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -5756,7 +5756,7 @@
     "parent_product_id": "PP-251",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -5779,7 +5779,7 @@
     "parent_product_id": "PP-252",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "General Care"
   },
   {
@@ -5802,7 +5802,7 @@
     "parent_product_id": "PP-253",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 6500.0,
     "use_case": "Respiratory"
   },
   {
@@ -5825,7 +5825,7 @@
     "parent_product_id": "PP-254",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "General Care"
   },
   {
@@ -5848,7 +5848,7 @@
     "parent_product_id": "PP-018",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5871,7 +5871,7 @@
     "parent_product_id": "PP-018",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5894,7 +5894,7 @@
     "parent_product_id": "PP-018",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5917,7 +5917,7 @@
     "parent_product_id": "PP-018",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5940,7 +5940,7 @@
     "parent_product_id": "PP-255",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5963,7 +5963,7 @@
     "parent_product_id": "PP-019",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -5986,7 +5986,7 @@
     "parent_product_id": "PP-019",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6009,7 +6009,7 @@
     "parent_product_id": "PP-019",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6032,7 +6032,7 @@
     "parent_product_id": "PP-019",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6055,7 +6055,7 @@
     "parent_product_id": "PP-256",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6078,7 +6078,7 @@
     "parent_product_id": "PP-020",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6101,7 +6101,7 @@
     "parent_product_id": "PP-020",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6124,7 +6124,7 @@
     "parent_product_id": "PP-259",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6147,7 +6147,7 @@
     "parent_product_id": "PP-260",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6170,7 +6170,7 @@
     "parent_product_id": "PP-021",
     "variant_type": "Type",
     "variant_value": "Non-Vented",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6193,7 +6193,7 @@
     "parent_product_id": "PP-261",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6216,7 +6216,7 @@
     "parent_product_id": "PP-021",
     "variant_type": "Type",
     "variant_value": "Vented",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6239,7 +6239,7 @@
     "parent_product_id": "PP-001",
     "variant_type": "Type",
     "variant_value": "Non-Vented",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6262,7 +6262,7 @@
     "parent_product_id": "PP-262",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6285,7 +6285,7 @@
     "parent_product_id": "PP-263",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6308,7 +6308,7 @@
     "parent_product_id": "PP-002",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6331,7 +6331,7 @@
     "parent_product_id": "PP-264",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Respiratory"
   },
   {
@@ -6354,7 +6354,7 @@
     "parent_product_id": "PP-265",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6377,7 +6377,7 @@
     "parent_product_id": "PP-266",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6400,7 +6400,7 @@
     "parent_product_id": "PP-022",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6423,7 +6423,7 @@
     "parent_product_id": "PP-022",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6446,7 +6446,7 @@
     "parent_product_id": "PP-022",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6469,7 +6469,7 @@
     "parent_product_id": "PP-022",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6492,7 +6492,7 @@
     "parent_product_id": "PP-023",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6515,7 +6515,7 @@
     "parent_product_id": "PP-023",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6538,7 +6538,7 @@
     "parent_product_id": "PP-023",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6583,7 +6583,7 @@
     "parent_product_id": "PP-270",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6606,7 +6606,7 @@
     "parent_product_id": "PP-271",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6629,7 +6629,7 @@
     "parent_product_id": "PP-272",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6652,7 +6652,7 @@
     "parent_product_id": "PP-024",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -6675,7 +6675,7 @@
     "parent_product_id": "PP-024",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -6698,7 +6698,7 @@
     "parent_product_id": "PP-024",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -6721,7 +6721,7 @@
     "parent_product_id": "PP-024",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -6744,7 +6744,7 @@
     "parent_product_id": "PP-025",
     "variant_type": "Size",
     "variant_value": "Child",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6767,7 +6767,7 @@
     "parent_product_id": "PP-025",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6790,7 +6790,7 @@
     "parent_product_id": "PP-025",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6813,7 +6813,7 @@
     "parent_product_id": "PP-025",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6836,7 +6836,7 @@
     "parent_product_id": "PP-025",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6859,7 +6859,7 @@
     "parent_product_id": "PP-274",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -6882,7 +6882,7 @@
     "parent_product_id": "PP-275",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "General Consumables"
   },
   {
@@ -6905,7 +6905,7 @@
     "parent_product_id": "PP-276",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6928,7 +6928,7 @@
     "parent_product_id": "PP-277",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -6951,7 +6951,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Left (L",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6974,7 +6974,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Left (M",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -6997,7 +6997,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Left (XL",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7020,7 +7020,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Right (L",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7043,7 +7043,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Right (M",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7066,7 +7066,7 @@
     "parent_product_id": "PP-026",
     "variant_type": "Side",
     "variant_value": "Right (XL",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7089,7 +7089,7 @@
     "parent_product_id": "PP-027",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7112,7 +7112,7 @@
     "parent_product_id": "PP-027",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7135,7 +7135,7 @@
     "parent_product_id": "PP-027",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7158,7 +7158,7 @@
     "parent_product_id": "PP-027",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7181,7 +7181,7 @@
     "parent_product_id": "PP-028",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7204,7 +7204,7 @@
     "parent_product_id": "PP-028",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7227,7 +7227,7 @@
     "parent_product_id": "PP-028",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7250,7 +7250,7 @@
     "parent_product_id": "PP-028",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7273,7 +7273,7 @@
     "parent_product_id": "PP-278",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7296,7 +7296,7 @@
     "parent_product_id": "PP-279",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -7319,7 +7319,7 @@
     "parent_product_id": "PP-280",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Respiratory"
   },
   {
@@ -7342,7 +7342,7 @@
     "parent_product_id": "PP-029",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7365,7 +7365,7 @@
     "parent_product_id": "PP-029",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7388,7 +7388,7 @@
     "parent_product_id": "PP-029",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7411,7 +7411,7 @@
     "parent_product_id": "PP-030",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7434,7 +7434,7 @@
     "parent_product_id": "PP-030",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7457,7 +7457,7 @@
     "parent_product_id": "PP-030",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7480,7 +7480,7 @@
     "parent_product_id": "PP-030",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7503,7 +7503,7 @@
     "parent_product_id": "PP-031",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7526,7 +7526,7 @@
     "parent_product_id": "PP-031",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7549,7 +7549,7 @@
     "parent_product_id": "PP-281",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Respiratory"
   },
   {
@@ -7572,7 +7572,7 @@
     "parent_product_id": "PP-282",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Respiratory"
   },
   {
@@ -7595,7 +7595,7 @@
     "parent_product_id": "PP-032",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7618,7 +7618,7 @@
     "parent_product_id": "PP-032",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7641,7 +7641,7 @@
     "parent_product_id": "PP-032",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7664,7 +7664,7 @@
     "parent_product_id": "PP-032",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7687,7 +7687,7 @@
     "parent_product_id": "PP-033",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7710,7 +7710,7 @@
     "parent_product_id": "PP-033",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7733,7 +7733,7 @@
     "parent_product_id": "PP-033",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7756,7 +7756,7 @@
     "parent_product_id": "PP-033",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7779,7 +7779,7 @@
     "parent_product_id": "PP-284",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7802,7 +7802,7 @@
     "parent_product_id": "PP-034",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7825,7 +7825,7 @@
     "parent_product_id": "PP-034",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7848,7 +7848,7 @@
     "parent_product_id": "PP-034",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7871,7 +7871,7 @@
     "parent_product_id": "PP-034",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7894,7 +7894,7 @@
     "parent_product_id": "PP-035",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7917,7 +7917,7 @@
     "parent_product_id": "PP-035",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7940,7 +7940,7 @@
     "parent_product_id": "PP-035",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7963,7 +7963,7 @@
     "parent_product_id": "PP-035",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -7986,7 +7986,7 @@
     "parent_product_id": "PP-036a",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8009,7 +8009,7 @@
     "parent_product_id": "PP-036a",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8032,7 +8032,7 @@
     "parent_product_id": "PP-036a",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8055,7 +8055,7 @@
     "parent_product_id": "PP-036a",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8078,7 +8078,7 @@
     "parent_product_id": "PP-036a",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8101,7 +8101,7 @@
     "parent_product_id": "PP-036b",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8124,7 +8124,7 @@
     "parent_product_id": "PP-036b",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8147,7 +8147,7 @@
     "parent_product_id": "PP-036b",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8170,7 +8170,7 @@
     "parent_product_id": "PP-036b",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8193,7 +8193,7 @@
     "parent_product_id": "PP-036b",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8216,7 +8216,7 @@
     "parent_product_id": "PP-285",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8239,7 +8239,7 @@
     "parent_product_id": "PP-037",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 2800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8262,7 +8262,7 @@
     "parent_product_id": "PP-037",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 2800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8285,7 +8285,7 @@
     "parent_product_id": "PP-037",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 2800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8308,7 +8308,7 @@
     "parent_product_id": "PP-037",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 2800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8331,7 +8331,7 @@
     "parent_product_id": "PP-038",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8354,7 +8354,7 @@
     "parent_product_id": "PP-038",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8377,7 +8377,7 @@
     "parent_product_id": "PP-038",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8400,7 +8400,7 @@
     "parent_product_id": "PP-038",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8423,7 +8423,7 @@
     "parent_product_id": "PP-038",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8446,7 +8446,7 @@
     "parent_product_id": "PP-286",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8491,7 +8491,7 @@
     "parent_product_id": "PP-288",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "Respiratory"
   },
   {
@@ -8514,7 +8514,7 @@
     "parent_product_id": "PP-289",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Respiratory"
   },
   {
@@ -8537,7 +8537,7 @@
     "parent_product_id": "PP-291",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 50.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -8560,7 +8560,7 @@
     "parent_product_id": "PP-292",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -8605,7 +8605,7 @@
     "parent_product_id": "PP-039",
     "variant_type": "Type",
     "variant_value": "Standard",
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8628,7 +8628,7 @@
     "parent_product_id": "PP-039",
     "variant_type": "Type",
     "variant_value": "Universal",
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8651,7 +8651,7 @@
     "parent_product_id": "PP-040",
     "variant_type": "Side",
     "variant_value": "Left",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8674,7 +8674,7 @@
     "parent_product_id": "PP-040",
     "variant_type": "Side",
     "variant_value": "Right",
-    "mrp": null,
+    "mrp": 700.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8697,7 +8697,7 @@
     "parent_product_id": "PP-297",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -8720,7 +8720,7 @@
     "parent_product_id": "PP-298",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -8743,7 +8743,7 @@
     "parent_product_id": "PP-299",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Hygiene & Sanitation"
   },
   {
@@ -8766,7 +8766,7 @@
     "parent_product_id": "PP-300",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -8789,7 +8789,7 @@
     "parent_product_id": "PP-302",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -8812,7 +8812,7 @@
     "parent_product_id": "PP-041",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8835,7 +8835,7 @@
     "parent_product_id": "PP-041",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8858,7 +8858,7 @@
     "parent_product_id": "PP-041",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8881,7 +8881,7 @@
     "parent_product_id": "PP-041",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8904,7 +8904,7 @@
     "parent_product_id": "PP-305",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1200.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -8927,7 +8927,7 @@
     "parent_product_id": "PP-306",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8950,7 +8950,7 @@
     "parent_product_id": "PP-307",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8960,7 +8960,7 @@
     "category": "Consumable",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 800,
+    "price": 1050,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -8973,7 +8973,7 @@
     "parent_product_id": "PP-308",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 1800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -8996,7 +8996,7 @@
     "parent_product_id": "PP-042",
     "variant_type": "Length",
     "variant_value": "2 Inch",
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9019,7 +9019,7 @@
     "parent_product_id": "PP-042",
     "variant_type": "Length",
     "variant_value": "4 Inch",
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9042,7 +9042,7 @@
     "parent_product_id": "PP-042",
     "variant_type": "Length",
     "variant_value": "5 Inch",
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9065,7 +9065,7 @@
     "parent_product_id": "PP-042",
     "variant_type": "Length",
     "variant_value": "6 Inch",
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9088,7 +9088,7 @@
     "parent_product_id": "PP-309",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2200.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -9111,7 +9111,7 @@
     "parent_product_id": "PP-013",
     "variant_type": "Size",
     "variant_value": "XXL",
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -9134,7 +9134,7 @@
     "parent_product_id": "PP-310",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -9157,7 +9157,7 @@
     "parent_product_id": "PP-311",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 500.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -9180,7 +9180,7 @@
     "parent_product_id": "PP-043",
     "variant_type": "Variant",
     "variant_value": "Special",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9203,7 +9203,7 @@
     "parent_product_id": "PP-312",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9226,7 +9226,7 @@
     "parent_product_id": "PP-043",
     "variant_type": "Variant",
     "variant_value": "Universal",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9249,7 +9249,7 @@
     "parent_product_id": "PP-044",
     "variant_type": "Variant",
     "variant_value": "Special",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9272,7 +9272,7 @@
     "parent_product_id": "PP-044",
     "variant_type": "Variant",
     "variant_value": "Universal",
-    "mrp": null,
+    "mrp": 4500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9295,7 +9295,7 @@
     "parent_product_id": "PP-045",
     "variant_type": "Size",
     "variant_value": "L",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9318,7 +9318,7 @@
     "parent_product_id": "PP-045",
     "variant_type": "Size",
     "variant_value": "M",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9341,7 +9341,7 @@
     "parent_product_id": "PP-045",
     "variant_type": "Size",
     "variant_value": "S",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9364,7 +9364,7 @@
     "parent_product_id": "PP-045",
     "variant_type": "Size",
     "variant_value": "XL",
-    "mrp": null,
+    "mrp": 600.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9387,7 +9387,7 @@
     "parent_product_id": "PP-313",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9410,7 +9410,7 @@
     "parent_product_id": "PP-316",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 300.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -9433,7 +9433,7 @@
     "parent_product_id": "PP-317",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 200.0,
     "use_case": "General Care"
   },
   {
@@ -9456,7 +9456,7 @@
     "parent_product_id": "PP-047",
     "variant_type": "Size",
     "variant_value": "Large",
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9479,7 +9479,7 @@
     "parent_product_id": "PP-047",
     "variant_type": "Size",
     "variant_value": "Medium",
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9502,7 +9502,7 @@
     "parent_product_id": "PP-047",
     "variant_type": "Size",
     "variant_value": "Small",
-    "mrp": null,
+    "mrp": 5500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9525,7 +9525,7 @@
     "parent_product_id": "PP-319",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9548,7 +9548,7 @@
     "parent_product_id": "PP-320",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9571,7 +9571,7 @@
     "parent_product_id": "PP-321",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9594,7 +9594,7 @@
     "parent_product_id": "PP-322",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9617,7 +9617,7 @@
     "parent_product_id": "PP-048",
     "variant_type": "Weight",
     "variant_value": "1 Kg",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9640,7 +9640,7 @@
     "parent_product_id": "PP-323",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9663,7 +9663,7 @@
     "parent_product_id": "PP-048",
     "variant_type": "Weight",
     "variant_value": "1/2 Kg",
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9686,7 +9686,7 @@
     "parent_product_id": "PP-324",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "Respiratory"
   },
   {
@@ -9709,7 +9709,7 @@
     "parent_product_id": "PP-326",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 900.0,
     "use_case": "Orthopaedic"
   },
   {
@@ -9732,7 +9732,7 @@
     "parent_product_id": "PP-327",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 150.0,
     "use_case": "General Consumables"
   },
   {
@@ -9755,7 +9755,7 @@
     "parent_product_id": "PP-328",
     "variant_type": null,
     "variant_value": null,
-    "mrp": null,
+    "mrp": 80.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -9783,9 +9783,9 @@
       "7d": 52299,
       "15d": 103999,
       "21d": 139999,
-      "30d": 159999
+      "30d": 1080
     },
-    "mrp": null,
+    "mrp": 12000.0,
     "use_case": "General Equipment"
   },
   {
@@ -9793,7 +9793,7 @@
     "name": "O2 Cylinders 10 ltrs",
     "brand": "",
     "category": "Equipment",
-    "available_for_sale": false,
+    "available_for_sale": true,
     "available_for_rent": true,
     "price": null,
     "rental_price": 99,
@@ -9813,9 +9813,9 @@
       "7d": 299,
       "15d": 499,
       "21d": 699,
-      "30d": 360.0
+      "30d": 360
     },
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "Respiratory"
   },
   {
@@ -9823,7 +9823,7 @@
     "name": "Infusion Pump",
     "brand": "",
     "category": "Equipment",
-    "available_for_sale": false,
+    "available_for_sale": true,
     "available_for_rent": true,
     "price": null,
     "rental_price": 299,
@@ -9843,9 +9843,9 @@
       "7d": 1999,
       "15d": 3899,
       "21d": 5299,
-      "30d": 5999
+      "30d": 4050
     },
-    "mrp": null,
+    "mrp": 45000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -9855,7 +9855,7 @@
     "category": "Equipment",
     "available_for_sale": true,
     "available_for_rent": false,
-    "price": 65600,
+    "price": 60300,
     "rental_price": null,
     "status": "Active",
     "image_url": null,
@@ -9869,7 +9869,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 80000.0,
     "use_case": "Respiratory"
   },
   {
@@ -9877,7 +9877,7 @@
     "name": "O2 Cylinder 50 ltrs",
     "brand": "",
     "category": "Equipment",
-    "available_for_sale": false,
+    "available_for_sale": true,
     "available_for_rent": true,
     "price": null,
     "rental_price": 99,
@@ -9897,9 +9897,9 @@
       "7d": 499,
       "15d": 999,
       "21d": 1299,
-      "30d": 1499
+      "30d": 720
     },
-    "mrp": null,
+    "mrp": 8000.0,
     "use_case": "Respiratory"
   },
   {
@@ -9923,7 +9923,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -9947,7 +9947,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 6000.0,
     "use_case": "Cardiac & Vascular"
   },
   {
@@ -9971,7 +9971,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 500000.0,
     "use_case": "General Equipment"
   },
   {
@@ -9995,7 +9995,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 3000.0,
     "use_case": "Neurological & Physiotherapy"
   },
   {
@@ -10019,7 +10019,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 2500.0,
     "use_case": "Mobility & Patient Comfort"
   },
   {
@@ -10043,7 +10043,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 40.0,
     "use_case": "General Consumables"
   },
   {
@@ -10052,7 +10052,7 @@
     "brand": "",
     "category": "Consumable",
     "available_for_sale": true,
-    "available_for_rent": true,
+    "available_for_rent": false,
     "price": 7500,
     "rental_price": 299,
     "status": "Active",
@@ -10067,7 +10067,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 7500.0,
     "use_case": "Respiratory",
     "rental_tiers": {
       "7d": 1999,
@@ -10097,7 +10097,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 10000.0,
     "use_case": "General Consumables"
   },
   {
@@ -10121,7 +10121,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 800.0,
     "use_case": "General Consumables"
   },
   {
@@ -10145,7 +10145,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 250.0,
     "use_case": "General Consumables"
   },
   {
@@ -10169,7 +10169,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Neurological & Physiotherapy"
   },
   {
@@ -10193,7 +10193,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 350.0,
     "use_case": "General Consumables"
   },
   {
@@ -10217,7 +10217,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 60.0,
     "use_case": "General Consumables"
   },
   {
@@ -10241,7 +10241,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "General Consumables"
   },
   {
@@ -10265,7 +10265,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "General Consumables"
   },
   {
@@ -10289,7 +10289,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 2000.0,
     "use_case": "General Consumables"
   },
   {
@@ -10313,7 +10313,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 250.0,
     "use_case": "General Consumables"
   },
   {
@@ -10337,7 +10337,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 3500.0,
     "use_case": "General Care"
   },
   {
@@ -10361,7 +10361,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 4000.0,
     "use_case": "General Care"
   },
   {
@@ -10385,7 +10385,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 40.0,
     "use_case": "General Consumables"
   },
   {
@@ -10409,7 +10409,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 350.0,
     "use_case": "General Consumables"
   },
   {
@@ -10433,7 +10433,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 1000.0,
     "use_case": "Post-Surgical & Wound Care"
   },
   {
@@ -10457,7 +10457,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 1500.0,
     "use_case": "Neurological & Physiotherapy"
   },
   {
@@ -10481,7 +10481,7 @@
     "variant_type": null,
     "variant_value": null,
     "needs_description": true,
-    "mrp": null,
+    "mrp": 400.0,
     "use_case": "Diagnostics & Monitoring"
   }
 ]
