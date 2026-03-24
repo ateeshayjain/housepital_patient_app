@@ -2541,8 +2541,26 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
 
 /// Splits catalog text by `|` or newline — catalog uses both formats.
 List<String> _splitCatalogText(String text) {
-  final sep = text.contains('|') ? '|' : '\n';
-  return text.split(sep).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  // Try pipe delimiter first (most catalog data uses this)
+  if (text.contains('|')) {
+    return text.split('|').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+  // Try newline delimiter
+  if (text.contains('\n')) {
+    return text.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+  // Fallback: split on sentence boundaries (". " followed by uppercase)
+  // This turns paragraphs into individual steps
+  final sentences = <String>[];
+  final regex = RegExp(r'(?<=\.)\s+(?=[A-Z])');
+  for (final s in text.split(regex)) {
+    final trimmed = s.trim();
+    if (trimmed.isNotEmpty) {
+      // Remove trailing period for cleaner display
+      sentences.add(trimmed.endsWith('.') ? trimmed.substring(0, trimmed.length - 1) : trimmed);
+    }
+  }
+  return sentences.length > 1 ? sentences : [text];
 }
 
 /// Parses FAQ text into Q/A pairs.
