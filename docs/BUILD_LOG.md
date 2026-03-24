@@ -4,6 +4,88 @@ Session-by-session diary of what was built, decisions made, and context for the 
 
 ---
 
+## Session 2026-03-24 (Session 4) -- Pricing Sync, 16 P0/P1 Features, Medication Reminders, Lab Tests, Bottom Sheet Fixes
+
+### What was built:
+- 10 new screens: VideoConsultationScreen, ChatScreen, StaffOtpVerificationScreen, OrderTrackingScreen, RentalAgreementScreen, ReturnScreen, EmiScreen, StaffReplacementScreen, ReferralScreen, MyOrdersScreen
+- Pricing overhaul: manpower services now show prices (synced from master Excel). MRP + strikethrough pricing on equipment. 364 items total.
+- Equipment tabs reorganized: Sale/Rental instead of Equipment/Consumable
+- 153 individual lab tests added with full detail (was 7 packages only)
+- Medication reminders via flutter_local_notifications (8AM/1PM/6PM/10PM schedule)
+- Reusable PaginatedList widget for all list screens
+- Offline caching via cache_service with TTL
+- Push notification routing via notification_router.dart
+- Hindi translations: 90+ new keys
+- BillingProvider for billing/EMI state management
+- video_call_service for video consultation
+- cache_service for offline data persistence
+- medication_reminder_service for local push notifications
+- i_api_service interface for testability
+- Bottom sheet navigation fix: return-result-to-parent pattern (was pop-then-push)
+- Razorpay web crash fix: kIsWeb guard
+- Backend: rate limiting, Zod validation, CORS restriction, structured logging with correlation IDs
+- API retry with exponential backoff on frontend
+
+### Files created:
+- lib/screens/consultation/video_consultation_screen.dart (NEW)
+- lib/screens/chat/chat_screen.dart (NEW)
+- lib/screens/my_care/staff_otp_verification_screen.dart (NEW)
+- lib/screens/orders/order_tracking_screen.dart (NEW)
+- lib/screens/rental/rental_agreement_screen.dart (NEW)
+- lib/screens/rental/return_screen.dart (NEW)
+- lib/screens/billing/emi_screen.dart (NEW)
+- lib/screens/support/staff_replacement_screen.dart (NEW)
+- lib/screens/settings/referral_screen.dart (NEW)
+- lib/screens/services/my_orders_screen.dart (NEW)
+- lib/services/video_call_service.dart (NEW)
+- lib/services/cache_service.dart (NEW)
+- lib/services/medication_reminder_service.dart (NEW)
+- lib/services/i_api_service.dart (NEW)
+- lib/utils/notification_router.dart (NEW)
+- lib/widgets/paginated_list.dart (NEW)
+- lib/providers/billing_provider.dart (NEW)
+- 24 new test files (see TEST_MAP.md)
+
+### Files modified:
+- lib/services/api_service.dart (retry with backoff, new endpoints)
+- lib/screens/services/service_catalog_screen.dart (Sale/Rental tabs, pricing display)
+- lib/screens/services/equipment_detail_screen.dart (MRP + strikethrough, Sale/Rental)
+- lib/utils/app_localizations.dart (90+ Hindi keys)
+- lib/main.dart (new routes, BillingProvider, medication_reminder_service init)
+- lib/config/constants.dart (updated catalog config)
+- Backend: middleware (rate limiting, CORS, Zod validation, structured logging)
+
+### Database changes:
+- None
+
+### Known issues resolved:
+- BUG-11 (offline handling), BUG-13 (Hindi), BUG-18 (notification routing), BUG-24 (chat UI), BUG-25 (bottom sheet grey screen), BUG-26 (Razorpay web crash)
+- TD-04 (retry logic), TD-08 (pagination), TD-13 (structured logging), TD-14 (rate limiting)
+
+### Decisions made:
+- Master Excel is single source of truth for all pricing -- catalog synced from it
+- Manpower services now show prices (reversed previous business decision to hide)
+- Equipment tabs changed to Sale/Rental for clearer user mental model
+- Medication reminders use flutter_local_notifications (local, no server dependency)
+- Rental agreement: deposit = 1 month rental, 3-day notice required for return
+- Bottom sheet navigation uses return-result-to-parent pattern to avoid grey screen
+
+### Dependencies added:
+- flutter_local_notifications (medication reminders)
+- timezone (scheduling notifications in correct timezone)
+
+### Test results:
+- 973 passing tests (was 529)
+
+### Next session should:
+- Complete Razorpay production mode setup
+- Connect MSG91 for SMS/WhatsApp notifications
+- Add integration tests for video consultation flow
+- Complete invoice PDF generation
+- Add analytics/event tracking (Firebase Analytics)
+
+---
+
 ## Session 2026-03-22 (Session 2) -- 24 Issues Fixed: New Screens + Bug Fixes + Permission Update
 
 ### What was built:

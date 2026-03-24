@@ -192,6 +192,8 @@ Medical equipment available for rent/sale.
 
 **Indexes:** `idx_category (category)`, `idx_status (status)`
 
+**UI note (2026-03-24):** The frontend displays equipment in Sale/Rental tabs (based on `available_for_sale` and `available_for_rent` flags) rather than by the Equipment/Consumable category enum. The DB category column is still used for filtering but the primary tab organization is Sale vs Rental.
+
 ---
 
 ### 7. `deployments`

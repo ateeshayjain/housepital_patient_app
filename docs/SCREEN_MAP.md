@@ -38,6 +38,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Medications          | /medications           | MedicationsScreen          | MedicationProvider             | Add, edit, delete, stock update  | PRIMARY only (write) |
 | Medication Schedule  | /medication-schedule   | MedicationScheduleScreen   | MedicationProvider.logs        | View today's schedule            | All roles   |
 | Add/Edit Medication  | /add-medication        | AddEditMedicationScreen    | MedicationProvider             | Create/update medication         | PRIMARY only |
+| Staff OTP Verify     | /staff-otp-verify      | StaffOtpVerificationScreen | API                            | Verify staff identity via OTP    | All roles   |
 
 **My Care Hub widgets:** HealthManagerBanner, ActiveServiceCard (per service), QuickActionsRow, VitalsTrendGrid, StaffAttendanceSection, CareReportSection, BillingSummarySection, EquipmentDeployedSection.
 
@@ -54,8 +55,13 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Package Detail      | /package-detail      | PackageDetailScreen      | CarePackage argument          | View package benefits            | All roles    |
 | Booking Confirmation| /booking-confirmation| BookingConfirmationScreen| Map args (serviceName, date, slot, amount) | View booking ID, share, next steps | All roles |
 | Booking History     | /booking-history     | BookingHistoryScreen     | API: GET /patients/:id/bookings | Filter, cancel, rate, re-book  | All roles    |
+| My Orders           | /my-orders           | MyOrdersScreen           | API: unified orders endpoint    | View all orders (bookings + equipment + rentals) | All roles |
 
-**Manpower price rule:** Services with `hide_price = true` (caretaker, nursing, japa, nanny) show no prices. Users must submit an assessment request to receive a personalized quote.
+**Manpower price rule:** Manpower services now show prices (synced from master Excel). MRP + strikethrough pricing on equipment. Equipment tabs reorganized as Sale and Rental categories (replacing Equipment/Consumable).
+
+**Lab Tests:** 153 individual lab tests with full detail (name, price, preparation notes) in addition to the 7 lab test packages.
+
+**Catalog stats:** 364 items total (synced from master Excel as single source of truth).
 
 ---
 
@@ -68,6 +74,26 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Transaction Log    | /transactions     | TransactionLogScreen  | API: /patients/:id/transactions    | View payment history       | All roles    |
 | Payment            | /payment          | PaymentScreen         | amount, description, invoice_id args | Razorpay checkout        | PRIMARY only |
 | Payment Methods    | /payment-methods  | PaymentMethodsScreen  | (static/settings)                  | View saved methods         | All roles    |
+| EMI Plans          | /emi              | EmiScreen             | BillingProvider                    | View/manage EMI installments | PRIMARY only |
+
+---
+
+### CONSULTATION & CHAT
+
+| Screen               | Route                | Widget                      | Data Source                    | Actions                          | Permissions  |
+|----------------------|----------------------|-----------------------------|--------------------------------|----------------------------------|--------------|
+| Video Consultation   | /video-consultation  | VideoConsultationScreen      | video_call_service             | Join/leave video call            | All roles    |
+| In-app Chat          | /chat                | ChatScreen                  | Firestore chat_messages        | Send/receive messages            | All roles    |
+
+---
+
+### ORDERS & RENTAL
+
+| Screen               | Route                | Widget                      | Data Source                    | Actions                          | Permissions  |
+|----------------------|----------------------|-----------------------------|--------------------------------|----------------------------------|--------------|
+| Order Tracking       | /order-tracking      | OrderTrackingScreen          | API: order status              | Track delivery/assignment status | All roles    |
+| Rental Agreement     | /rental-agreement    | RentalAgreementScreen        | API: rental terms              | Review terms, digital sign       | PRIMARY only |
+| Equipment Return     | /return              | ReturnScreen                 | API: return request            | Schedule return, reason          | PRIMARY only |
 
 ---
 
@@ -82,6 +108,15 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Notification Prefs | /notification-preferences | NotificationPreferencesScreen | SharedPreferences       | Toggle notification types  | All roles (own prefs) |
 | Help / FAQ         | /help-faq          | HelpFaqScreen            | Static (20 FAQs)                | Search, filter by category, contact support | All roles |
 | About              | /about             | AboutScreen              | Static                          | View version, company info, links | All roles |
+| Referral           | /referral          | ReferralScreen           | API: referral code + stats      | Share referral code, view rewards | All roles |
+
+---
+
+### SUPPORT (Additional)
+
+| Screen                | Route                   | Widget                       | Data Source                    | Actions                    | Permissions  |
+|-----------------------|-------------------------|------------------------------|--------------------------------|----------------------------|--------------|
+| Staff Replacement     | /staff-replacement      | StaffReplacementScreen       | API: replacement request       | Request new staff, reason  | PRIMARY only |
 
 ---
 
@@ -150,6 +185,16 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | `/notification-preferences` | none               | NotificationPreferencesScreen |
 | `/help-faq`          | none                      | HelpFaqScreen              |
 | `/about`             | none                      | AboutScreen                |
+| `/video-consultation`| `Map<String, dynamic>`    | VideoConsultationScreen     |
+| `/chat`              | `String` (patientId)      | ChatScreen                 |
+| `/staff-otp-verify`  | `Map<String, dynamic>`    | StaffOtpVerificationScreen |
+| `/order-tracking`    | `String` (orderId)        | OrderTrackingScreen        |
+| `/rental-agreement`  | `Map<String, dynamic>`    | RentalAgreementScreen      |
+| `/return`            | `Map<String, dynamic>`    | ReturnScreen               |
+| `/emi`               | `Map<String, dynamic>`    | EmiScreen                  |
+| `/staff-replacement` | `String` (deploymentId)   | StaffReplacementScreen     |
+| `/referral`          | none                      | ReferralScreen             |
+| `/my-orders`         | none                      | MyOrdersScreen             |
 | (default)            | none                      | MainShell                  |
 
 ---

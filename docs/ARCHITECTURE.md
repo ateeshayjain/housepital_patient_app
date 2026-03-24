@@ -14,7 +14,7 @@
 | Layer              | Technology                                        |
 |--------------------|---------------------------------------------------|
 | Frontend           | Flutter 3.x / Dart                                |
-| State Management   | Provider (ChangeNotifier) -- 5 providers           |
+| State Management   | Provider (ChangeNotifier) -- 6 providers           |
 | Backend Runtime    | Node.js + Express.js (TypeScript)                  |
 | Hosting            | Firebase Cloud Functions (asia-south1)             |
 | Relational DB      | Cloud SQL for MySQL (asia-south1)                  |
@@ -22,7 +22,8 @@
 | Authentication     | Firebase Auth (phone OTP)                          |
 | Payments           | Razorpay (Standard Checkout, webhook)              |
 | Push Notifications | Firebase Cloud Messaging (FCM)                     |
-| Offline Storage    | SharedPreferences (language pref)                  |
+| Offline Storage    | SharedPreferences (language, cart, addresses, cache)|
+| Local Notifications| flutter_local_notifications + timezone             |
 | Typography         | Google Fonts (Archivo)                             |
 | HTTP Client        | `http` package (Dart)                              |
 | Testing            | flutter_test (unit)                                |
@@ -46,6 +47,7 @@ lib/
  +-- providers/
  |   +-- app_provider.dart            # AppProvider -- patient context, dashboard, language
  |   +-- auth_provider.dart           # AuthProvider -- login state, OTP flow
+ |   +-- billing_provider.dart        # BillingProvider -- billing summary, invoices, EMI
  |   +-- cart_provider.dart           # CartProvider -- cart + saved-for-later
  |   +-- my_care_provider.dart        # MyCareProvider -- active services, service detail
  |   +-- medication_provider.dart     # MedicationProvider -- medication CRUD + logs
@@ -65,20 +67,33 @@ lib/
  |   |   +-- add_edit_medication_screen.dart
  |   |   +-- report_history_screen.dart
  |   |   +-- attendance_history_screen.dart
- |   |   +-- widgets/                 # vitals_trend_grid, active_service_card, etc.
+ |   |   +-- staff_otp_verification_screen.dart  # OTP verification for staff check-in
+ |   |   +-- widgets/                 # vitals_trend_grid, active_service_card, health_manager_banner, etc.
  |   +-- services/
  |   |   +-- service_catalog_screen.dart
  |   |   +-- service_booking_screen.dart
  |   |   +-- assessment_request_screen.dart
  |   |   +-- equipment_detail_screen.dart
+ |   |   +-- booking_confirmation_screen.dart
+ |   |   +-- my_orders_screen.dart      # Unified orders (bookings + equipment + rentals)
  |   +-- billing/
  |   |   +-- billing_screen.dart
  |   |   +-- invoice_detail_screen.dart
  |   |   +-- transaction_log_screen.dart
  |   |   +-- payment_screen.dart
  |   |   +-- payment_methods_screen.dart
+ |   |   +-- emi_screen.dart            # EMI payment plans
  |   +-- cart/
  |   |   +-- cart_screen.dart
+ |   +-- consultation/
+ |   |   +-- video_consultation_screen.dart  # Video call with coordinator/doctor
+ |   +-- chat/
+ |   |   +-- chat_screen.dart           # In-app chat with coordinator
+ |   +-- orders/
+ |   |   +-- order_tracking_screen.dart  # Order status tracking
+ |   +-- rental/
+ |   |   +-- rental_agreement_screen.dart # Rental terms + digital signature
+ |   |   +-- return_screen.dart          # Equipment return request
  |   +-- packages/
  |   |   +-- package_detail_screen.dart
  |   +-- reports/
@@ -87,6 +102,7 @@ lib/
  |   +-- support/
  |   |   +-- raise_concern_screen.dart
  |   |   +-- staff_profile_screen.dart
+ |   |   +-- staff_replacement_screen.dart # Request staff replacement
  |   +-- sos/
  |   |   +-- sos_screen.dart
  |   +-- notifications/
@@ -95,22 +111,36 @@ lib/
  |   |   +-- settings_screen.dart
  |   |   +-- patient_profile_screen.dart
  |   |   +-- family_members_screen.dart
+ |   |   +-- notification_preferences_screen.dart
+ |   |   +-- help_faq_screen.dart
+ |   |   +-- about_screen.dart
+ |   |   +-- referral_screen.dart       # Refer-a-friend program
  |   +-- documents/
  |   |   +-- document_repository_screen.dart
  |   +-- search/
  |       +-- universal_search_screen.dart
  +-- services/
  |   +-- api_service.dart             # All HTTP calls to backend
+ |   +-- i_api_service.dart           # API service interface (for testing)
  |   +-- payment_service.dart         # Razorpay SDK wrapper
  |   +-- firebase_service.dart        # Firestore listeners
  |   +-- sync_service.dart            # Dashboard data sync
  |   +-- payment_reminder_service.dart
+ |   +-- video_call_service.dart      # Video consultation (Agora/WebRTC)
+ |   +-- cache_service.dart           # Offline caching with TTL
+ |   +-- medication_reminder_service.dart  # Local push notifications for medication schedule
  +-- utils/
  |   +-- helpers.dart                 # Date formatting, currency helpers
  |   +-- app_localizations.dart       # i18n delegate
+ |   +-- notification_router.dart     # Push notification tap -> screen routing
+ |   +-- pricing.dart                 # GST, discount, commission calculations
+ |   +-- vital_classifier.dart        # GREEN/YELLOW/RED vital classification
+ |   +-- permissions.dart             # Role-based action gating
+ |   +-- booking_state_machine.dart   # Booking status transitions
  +-- widgets/
  |   +-- document_attach_widgets.dart
  |   +-- common_widgets.dart
+ |   +-- paginated_list.dart          # Reusable paginated list widget
  +-- data/
      +-- care_packages.dart           # Static care package definitions
 ```
@@ -217,15 +247,16 @@ Razorpay ----webhook----> /payments/webhook (signature verified)
 
 ## State Management
 
-Five `ChangeNotifierProvider` instances initialized in `main.dart`:
+Six `ChangeNotifierProvider` instances initialized in `main.dart`:
 
 | Provider              | Scope                          | Key State                                      |
 |-----------------------|--------------------------------|------------------------------------------------|
 | `AuthProvider`        | Login, OTP, session            | AuthState, user profile, Firebase token         |
-| `AppProvider`         | Global app state               | Current patient, dashboard data, locale, billing|
-| `CartProvider`        | Shopping cart                  | Cart items, saved-for-later items               |
+| `AppProvider`         | Global app state               | Current patient, dashboard data, locale          |
+| `BillingProvider`     | Billing + payments             | Billing summary, invoices, EMI plans, transactions |
+| `CartProvider`        | Shopping cart                  | Cart items, saved-for-later items (SharedPreferences persisted) |
 | `MyCareProvider`      | Active services hub            | Active services list, service detail, staff      |
-| `MedicationProvider`  | Medication management          | Medication list, logs, stock                     |
+| `MedicationProvider`  | Medication management          | Medication list, logs, stock, reminders          |
 
 ### Auth Middleware Stack (Backend)
 

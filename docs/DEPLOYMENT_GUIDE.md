@@ -2,7 +2,7 @@
 
 Step-by-step guide to deploy the full Housepital Patient App stack.
 
-**Last updated:** 2026-03-22
+**Last updated:** 2026-03-24
 
 ---
 
@@ -207,6 +207,33 @@ flutter build appbundle --release
 
 # Output: build/app/outputs/bundle/release/app-release.aab
 ```
+
+### 4.1.1 Android Permissions for Medication Reminders
+
+The `flutter_local_notifications` package requires the following Android permissions in `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<!-- Medication reminder notifications (Android 13+) -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<!-- Exact alarm scheduling for medication reminders -->
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+<!-- Receive boot completed to reschedule notifications -->
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+```
+
+For Android 13+ (API 33+), the app requests `POST_NOTIFICATIONS` permission at runtime when the user first adds a medication.
+
+### 4.1.2 New Dependencies to Install
+
+These dependencies were added since the last deployment guide update:
+
+```yaml
+# pubspec.yaml additions
+flutter_local_notifications: ^18.0.0   # Medication reminders
+timezone: ^0.9.4                       # Timezone-aware notification scheduling
+```
+
+Run `flutter pub get` after pulling latest code.
 
 Before building for release:
 1. Update `android/app/build.gradle` with your signing config

@@ -988,4 +988,124 @@ List active coupons, optionally filtered by category.
 
 ---
 
+## Slot Availability
+
+### `GET /services/:id/slots`
+
+Check available time slots for a service on a given date.
+
+**Auth:** Bearer token
+
+**Query:** `date` (YYYY-MM-DD, required)
+
+**Response:**
+```json
+{
+  "slots": [
+    { "time": "09:00", "available": true },
+    { "time": "10:00", "available": false },
+    { "time": "11:00", "available": true }
+  ]
+}
+```
+
+---
+
+## Equipment Reviews
+
+### `GET /equipment/:id/reviews`
+
+Get reviews for a specific equipment item.
+
+**Auth:** Bearer token
+
+**Query:** `page`, `page_size`
+
+**Response:** `{ "reviews": [...], "average_rating": 4.5, "total": 12 }`
+
+---
+
+### `POST /equipment/:id/reviews`
+
+Submit a review for equipment.
+
+**Auth:** Bearer token + requirePrimary
+
+**Input:**
+```json
+{
+  "rating": "1-5 (required)",
+  "comment": "string (optional)"
+}
+```
+
+**Response:** `201` -- `{ "success": true, "id": "uuid" }`
+
+---
+
+## Returns
+
+### `POST /returns/schedule`
+
+Schedule an equipment return.
+
+**Auth:** Bearer token + requirePrimary
+
+**Input:**
+```json
+{
+  "equipment_id": "string (required)",
+  "rental_id": "string (required)",
+  "preferred_date": "YYYY-MM-DD (required)",
+  "reason": "string (optional)"
+}
+```
+
+**Response:** `201` -- `{ "return": { "id": "...", "status": "scheduled", "pickup_date": "..." } }`
+
+---
+
+## Staff Replacement
+
+### `POST /deployments/:id/replacement`
+
+Request a staff replacement for an active deployment.
+
+**Auth:** Bearer token + requirePrimary
+
+**Input:**
+```json
+{
+  "reason": "string (required)",
+  "preferred_date": "YYYY-MM-DD (optional)"
+}
+```
+
+**Response:** `201` -- `{ "replacement": { "id": "...", "status": "requested", "expected_resolution": "24-48hr" } }`
+
+---
+
+## Pagination
+
+All list endpoints now support standard pagination parameters:
+
+**Query parameters:**
+- `page` (default: 1) -- page number
+- `page_size` (default: 20, max: 100) -- items per page
+
+**Response shape:**
+```json
+{
+  "items": [...],
+  "total": 150,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 8
+}
+```
+
+Applies to: `/notifications`, `/patients/:id/bookings`, `/patients/:id/invoices`, `/patients/:id/reports`, `/patients/:id/concerns`, `/patients/:id/assessments`, `/equipment`, `/equipment/:id/reviews`
+
+---
+
 **Update rule:** Every new Cloud Function or endpoint = update this file.

@@ -153,7 +153,7 @@ flutter test integration_test/
 
 1. **Manpower services (caretaker, nursing_deployment, japa, nanny) have NO commission** -- users reject if they see prices upfront.
 2. **Vital sign boundaries go to the MORE SEVERE category** (e.g., BP 140 is RED, not yellow).
-3. **FAMILY_MEMBER cannot book or pay** -- only PRIMARY_CONTACT can.
+3. **FAMILY_MEMBER can book but cannot pay** -- PRIMARY_CONTACT can do both.
 4. **Booking status transitions are strictly enforced** -- no skipping steps, no going backwards.
 5. **Equipment gets 30% discount for 3-month plan customers.**
 6. **GST is 18% on service price.**

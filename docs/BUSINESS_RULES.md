@@ -4,7 +4,7 @@
 
 ### Manpower Services (Caretaker, Nursing Deployment, Japa, Nanny)
 
-**CRITICAL RULE: Never show prices for manpower services to users.** Users reject when they see prices without first speaking to a coordinator. The `hide_price` flag on `service_catalog` ensures the API returns `null` for `base_price_min` and `base_price_max`.
+**UPDATED (2026-03-24): Manpower services now show prices.** Prices are synced from master Excel (single source of truth). The previous `hide_price` rule has been reversed -- all services now display pricing. Equipment shows MRP with strikethrough + discounted price.
 
 - Staff salary + Commission to Housepital
 - Monthly plan: Rs 12,000 commission (Rs 5,000 non-refundable minimum)
@@ -15,11 +15,22 @@
 - Direct salary model -- NO commission layer
 - Pricing handled through assessment + quote flow
 
-### Equipment Rental
+### Equipment (Sale and Rental)
 
-- Monthly rental only (no sale model currently -- `available_for_sale` exists in schema but not used)
-- 30% discount for 3-month plan customers
-- Rental prices stored in paise in `equipment_catalog.rental_price`
+- Equipment tabs reorganized as **Sale** and **Rental** categories (was Equipment/Consumable)
+- MRP displayed with strikethrough + discounted price
+- Sale and rental prices synced from master Excel
+- 30% discount for 3-month plan customers on rentals
+- All prices stored in paise
+- **364 total items** in catalog (synced from master Excel)
+
+### Rental Agreement Terms
+
+- **Security deposit:** 1 month rental amount (refundable)
+- **Return notice:** 3 business days advance notice required
+- **Minimum rental:** 1 month
+- **Damage clause:** Deducted from deposit based on assessment
+- **Digital signature:** Required on RentalAgreementScreen before equipment dispatch
 
 ### Instant/Scheduled Services
 
@@ -171,6 +182,37 @@ The backend uses simplified thresholds for the service-detail endpoint:
 - SpO2: normal (>= 95), warning (>= 90), critical (< 90)
 - Pulse: normal (60-100), warning (outside 60-100), critical (> 120 or < 50)
 - Temperature: normal (<= 100), warning (> 100), critical (> 103)
+
+---
+
+## Medication Reminder Schedule
+
+Local push notifications for medication adherence. Uses `flutter_local_notifications` + `timezone` package.
+
+| Slot        | Time   | Label         |
+|-------------|--------|---------------|
+| Morning     | 8:00 AM| Morning meds  |
+| Afternoon   | 1:00 PM| Afternoon meds|
+| Evening     | 6:00 PM| Evening meds  |
+| Night       | 10:00 PM| Night meds   |
+
+- Reminders are **local** (no server dependency)
+- Scheduled based on medication `time_slots` field
+- Respects device timezone via `timezone` package
+- Requires Android notification permissions (POST_NOTIFICATIONS on Android 13+)
+- iOS notifications requested at first medication add
+
+---
+
+## Unified Pricing (Master Excel)
+
+**Single source of truth:** All service and equipment pricing is synced from a master Excel spreadsheet.
+
+- Catalog items: **364 total** (was 465, then 434 after cleanup)
+- Equipment: MRP + discounted price (strikethrough display)
+- Manpower: prices now visible (previously hidden)
+- Lab tests: **153 individual tests** with per-test pricing (was 7 packages only)
+- Sync process: Excel -> backend seed script -> service_catalog + equipment_catalog tables
 
 ---
 

@@ -4,6 +4,74 @@
 
 ---
 
+## [2026-03-24 (Session 4)] -- P0/P1 Features, Pricing Sync, 16 New Features, 973 Tests
+
+### New Screens (10)
+- **VideoConsultationScreen:** Video call with coordinator/doctor via video_call_service
+- **ChatScreen:** Real-time in-app chat with coordinator using Firestore chat_messages
+- **StaffOtpVerificationScreen:** OTP-based staff identity verification at check-in
+- **OrderTrackingScreen:** Track order delivery/assignment status with timeline
+- **RentalAgreementScreen:** Rental terms display with digital signature (deposit = 1 month, 3-day return notice)
+- **ReturnScreen:** Equipment return request with reason and scheduling
+- **EmiScreen:** EMI payment plans display and installment tracking
+- **StaffReplacementScreen:** Request staff replacement with reason selection
+- **ReferralScreen:** Refer-a-friend program with shareable code and reward tracking
+- **MyOrdersScreen:** Unified view of all orders (bookings + equipment + rentals)
+
+### Major Features
+- **Pricing overhaul:** Manpower services now show prices (was hidden). MRP + strikethrough pricing on equipment. All 364 items synced from master Excel (single source of truth).
+- **Equipment tab reorganization:** Sale and Rental categories replace Equipment/Consumable tabs
+- **Lab tests expansion:** 153 individual lab tests added with full detail (was 7 packages only)
+- **Medication reminders:** Local push notifications via flutter_local_notifications at 8AM/1PM/6PM/10PM
+- **Pagination widget:** Reusable PaginatedList widget for all list screens
+- **Offline caching:** cache_service with TTL for dashboard and catalog data
+- **Push notification routing:** notification_router.dart handles tap -> screen navigation
+- **Hindi translations:** 90+ new keys added (near-complete coverage)
+- **Cart persistence:** SharedPreferences-backed cart survives app restart
+
+### Code Quality Improvements
+- **Rate limiting:** express-rate-limit applied to all backend endpoints
+- **Zod validation:** Request payload validation with Zod schemas on backend
+- **CORS restriction:** Backend CORS restricted to allowed origins only
+- **Structured logging:** Correlation IDs for request tracing on backend
+- **Retry with backoff:** API calls retry with exponential backoff on failure
+
+### Bug Fixes
+- **Bottom sheet grey screen:** Replaced pop-then-push pattern with return-result-to-parent pattern
+- **Razorpay web crash:** Guarded with kIsWeb check to prevent crash on web platform
+- **Offline handling:** cache_service prevents blank screen when offline
+
+### New Service Files
+- `lib/services/video_call_service.dart` (NEW)
+- `lib/services/cache_service.dart` (NEW)
+- `lib/services/medication_reminder_service.dart` (NEW)
+- `lib/services/i_api_service.dart` (NEW -- API service interface)
+
+### New Utility Files
+- `lib/utils/notification_router.dart` (NEW)
+- `lib/widgets/paginated_list.dart` (NEW)
+
+### New Provider
+- `lib/providers/billing_provider.dart` (NEW -- BillingProvider)
+
+### Test Results
+- **973 tests passing** (was 529 previously)
+- 24 new test files added covering new screens, services, and utilities
+
+### Known Issues Resolved
+- BUG-11: Offline handling (cache_service added)
+- BUG-13: Hindi translations (90+ keys added)
+- BUG-18: Notification routing (notification_router.dart)
+- BUG-24: Coordinator chat (ChatScreen)
+- BUG-25: Bottom sheet grey screen (return-result-to-parent pattern)
+- BUG-26: Razorpay web crash (kIsWeb guard)
+
+### Breaking Changes
+- Equipment tab categories changed from Equipment/Consumable to Sale/Rental
+- Manpower services now show prices (previously hidden with hide_price flag)
+
+---
+
 ## [2026-03-22 (Session 2)] -- 24 Issues Fixed: New Screens, Bug Fixes, Permissions Update
 
 ### New Screens (6)

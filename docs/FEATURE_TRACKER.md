@@ -1,6 +1,6 @@
 # Feature Tracker -- Housepital Patient App
 
-**Last updated:** 2026-03-22
+**Last updated:** 2026-03-24
 
 Legend: Done = feature is shipped and working | In Progress = partially built | Not Started = not yet coded
 
@@ -65,6 +65,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Stock Management                    | MedicationsScreen           | PUT /medications/:id/stock           | Done           | Update stock count                   |
 | 7 | Low Stock Alert                     | --                          | --                                   | Not Started    | Push notification when stock < threshold |
 | 8 | Prescription Photo Upload           | AddEditMedicationScreen     | --                                   | In Progress    | Field exists, upload not connected   |
+| 9 | Medication Reminders (local push)   | medication_reminder_service | flutter_local_notifications          | Done           | Local push at 8AM/1PM/6PM/10PM schedule |
 
 ---
 
@@ -80,8 +81,8 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | Coupon system fully wired in cart + booking  |
 | 7 | Cart System                         | CartScreen               | --                   | Done           | CartProvider with SharedPreferences persistence, coupon support |
 | 8 | Universal Search                    | UniversalSearchScreen    | --                   | Done           | Local search across services                 |
-| 9 | Manpower Price Hiding               | ServiceCatalogScreen     | hide_price flag      | Done           | Prices hidden per business rule              |
-| 10| Slot Availability Check             | --                       | --                   | Not Started    | Currently accepts any slot without checking  |
+| 9 | Manpower Price Display              | ServiceCatalogScreen     | master Excel sync    | Done           | Prices now shown (synced from master Excel). MRP + strikethrough on equipment. |
+| 10| Slot Availability Check             | ServiceBookingScreen     | GET /services/:id/slots | Done        | getAvailableSlots API checks real-time availability |
 | 11| Booking Cancellation                | BookingHistoryScreen     | PUT /bookings/:id/cancel | Done       | Cancel from booking history with confirmation dialog |
 | 12| Post-Service Rating                 | BookingHistoryScreen     | POST /ratings        | Done           | Rate completed bookings from booking history |
 | 13| Booking Confirmation Screen         | BookingConfirmationScreen| --                   | Done           | Animated confirmation with booking ID, share, next steps |
@@ -102,7 +103,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Payment Webhook Handler             | --                     | /payments/webhook                | Done           | payment.captured, payment.failed, refund |
 | 7 | Invoice PDF Download                | InvoiceDetailScreen    | --                               | Not Started    | Button exists, shows "Coming soon"       |
 | 8 | Payment Methods Management          | PaymentMethodsScreen   | --                               | Not Started    | Placeholder screen                       |
-| 9 | EMI Payment Support                 | --                     | --                               | Not Started    | Schema supports it, no UI               |
+| 9 | EMI Payment Support                 | EmiScreen              | BillingProvider                  | Done           | EMI plan display, installment tracking   |
 | 10| Payment Reminders (push)            | --                     | --                               | Not Started    | PaymentReminderService exists but not connected to FCM |
 | 11| Overdue Payment Blocking            | --                     | --                               | Not Started    | Business rule: block new bookings if overdue |
 
@@ -129,8 +130,8 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 2 | Concern History                     | --                     | GET /patients/:id/concerns | Done (API)   | API exists, no dedicated history screen  |
 | 3 | Staff Profile                       | StaffProfileScreen     | /staff/:id/profile       | Done           | Verification badges, reviews             |
 | 4 | SOS Emergency                       | SOSScreen              | --                       | Done           | Call ambulance + 112                     |
-| 5 | Coordinator Chat                    | --                     | Firestore chat_messages  | Not Started    | Firestore collection + rules exist, no UI|
-| 6 | Staff Replacement Request           | --                     | --                       | Not Started    | Business rule exists, no UI              |
+| 5 | Coordinator Chat                    | ChatScreen             | Firestore chat_messages  | Done           | Real-time in-app chat with coordinator   |
+| 6 | Staff Replacement Request           | StaffReplacementScreen | POST /replacements       | Done           | Request replacement with reason          |
 | 7 | Daily Care Rating                   | --                     | POST /ratings            | Not Started    | Backend ready, no UI                     |
 
 ---
@@ -161,7 +162,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 3 | Mark All as Read                    | NotificationsScreen     | PUT /notifications/read-all| Done           |                                          |
 | 4 | FCM Token Registration              | AuthProvider            | POST /auth/fcm-token       | Done           |                                          |
 | 5 | Push Notification Display            | --                     | --                         | Done           | FCM shows system notification            |
-| 6 | Notification Tap Routing            | --                      | --                         | Not Started    | Tapping notification does not navigate   |
+| 6 | Notification Tap Routing            | notification_router.dart | --                        | Done           | Push notification taps route to correct screen |
 | 7 | SMS/WhatsApp Notifications          | --                      | --                         | Not Started    | MSG91 integration not connected          |
 
 ---
@@ -170,8 +171,8 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Status         | Notes                                                |
 |---|-------------------------------------|----------------|------------------------------------------------------|
-| 1 | Localization (EN + HI)              | In Progress    | Framework done, Hindi strings ~60% complete          |
-| 2 | Offline Support                     | Not Started    | No caching, no offline queue                         |
+| 1 | Localization (EN + HI)              | Done           | 90+ Hindi translation keys added, near-complete      |
+| 2 | Offline Support                     | Done           | cache_service with TTL, SharedPreferences persistence |
 | 3 | Error Handling (global)             | Done           | Backend global error handler + Flutter error UI      |
 | 4 | Loading States                      | Done           | Most screens have loading indicators                 |
 | 5 | Empty States                        | In Progress    | Some screens have empty states, some do not          |
@@ -180,8 +181,14 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 8 | Crash Reporting (Crashlytics)       | Not Started    |                                                      |
 | 9 | Deep Linking                        | Not Started    |                                                      |
 | 10| App Performance Monitoring          | Not Started    |                                                      |
-| 11| Rate Limiting (backend)             | Not Started    | express-rate-limit is a dependency but not applied   |
-| 12| Structured Logging (backend)        | Not Started    | Uses console.log                                     |
+| 11| Rate Limiting (backend)             | Done           | express-rate-limit applied to all endpoints          |
+| 12| Structured Logging (backend)        | Done           | Structured logging with correlation IDs              |
+| 13| Zod Validation (backend)            | Done           | Request payload validation with Zod schemas          |
+| 14| CORS Restriction (backend)          | Done           | CORS restricted to allowed origins                   |
+| 15| Retry with Backoff (frontend)       | Done           | API calls retry with exponential backoff             |
+| 16| Pagination Widget                   | Done           | Reusable PaginatedList widget in lib/widgets/        |
+| 17| Video Consultation                  | Done           | VideoConsultationScreen + video_call_service          |
+| 18| Referral Program                    | Done           | ReferralScreen with share code + reward tracking     |
 
 ---
 
@@ -191,7 +198,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 |----------------------------|-------------------------------------------------------|---------|
 | Invoice PDF generation     | Razorpay live mode approval pending + pdfkit backend  | Founder |
 | WhatsApp notifications     | MSG91 template approval from WhatsApp                 | Founder |
-| Lab test catalog (detailed)| Lab partner pricing not finalized                     | Ops     |
+| ~~Lab test catalog (detailed)~~| ~~Lab partner pricing not finalized~~ (RESOLVED -- 153 individual tests added) | Ops |
 | Razorpay production mode   | Business verification with Razorpay                   | Founder |
 | Multi-patient support UI   | Product decision on UX flow                           | Founder |
 

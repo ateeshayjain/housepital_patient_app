@@ -2,7 +2,7 @@
 
 Common issues and their solutions for Housepital Patient App development.
 
-**Last updated:** 2026-03-22
+**Last updated:** 2026-03-24
 
 ---
 
@@ -223,7 +223,53 @@ The connection pool in `cloudSql.ts` is configured with `max: 10` and `idleTimeo
 
 ---
 
+## Bottom Sheet Navigation Issues
+
+### Problem: Bottom sheet navigation shows grey screen
+
+**Cause:** Using a pop-then-push pattern from within a bottom sheet causes a grey screen because the bottom sheet's navigation context is destroyed during the pop.
+
+**Solution:**
+Do NOT pop the bottom sheet and then push a new route. Instead, use the **return-result-to-parent** pattern:
+
+1. In the bottom sheet, call `Navigator.pop(context, result)` to return a result
+2. In the parent screen, use the returned result to navigate:
+```dart
+final result = await showModalBottomSheet<Map<String, dynamic>>(
+  context: context,
+  builder: (ctx) => MyBottomSheet(),
+);
+if (result != null) {
+  Navigator.pushNamed(context, '/target-route', arguments: result);
+}
+```
+
+This ensures the parent's navigation context (not the destroyed bottom sheet context) handles the push.
+
+---
+
 ## Razorpay Issues
+
+### Problem: Razorpay crashes on web platform
+
+**Cause:** The `razorpay_flutter` plugin does not support web. Calling Razorpay methods on web causes an unrecoverable crash.
+
+**Solution:**
+Guard all Razorpay calls with `kIsWeb`:
+```dart
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+if (kIsWeb) {
+  // Show web-specific payment flow or "not supported on web" message
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Payments are not supported on web. Please use the mobile app.')),
+  );
+  return;
+}
+// Proceed with Razorpay checkout
+```
+
+---
 
 ### Problem: Razorpay checkout does not open / crashes on Android
 
@@ -288,6 +334,24 @@ Test Netbanking: All banks work in test mode
 # or disable service worker for development:
 flutter build web --pwa-strategy=none
 ```
+
+---
+
+### Problem: Service worker caching old build -- changes not visible
+
+**Cause:** `flutter_service_worker.js` aggressively caches all assets. Even after deploying a new build, users may see the old version indefinitely.
+
+**Solution:**
+1. Delete `flutter_service_worker.js` from the deployed build folder
+2. Use a **different port** for local dev to avoid port-specific cache:
+   ```bash
+   flutter run -d chrome --web-port=9999
+   ```
+3. For production, build without service worker:
+   ```bash
+   flutter build web --pwa-strategy=none
+   ```
+4. If already deployed with service worker, users must manually clear cache or you can add a version check script to `web/index.html` that forces reload when version changes.
 
 ---
 
