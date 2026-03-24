@@ -126,5 +126,74 @@ void main() {
       final text = await cacheService.getLastUpdatedText('nope');
       expect(text, isNull);
     });
+
+    // --- Additional tests for persistence, isolation, and prefix clearing ---
+
+    test('cache survives simulated app restart (pre-seeded SharedPreferences)', () async {
+      // Simulate data persisted from a previous session by pre-seeding
+      final freshTimestamp = DateTime.now().millisecondsSinceEpoch;
+      final wrapper = jsonEncode({
+        'data': 'persisted_value',
+        'timestamp': freshTimestamp,
+      });
+      SharedPreferences.setMockInitialValues({
+        'housepital_cache_restart_key': wrapper,
+      });
+
+      // A new get call should find the pre-seeded data
+      final result = await cacheService.get<String>('restart_key');
+      expect(result, equals('persisted_value'));
+    });
+
+    test('multiple cache keys do not interfere with each other', () async {
+      SharedPreferences.setMockInitialValues({});
+      await cacheService.cache('alpha', 'value_alpha');
+      await cacheService.cache('beta', 'value_beta');
+      await cacheService.cache('gamma', 42);
+
+      final alpha = await cacheService.get<String>('alpha');
+      final beta = await cacheService.get<String>('beta');
+      final gamma = await cacheService.get<int>('gamma');
+
+      expect(alpha, equals('value_alpha'));
+      expect(beta, equals('value_beta'));
+      expect(gamma, equals(42));
+
+      // Removing one key does not affect others
+      await cacheService.remove('beta');
+      expect(await cacheService.get<String>('alpha'), equals('value_alpha'));
+      expect(await cacheService.get<String>('beta'), isNull);
+      expect(await cacheService.get<int>('gamma'), equals(42));
+    });
+
+    test('clear() removes all keys with housepital_cache_ prefix', () async {
+      // Pre-seed with both cache keys and a non-cache key
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      SharedPreferences.setMockInitialValues({
+        'housepital_cache_a': jsonEncode({'data': 1, 'timestamp': ts}),
+        'housepital_cache_b': jsonEncode({'data': 2, 'timestamp': ts}),
+        'housepital_cache_c': jsonEncode({'data': 3, 'timestamp': ts}),
+        'other_app_key': 'should_survive',
+      });
+
+      await cacheService.clear();
+
+      final prefs = await SharedPreferences.getInstance();
+      // All cache keys should be gone
+      expect(prefs.getString('housepital_cache_a'), isNull);
+      expect(prefs.getString('housepital_cache_b'), isNull);
+      expect(prefs.getString('housepital_cache_c'), isNull);
+      // Non-prefixed key should survive
+      expect(prefs.getString('other_app_key'), equals('should_survive'));
+    });
+
+    test('cache overwrites existing key with new value', () async {
+      SharedPreferences.setMockInitialValues({});
+      await cacheService.cache('overwrite_key', 'original');
+      await cacheService.cache('overwrite_key', 'updated');
+
+      final result = await cacheService.get<String>('overwrite_key');
+      expect(result, equals('updated'));
+    });
   });
 }

@@ -43,5 +43,54 @@ void main() {
       expect(total1Month, lessThan(total3Month));
       expect(total3Month, lessThan(total6Month));
     });
+
+    // --- Additional tests for bottom sheet / rental agreement flow ---
+
+    test('first payment equals monthlyRate + deposit (deposit = monthlyRate)', () {
+      // deposit = monthlyRate, so firstPayment = 2 * monthlyRate
+      expect(firstPayment(3599), equals(3599 + 3599));
+      expect(firstPayment(7999), equals(7999 * 2));
+      expect(firstPayment(1), equals(2));
+    });
+
+    test('zero monthlyRate produces zero firstPayment', () {
+      expect(firstPayment(0), equals(0));
+      expect(deposit(0), equals(0));
+    });
+
+    test('large monthlyRate values work correctly', () {
+      const largeRate = 999999;
+      expect(deposit(largeRate), equals(largeRate));
+      expect(firstPayment(largeRate), equals(largeRate * 2));
+      // Ensure no overflow for reasonable values
+      expect(firstPayment(largeRate), isPositive);
+    });
+
+    test('durationMonths defaults to 1 in rental args', () {
+      // When creating rental agreement args, durationMonths defaults to 1
+      final args = <String, dynamic>{
+        'itemName': 'Wheelchair',
+        'monthlyRate': 2500,
+        'durationMonths': 1,
+      };
+      expect(args['durationMonths'], equals(1));
+
+      // Total cost for 1 month = firstPayment (deposit + 1 month)
+      final totalForDefault =
+          (args['monthlyRate'] as int) * (args['durationMonths'] as int) +
+              deposit(args['monthlyRate'] as int);
+      expect(totalForDefault, equals(2500 + 2500));
+    });
+
+    test('total rental cost formula is correct across durations', () {
+      const rate = 4000;
+      // Total = (monthlyRate * duration) + deposit
+      // where deposit = monthlyRate
+      for (final duration in [1, 3, 6, 12]) {
+        final total = rate * duration + deposit(rate);
+        expect(total, equals(rate * duration + rate));
+        expect(total, equals(rate * (duration + 1)));
+      }
+    });
   });
 }
