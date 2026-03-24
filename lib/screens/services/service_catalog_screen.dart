@@ -1524,7 +1524,7 @@ class _EquipmentTabState extends State<_EquipmentTab> {
   String _sortBy = 'Relevance';
   final _searchController = TextEditingController();
 
-  static const _categories = ['All', 'Equipment', 'Consumable'];
+  static const _categories = ['All', 'Sale', 'Rental'];
   static const _sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Name A-Z'];
 
   @override
@@ -1559,8 +1559,10 @@ class _EquipmentTabState extends State<_EquipmentTab> {
 
   List<EquipmentItem> get _filtered {
     var items = _allItems;
-    if (_selectedCategory != 'All') {
-      items = items.where((i) => i.category == _selectedCategory).toList();
+    if (_selectedCategory == 'Sale') {
+      items = items.where((i) => i.availableForSale).toList();
+    } else if (_selectedCategory == 'Rental') {
+      items = items.where((i) => i.availableForRent).toList();
     }
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
@@ -1679,7 +1681,9 @@ class _EquipmentTabState extends State<_EquipmentTab> {
                       final isSelected = cat == _selectedCategory;
                       final count = cat == 'All'
                           ? _allItems.length
-                          : _allItems.where((i) => i.category == cat).length;
+                          : cat == 'Sale'
+                              ? _allItems.where((i) => i.availableForSale).length
+                              : _allItems.where((i) => i.availableForRent).length;
                       return GestureDetector(
                         onTap: () => setState(() => _selectedCategory = cat),
                         child: Container(
