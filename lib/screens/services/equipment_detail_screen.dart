@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
-import '../../screens/cart/cart_screen.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 
@@ -1510,9 +1509,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         : inCart
                             ? OutlinedButton.icon(
                                 onPressed: () {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (_) => const CartScreen(),
-                                  ));
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pushNamed('/cart');
                                 },
                                 icon: const Icon(Icons.shopping_cart, size: 18),
                                 label: const Text('Go to Cart'),
@@ -1559,9 +1557,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       onPressed: () {
                         // Add to cart first, then navigate
                         if (!inCart) _addToCart(context);
-                        Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const CartScreen(),
-                        ));
+                        // Pop the bottom sheet first, then navigate
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pushNamed('/cart');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HousepitalColors.orange,
