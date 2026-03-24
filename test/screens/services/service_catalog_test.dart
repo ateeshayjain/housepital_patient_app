@@ -25,23 +25,23 @@ final List<ServiceItem> _physioServices = [
 ];
 
 final List<ServiceItem> _manpowerServices = [
-  ServiceItem(id: 'mp-nurse-basic-12', name: 'Nurse (Basic) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-nurse-basic-24', name: 'Nurse (Basic) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-nurse-adv-12', name: 'Nurse (Advanced) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-nurse-adv-24', name: 'Nurse (Advanced) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
+  ServiceItem(id: 'mp-nurse-basic-12', name: 'Nurse (Basic) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 900),
+  ServiceItem(id: 'mp-nurse-basic-24', name: 'Nurse (Basic) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
+  ServiceItem(id: 'mp-nurse-adv-12', name: 'Nurse (Advanced) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
+  ServiceItem(id: 'mp-nurse-adv-24', name: 'Nurse (Advanced) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1500),
   ServiceItem(id: 'mp-nurse-crit-12', name: 'Nurse (Critical) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
   ServiceItem(id: 'mp-nurse-crit-24', name: 'Nurse (Critical) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-basic-12', name: 'Caretaker (Basic) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-basic-24', name: 'Caretaker (Basic) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-adv-12', name: 'Caretaker (Advanced) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-japa-24', name: 'Japa Maid – 24 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-nanny-12', name: 'Nanny – 12 Hours', category: 'manpower', bookingType: 'assessment'),
-  ServiceItem(id: 'mp-physio-basic', name: 'Physiotherapy (Basic)', category: 'manpower', bookingType: 'assessment', basePriceMin: 900, basePriceMax: 900),
-  ServiceItem(id: 'mp-physio-advance', name: 'Physiotherapy (Advanced)', category: 'manpower', bookingType: 'assessment', basePriceMin: 1200, basePriceMax: 1200),
-  ServiceItem(id: 'mp-physio-critical', name: 'Physiotherapy (Critical)', category: 'manpower', bookingType: 'assessment', basePriceMin: 1500, basePriceMax: 1500),
+  ServiceItem(id: 'mp-caretaker-basic-12', name: 'Caretaker (Basic) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 600),
+  ServiceItem(id: 'mp-caretaker-basic-24', name: 'Caretaker (Basic) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 800),
+  ServiceItem(id: 'mp-caretaker-adv-12', name: 'Caretaker (Advanced) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 800),
+  ServiceItem(id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1000),
+  ServiceItem(id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1000),
+  ServiceItem(id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
+  ServiceItem(id: 'mp-japa-24', name: 'Japa Maid – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 800),
+  ServiceItem(id: 'mp-nanny-12', name: 'Nanny – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 600),
+  ServiceItem(id: 'mp-physio-basic', name: 'Physiotherapy (Basic)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 900),
+  ServiceItem(id: 'mp-physio-advance', name: 'Physiotherapy (Advanced)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
+  ServiceItem(id: 'mp-physio-critical', name: 'Physiotherapy (Critical)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1500),
 ];
 
 final List<ServiceItem> _equipmentServices = [
