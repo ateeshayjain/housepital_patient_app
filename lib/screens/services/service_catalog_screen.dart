@@ -1484,14 +1484,15 @@ class _StaffRoleCard extends StatelessWidget {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    final nav = Navigator.of(context, rootNavigator: true);
+                    Navigator.of(context).pop();
                     // Find the first matching service to pass to assessment
                     final matchingService = services.firstWhere(
                       (s) => s.name.toLowerCase().contains(
                           role.title.toLowerCase().split(' ').first),
                       orElse: () => services.first,
                     );
-                    Navigator.pushNamed(context, '/assessment-request',
+                    nav.pushNamed('/assessment-request',
                         arguments: matchingService);
                   },
                   child: const Text('Request Assessment'),
@@ -2516,8 +2517,9 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/assessment-request',
+                  final nav = Navigator.of(context, rootNavigator: true);
+                  Navigator.of(context).pop();
+                  nav.pushNamed('/assessment-request',
                       arguments: ServiceItem(
                         id: 'eq-${item.id}',
                         name: item.name,
@@ -3439,11 +3441,12 @@ class _LabTestsTabState extends State<_LabTestsTab> {
       builder: (_) => _LabTestDetailSheet(
         test: test,
         onBook: () {
-          Navigator.pop(context);
-          widget.onNavigateService(context, test.toServiceItem());
+          final nav = Navigator.of(context, rootNavigator: true);
+          Navigator.of(context).pop();
+          widget.onNavigateService(nav.context, test.toServiceItem());
         },
         onRelatedTap: (name) {
-          Navigator.pop(context);
+          Navigator.of(context).pop();
           setState(() {
             _searchQuery = name.trim();
             _searchController.text = name.trim();
