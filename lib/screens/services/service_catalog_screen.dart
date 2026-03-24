@@ -2566,63 +2566,67 @@ List<String> _splitCatalogText(String text) {
 /// Parses FAQ text into Q/A pairs.
 /// Handles formats: "Q: ... | A: ... | Q: ..." or "Q: ... A: ... Q: ..."
 List<Widget> _buildFaqItems(String faqs) {
-  // Split by Q: to get each question block, handling both pipe and inline formats
-  // First normalize: replace " | Q:" with "\nQ:" and " | A:" with "\nA:"
-  var normalized = faqs
-      .replaceAll(RegExp(r'\s*\|\s*Q:'), '\nQ:')
-      .replaceAll(RegExp(r'\s*\|\s*A:'), '\nA:');
-  // Also split inline "A: ... Q:" where there's no separator
-  normalized = normalized.replaceAllMapped(
-    RegExp(r'(A:.*?\.)\s+(Q:)'),
-    (m) => '${m.group(1)}\n${m.group(2)}',
+  // Extract Q/A pairs using a regex that finds "Q:" followed by "A:" patterns
+  // Handles: "Q: q1? A: a1. | Q: q2? A: a2." and "Q: q1? A: a1. Q: q2? A: a2."
+  final pairs = <Map<String, String>>[];
+
+  // Find all Q: ... A: ... pairs using regex
+  final qaRegex = RegExp(
+    r'Q[:.]\s*(.*?)\s*A[:.]\s*(.*?)(?=\s*\|?\s*Q[:.]\s|$)',
+    dotAll: true,
   );
 
-  final lines = normalized.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-  final items = <Widget>[];
-  String? currentQ;
-  int qNumber = 0;
-
-  for (final line in lines) {
-    if (line.startsWith('Q:') || line.startsWith('Q.')) {
-      currentQ = line.substring(2).trim();
-    } else if ((line.startsWith('A:') || line.startsWith('A.')) && currentQ != null) {
-      qNumber++;
-      items.add(Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 22, height: 22,
-                  margin: const EdgeInsets.only(top: 1),
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.orangeLight,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Center(child: Text('$qNumber',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
-                ),
-                const SizedBox(width: 10),
-                Expanded(child: Text(currentQ, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.black))),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 32, top: 4),
-              child: Text(line.substring(2).trim(), style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight, height: 1.4)),
-            ),
-          ],
-        ),
-      ));
-      currentQ = null;
+  for (final match in qaRegex.allMatches(faqs)) {
+    final question = match.group(1)?.trim() ?? '';
+    final answer = match.group(2)?.trim() ?? '';
+    if (question.isNotEmpty && answer.isNotEmpty) {
+      // Clean trailing pipe or period from answer
+      final cleanAnswer = answer.endsWith('|')
+          ? answer.substring(0, answer.length - 1).trim()
+          : answer;
+      pairs.add({'q': question, 'a': cleanAnswer});
     }
   }
-  if (items.isEmpty) {
+
+  if (pairs.isEmpty) {
     return [Text(faqs, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4))];
   }
-  return items;
+
+  return pairs.asMap().entries.map((entry) {
+    final idx = entry.key + 1;
+    final q = entry.value['q']!;
+    final a = entry.value['a']!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 22, height: 22,
+                margin: const EdgeInsets.only(top: 1),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.orangeLight,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Center(child: Text('$idx',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(q, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.black, height: 1.4))),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 32),
+            child: Text(a, style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight, height: 1.5)),
+          ),
+        ],
+      ),
+    );
+  }).toList();
 }
 
 /// Collapsible text widget — shows 3 lines with "Read more" toggle.
