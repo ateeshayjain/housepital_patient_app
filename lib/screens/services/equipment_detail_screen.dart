@@ -1556,12 +1556,20 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Add to cart first, then navigate
-                        if (!inCart) _addToCart(context);
-                        // Capture root navigator before popping bottom sheet
-                        final nav = Navigator.of(context, rootNavigator: true);
-                        Navigator.of(context).pop(); // close bottom sheet
-                        nav.pushNamed('/cart');
+                        if (_canRent) {
+                          // Rental flow → Rental Agreement screen
+                          Navigator.pushNamed(context, '/rental-agreement',
+                            arguments: {
+                              'itemName': _catalogItem!.name,
+                              'monthlyRate': (_catalogItem!.rentalPrice ?? 0).toInt(),
+                              'durationMonths': _selectedRentalMonths,
+                            },
+                          );
+                        } else {
+                          // Buy flow → add to cart and go to cart
+                          if (!inCart) _addToCart(context);
+                          Navigator.pushNamed(context, '/cart');
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HousepitalColors.orange,

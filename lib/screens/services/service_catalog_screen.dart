@@ -2548,28 +2548,40 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  final cart = Provider.of<CartProvider>(context, listen: false);
-                  cart.addItem(item,
-                      isRental: _isRental,
-                      rentalMonths: _isRental ? _rentalMonths : 1);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context)
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      SnackBar(
-                        content: Text('${item.name} added to cart'),
-                        backgroundColor: HousepitalColors.success,
-                        duration: const Duration(seconds: 3),
-                        behavior: SnackBarBehavior.floating,
-                        action: SnackBarAction(
-                          label: 'VIEW CART',
-                          textColor: Colors.white,
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/cart');
-                          },
-                        ),
-                      ),
+                  if (_isRental) {
+                    // Rental flow → Rental Agreement screen
+                    final nav = Navigator.of(context, rootNavigator: true);
+                    Navigator.of(context).pop();
+                    nav.pushNamed('/rental-agreement',
+                      arguments: {
+                        'itemName': item.name,
+                        'monthlyRate': (item.rentalPrice ?? 0).toInt(),
+                        'durationMonths': _rentalMonths,
+                      },
                     );
+                  } else {
+                    // Buy flow → add to cart
+                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    cart.addItem(item, isRental: false, rentalMonths: 1);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        SnackBar(
+                          content: Text('${item.name} added to cart'),
+                          backgroundColor: HousepitalColors.success,
+                          duration: const Duration(seconds: 3),
+                          behavior: SnackBarBehavior.floating,
+                          action: SnackBarAction(
+                            label: 'VIEW CART',
+                            textColor: Colors.white,
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/cart');
+                            },
+                          ),
+                        ),
+                      );
+                  }
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
                 label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),
