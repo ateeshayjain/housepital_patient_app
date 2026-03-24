@@ -1484,15 +1484,14 @@ class _StaffRoleCard extends StatelessWidget {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    final nav = Navigator.of(context, rootNavigator: true);
-                    Navigator.of(context).pop();
                     // Find the first matching service to pass to assessment
                     final matchingService = services.firstWhere(
                       (s) => s.name.toLowerCase().contains(
                           role.title.toLowerCase().split(' ').first),
                       orElse: () => services.first,
                     );
-                    nav.pushNamed('/assessment-request',
+                    // Push first (context still valid), sheet auto-dismisses
+                    Navigator.of(context).pushNamed('/assessment-request',
                         arguments: matchingService);
                   },
                   child: const Text('Request Assessment'),
@@ -2517,9 +2516,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  final nav = Navigator.of(context, rootNavigator: true);
-                  Navigator.of(context).pop();
-                  nav.pushNamed('/assessment-request',
+                  Navigator.of(context).pushNamed('/assessment-request',
                       arguments: ServiceItem(
                         id: 'eq-${item.id}',
                         name: item.name,
@@ -2549,16 +2546,17 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   if (_isRental) {
-                    // Rental flow → Rental Agreement screen
-                    final nav = Navigator.of(context, rootNavigator: true);
-                    Navigator.of(context).pop();
-                    nav.pushNamed('/rental-agreement',
+                    // Rental flow → navigate to Rental Agreement
+                    // Push BEFORE pop so context is still valid
+                    Navigator.of(context).pushNamed('/rental-agreement',
                       arguments: {
                         'itemName': item.name,
                         'monthlyRate': (item.rentalPrice ?? 0).toInt(),
                         'durationMonths': _rentalMonths,
                       },
-                    );
+                    ).then((_) {
+                      // Bottom sheet auto-dismisses when we navigate away
+                    });
                   } else {
                     // Buy flow → add to cart
                     final cart = Provider.of<CartProvider>(context, listen: false);
@@ -3453,9 +3451,7 @@ class _LabTestsTabState extends State<_LabTestsTab> {
       builder: (_) => _LabTestDetailSheet(
         test: test,
         onBook: () {
-          final nav = Navigator.of(context, rootNavigator: true);
-          Navigator.of(context).pop();
-          widget.onNavigateService(nav.context, test.toServiceItem());
+          widget.onNavigateService(context, test.toServiceItem());
         },
         onRelatedTap: (name) {
           Navigator.of(context).pop();
