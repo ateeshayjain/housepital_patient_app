@@ -2284,21 +2284,29 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               concern: _isDoctorVisit ? _concernController.text : null,
             );
 
-            // Show snackbar and navigate back to services catalog
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Service added to cart'),
-                backgroundColor: HousepitalColors.success,
-                action: SnackBarAction(
-                  label: 'View Cart',
-                  textColor: Colors.white,
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/cart');
-                  },
+            // Capture navigator before popping
+            final nav = Navigator.of(context);
+            final messenger = ScaffoldMessenger.of(context);
+
+            // Pop first, then show SnackBar on the parent screen
+            nav.pop();
+
+            messenger
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: const Text('Service added to cart'),
+                  backgroundColor: HousepitalColors.success,
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+                  action: SnackBarAction(
+                    label: 'View Cart',
+                    textColor: Colors.white,
+                    onPressed: () => nav.pushNamed('/cart'),
+                  ),
                 ),
-              ),
-            );
-            Navigator.pop(context);
+              );
           },
           child: const Text('Confirm & Add to Cart'),
         ),
