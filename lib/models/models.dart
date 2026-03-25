@@ -1376,27 +1376,66 @@ class BillingSummary {
 
 // Cart Item Model — wraps an EquipmentItem with quantity and purchase mode
 class CartItem {
-  final EquipmentItem item;
-  final bool isRental; // true = rent, false = buy
-  int quantity;
-  int rentalMonths; // only relevant when isRental == true (min 1 month)
+  final String equipmentId;
+  final String name;
+  final String brand;
+  final String? imageUrl;
+  final int unitPrice; // sale price or monthly rental price
+  final int? mrp;
+  final bool isRental;
+  final int rentalMonths;
+  final int quantity;
 
-  CartItem({
-    required this.item,
+  const CartItem({
+    required this.equipmentId,
+    required this.name,
+    required this.brand,
+    this.imageUrl,
+    required this.unitPrice,
+    this.mrp,
     this.isRental = false,
-    this.quantity = 1,
     this.rentalMonths = 1,
+    this.quantity = 1,
   });
 
-  /// Unique key combining item id + mode so same item can be in cart as both rental and purchase
-  String get cartKey => '${item.id}_${isRental ? "rent" : "buy"}';
+  int get lineTotal =>
+      isRental ? unitPrice * rentalMonths * quantity : unitPrice * quantity;
 
-  double get unitPrice =>
-      isRental ? (item.rentalPrice ?? 0) : (item.price ?? 0);
+  CartItem copyWith({int? quantity, int? rentalMonths}) => CartItem(
+        equipmentId: equipmentId,
+        name: name,
+        brand: brand,
+        imageUrl: imageUrl,
+        unitPrice: unitPrice,
+        mrp: mrp,
+        isRental: isRental,
+        rentalMonths: rentalMonths ?? this.rentalMonths,
+        quantity: quantity ?? this.quantity,
+      );
 
-  /// rentalPrice is monthly rate — lineTotal = monthly × months × qty
-  double get lineTotal =>
-      isRental ? unitPrice * quantity * rentalMonths : unitPrice * quantity;
+  Map<String, dynamic> toJson() => {
+        'equipmentId': equipmentId,
+        'name': name,
+        'brand': brand,
+        'imageUrl': imageUrl,
+        'unitPrice': unitPrice,
+        'mrp': mrp,
+        'isRental': isRental,
+        'rentalMonths': rentalMonths,
+        'quantity': quantity,
+      };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
+        equipmentId: json['equipmentId'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        brand: json['brand'] as String? ?? '',
+        imageUrl: json['imageUrl'] as String?,
+        unitPrice: json['unitPrice'] as int? ?? 0,
+        mrp: json['mrp'] as int?,
+        isRental: json['isRental'] as bool? ?? false,
+        rentalMonths: json['rentalMonths'] as int? ?? 1,
+        quantity: json['quantity'] as int? ?? 1,
+      );
 }
 
 // Care Package Model — condition-based bundles of equipment + services

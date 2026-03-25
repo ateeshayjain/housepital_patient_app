@@ -6,7 +6,6 @@ import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
-import '../../services/payment_service.dart';
 import '../../utils/helpers.dart';
 
 class CartScreen extends StatefulWidget {
@@ -17,7 +16,6 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  PaymentService? _paymentService;
   final _couponController = TextEditingController();
   String? _couponError;
   String? _appliedCouponCode;
@@ -25,17 +23,7 @@ class _CartScreenState extends State<CartScreen> {
   bool _validatingCoupon = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Razorpay doesn't work on web — guard initialization
-    if (!kIsWeb) {
-      _paymentService = PaymentService();
-    }
-  }
-
-  @override
   void dispose() {
-    _paymentService?.dispose();
     _couponController.dispose();
     super.dispose();
   }
@@ -54,7 +42,7 @@ class _CartScreenState extends State<CartScreen> {
 
     // Check hardcoded test coupon first (offline support)
     if (code == 'WELCOME10') {
-      final subtotal = cart.subtotal.toInt();
+      final subtotal = cart.subtotal;
       int discount = (subtotal * 10 / 100).round();
       if (discount > 500) discount = 500;
       setState(() {
@@ -68,8 +56,8 @@ class _CartScreenState extends State<CartScreen> {
 
     // Try backend validation
     try {
-      final coupon = await ApiService().validateCoupon(code, 'equipment', cart.subtotal.toInt());
-      final discount = coupon.calculateDiscount(cart.subtotal.toInt());
+      final coupon = await ApiService().validateCoupon(code, 'equipment', cart.subtotal);
+      final discount = coupon.calculateDiscount(cart.subtotal);
       if (discount > 0) {
         setState(() {
           _validatingCoupon = false;
@@ -104,7 +92,11 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Cart'),
+        title: Consumer<CartProvider>(
+          builder: (_, cart, __) => Text(
+            cart.isEmpty ? 'My Cart' : 'My Cart (${cart.itemCount} items)',
+          ),
+        ),
         actions: [
           Consumer<CartProvider>(
             builder: (_, cart, __) => cart.isEmpty
@@ -132,16 +124,16 @@ class _CartScreenState extends State<CartScreen> {
                     if (cart.isEmpty && cart.hasSavedItems)
                       const Padding(
                         padding: EdgeInsets.only(bottom: 16),
-                        child: Text('Your cart is empty, but you have saved items below.',
-                            style: TextStyle(color: HousepitalColors.greyLight)),
+                        child: Text(
+                          'Your cart is empty, but you have saved items below.',
+                          style: TextStyle(color: HousepitalColors.greyLight),
+                        ),
                       ),
-                    ...cart.items.entries.map((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _CartItemCard(
-                        cartKey: entry.key,
-                        cartItem: entry.value,
+                    for (int i = 0; i < cart.items.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _CartItemCard(index: i, cartItem: cart.items[i]),
                       ),
-                    )),
 
                     // Saved for Later section
                     if (cart.hasSavedItems) ...[
@@ -164,13 +156,12 @@ class _CartScreenState extends State<CartScreen> {
                           ],
                         ),
                       ),
-                      ...cart.savedForLater.entries.map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _SavedItemCard(
-                          savedKey: entry.key,
-                          cartItem: entry.value,
+                      for (int i = 0; i < cart.savedItems.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _SavedItemCard(
+                              index: i, cartItem: cart.savedItems[i]),
                         ),
-                      )),
                     ],
                   ],
                 ),
@@ -226,39 +217,53 @@ class _CartScreenState extends State<CartScreen> {
         children: [
           const Row(
             children: [
-              Icon(Icons.local_offer_outlined, size: 18, color: HousepitalColors.orange),
+              Icon(Icons.local_offer_outlined,
+                  size: 18, color: HousepitalColors.orange),
               SizedBox(width: 8),
-              Text('Have a coupon?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Have a coupon?',
+                  style:
+                      TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 10),
           if (_appliedCouponCode != null)
             // Applied coupon display
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: HousepitalColors.successLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: HousepitalColors.success.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color:
+                        HousepitalColors.success.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, size: 18, color: HousepitalColors.success),
+                  const Icon(Icons.check_circle,
+                      size: 18, color: HousepitalColors.success),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_appliedCouponCode!,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
-                        Text('You save ${DateHelper.formatCurrency(_discountAmount)}',
-                            style: const TextStyle(fontSize: 12, color: HousepitalColors.success)),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: HousepitalColors.success)),
+                        Text(
+                            'You save ${DateHelper.formatCurrency(_discountAmount)}',
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: HousepitalColors.success)),
                       ],
                     ),
                   ),
                   GestureDetector(
                     onTap: _removeCoupon,
-                    child: const Icon(Icons.close, size: 18, color: HousepitalColors.greyLight),
+                    child: const Icon(Icons.close,
+                        size: 18, color: HousepitalColors.greyLight),
                   ),
                 ],
               ),
@@ -275,43 +280,60 @@ class _CartScreenState extends State<CartScreen> {
                       hintText: 'Enter coupon code',
                       hintStyle: const TextStyle(fontSize: 13),
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
                       ),
                       filled: true,
                       fillColor: Colors.white,
                     ),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
                   height: 40,
                   child: ElevatedButton(
-                    onPressed: _validatingCoupon ? null : () => _applyCoupon(cart),
+                    onPressed: _validatingCoupon
+                        ? null
+                        : () => _applyCoupon(cart),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: HousepitalColors.orange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     child: _validatingCoupon
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Apply', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Text('Apply',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
             ),
           if (_couponError != null) ...[
             const SizedBox(height: 6),
-            Text(_couponError!, style: const TextStyle(fontSize: 12, color: HousepitalColors.error)),
+            Text(_couponError!,
+                style: const TextStyle(
+                    fontSize: 12, color: HousepitalColors.error)),
           ],
         ],
       ),
@@ -332,7 +354,8 @@ class _CartScreenState extends State<CartScreen> {
             offset: const Offset(0, -4),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         child: Column(
@@ -343,7 +366,7 @@ class _CartScreenState extends State<CartScreen> {
             // Subtotal
             _summaryRow(
                 'Subtotal (${cart.itemCount} items)',
-                DateHelper.formatCurrency(cart.subtotal.toInt())),
+                DateHelper.formatCurrency(cart.subtotal)),
             const SizedBox(height: 6),
             // Discount
             if (_discountAmount > 0) ...[
@@ -359,7 +382,7 @@ class _CartScreenState extends State<CartScreen> {
               'Delivery',
               cart.deliveryCharge == 0
                   ? 'FREE'
-                  : DateHelper.formatCurrency(cart.deliveryCharge.toInt()),
+                  : DateHelper.formatCurrency(cart.deliveryCharge),
               valueColor: cart.deliveryCharge == 0
                   ? HousepitalColors.success
                   : null,
@@ -369,9 +392,10 @@ class _CartScreenState extends State<CartScreen> {
                 padding: EdgeInsets.only(top: 2),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Free delivery on orders above ₹999',
+                  child: Text('Free delivery on orders above Rs.999',
                       style: TextStyle(
-                          fontSize: 11, color: HousepitalColors.success)),
+                          fontSize: 11,
+                          color: HousepitalColors.success)),
                 ),
               ),
             const Padding(
@@ -383,10 +407,10 @@ class _CartScreenState extends State<CartScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total',
-                    style:
-                        TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700)),
                 Text(
-                  DateHelper.formatCurrency(adjustedTotal.toInt()),
+                  DateHelper.formatCurrency(adjustedTotal),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -401,11 +425,13 @@ class _CartScreenState extends State<CartScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () => _checkout(context, cart),
+                onPressed: () => _checkout(context, cart, adjustedTotal),
                 icon: const Icon(Icons.lock_outline, size: 18),
-                label: const Text('Proceed to Pay',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Checkout (${DateHelper.formatCurrency(adjustedTotal)})',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HousepitalColors.orange,
                   foregroundColor: Colors.white,
@@ -437,52 +463,30 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  void _checkout(BuildContext context, CartProvider cart) {
-    final adjustedTotal = cart.subtotal - _discountAmount + cart.deliveryCharge;
-    final amountInPaise = (adjustedTotal * 100).toInt();
-    final itemNames = cart.items.values
-        .map((ci) => ci.item.name)
-        .take(3)
-        .join(', ');
-    final description = cart.itemCount <= 3
-        ? itemNames
-        : '$itemNames +${cart.itemCount - 3} more';
-
-    if (_paymentService == null) {
-      // Web fallback — Razorpay not available
+  void _checkout(BuildContext context, CartProvider cart, int adjustedTotal) {
+    if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Payments require the mobile app. Use the Housepital app on Android/iOS.'),
+          content: Text(
+              'Payments require the mobile app. Use the Housepital app on Android/iOS.'),
           backgroundColor: HousepitalColors.warning,
         ),
       );
       return;
     }
 
-    _paymentService!.openCheckout(
-      amount: amountInPaise,
-      description: description,
-      onSuccess: () {
-        cart.clear();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful! Your order is confirmed.'),
-            backgroundColor: HousepitalColors.success,
-          ),
-        );
-        Navigator.pop(context);
-      },
-      onFailure: (msg) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment failed: $msg'),
-            backgroundColor: HousepitalColors.error,
-          ),
-        );
-      },
-    );
+    // Build description for payment screen
+    final itemNames =
+        cart.items.map((ci) => ci.name).take(3).join(', ');
+    final description = cart.itemCount <= 3
+        ? itemNames
+        : '$itemNames +${cart.itemCount - 3} more';
+
+    Navigator.pushNamed(context, '/payment', arguments: {
+      'amount': adjustedTotal,
+      'description': description,
+      'invoice_id': null,
+    });
   }
 
   void _confirmClear(BuildContext context, CartProvider cart) {
@@ -512,20 +516,23 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ====================================================================
 //  CART ITEM CARD
-// ═══════════════════════════════════════════════════════════════
+// ====================================================================
 
 class _CartItemCard extends StatelessWidget {
-  final String cartKey;
+  final int index;
   final CartItem cartItem;
 
-  const _CartItemCard({required this.cartKey, required this.cartItem});
+  const _CartItemCard({required this.index, required this.cartItem});
 
   @override
   Widget build(BuildContext context) {
-    final item = cartItem.item;
     final cart = Provider.of<CartProvider>(context, listen: false);
+    final hasDiscount = cartItem.mrp != null && cartItem.mrp! > cartItem.unitPrice;
+    final discountPercent = hasDiscount
+        ? ((1 - cartItem.unitPrice / cartItem.mrp!) * 100).round()
+        : 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -545,11 +552,11 @@ class _CartItemCard extends StatelessWidget {
               color: HousepitalColors.orangeLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: item.imageUrl != null
+            child: cartItem.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: CachedNetworkImage(
-                      imageUrl: item.imageUrl!,
+                      imageUrl: cartItem.imageUrl!,
                       fit: BoxFit.contain,
                       errorWidget: (_, __, ___) => const Icon(
                           Icons.medical_services_outlined,
@@ -565,18 +572,19 @@ class _CartItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name,
+                Text(cartItem.name,
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(item.brand,
+                Text(cartItem.brand,
                     style: const TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight)),
+                        fontSize: 12,
+                        color: HousepitalColors.greyLight)),
                 const SizedBox(height: 4),
                 // Mode badge
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: cartItem.isRental
                         ? HousepitalColors.infoLight
@@ -597,16 +605,43 @@ class _CartItemCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Price + quantity row
+                // Price + discount + quantity row
                 Row(
                   children: [
-                    Text(
-                      DateHelper.formatCurrency(cartItem.lineTotal.toInt()),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: HousepitalColors.orangeText,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          DateHelper.formatCurrency(cartItem.lineTotal),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: HousepitalColors.orangeText,
+                          ),
+                        ),
+                        if (hasDiscount)
+                          Row(
+                            children: [
+                              Text(
+                                DateHelper.formatCurrency(cartItem.mrp!),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: HousepitalColors.greyLight,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$discountPercent% off',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: HousepitalColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
                     const Spacer(),
                     // Quantity controls
@@ -620,11 +655,11 @@ class _CartItemCard extends StatelessWidget {
                         children: [
                           _qtyButton(Icons.remove, () {
                             cart.updateQuantity(
-                                cartKey, cartItem.quantity - 1);
+                                index, cartItem.quantity - 1);
                           }),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12),
                             child: Text('${cartItem.quantity}',
                                 style: const TextStyle(
                                     fontSize: 15,
@@ -632,7 +667,7 @@ class _CartItemCard extends StatelessWidget {
                           ),
                           _qtyButton(Icons.add, () {
                             cart.updateQuantity(
-                                cartKey, cartItem.quantity + 1);
+                                index, cartItem.quantity + 1);
                           }),
                         ],
                       ),
@@ -644,10 +679,11 @@ class _CartItemCard extends StatelessWidget {
           ),
           // Delete button
           GestureDetector(
-            onTap: () => cart.removeItem(cartKey),
+            onTap: () => cart.removeItem(index),
             child: const Padding(
               padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.close, size: 18, color: HousepitalColors.greyLight),
+              child: Icon(Icons.close,
+                  size: 18, color: HousepitalColors.greyLight),
             ),
           ),
         ],
@@ -666,19 +702,18 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ====================================================================
 //  SAVED FOR LATER CARD
-// ═══════════════════════════════════════════════════════════════
+// ====================================================================
 
 class _SavedItemCard extends StatelessWidget {
-  final String savedKey;
+  final int index;
   final CartItem cartItem;
 
-  const _SavedItemCard({required this.savedKey, required this.cartItem});
+  const _SavedItemCard({required this.index, required this.cartItem});
 
   @override
   Widget build(BuildContext context) {
-    final item = cartItem.item;
     final cart = Provider.of<CartProvider>(context, listen: false);
 
     return Container(
@@ -699,11 +734,11 @@ class _SavedItemCard extends StatelessWidget {
               color: HousepitalColors.greyLighter,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: item.imageUrl != null
+            child: cartItem.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: CachedNetworkImage(
-                      imageUrl: item.imageUrl!,
+                      imageUrl: cartItem.imageUrl!,
                       fit: BoxFit.contain,
                       errorWidget: (_, __, ___) => const Icon(
                           Icons.medical_services_outlined,
@@ -719,13 +754,14 @@ class _SavedItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name,
+                Text(cartItem.name,
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(item.brand,
+                Text(cartItem.brand,
                     style: const TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight)),
+                        fontSize: 12,
+                        color: HousepitalColors.greyLight)),
               ],
             ),
           ),
@@ -734,7 +770,7 @@ class _SavedItemCard extends StatelessWidget {
           SizedBox(
             height: 34,
             child: OutlinedButton(
-              onPressed: () => cart.moveToCart(savedKey),
+              onPressed: () => cart.moveToCart(index),
               style: OutlinedButton.styleFrom(
                 foregroundColor: HousepitalColors.orange,
                 side: const BorderSide(color: HousepitalColors.orange),
@@ -750,10 +786,11 @@ class _SavedItemCard extends StatelessWidget {
           const SizedBox(width: 4),
           // Remove
           GestureDetector(
-            onTap: () => cart.removeSaved(savedKey),
+            onTap: () => cart.removeSaved(index),
             child: const Padding(
               padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.close, size: 16, color: HousepitalColors.greyLight),
+              child: Icon(Icons.close,
+                  size: 16, color: HousepitalColors.greyLight),
             ),
           ),
         ],

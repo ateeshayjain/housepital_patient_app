@@ -1389,7 +1389,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   void _saveForLater(BuildContext context) {
     if (_catalogItem == null) return;
     final cart = context.read<CartProvider>();
-    cart.saveForLater(_catalogItem!, isRental: _canRent, rentalMonths: _canRent ? _selectedRentalMonths : 1);
+    cart.saveItemForLater(_catalogItem!, isRental: _canRent, rentalMonths: _canRent ? _selectedRentalMonths : 1);
     setState(() => _showSavedConfirmation = true);
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _showSavedConfirmation = false);

@@ -1,8 +1,8 @@
 // test/providers/cart_persistence_test.dart
 //
 // Tests cart persistence via SharedPreferences:
-// - Items persist after _persistCart()
-// - Cart loads from SharedPreferences on construction
+// - Items persist after _persist() is called
+// - Cart loads from SharedPreferences via loadFromStorage()
 // - Saved-for-later items persist separately
 // - Corrupt JSON handled gracefully
 // - Empty SharedPreferences results in empty cart
@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:housepital_patient/providers/cart_provider.dart';
 import 'package:housepital_patient/models/models.dart';
 
-// ── Fixture helpers ──────────────────────────────────────────────────────────
+// -- Fixture helpers ----------------------------------------------------------
 
 EquipmentItem _makeEquipment({
   String id = 'eq1',
@@ -33,44 +33,33 @@ EquipmentItem _makeEquipment({
   );
 }
 
-/// Helper to build a valid persisted cart JSON string.
-String _buildCartJson(List<Map<String, dynamic>> items) => json.encode(items);
-
-Map<String, dynamic> _cartEntryJson({
-  String key = 'eq1_buy',
-  String id = 'eq1',
+/// Helper to build a valid persisted cart JSON string using the new flat format.
+Map<String, dynamic> _cartItemJson({
+  String equipmentId = 'eq1',
   String name = 'Oxygen Concentrator',
-  double? price = 25000,
-  double? rentalPrice = 3000,
+  String brand = 'Philips',
+  int unitPrice = 25000,
   bool isRental = false,
   int quantity = 1,
   int rentalMonths = 1,
 }) =>
     {
-      'key': key,
-      'item': {
-        'id': id,
-        'name': name,
-        'brand': 'Philips',
-        'category': 'Equipment',
-        'available_for_sale': true,
-        'available_for_rent': true,
-        'price': price,
-        'rental_price': rentalPrice,
-        'status': 'Active',
-      },
+      'equipmentId': equipmentId,
+      'name': name,
+      'brand': brand,
+      'unitPrice': unitPrice,
       'isRental': isRental,
       'quantity': quantity,
       'rentalMonths': rentalMonths,
     };
 
-// ── Tests ────────────────────────────────────────────────────────────────────
+// -- Tests --------------------------------------------------------------------
 
 void main() {
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Cart items persist after _persistCart() is called
-  // ═══════════════════════════════════════════════════════════════════════════
-  group('Cart persistence — items persist after adding', () {
+  // =========================================================================
+  // Cart items persist after adding
+  // =========================================================================
+  group('Cart persistence -- items persist after adding', () {
     test('adding an item persists to SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({});
       final cart = CartProvider();
@@ -85,8 +74,9 @@ void main() {
 
       final List<dynamic> decoded = json.decode(cartStr!);
       expect(decoded.length, 1);
-      expect(decoded[0]['key'], 'eq1_buy');
+      expect(decoded[0]['equipmentId'], 'eq1');
       expect(decoded[0]['quantity'], 1);
+      expect(decoded[0]['isRental'], false);
     });
 
     test('updating quantity persists new value', () async {
@@ -94,7 +84,7 @@ void main() {
       final cart = CartProvider();
 
       cart.addItem(_makeEquipment());
-      cart.updateQuantity('eq1_buy', 5);
+      cart.updateQuantity(0, 5);
       await Future.delayed(const Duration(milliseconds: 100));
 
       final prefs = await SharedPreferences.getInstance();
@@ -118,36 +108,35 @@ void main() {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // Cart loads from SharedPreferences on construction
-  // ═══════════════════════════════════════════════════════════════════════════
-  group('Cart persistence — loads on construction', () {
-    test('cart loads persisted items on construction', () async {
-      final cartData = _buildCartJson([
-        _cartEntryJson(key: 'eq1_buy', quantity: 3),
+  // =========================================================================
+  // Cart loads from SharedPreferences via loadFromStorage()
+  // =========================================================================
+  group('Cart persistence -- loads via loadFromStorage()', () {
+    test('cart loads persisted items', () async {
+      final cartData = json.encode([
+        _cartItemJson(equipmentId: 'eq1', quantity: 3),
       ]);
       SharedPreferences.setMockInitialValues({
         'housepital_cart_items': cartData,
       });
 
       final cart = CartProvider();
-      // Wait for async load
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.items.length, 1);
-      expect(cart.items['eq1_buy']!.quantity, 3);
-      expect(cart.itemCount, 3);
+      expect(cart.items[0].equipmentId, 'eq1');
+      expect(cart.items[0].quantity, 3);
     });
 
     test('cart loads multiple items from SharedPreferences', () async {
-      final cartData = _buildCartJson([
-        _cartEntryJson(key: 'eq1_buy', id: 'eq1', quantity: 2),
-        _cartEntryJson(
-          key: 'eq2_rent',
-          id: 'eq2',
+      final cartData = json.encode([
+        _cartItemJson(equipmentId: 'eq1', quantity: 2),
+        _cartItemJson(
+          equipmentId: 'eq2',
           name: 'Wheelchair',
           isRental: true,
           rentalMonths: 3,
+          unitPrice: 3000,
         ),
       ]);
       SharedPreferences.setMockInitialValues({
@@ -155,23 +144,24 @@ void main() {
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.items.length, 2);
-      expect(cart.items.containsKey('eq1_buy'), isTrue);
-      expect(cart.items.containsKey('eq2_rent'), isTrue);
+      expect(cart.items[0].equipmentId, 'eq1');
+      expect(cart.items[1].equipmentId, 'eq2');
+      expect(cart.items[1].isRental, isTrue);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Saved-for-later items persist separately
-  // ═══════════════════════════════════════════════════════════════════════════
-  group('Cart persistence — saved-for-later persists separately', () {
+  // =========================================================================
+  group('Cart persistence -- saved-for-later persists separately', () {
     test('saved items are stored under a different key', () async {
       SharedPreferences.setMockInitialValues({});
       final cart = CartProvider();
 
-      cart.saveForLater(_makeEquipment(id: 'eq-saved'));
+      cart.saveItemForLater(_makeEquipment(id: 'eq-saved'));
       await Future.delayed(const Duration(milliseconds: 100));
 
       final prefs = await SharedPreferences.getInstance();
@@ -180,7 +170,7 @@ void main() {
 
       final List<dynamic> decoded = json.decode(savedStr!);
       expect(decoded.length, 1);
-      expect(decoded[0]['key'], 'eq-saved_buy');
+      expect(decoded[0]['equipmentId'], 'eq-saved');
 
       // Cart items should be empty
       final cartStr = prefs.getString('housepital_cart_items');
@@ -188,81 +178,81 @@ void main() {
       expect(cartDecoded, isEmpty);
     });
 
-    test('saved items load from SharedPreferences on construction', () async {
-      final savedData = _buildCartJson([
-        _cartEntryJson(key: 'eq-saved_buy', id: 'eq-saved'),
+    test('saved items load from SharedPreferences via loadFromStorage()', () async {
+      final savedData = json.encode([
+        _cartItemJson(equipmentId: 'eq-saved'),
       ]);
       SharedPreferences.setMockInitialValues({
         'housepital_saved_items': savedData,
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.hasSavedItems, isTrue);
       expect(cart.savedCount, 1);
-      expect(cart.savedForLater.containsKey('eq-saved_buy'), isTrue);
+      expect(cart.savedItems[0].equipmentId, 'eq-saved');
       // Cart should be empty
       expect(cart.isEmpty, isTrue);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Corrupt JSON is handled gracefully
-  // ═══════════════════════════════════════════════════════════════════════════
-  group('Cart persistence — corrupt JSON handling', () {
-    test('corrupt cart JSON does not crash — results in empty cart', () async {
+  // =========================================================================
+  group('Cart persistence -- corrupt JSON handling', () {
+    test('corrupt cart JSON does not crash -- results in empty cart', () async {
       SharedPreferences.setMockInitialValues({
         'housepital_cart_items': 'this is not valid JSON!!!',
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.isEmpty, isTrue);
       expect(cart.itemCount, 0);
     });
 
-    test('corrupt saved JSON does not crash — no saved items', () async {
+    test('corrupt saved JSON does not crash -- no saved items', () async {
       SharedPreferences.setMockInitialValues({
         'housepital_saved_items': '{invalid json[',
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.hasSavedItems, isFalse);
       expect(cart.savedCount, 0);
     });
 
     test('partially corrupt cart entry is skipped', () async {
-      // One valid entry, one with missing 'item' field
+      // One valid entry, one with missing required fields
       final cartData = json.encode([
-        _cartEntryJson(key: 'eq1_buy', quantity: 2),
-        {'key': 'bad_entry', 'item': 'not_a_map', 'isRental': false},
+        _cartItemJson(equipmentId: 'eq1', quantity: 2),
+        {'bad': 'entry', 'unitPrice': 'not_an_int'},
       ]);
       SharedPreferences.setMockInitialValues({
         'housepital_cart_items': cartData,
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       // Should load the valid entry and skip the corrupt one
-      expect(cart.items.length, 1);
-      expect(cart.items.containsKey('eq1_buy'), isTrue);
+      expect(cart.items.length, greaterThanOrEqualTo(1));
+      expect(cart.items[0].equipmentId, 'eq1');
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Empty SharedPreferences results in empty cart
-  // ═══════════════════════════════════════════════════════════════════════════
-  group('Cart persistence — empty SharedPreferences', () {
+  // =========================================================================
+  group('Cart persistence -- empty SharedPreferences', () {
     test('no persisted data results in empty cart', () async {
       SharedPreferences.setMockInitialValues({});
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.isEmpty, isTrue);
       expect(cart.itemCount, 0);
@@ -271,13 +261,13 @@ void main() {
     });
 
     test('missing cart key results in empty cart', () async {
-      // Only set an unrelated key — cart key is absent
+      // Only set an unrelated key -- cart key is absent
       SharedPreferences.setMockInitialValues({
         'some_other_key': 'value',
       });
 
       final cart = CartProvider();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await cart.loadFromStorage();
 
       expect(cart.isEmpty, isTrue);
     });

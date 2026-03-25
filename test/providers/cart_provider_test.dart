@@ -4,13 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:housepital_patient/providers/cart_provider.dart';
 import 'package:housepital_patient/models/models.dart';
 
-// ── Fixture helpers ──────────────────────────────────────────────────────────
+// -- Fixture helpers ----------------------------------------------------------
 
 EquipmentItem _makeEquipment({
   String id = 'eq1',
   String name = 'Oxygen Concentrator',
   double? price = 25000,
   double? rentalPrice = 3000,
+  double? mrp,
 }) {
   return EquipmentItem(
     id: id,
@@ -21,10 +22,11 @@ EquipmentItem _makeEquipment({
     availableForRent: true,
     price: price,
     rentalPrice: rentalPrice,
+    mrp: mrp,
   );
 }
 
-// ── Tests ────────────────────────────────────────────────────────────────────
+// -- Tests --------------------------------------------------------------------
 
 void main() {
   late CartProvider cart;
@@ -33,9 +35,9 @@ void main() {
     cart = CartProvider();
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Initial state
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('Initial state', () {
     test('cart starts empty', () {
       expect(cart.isEmpty, isTrue);
@@ -50,9 +52,9 @@ void main() {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // addItem
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('addItem', () {
     test('adds item to cart (purchase mode)', () {
       cart.addItem(_makeEquipment());
@@ -69,7 +71,7 @@ void main() {
       final eq = _makeEquipment();
       cart.addItem(eq);
       cart.addItem(eq);
-      expect(cart.itemCount, 2); // quantity = 2
+      expect(cart.items[0].quantity, 2);
       expect(cart.items.length, 1); // only 1 unique entry
     });
 
@@ -82,7 +84,9 @@ void main() {
 
     test('addItem removes from saved list if present', () {
       final eq = _makeEquipment();
-      cart.saveForLater(eq);
+      // Manually add to cart then save, to get it into saved list
+      cart.addItem(eq);
+      cart.saveForLater(0);
       expect(cart.hasSavedItems, isTrue);
 
       cart.addItem(eq);
@@ -98,102 +102,94 @@ void main() {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // removeItem
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('removeItem', () {
-    test('removes item by cartKey', () {
+    test('removes item by index', () {
       cart.addItem(_makeEquipment());
       expect(cart.itemCount, 1);
 
-      cart.removeItem('eq1_buy');
+      cart.removeItem(0);
       expect(cart.itemCount, 0);
       expect(cart.isEmpty, isTrue);
     });
 
-    test('removing non-existent key is no-op', () {
+    test('removing out-of-bounds index is no-op', () {
       cart.addItem(_makeEquipment());
-      cart.removeItem('nonexistent_buy');
+      cart.removeItem(5);
       expect(cart.itemCount, 1);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // updateQuantity
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('updateQuantity', () {
     test('updates quantity for existing item', () {
       cart.addItem(_makeEquipment());
-      cart.updateQuantity('eq1_buy', 5);
-      expect(cart.itemCount, 5);
+      cart.updateQuantity(0, 5);
+      expect(cart.items[0].quantity, 5);
     });
 
     test('setting quantity to 0 removes item', () {
       cart.addItem(_makeEquipment());
-      cart.updateQuantity('eq1_buy', 0);
+      cart.updateQuantity(0, 0);
       expect(cart.isEmpty, isTrue);
     });
 
     test('negative quantity removes item', () {
       cart.addItem(_makeEquipment());
-      cart.updateQuantity('eq1_buy', -1);
+      cart.updateQuantity(0, -1);
       expect(cart.isEmpty, isTrue);
     });
 
-    test('no-op for non-existent cartKey', () {
-      cart.updateQuantity('nonexistent_buy', 10);
+    test('no-op for out-of-bounds index', () {
+      cart.updateQuantity(10, 10);
       expect(cart.isEmpty, isTrue);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // saveForLater / moveToCart / moveToSaved
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
+  // saveForLater / moveToCart
+  // =========================================================================
   group('Save for Later operations', () {
     test('saveForLater adds to saved list and removes from cart', () {
-      final eq = _makeEquipment();
-      cart.addItem(eq);
+      cart.addItem(_makeEquipment());
       expect(cart.itemCount, 1);
 
-      cart.saveForLater(eq);
+      cart.saveForLater(0);
       expect(cart.isEmpty, isTrue);
       expect(cart.hasSavedItems, isTrue);
       expect(cart.savedCount, 1);
     });
 
     test('moveToCart moves saved item into cart', () {
-      final eq = _makeEquipment();
-      cart.saveForLater(eq);
+      cart.addItem(_makeEquipment());
+      cart.saveForLater(0);
       expect(cart.savedCount, 1);
 
-      cart.moveToCart('eq1_buy');
+      cart.moveToCart(0);
       expect(cart.itemCount, 1);
       expect(cart.savedCount, 0);
     });
 
-    test('moveToSaved moves cart item to saved list', () {
-      cart.addItem(_makeEquipment());
-      cart.moveToSaved('eq1_buy');
-      expect(cart.isEmpty, isTrue);
-      expect(cart.savedCount, 1);
-    });
-
-    test('moveToCart with non-existent key is no-op', () {
-      cart.moveToCart('nonexistent_buy');
+    test('moveToCart with out-of-bounds index is no-op', () {
+      cart.moveToCart(5);
       expect(cart.isEmpty, isTrue);
       expect(cart.savedCount, 0);
     });
 
-    test('moveToSaved with non-existent key is no-op', () {
-      cart.moveToSaved('nonexistent_buy');
+    test('saveForLater with out-of-bounds index is no-op', () {
+      cart.saveForLater(5);
       expect(cart.isEmpty, isTrue);
       expect(cart.savedCount, 0);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // isInCart / isSaved helpers
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('isInCart / isSaved helpers', () {
     test('isInCart returns true when item is in cart', () {
       cart.addItem(_makeEquipment(id: 'bp-monitor'));
@@ -202,53 +198,54 @@ void main() {
     });
 
     test('isSaved returns true when item is saved for later', () {
-      cart.saveForLater(_makeEquipment(id: 'bp-monitor'));
+      cart.addItem(_makeEquipment(id: 'bp-monitor'));
+      cart.saveForLater(0);
       expect(cart.isSaved('bp-monitor'), isTrue);
       expect(cart.isSaved('other-item'), isFalse);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Subtotal calculation
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('Subtotal calculation', () {
     test('purchase: subtotal = price * quantity', () {
       cart.addItem(_makeEquipment(price: 5000));
       expect(cart.subtotal, 5000);
 
-      cart.updateQuantity('eq1_buy', 3);
+      cart.updateQuantity(0, 3);
       expect(cart.subtotal, 15000);
     });
 
     test('rental: subtotal = rentalPrice * months * quantity', () {
       cart.addItem(_makeEquipment(rentalPrice: 2000), isRental: true, rentalMonths: 3);
-      // 2000 * 1 * 3 = 6000
+      // 2000 * 3 * 1 = 6000
       expect(cart.subtotal, 6000);
     });
 
     test('mixed cart: purchase + rental', () {
       cart.addItem(_makeEquipment(id: 'eq1', price: 5000), isRental: false);
       cart.addItem(_makeEquipment(id: 'eq2', rentalPrice: 2000), isRental: true, rentalMonths: 2);
-      // 5000 + (2000 * 1 * 2) = 9000
+      // 5000 + (2000 * 2 * 1) = 9000
       expect(cart.subtotal, 9000);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Delivery charge
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('Delivery charge', () {
-    test('₹49 delivery when subtotal < ₹999', () {
+    test('49 delivery when subtotal < 999', () {
       cart.addItem(_makeEquipment(price: 500));
       expect(cart.deliveryCharge, 49);
     });
 
-    test('free delivery when subtotal >= ₹999', () {
+    test('free delivery when subtotal >= 999', () {
       cart.addItem(_makeEquipment(price: 999));
       expect(cart.deliveryCharge, 0);
     });
 
-    test('free delivery when subtotal = ₹1000', () {
+    test('free delivery when subtotal = 1000', () {
       cart.addItem(_makeEquipment(price: 1000));
       expect(cart.deliveryCharge, 0);
     });
@@ -259,9 +256,9 @@ void main() {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // Total = subtotal + delivery
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('Total calculation', () {
     test('total = subtotal + delivery charge (small order)', () {
       cart.addItem(_makeEquipment(price: 500));
@@ -279,9 +276,9 @@ void main() {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   // clear
-  // ═══════════════════════════════════════════════════════════════════════════
+  // =========================================================================
   group('clear', () {
     test('clear empties the cart', () {
       cart.addItem(_makeEquipment());
@@ -295,10 +292,65 @@ void main() {
 
     test('clear does not affect saved items', () {
       cart.addItem(_makeEquipment(id: 'eq1'));
-      cart.saveForLater(_makeEquipment(id: 'eq2'));
+      cart.addItem(_makeEquipment(id: 'eq2'));
+      cart.saveForLater(1); // save eq2
       cart.clear();
       expect(cart.isEmpty, isTrue);
       expect(cart.savedCount, 1);
+    });
+  });
+
+  // =========================================================================
+  // CartItem model
+  // =========================================================================
+  group('CartItem model', () {
+    test('lineTotal for purchase = unitPrice * quantity', () {
+      const item = CartItem(
+        equipmentId: 'eq1', name: 'Test', brand: 'Brand',
+        unitPrice: 500, quantity: 3,
+      );
+      expect(item.lineTotal, 1500);
+    });
+
+    test('lineTotal for rental = unitPrice * rentalMonths * quantity', () {
+      const item = CartItem(
+        equipmentId: 'eq1', name: 'Test', brand: 'Brand',
+        unitPrice: 2000, isRental: true, rentalMonths: 3, quantity: 2,
+      );
+      expect(item.lineTotal, 12000);
+    });
+
+    test('copyWith preserves fields', () {
+      const item = CartItem(
+        equipmentId: 'eq1', name: 'Test', brand: 'Brand',
+        unitPrice: 500, isRental: true, rentalMonths: 2, quantity: 1,
+      );
+      final updated = item.copyWith(quantity: 5, rentalMonths: 6);
+      expect(updated.quantity, 5);
+      expect(updated.rentalMonths, 6);
+      expect(updated.equipmentId, 'eq1');
+      expect(updated.unitPrice, 500);
+    });
+
+    test('toJson/fromJson round-trip', () {
+      const item = CartItem(
+        equipmentId: 'eq1', name: 'Oxygen Concentrator', brand: 'Philips',
+        imageUrl: 'https://example.com/img.jpg',
+        unitPrice: 3000, mrp: 5000,
+        isRental: true, rentalMonths: 3, quantity: 2,
+      );
+      final json = item.toJson();
+      final restored = CartItem.fromJson(json);
+      expect(restored.equipmentId, item.equipmentId);
+      expect(restored.name, item.name);
+      expect(restored.brand, item.brand);
+      expect(restored.imageUrl, item.imageUrl);
+      expect(restored.unitPrice, item.unitPrice);
+      expect(restored.mrp, item.mrp);
+      expect(restored.isRental, item.isRental);
+      expect(restored.rentalMonths, item.rentalMonths);
+      expect(restored.quantity, item.quantity);
+      expect(restored.lineTotal, item.lineTotal);
     });
   });
 }

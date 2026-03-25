@@ -90,7 +90,11 @@ void main() async {
           create: (_) => AppProvider(apiService),
         ),
         ChangeNotifierProvider(
-          create: (_) => CartProvider(),
+          create: (_) {
+            final cartProvider = CartProvider();
+            cartProvider.loadFromStorage(); // fire and forget — loads async
+            return cartProvider;
+          },
         ),
         ChangeNotifierProvider(
           create: (_) => MyCareProvider(apiService),
