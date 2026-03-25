@@ -1,7 +1,6 @@
 {
   "app_name": "Housepital",
   "tagline": "Hospital-like expertise. Home-like care.",
-
   "login_title": "Welcome to Housepital",
   "login_subtitle": "Enter your phone number to get started",
   "phone_label": "Phone Number",
@@ -13,7 +12,6 @@
   "otp_subtitle": "We've sent a 6-digit code to",
   "resend_otp": "Resend OTP",
   "resend_in": "Resend in {seconds}s",
-
   "onboarding_title": "Set Up Your Profile",
   "name_label": "Full Name",
   "relationship_label": "Relationship to Patient",
@@ -21,16 +19,13 @@
   "enable_notifications": "Enable Push Notifications",
   "notifications_benefit": "Get instant alerts when caretaker checks in",
   "complete_setup": "Complete Setup",
-
   "tab_home": "Home",
   "tab_reports": "Reports",
   "tab_services": "Services",
   "tab_billing": "Billing",
   "tab_more": "More",
-
   "dashboard_care": "{name}'s Care",
   "switch_patient": "Switch Patient",
-
   "attendance_checked_in": "Checked in at {time}",
   "attendance_waiting": "Waiting for check-in",
   "attendance_late": "Checked in late at {time}",
@@ -39,7 +34,6 @@
   "attendance_checked_out": "Shift ended at {time}",
   "day_count": "Day {current} of {total}",
   "view_profile": "View Profile",
-
   "todays_vitals": "Today's Vitals",
   "see_all": "See All",
   "bp": "BP",
@@ -54,7 +48,6 @@
   "normal": "Normal",
   "borderline": "Borderline",
   "alert": "Alert",
-
   "todays_report": "Today's Report",
   "details": "Details",
   "completion": "Completion: {percent}% ({done} of {total} done)",
@@ -68,7 +61,6 @@
   "staff_notes": "Staff Notes",
   "photos": "Photos",
   "view_all": "View All",
-
   "book_services": "Book Services",
   "nursing_visit": "Nursing Visit",
   "physio": "Physio",
@@ -79,7 +71,6 @@
   "request_assessment": "Request Assessment",
   "starting_from": "Starting {price}/visit",
   "available_tomorrow": "Available tomorrow",
-
   "payment_due": "Payment Due: {amount} by {date}",
   "pay_now": "Pay Now",
   "billing_title": "Billing",
@@ -89,21 +80,18 @@
   "download_invoice": "Download Invoice PDF",
   "payment_history": "Payment History",
   "upcoming_payments": "Upcoming Payments",
-
   "sos": "SOS",
   "sos_title": "Emergency",
   "sos_medical": "Medical Emergency — Call Ambulance",
   "sos_staff": "Staff Emergency",
   "sos_112": "Call Emergency Services (112)",
-
-  "raise_concern": "Raise a Concern",
+  "raise_concern": "Raise Concern",
   "concern_category": "What's the concern about?",
   "concern_description": "Describe the issue",
   "concern_urgency": "How urgent?",
   "concern_resolution": "Preferred resolution",
   "submit_concern": "Submit Concern",
   "concern_submitted": "Your concern has been received",
-
   "staff_profile": "Staff Profile",
   "id_verified": "ID Verified",
   "training_complete": "Training Complete",
@@ -111,10 +99,8 @@
   "experience": "Experience",
   "rating": "Rating",
   "assigned_since": "Assigned Since",
-
   "notifications_title": "Notifications",
   "mark_all_read": "Mark all as read",
-
   "settings_title": "Settings",
   "profile": "Profile",
   "patient_profile": "Patient Profile",
@@ -125,7 +111,6 @@
   "about": "About",
   "logout": "Logout",
   "version": "Version",
-
   "rate_care": "Rate Today's Care",
   "share_with_doctor": "Share with Doctor",
   "cancel": "Cancel",
@@ -137,7 +122,6 @@
   "retry": "Retry",
   "no_data": "No data available",
   "search": "Search",
-
   "tab_my_care": "My Care",
   "active_services": "Active Services",
   "todays_staff": "Today's Staff",
@@ -145,7 +129,6 @@
   "staff_pending_checkin": "Some staff haven't checked in yet",
   "billing_summary": "Billing Summary",
   "view_invoices": "View Invoices & Payment History",
-  "raise_concern": "Raise Concern",
   "staff_service_billing": "Staff, service, billing",
   "daily_reports": "Daily Reports",
   "view_all_reports": "View all reports",
@@ -180,7 +163,6 @@
   "equipment_deployed": "Equipment Deployed",
   "tasks_completed": "{done}/{total} tasks, {percent}% complete",
   "view_my_care": "View My Care",
-
   "my_orders": "My Orders",
   "video_consultation": "Video Consultation",
   "chat": "Chat",
@@ -192,33 +174,28 @@
   "staff_replacement": "Staff Replacement",
   "referrals": "Refer & Earn",
   "notification_preferences": "Notification Preferences",
-
   "rate": "Rate",
   "re_book": "Re-book",
   "accept": "Accept",
   "decline": "Decline",
   "track": "Track",
   "share": "Share",
-
   "status_submitted": "Submitted",
   "status_under_review": "Under Review",
   "status_quote_sent": "Quote Sent",
   "status_confirmed": "Confirmed",
   "status_dispatched": "Dispatched",
   "status_delivered": "Delivered",
-
   "no_data_available": "No data available",
   "unable_to_connect": "Unable to connect",
   "try_again": "Try again",
   "last_updated": "Last updated: {time}",
-
   "write_review": "Write a Review",
   "customer_reviews": "Customer Reviews",
   "reviews": "{count} reviews",
   "submit_review": "Submit Review",
   "share_experience": "Share your experience...",
   "thank_you_review": "Thank you for your review!",
-
   "rental_summary": "Rental Summary",
   "monthly_rate": "Monthly Rate",
   "duration": "Duration",
@@ -230,34 +207,29 @@
   "monthly_billing": "Monthly Billing",
   "damage_policy": "Damage Policy",
   "return_policy": "Return Policy",
-
   "reason_for_return": "Reason for Return",
   "pickup_date": "Preferred Pickup Date",
   "time_slot": "Preferred Time Slot",
   "equipment_condition": "Equipment Condition",
   "schedule_return_pickup": "Schedule Return Pickup",
   "return_scheduled": "Return Scheduled",
-
   "select_emi_plan": "Select EMI Plan",
   "emi_schedule": "EMI Schedule",
   "no_cost_emi": "No-cost EMI - Zero processing fee",
   "processing_fee_free": "Processing Fee: FREE",
   "total_amount": "Total Amount",
-
   "request_replacement": "Request Replacement",
   "reason_for_replacement": "Reason for Replacement",
   "preferred_gender": "Preferred Replacement Gender",
   "additional_requirements": "Additional Requirements",
   "replacement_submitted": "We'll assign a new professional within 24 hours",
-
   "referral_code": "Your Referral Code",
-  "refer_earn_desc": "Share your code and earn \u20B9500 when they complete their first booking!",
+  "refer_earn_desc": "Share your code and earn ₹500 when they complete their first booking!",
   "copy_code": "Copy Code",
   "total_referred": "Total Referred",
   "successful": "Successful",
   "earnings": "Earnings",
   "how_it_works": "How it Works",
-
   "no_longer_needed": "No longer needed",
   "upgrading": "Upgrading",
   "moving": "Moving",
@@ -275,5 +247,28 @@
   "damaged": "Damaged",
   "male": "Male",
   "female": "Female",
-  "no_preference": "No preference"
+  "no_preference": "No preference",
+  "payment": "Payment",
+  "payment_method": "Payment Method",
+  "amount_to_pay": "Amount to Pay",
+  "credit_debit_card": "Credit / Debit Card",
+  "net_banking": "Net Banking",
+  "wallet": "Wallet",
+  "coupon_code": "Coupon Code",
+  "enter_coupon_code": "Enter coupon code",
+  "apply": "Apply",
+  "pay": "Pay",
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "total": "Total",
+  "you_save": "You save",
+  "price_breakdown": "Price Breakdown",
+  "payment_successful": "Payment Successful!",
+  "transaction_id": "Transaction ID",
+  "view_receipt": "View Receipt",
+  "opening_receipt": "Opening receipt...",
+  "add_to_cart": "Add to Cart",
+  "added_to_cart": "Added to Cart",
+  "go_to_cart": "Go to Cart",
+  "on_request": "On request"
 }

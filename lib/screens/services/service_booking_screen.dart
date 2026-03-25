@@ -2272,7 +2272,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               },
             );
           },
-          child: Text(l.t('pay_now')),
+          child: Text(l.t('add_to_cart')),
         ),
       ),
     ];
