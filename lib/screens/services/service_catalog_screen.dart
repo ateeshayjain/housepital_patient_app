@@ -449,6 +449,40 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(l.t('book_services')),
+        actions: [
+          Consumer<CartProvider>(
+            builder: (ctx, cart, _) {
+              final count = cart.itemCount;
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart_outlined),
+                    onPressed: () => Navigator.pushNamed(ctx, '/cart'),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -1981,12 +2015,17 @@ class _EquipmentItemCard extends StatelessWidget {
       ),
       builder: (_) => _EquipmentDetailSheet(item: item, icon: icon),
     );
-    // Handle result AFTER bottom sheet is fully closed, using parent context
+    // Handle result AFTER bottom sheet is fully closed, using parent context.
+    // Capture navigator & scaffold messenger eagerly — the card's context may
+    // become unmounted by the time the user taps the SnackBar action because
+    // _EquipmentItemCard lives inside a GridView.builder (widgets get recycled).
     if (result != null && context.mounted) {
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
       if (result['action'] == 'added_to_cart') {
         final itemName = result['itemName'] as String;
         final isRental = result['isRental'] == true;
-        ScaffoldMessenger.of(context)
+        messenger
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
@@ -1997,13 +2036,13 @@ class _EquipmentItemCard extends StatelessWidget {
               action: SnackBarAction(
                 label: 'View Cart',
                 textColor: Colors.white,
-                onPressed: () => Navigator.of(context).pushNamed('/cart'),
+                onPressed: () => navigator.pushNamed('/cart'),
               ),
             ),
           );
       } else if (result.containsKey('route')) {
         final route = result['route'] as String;
-        Navigator.of(context).pushNamed(route, arguments: result['args']);
+        navigator.pushNamed(route, arguments: result['args']);
       }
     }
   }
