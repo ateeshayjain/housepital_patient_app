@@ -2022,23 +2022,46 @@ class _EquipmentItemCard extends StatelessWidget {
     if (result != null && context.mounted) {
       final navigator = Navigator.of(context, rootNavigator: true);
       final messenger = ScaffoldMessenger.maybeOf(context);
-      if (result['action'] == 'add_to_cart') {
-        // Add to cart using parent's context (guaranteed to have CartProvider)
+      if (result['action'] == 'rent') {
+        // Rental flow: navigate to rental agreement for confirmation
+        final agreed = await navigator.pushNamed('/rental-agreement', arguments: {
+          'itemName': item.name,
+          'monthlyRate': result['monthlyRate'],
+          'durationMonths': result['rentalMonths'],
+        });
+        if (agreed == true && context.mounted) {
+          final cart = Provider.of<CartProvider>(context, listen: false);
+          cart.addItem(item, isRental: true, rentalMonths: result['rentalMonths'] as int);
+          messenger
+            ?..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text('${item.name} rental added to cart'),
+                backgroundColor: HousepitalColors.success,
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                action: SnackBarAction(
+                  label: 'View Cart',
+                  textColor: Colors.white,
+                  onPressed: () => navigator.pushNamed('/cart'),
+                ),
+              ),
+            );
+        }
+      } else if (result['action'] == 'add_to_cart') {
+        // Buy flow: add to cart directly
         final cart = Provider.of<CartProvider>(context, listen: false);
-        debugPrint('CART DEBUG: Adding ${item.name} to cart. Cart count BEFORE: ${cart.itemCount}');
         cart.addItem(
           item,
-          isRental: result['isRental'] == true,
-          rentalMonths: (result['rentalMonths'] as int?) ?? 1,
+          isRental: false,
+          rentalMonths: 1,
         );
-        debugPrint('CART DEBUG: Cart count AFTER: ${cart.itemCount}. Items: ${cart.items.map((i) => i.name).toList()}');
         final itemName = result['itemName'] as String;
-        final isRental = result['isRental'] == true;
         messenger
           ?..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text('$itemName ${isRental ? "rental " : ""}added to cart'),
+              content: Text('$itemName added to cart'),
               backgroundColor: HousepitalColors.success,
               duration: const Duration(seconds: 3),
               behavior: SnackBarBehavior.floating,
@@ -2625,20 +2648,27 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Both Buy and Rent → add to cart via parent context
-                  Navigator.of(context).pop<Map<String, dynamic>>({
-                    'action': 'add_to_cart',
-                    'itemId': item.id,
-                    'itemName': item.name,
-                    'itemBrand': item.brand,
-                    'itemImageUrl': item.imageUrl,
-                    'unitPrice': _isRental
-                        ? (item.rentalPrice?.toInt() ?? 0)
-                        : (item.price?.toInt() ?? 0),
-                    'mrp': _isRental ? null : item.mrp?.toInt(),
-                    'isRental': _isRental,
-                    'rentalMonths': _isRental ? _rentalMonths : 1,
-                  });
+                  if (_isRental) {
+                    // Rental → pop with 'rent' action; parent navigates to rental agreement
+                    Navigator.of(context).pop<Map<String, dynamic>>({
+                      'action': 'rent',
+                      'monthlyRate': (item.rentalPrice ?? 0).toInt(),
+                      'rentalMonths': _rentalMonths,
+                    });
+                  } else {
+                    // Buy → add to cart directly via parent context
+                    Navigator.of(context).pop<Map<String, dynamic>>({
+                      'action': 'add_to_cart',
+                      'itemId': item.id,
+                      'itemName': item.name,
+                      'itemBrand': item.brand,
+                      'itemImageUrl': item.imageUrl,
+                      'unitPrice': (item.price?.toInt() ?? 0),
+                      'mrp': item.mrp?.toInt(),
+                      'isRental': false,
+                      'rentalMonths': 1,
+                    });
+                  }
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
                 label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),

@@ -105,34 +105,9 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: _agreed
-                    ? () {
-                        // Pop back and let the parent know to add to cart
-                        Navigator.pop(context, {
-                          'action': 'add_to_cart',
-                          'itemName': widget.itemName,
-                          'monthlyRate': widget.monthlyRate,
-                          'durationMonths': widget.durationMonths,
-                          'deposit': _deposit,
-                          'firstPayment': _firstPayment,
-                        });
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              content: Text('${widget.itemName} rental added to cart'),
-                              backgroundColor: HousepitalColors.success,
-                              action: SnackBarAction(
-                                label: 'View Cart',
-                                textColor: HousepitalColors.white,
-                                onPressed: () => Navigator.pushNamed(context, '/cart'),
-                              ),
-                            ),
-                          );
-                      }
-                    : null,
+                onPressed: _agreed ? () => Navigator.pop(context, true) : null,
                 icon: const Icon(Icons.shopping_cart_outlined),
-                label: const Text('Add to Cart',
+                label: const Text('Confirm & Add to Cart',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HousepitalColors.orange,

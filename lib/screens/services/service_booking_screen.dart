@@ -2300,7 +2300,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             );
             Navigator.pop(context);
           },
-          child: Text(l.t('add_to_cart')),
+          child: const Text('Confirm & Add to Cart'),
         ),
       ),
     ];
