@@ -2298,8 +2298,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   content: const Text('Service added to cart'),
                   backgroundColor: HousepitalColors.success,
                   duration: const Duration(seconds: 2),
-                  behavior: SnackBarBehavior.floating,
-                  margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+                  dismissDirection: DismissDirection.horizontal,
                   action: SnackBarAction(
                     label: 'View Cart',
                     textColor: Colors.white,
