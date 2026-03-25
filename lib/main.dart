@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 
 import 'config/firebase_options.dart';
@@ -17,7 +16,6 @@ import 'services/firebase_service.dart';
 import 'utils/app_localizations.dart';
 
 import 'screens/main_shell.dart';
-import 'screens/auth/login_screen.dart';
 import 'screens/auth/otp_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
 import 'screens/reports/daily_report_screen.dart';

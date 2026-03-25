@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../config/theme.dart';
 import '../utils/app_localizations.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';

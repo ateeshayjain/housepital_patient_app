@@ -9,7 +9,6 @@ import '../../widgets/common_widgets.dart';
 import 'widgets/vitals_trend_grid.dart';
 import 'widgets/care_report_section.dart';
 import 'widgets/equipment_deployed_section.dart';
-import 'staff_otp_verification_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final ActiveService service;

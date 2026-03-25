@@ -1,6 +1,6 @@
 # Feature Tracker -- Housepital Patient App
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-03-25
 
 Legend: Done = feature is shipped and working | In Progress = partially built | Not Started = not yet coded
 
@@ -88,6 +88,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 13| Booking Confirmation Screen         | BookingConfirmationScreen| --                   | Done           | Animated confirmation with booking ID, share, next steps |
 | 14| Booking History                     | BookingHistoryScreen     | GET /patients/:id/bookings | Done     | Filter by status, cancel, rate, re-book      |
 | 15| Address Selection (checkout)        | AddressSelectionScreen   | SharedPreferences    | Done           | Saved addresses, pincode validation, add/edit/delete |
+| 16| My Orders                          | MyOrdersScreen           | OrdersProvider       | Done           | Done -- reads from OrdersProvider                    |
 
 ---
 
@@ -95,11 +96,11 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend               | Backend                          | Status         | Notes                                    |
 |---|-------------------------------------|------------------------|----------------------------------|----------------|------------------------------------------|
-| 1 | Billing Dashboard                   | BillingScreen          | /patients/:id/billing/summary    | Done           | Outstanding, paid, overdue amounts       |
+| 1 | Billing Dashboard                   | BillingScreen          | /patients/:id/billing/summary    | Done           | Done -- reads from OrdersProvider        |
 | 2 | Invoice List                        | BillingScreen          | /patients/:id/invoices           | Done           | Paginated invoices                       |
 | 3 | Invoice Detail                      | InvoiceDetailScreen    | /invoices/:id                    | Done           | Line items, amounts, status              |
 | 4 | Transaction Log                     | TransactionLogScreen   | /patients/:id/transactions       | Done           | Payment history with status badges       |
-| 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Real Razorpay integration (Random() stub replaced) |
+| 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Done -- web simulation mode              |
 | 6 | Payment Webhook Handler             | --                     | /payments/webhook                | Done           | payment.captured, payment.failed, refund |
 | 7 | Invoice PDF Download                | InvoiceDetailScreen    | --                               | Not Started    | Button exists, shows "Coming soon"       |
 | 8 | Payment Methods Management          | PaymentMethodsScreen   | --                               | Not Started    | Placeholder screen                       |

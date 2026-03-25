@@ -151,7 +151,9 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
             await rootBundle.loadString('assets/equipment_catalog.json');
         final List<dynamic> list = json.decode(jsonStr);
         _equipment = list.map((e) => EquipmentItem.fromJson(e)).toList();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('UniversalSearchScreen: failed to load equipment catalog: $e');
+      }
     }
     if (mounted) setState(() => _loaded = true);
   }

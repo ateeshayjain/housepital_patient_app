@@ -2,7 +2,7 @@
 
 Running list of bugs, workarounds, technical debt, and things that work but are not right.
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-03-25
 
 ---
 
@@ -113,6 +113,10 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 | BUG-26 | Razorpay crashes on web platform                                       | 2026-03-23 | 2026-03-24 | Guarded with kIsWeb check                       |
 | BUG-27 | Cart shows empty after adding items (grey screen / deserialization)    | 2026-03-22 | 2026-03-25 | Cart rewrite: flat CartItem model replaces nested EquipmentItem serialization |
 | BUG-28 | Cart grey screen on reopen after app restart                           | 2026-03-23 | 2026-03-25 | Cart rewrite: List<CartItem> with SharedPreferences persistence via flat JSON |
+| BUG-29 | Orders not persisting across app restarts                              | 2026-03-24 | 2026-03-25 | OrdersProvider with SharedPreferences persistence for orders and assessments |
+| BUG-30 | Billing screen used mock/hardcoded data                                | 2026-03-24 | 2026-03-25 | BillingScreen rewritten to read from OrdersProvider with real order data |
+| BUG-31 | Payment crashes on web platform (Razorpay SDK unavailable)             | 2026-03-24 | 2026-03-25 | Web simulation mode added to PaymentService with kIsWeb guard |
+| BUG-32 | Missing i18n keys causing fallback to raw key strings                  | 2026-03-24 | 2026-03-25 | Added missing translation keys for billing, orders, and payment screens |
 
 ---
 

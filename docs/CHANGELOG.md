@@ -4,6 +4,52 @@
 
 ---
 
+## [2026-03-25 (Session 6)] -- OrdersProvider, Billing Rewrite, i18n Fixes, Payment Web Sim
+
+### OrdersProvider
+- **New provider:** `OrdersProvider` manages orders and assessments with SharedPreferences persistence
+- **addOrder:** Creates orders with booking number, items, total, status 'confirmed', newest-first ordering
+- **addAssessment:** Creates assessment requests with serviceId, serviceName, status 'submitted'
+- **cancelOrder / updateOrderStatus:** Status management with cancellation reason tracking
+- **generateBookingNumber:** Produces HPL-BOOK-XXXXX format (5-digit random suffix)
+
+### Billing Rewrite
+- **BillingScreen rewritten:** Now reads from OrdersProvider instead of mock/hardcoded data
+- **Billing calculations:** totalOutstanding (confirmed + in_progress), totalPaid (completed), overdueCount (confirmed > 7 days)
+- **Spend summary:** Groups spend by service vs equipment category with percentage breakdown
+
+### i18n Fixes
+- Added missing translation keys for billing, orders, and payment screens
+
+### Payment Web Simulation
+- **PaymentService:** Web simulation mode with kIsWeb guard prevents Razorpay SDK crash on web
+
+### New Test Files (3)
+- `test/providers/orders_provider_test.dart` -- 20 tests for OrdersProvider (addOrder, addAssessment, cancelOrder, updateOrderStatus, generateBookingNumber, empty state)
+- `test/screens/billing/billing_screen_test.dart` -- 23 tests for billing calculation logic (totalOutstanding, totalPaid, overdueCount, spendSummary, zero state)
+- `test/providers/orders_persistence_test.dart` -- 11 tests for SharedPreferences persistence (persist, load, corrupt JSON, round-trip)
+
+### Code Quality Fixes
+- Removed 6 unused imports across lib/ (main.dart, app_provider.dart, billing_provider.dart, main_shell.dart, service_detail_screen.dart, cart_screen.dart)
+- Fixed empty catch block in universal_search_screen.dart (now logs error with debugPrint)
+- No print() statements found in production code (all use debugPrint)
+- All form fields have validators
+
+### Known Issues Resolved
+- BUG-29: Orders not persisting (OrdersProvider with SharedPreferences)
+- BUG-30: Billing mock data (reads from OrdersProvider)
+- BUG-31: Payment web crash (web simulation mode)
+- BUG-32: Missing i18n keys (translation keys added)
+
+### Documentation Updated
+- ARCHITECTURE.md: Added OrdersProvider (6 -> 7 providers)
+- FEATURE_TRACKER.md: Updated billing, My Orders, payment statuses
+- KNOWN_ISSUES.md: Marked 4 issues resolved
+- CHANGELOG.md: Added Session 6 entry
+- TEST_MAP.md: Added 3 new test files
+
+---
+
 ## [2026-03-25 (Session 5)] -- Cart Rewrite, Comprehensive Cart Tests
 
 ### Cart Rewrite

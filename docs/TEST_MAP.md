@@ -1,8 +1,8 @@
 # Test Map -- Housepital Patient App
 
 **Last updated:** 2026-03-25
-**Total test count:** 1036
-**Pass rate:** 1036/1036 (all passing)
+**Total test count:** 1090
+**Pass rate:** 1090/1090 (all passing)
 
 ---
 
@@ -41,6 +41,8 @@
 | `lib/providers/my_care_provider.dart` | `test/providers/my_care_provider_test.dart` | 18 | PASS | YES |
 | `lib/providers/medication_provider.dart` | `test/providers/medication_provider_test.dart` | exists | PASS | YES |
 | `lib/providers/cart_provider.dart` (persistence) | `test/providers/cart_persistence_test.dart` | exists | PASS | YES |
+| `lib/providers/orders_provider.dart` | `test/providers/orders_provider_test.dart` | 20 | PASS | YES |
+| `lib/providers/orders_provider.dart` (persistence) | `test/providers/orders_persistence_test.dart` | 11 | PASS | YES |
 | `lib/providers/auth_provider.dart` | -- | 0 | MISSING | YES |
 | `lib/providers/app_provider.dart` | `test/providers/app_provider_test.dart` | exists | PASS | NO |
 
@@ -67,7 +69,7 @@
 | Referral | `test/screens/settings/referral_test.dart` | exists | PASS | NO |
 | Slot Availability | `test/screens/services/slot_availability_test.dart` | exists | PASS | YES |
 | Home Screen | -- | 0 | MISSING | NO |
-| Billing screens | -- | 0 | MISSING | YES |
+| Billing Screen (logic) | `test/screens/billing/billing_screen_test.dart` | 23 | PASS | YES |
 | Settings screens | -- | 0 | MISSING | NO |
 | About | -- | 0 | MISSING | NO |
 
@@ -140,6 +142,9 @@
 | 42 | `test/models/cart_item_test.dart` | PASS |
 | 43 | `test/screens/cart/cart_screen_test.dart` | PASS |
 | 44 | `test/integration/cart_flow_test.dart` | PASS |
+| 45 | `test/providers/orders_provider_test.dart` | PASS |
+| 46 | `test/providers/orders_persistence_test.dart` | PASS |
+| 47 | `test/screens/billing/billing_screen_test.dart` | PASS |
 
 ---
 
@@ -159,7 +164,7 @@
 |-----|-----------------------|--------------|
 | Firebase service | `test/services/firebase_service_test.dart` | Firestore CRUD, offline queue |
 | Sync service | `test/services/sync_service_test.dart` | Offline queue, reconnect sync |
-| Billing screens | `test/screens/billing/billing_test.dart` | Invoice display, payment methods |
+| ~~Billing screens~~ | ~~`test/screens/billing/billing_test.dart`~~ | ~~Invoice display, payment methods~~ RESOLVED: billing_screen_test.dart added |
 | Video consultation | `test/screens/consultation/video_consultation_test.dart` | Join/leave flow |
 | Chat screen | `test/screens/chat/chat_screen_test.dart` | Send/receive messages |
 

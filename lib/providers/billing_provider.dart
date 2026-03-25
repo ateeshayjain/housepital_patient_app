@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
-import '../models/models.dart';
 
 /// Handles billing-related state, extracted from AppProvider
 /// to maintain Single Responsibility.

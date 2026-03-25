@@ -14,7 +14,7 @@
 | Layer              | Technology                                        |
 |--------------------|---------------------------------------------------|
 | Frontend           | Flutter 3.x / Dart                                |
-| State Management   | Provider (ChangeNotifier) -- 6 providers           |
+| State Management   | Provider (ChangeNotifier) -- 7 providers           |
 | Backend Runtime    | Node.js + Express.js (TypeScript)                  |
 | Hosting            | Firebase Cloud Functions (asia-south1)             |
 | Relational DB      | Cloud SQL for MySQL (asia-south1)                  |
@@ -51,6 +51,7 @@ lib/
  |   +-- cart_provider.dart           # CartProvider -- cart + saved-for-later
  |   +-- my_care_provider.dart        # MyCareProvider -- active services, service detail
  |   +-- medication_provider.dart     # MedicationProvider -- medication CRUD + logs
+ |   +-- orders_provider.dart        # OrdersProvider -- orders + assessments, SharedPreferences persistence
  +-- screens/
  |   +-- main_shell.dart              # Bottom nav bar (5 tabs)
  |   +-- auth/
@@ -247,7 +248,7 @@ Razorpay ----webhook----> /payments/webhook (signature verified)
 
 ## State Management
 
-Six `ChangeNotifierProvider` instances initialized in `main.dart`:
+Seven `ChangeNotifierProvider` instances initialized in `main.dart`:
 
 | Provider              | Scope                          | Key State                                      |
 |-----------------------|--------------------------------|------------------------------------------------|
@@ -257,6 +258,7 @@ Six `ChangeNotifierProvider` instances initialized in `main.dart`:
 | `CartProvider`        | Shopping cart                  | List<CartItem> with index-based ops, SharedPreferences persistence. Flat CartItem model (no nested EquipmentItem). |
 | `MyCareProvider`      | Active services hub            | Active services list, service detail, staff      |
 | `MedicationProvider`  | Medication management          | Medication list, logs, stock, reminders          |
+| `OrdersProvider`      | Orders + assessments           | Order list, assessment list, SharedPreferences persistence |
 
 ### Auth Middleware Stack (Backend)
 
