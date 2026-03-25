@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/orders_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 
@@ -465,18 +466,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _checkout(BuildContext context, CartProvider cart, int adjustedTotal) {
-    if (kIsWeb) {
-      // On web, navigate to booking confirmation with all cart items
-      final items = cart.items.toList();
-      Navigator.pushNamed(context, '/booking-confirmation', arguments: {
-        'cartItems': items,
-        'totalAmount': adjustedTotal,
-      });
-      // Clear cart after checkout
-      cart.clear();
-      return;
-    }
-
     // Build description for payment screen
     final itemNames =
         cart.items.map((ci) => ci.name).take(3).join(', ');
@@ -484,10 +473,33 @@ class _CartScreenState extends State<CartScreen> {
         ? itemNames
         : '$itemNames +${cart.itemCount - 3} more';
 
+    // Always go through payment screen — it handles web/mobile differences
     Navigator.pushNamed(context, '/payment', arguments: {
       'amount': adjustedTotal,
       'description': description,
       'invoice_id': null,
+      'cartItems': cart.items.toList(),
+    }).then((result) {
+      // If payment was successful, save order, clear cart, show confirmation
+      if (result == true) {
+        final items = cart.items.toList();
+        final bookingNumber = OrdersProvider.generateBookingNumber();
+
+        // Persist order to OrdersProvider
+        context.read<OrdersProvider>().addOrder(
+              items: items,
+              totalAmount: adjustedTotal,
+              bookingNumber: bookingNumber,
+            );
+
+        cart.clear();
+        Navigator.pushReplacementNamed(context, '/booking-confirmation',
+            arguments: {
+              'cartItems': items,
+              'totalAmount': adjustedTotal,
+              'bookingNumber': bookingNumber,
+            });
+      }
     });
   }
 

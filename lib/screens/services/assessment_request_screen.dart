@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/orders_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/document_attach_widgets.dart';
 
@@ -1376,6 +1377,17 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
       );
       return;
     }
+
+    // Save assessment to OrdersProvider
+    context.read<OrdersProvider>().addAssessment(
+          serviceId: widget.service.id,
+          serviceName: widget.service.name,
+          formData: {
+            'serviceType': _serviceType.name,
+            'startDate': _startDate?.toIso8601String(),
+            'notes': _notesController.text,
+          },
+        );
 
     showDialog(
       context: context,

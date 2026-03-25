@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/theme.dart';
@@ -25,7 +26,7 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen>
     with TickerProviderStateMixin {
-  String _selectedMethod = 'upi';
+  String _selectedMethod = kIsWeb ? 'web_sim' : 'upi';
   final _couponController = TextEditingController();
   bool _isApplyingCoupon = false;
   Coupon? _appliedCoupon;
@@ -92,7 +93,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     _couponController.dispose();
     _checkAnimController.dispose();
     _fadeAnimController.dispose();
-    _paymentService.dispose();
+    _paymentService?.dispose();
     super.dispose();
   }
 
@@ -139,16 +140,23 @@ class _PaymentScreenState extends State<PaymentScreen>
     });
   }
 
-  late final PaymentService _paymentService;
+  PaymentService? _paymentService;
 
   void _initPaymentService() {
-    _paymentService = PaymentService();
+    if (!kIsWeb) {
+      _paymentService = PaymentService();
+    }
   }
 
   Future<void> _processPayment() async {
+    if (kIsWeb) {
+      _processWebPayment();
+      return;
+    }
+
     setState(() => _isProcessing = true);
 
-    _paymentService.openCheckout(
+    _paymentService!.openCheckout(
       amount: _totalAmount,
       description: widget.description,
       onSuccess: () {
@@ -180,6 +188,27 @@ class _PaymentScreenState extends State<PaymentScreen>
         _checkAnimController.forward();
       },
     );
+  }
+
+  /// Web payment simulation — simulates a successful payment after a brief delay.
+  Future<void> _processWebPayment() async {
+    setState(() => _isProcessing = true);
+
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    final txnId = 'web_pay_${DateTime.now().millisecondsSinceEpoch}';
+    setState(() {
+      _isProcessing = false;
+      _showResult = true;
+      _paymentSuccess = true;
+      _transactionId = txnId;
+      _failureMessage = null;
+    });
+    _fadeAnimController.forward();
+    _checkAnimController.forward();
   }
 
   void _retryPayment() {
@@ -217,13 +246,18 @@ class _PaymentScreenState extends State<PaymentScreen>
                   // Payment methods
                   SectionHeader(title: l.t('payment_method')),
                   const SizedBox(height: 8),
-                  _buildMethodOption('upi', 'UPI', Icons.account_balance, l),
-                  _buildMethodOption(
-                      'card', l.t('credit_debit_card'), Icons.credit_card, l),
-                  _buildMethodOption(
-                      'netbanking', l.t('net_banking'), Icons.language, l),
-                  _buildMethodOption('wallet', l.t('wallet'),
-                      Icons.account_balance_wallet, l),
+                  if (kIsWeb) ...[
+                    _buildMethodOption('web_sim', l.t('payment_simulation'),
+                        Icons.computer, l),
+                  ] else ...[
+                    _buildMethodOption('upi', 'UPI', Icons.account_balance, l),
+                    _buildMethodOption(
+                        'card', l.t('credit_debit_card'), Icons.credit_card, l),
+                    _buildMethodOption(
+                        'netbanking', l.t('net_banking'), Icons.language, l),
+                    _buildMethodOption('wallet', l.t('wallet'),
+                        Icons.account_balance_wallet, l),
+                  ],
                   const SizedBox(height: 24),
 
                   // Coupon code
@@ -410,7 +444,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         child: SizedBox(
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () => Navigator.pop(context, true),
                             child: Text(l.t('done')),
                           ),
                         ),
@@ -431,7 +465,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     width: double.infinity,
                     height: 48,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context, false),
                       child: const Text('Go Back'),
                     ),
                   ),

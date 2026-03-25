@@ -11,6 +11,7 @@ import 'models/models.dart';
 import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
+import 'providers/orders_provider.dart';
 import 'services/api_service.dart';
 import 'services/firebase_service.dart';
 import 'utils/app_localizations.dart';
@@ -95,6 +96,9 @@ void main() async {
             cartProvider.loadFromStorage(); // fire and forget — loads async
             return cartProvider;
           },
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrdersProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => MyCareProvider(apiService),

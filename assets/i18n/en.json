@@ -270,5 +270,7 @@
   "add_to_cart": "Add to Cart",
   "added_to_cart": "Added to Cart",
   "go_to_cart": "Go to Cart",
-  "on_request": "On request"
+  "on_request": "On request",
+  "payment_simulation": "Payment Simulation (Web Testing)",
+  "payment_failed": "Payment Failed"
 }

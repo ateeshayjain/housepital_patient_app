@@ -270,5 +270,7 @@
   "add_to_cart": "कार्ट में जोड़ें",
   "added_to_cart": "कार्ट में जोड़ा गया",
   "go_to_cart": "कार्ट देखें",
-  "on_request": "अनुरोध पर"
+  "on_request": "अनुरोध पर",
+  "payment_simulation": "भुगतान सिमुलेशन (वेब टेस्टिंग)",
+  "payment_failed": "भुगतान विफल"
 }
