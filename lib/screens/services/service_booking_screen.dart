@@ -263,7 +263,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 _stepLine(),
                 _stepDot(1, 'Select Slot'),
                 _stepLine(),
-                _stepDot(2, 'Review & Pay'),
+                _stepDot(2, 'Review'),
               ],
             ),
             const SizedBox(height: 24),
@@ -1570,7 +1570,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   : (_selectedDate != null && _selectedSlot != null
                       ? () => setState(() => _step = 2)
                       : null),
-          child: const Text('Review & Pay'),
+          child: const Text('Next'),
         ),
       ),
     ];

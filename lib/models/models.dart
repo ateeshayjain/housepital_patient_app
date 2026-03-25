@@ -1042,8 +1042,10 @@ class EquipmentItem {
   }
 
   /// Equipment that requires a complementary clinical assessment before ordering.
-  /// Ventilators, BiPAP, and CPAP machines need pressure settings, mask fitting, etc.
+  /// Only applies to BUY flow — rental items go through rental agreement instead.
   bool get needsAssessment {
+    // Rentable items don't need assessment (rental agreement covers terms)
+    if (availableForRent == true) return false;
     final n = name.toLowerCase();
     return n.contains('ventilator') ||
         n.contains('bipap') ||
