@@ -29,6 +29,7 @@ class CartProvider extends ChangeNotifier {
   // ── Cart operations ─────────────────────────────────────────
 
   void addItem(EquipmentItem equipment, {bool isRental = false, int rentalMonths = 1}) {
+    debugPrint('CartProvider.addItem: ${equipment.name}, id=${equipment.id}, isRental=$isRental, price=${equipment.price}, rentalPrice=${equipment.rentalPrice}');
     // Check if already in cart (same equipment + same mode)
     final existingIndex = _items.indexWhere(
       (i) => i.equipmentId == equipment.id && i.isRental == isRental,

@@ -111,6 +111,7 @@ class _CartScreenState extends State<CartScreen> {
       ),
       body: Consumer<CartProvider>(
         builder: (context, cart, _) {
+          debugPrint('CartScreen BUILD: isEmpty=${cart.isEmpty}, itemCount=${cart.itemCount}, items=${cart.items.map((i) => i.name).toList()}');
           if (cart.isEmpty && !cart.hasSavedItems) {
             return _buildEmptyCart(context);
           }

@@ -2020,20 +2020,22 @@ class _EquipmentItemCard extends StatelessWidget {
     // become unmounted by the time the user taps the SnackBar action because
     // _EquipmentItemCard lives inside a GridView.builder (widgets get recycled).
     if (result != null && context.mounted) {
-      final navigator = Navigator.of(context);
-      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context, rootNavigator: true);
+      final messenger = ScaffoldMessenger.maybeOf(context);
       if (result['action'] == 'add_to_cart') {
         // Add to cart using parent's context (guaranteed to have CartProvider)
         final cart = Provider.of<CartProvider>(context, listen: false);
+        debugPrint('CART DEBUG: Adding ${item.name} to cart. Cart count BEFORE: ${cart.itemCount}');
         cart.addItem(
           item,
           isRental: result['isRental'] == true,
           rentalMonths: (result['rentalMonths'] as int?) ?? 1,
         );
+        debugPrint('CART DEBUG: Cart count AFTER: ${cart.itemCount}. Items: ${cart.items.map((i) => i.name).toList()}');
         final itemName = result['itemName'] as String;
         final isRental = result['isRental'] == true;
         messenger
-          ..hideCurrentSnackBar()
+          ?..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
               content: Text('$itemName ${isRental ? "rental " : ""}added to cart'),
@@ -2076,13 +2078,13 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
     final breakeven = item.breakevenDays;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => SingleChildScrollView(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
