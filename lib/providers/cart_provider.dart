@@ -61,6 +61,35 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addService({
+    required String serviceId,
+    required String serviceName,
+    required String category,
+    required int price,
+    DateTime? scheduledDate,
+    String? scheduledSlot,
+    String? address,
+    String? notes,
+    String? doctorType,
+    String? concern,
+  }) {
+    _items.add(CartItem(
+      equipmentId: serviceId,
+      name: serviceName,
+      brand: category,
+      unitPrice: price,
+      isService: true,
+      scheduledDate: scheduledDate,
+      scheduledSlot: scheduledSlot,
+      selectedAddress: address,
+      serviceNotes: notes,
+      doctorType: doctorType,
+      concern: concern,
+    ));
+    _persist();
+    notifyListeners();
+  }
+
   void removeItem(int index) {
     if (index < 0 || index >= _items.length) return;
     _items.removeAt(index);

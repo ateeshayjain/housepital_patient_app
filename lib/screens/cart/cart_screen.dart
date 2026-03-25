@@ -186,7 +186,7 @@ class _CartScreenState extends State<CartScreen> {
           const Text('Your cart is empty',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text('Browse equipment & consumables to add items',
+          const Text('Browse services & equipment to add items',
               style: TextStyle(color: HousepitalColors.greyLight)),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -466,13 +466,14 @@ class _CartScreenState extends State<CartScreen> {
 
   void _checkout(BuildContext context, CartProvider cart, int adjustedTotal) {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Payments require the mobile app. Use the Housepital app on Android/iOS.'),
-          backgroundColor: HousepitalColors.warning,
-        ),
-      );
+      // On web, navigate to booking confirmation with all cart items
+      final items = cart.items.toList();
+      Navigator.pushNamed(context, '/booking-confirmation', arguments: {
+        'cartItems': items,
+        'totalAmount': adjustedTotal,
+      });
+      // Clear cart after checkout
+      cart.clear();
       return;
     }
 
@@ -527,6 +528,20 @@ class _CartItemCard extends StatelessWidget {
 
   const _CartItemCard({required this.index, required this.cartItem});
 
+  String _formatSlotLabel(String? slot) {
+    switch (slot) {
+      case 'morning':
+        return 'Morning (9 AM - 12 PM)';
+      case 'afternoon':
+        return 'Afternoon (12 - 4 PM)';
+      case 'evening':
+        return 'Evening (4 - 7 PM)';
+      default:
+        if (slot != null && slot.contains(':')) return slot; // hour-based slot
+        return slot ?? '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
@@ -545,27 +560,32 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image
+          // Image / Icon
           Container(
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
+              color: cartItem.isService
+                  ? HousepitalColors.infoLight
+                  : HousepitalColors.orangeLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: cartItem.imageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CachedNetworkImage(
-                      imageUrl: cartItem.imageUrl!,
-                      fit: BoxFit.contain,
-                      errorWidget: (_, __, ___) => const Icon(
-                          Icons.medical_services_outlined,
-                          color: HousepitalColors.orange),
-                    ),
-                  )
-                : const Icon(Icons.medical_services_outlined,
-                    color: HousepitalColors.orange, size: 28),
+            child: cartItem.isService
+                ? const Icon(Icons.calendar_today_outlined,
+                    color: HousepitalColors.info, size: 28)
+                : cartItem.imageUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: CachedNetworkImage(
+                          imageUrl: cartItem.imageUrl!,
+                          fit: BoxFit.contain,
+                          errorWidget: (_, __, ___) => const Icon(
+                              Icons.medical_services_outlined,
+                              color: HousepitalColors.orange),
+                        ),
+                      )
+                    : const Icon(Icons.medical_services_outlined,
+                        color: HousepitalColors.orange, size: 28),
           ),
           const SizedBox(width: 12),
           // Details
@@ -582,31 +602,91 @@ class _CartItemCard extends StatelessWidget {
                         fontSize: 12,
                         color: HousepitalColors.greyLight)),
                 const SizedBox(height: 4),
-                // Mode badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: cartItem.isRental
-                        ? HousepitalColors.infoLight
-                        : HousepitalColors.successLight,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    cartItem.isRental
-                        ? 'Rent \u00b7 ${cartItem.rentalMonths} ${cartItem.rentalMonths == 1 ? "month" : "months"}'
-                        : 'Buy',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: cartItem.isRental
-                          ? HousepitalColors.info
-                          : HousepitalColors.success,
+                if (cartItem.isService) ...[
+                  // Service: show scheduled info
+                  if (cartItem.scheduledDate != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule,
+                            size: 14, color: HousepitalColors.info),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Scheduled: ${DateHelper.formatDate(cartItem.scheduledDate!)}${cartItem.scheduledSlot != null ? ', ${_formatSlotLabel(cartItem.scheduledSlot)}' : ''}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: HousepitalColors.info,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (cartItem.selectedAddress != null && cartItem.selectedAddress!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 14, color: HousepitalColors.greyLight),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            cartItem.selectedAddress!,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                color: HousepitalColors.greyLight),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  // Service badge
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: HousepitalColors.infoLight,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Service',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: HousepitalColors.info,
+                      ),
                     ),
                   ),
-                ),
+                ] else ...[
+                  // Equipment: mode badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cartItem.isRental
+                          ? HousepitalColors.infoLight
+                          : HousepitalColors.successLight,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      cartItem.isRental
+                          ? 'Rent \u00b7 ${cartItem.rentalMonths} ${cartItem.rentalMonths == 1 ? "month" : "months"}'
+                          : 'Buy',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: cartItem.isRental
+                            ? HousepitalColors.info
+                            : HousepitalColors.success,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
-                // Price + discount + quantity row
+                // Price + quantity row
                 Row(
                   children: [
                     Column(
@@ -645,34 +725,35 @@ class _CartItemCard extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    // Quantity controls
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
+                    // Quantity controls (only for equipment, not services)
+                    if (!cartItem.isService)
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _qtyButton(Icons.remove, () {
+                              cart.updateQuantity(
+                                  index, cartItem.quantity - 1);
+                            }),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12),
+                              child: Text('${cartItem.quantity}',
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                            _qtyButton(Icons.add, () {
+                              cart.updateQuantity(
+                                  index, cartItem.quantity + 1);
+                            }),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _qtyButton(Icons.remove, () {
-                            cart.updateQuantity(
-                                index, cartItem.quantity - 1);
-                          }),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12),
-                            child: Text('${cartItem.quantity}',
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                          _qtyButton(Icons.add, () {
-                            cart.updateQuantity(
-                                index, cartItem.quantity + 1);
-                          }),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ],

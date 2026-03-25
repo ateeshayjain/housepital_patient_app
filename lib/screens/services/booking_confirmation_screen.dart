@@ -3,20 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
+import '../../models/models.dart';
 import '../../utils/helpers.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
-  final String serviceName;
-  final DateTime scheduledDate;
-  final String scheduledSlot;
+  /// When coming from cart checkout, cartItems will be non-null.
+  final List<CartItem>? cartItems;
   final int totalAmount;
+
+  /// Legacy single-service fields (kept for backward compat).
+  final String? serviceName;
+  final DateTime? scheduledDate;
+  final String? scheduledSlot;
 
   const BookingConfirmationScreen({
     super.key,
-    required this.serviceName,
-    required this.scheduledDate,
-    required this.scheduledSlot,
+    this.cartItems,
     required this.totalAmount,
+    this.serviceName,
+    this.scheduledDate,
+    this.scheduledSlot,
   });
 
   @override
@@ -33,14 +39,38 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
 
   late final String _bookingNumber;
 
+  /// Resolved list of items to display.
+  List<CartItem> get _items {
+    if (widget.cartItems != null && widget.cartItems!.isNotEmpty) {
+      return widget.cartItems!;
+    }
+    // Legacy: single service fallback
+    if (widget.serviceName != null) {
+      return [
+        CartItem(
+          equipmentId: '',
+          name: widget.serviceName!,
+          brand: '',
+          unitPrice: widget.totalAmount,
+          isService: true,
+          scheduledDate: widget.scheduledDate,
+          scheduledSlot: widget.scheduledSlot,
+        ),
+      ];
+    }
+    return [];
+  }
+
+  bool get _hasServices => _items.any((i) => i.isService);
+  bool get _hasEquipment => _items.any((i) => !i.isService);
+
   @override
   void initState() {
     super.initState();
 
     // Generate booking number
     final rand = Random();
-    _bookingNumber =
-        'HPL-BOOK-${rand.nextInt(90000) + 10000}';
+    _bookingNumber = 'HPL-BOOK-${rand.nextInt(90000) + 10000}';
 
     _checkController = AnimationController(
       vsync: this,
@@ -76,8 +106,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
     super.dispose();
   }
 
-  String get _slotLabel {
-    switch (widget.scheduledSlot) {
+  String _slotLabel(String? slot) {
+    switch (slot) {
       case 'morning':
         return 'Morning (9 AM - 12 PM)';
       case 'afternoon':
@@ -85,17 +115,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
       case 'evening':
         return 'Evening (4 - 7 PM)';
       default:
-        return widget.scheduledSlot;
+        return slot ?? '';
     }
   }
 
   void _shareBooking() {
-    final text = 'Housepital Booking Confirmation\n'
-        'Booking: $_bookingNumber\n'
-        'Service: ${widget.serviceName}\n'
-        'Date: ${DateHelper.formatDate(widget.scheduledDate)}\n'
-        'Slot: $_slotLabel\n'
-        'Amount: ${DateHelper.formatCurrency(widget.totalAmount)}';
+    final itemLines = _items
+        .map((i) => '- ${i.name}: ${DateHelper.formatCurrency(i.lineTotal)}')
+        .join('\n');
+    final text = 'Housepital Order Confirmation\n'
+        'Order: $_bookingNumber\n'
+        'Items:\n$itemLines\n'
+        'Total: ${DateHelper.formatCurrency(widget.totalAmount)}';
     SharePlus.instance.share(ShareParams(text: text));
   }
 
@@ -133,7 +164,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                   const SizedBox(height: 24),
 
                   const Text(
-                    'Booking Confirmed!',
+                    'Order Confirmed!',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -152,7 +183,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                   ),
                   const SizedBox(height: 24),
 
-                  // Booking details card
+                  // Items list card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -162,26 +193,44 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                       border: Border.all(color: HousepitalColors.divider),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _detailRow(
-                            Icons.medical_services_outlined,
-                            'Service',
-                            widget.serviceName),
-                        const SizedBox(height: 14),
-                        _detailRow(
-                            Icons.calendar_today_outlined,
-                            'Date',
-                            DateHelper.formatDate(widget.scheduledDate)),
-                        const SizedBox(height: 14),
-                        _detailRow(
-                            Icons.access_time_outlined,
-                            'Slot',
-                            _slotLabel),
-                        const SizedBox(height: 14),
-                        _detailRow(
-                            Icons.payment_outlined,
-                            'Amount',
-                            DateHelper.formatCurrency(widget.totalAmount)),
+                        const Text(
+                          'Order Items',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final item in _items) ...[
+                          _buildItemRow(item),
+                          if (item != _items.last)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Divider(height: 1),
+                            ),
+                        ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(height: 1),
+                        ),
+                        // Total
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700)),
+                            Text(
+                              DateHelper.formatCurrency(widget.totalAmount),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: HousepitalColors.orangeText,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -214,20 +263,34 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                           ],
                         ),
                         const SizedBox(height: 14),
+                        if (_hasServices) ...[
+                          _nextStepItem(
+                            '1',
+                            'Staff Assignment',
+                            'A qualified professional will be assigned within 2 hours.',
+                          ),
+                          const SizedBox(height: 10),
+                          _nextStepItem(
+                            '2',
+                            'Confirmation Call',
+                            'You will receive a confirmation call with staff details.',
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        if (_hasEquipment) ...[
+                          _nextStepItem(
+                            _hasServices ? '3' : '1',
+                            'Equipment Delivery',
+                            'Your equipment will be delivered within 24 hours.',
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                         _nextStepItem(
-                          '1',
-                          'Staff Assignment',
-                          'A qualified professional will be assigned within 2 hours.',
-                        ),
-                        const SizedBox(height: 10),
-                        _nextStepItem(
-                          '2',
-                          'Confirmation Call',
-                          'You will receive a confirmation call with staff details.',
-                        ),
-                        const SizedBox(height: 10),
-                        _nextStepItem(
-                          '3',
+                          _hasServices && _hasEquipment
+                              ? '4'
+                              : _hasServices
+                                  ? '3'
+                                  : '2',
                           'Preparation Tips',
                           'Keep prescription and medical records handy for the visit.',
                         ),
@@ -260,8 +323,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                       onPressed: () {
                         Navigator.popUntil(context, (route) => route.isFirst);
                       },
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: const Text('Book Another Service'),
+                      icon: const Icon(Icons.home_outlined),
+                      label: const Text('Back to Home'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -271,7 +334,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                     child: TextButton.icon(
                       onPressed: _shareBooking,
                       icon: const Icon(Icons.share_outlined),
-                      label: const Text('Share Booking Details'),
+                      label: const Text('Share Order Details'),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -281,6 +344,83 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildItemRow(CartItem item) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Icon
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: item.isService
+                ? HousepitalColors.infoLight
+                : HousepitalColors.orangeLight,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            item.isService
+                ? Icons.calendar_today_outlined
+                : Icons.medical_services_outlined,
+            size: 18,
+            color: item.isService
+                ? HousepitalColors.info
+                : HousepitalColors.orange,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              if (item.isService && item.scheduledDate != null)
+                Text(
+                  'Scheduled: ${DateHelper.formatDate(item.scheduledDate!)}${item.scheduledSlot != null ? ', ${_slotLabel(item.scheduledSlot)}' : ''}',
+                  style: const TextStyle(
+                      fontSize: 12, color: HousepitalColors.info),
+                ),
+              if (!item.isService && item.brand.isNotEmpty)
+                Text(
+                  item.brand,
+                  style: const TextStyle(
+                      fontSize: 12, color: HousepitalColors.greyLight),
+                ),
+              if (item.isService)
+                const Text(
+                  'Staff assignment in progress',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: HousepitalColors.warning,
+                      fontStyle: FontStyle.italic),
+                ),
+              if (!item.isService)
+                const Text(
+                  'Delivery in 24 hours',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: HousepitalColors.success,
+                      fontStyle: FontStyle.italic),
+                ),
+            ],
+          ),
+        ),
+        Text(
+          DateHelper.formatCurrency(item.lineTotal),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: HousepitalColors.orangeText,
+          ),
+        ),
+      ],
     );
   }
 

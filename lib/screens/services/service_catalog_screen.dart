@@ -2625,32 +2625,20 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  if (_isRental) {
-                    // Return result to parent — parent navigates after sheet closes
-                    Navigator.of(context).pop<Map<String, dynamic>>({
-                      'route': '/rental-agreement',
-                      'args': {
-                        'itemName': item.name,
-                        'monthlyRate': (item.rentalPrice ?? 0).toInt(),
-                        'durationMonths': _rentalMonths,
-                      },
-                    });
-                  } else {
-                    // Pop with item data — parent will add to cart using its own context
-                    Navigator.of(context).pop<Map<String, dynamic>>({
-                      'action': 'add_to_cart',
-                      'itemId': item.id,
-                      'itemName': item.name,
-                      'itemBrand': item.brand,
-                      'itemImageUrl': item.imageUrl,
-                      'unitPrice': _isRental
-                          ? (item.rentalPrice?.toInt() ?? 0)
-                          : (item.price?.toInt() ?? 0),
-                      'mrp': item.mrp?.toInt(),
-                      'isRental': _isRental,
-                      'rentalMonths': _isRental ? _rentalMonths : 1,
-                    });
-                  }
+                  // Both Buy and Rent → add to cart via parent context
+                  Navigator.of(context).pop<Map<String, dynamic>>({
+                    'action': 'add_to_cart',
+                    'itemId': item.id,
+                    'itemName': item.name,
+                    'itemBrand': item.brand,
+                    'itemImageUrl': item.imageUrl,
+                    'unitPrice': _isRental
+                        ? (item.rentalPrice?.toInt() ?? 0)
+                        : (item.price?.toInt() ?? 0),
+                    'mrp': _isRental ? null : item.mrp?.toInt(),
+                    'isRental': _isRental,
+                    'rentalMonths': _isRental ? _rentalMonths : 1,
+                  });
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
                 label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),

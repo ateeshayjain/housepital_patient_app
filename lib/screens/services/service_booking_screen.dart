@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
@@ -2261,16 +2262,43 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             final gst = (subtotal * 0.18).toInt();
             final total = subtotal + gst;
 
-            Navigator.pushNamed(
-              context,
-              '/booking-confirmation',
-              arguments: {
-                'serviceName': widget.service.name,
-                'scheduledDate': _selectedDate ?? DateTime.now(),
-                'scheduledSlot': _selectedSlot ?? 'morning',
-                'totalAmount': total,
-              },
+            // Build address string from selected address
+            String? addressStr;
+            if (_savedAddresses.isNotEmpty && _selectedAddressIndex < _savedAddresses.length) {
+              final addr = _savedAddresses[_selectedAddressIndex];
+              addressStr = addr['address'] ?? addr['label'] ?? '';
+            }
+
+            // Add service to cart
+            final cart = Provider.of<CartProvider>(context, listen: false);
+            cart.addService(
+              serviceId: widget.service.id,
+              serviceName: widget.service.name,
+              category: widget.service.category,
+              price: total,
+              scheduledDate: _selectedDate ?? DateTime.now(),
+              scheduledSlot: _selectedSlot ?? 'morning',
+              address: addressStr,
+              notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+              doctorType: _isDoctorVisit ? _recommendedDoctor : null,
+              concern: _isDoctorVisit ? _concernController.text : null,
             );
+
+            // Show snackbar and navigate back to services catalog
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Service added to cart'),
+                backgroundColor: HousepitalColors.success,
+                action: SnackBarAction(
+                  label: 'View Cart',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/cart');
+                  },
+                ),
+              ),
+            );
+            Navigator.pop(context);
           },
           child: Text(l.t('add_to_cart')),
         ),

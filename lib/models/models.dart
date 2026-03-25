@@ -1386,6 +1386,15 @@ class CartItem {
   final int rentalMonths;
   final int quantity;
 
+  // Service-specific fields
+  final bool isService;
+  final DateTime? scheduledDate;
+  final String? scheduledSlot;
+  final String? selectedAddress;
+  final String? serviceNotes;
+  final String? doctorType; // for doctor visits: 'gp' or 'icu'
+  final String? concern; // for doctor visits
+
   const CartItem({
     required this.equipmentId,
     required this.name,
@@ -1396,6 +1405,13 @@ class CartItem {
     this.isRental = false,
     this.rentalMonths = 1,
     this.quantity = 1,
+    this.isService = false,
+    this.scheduledDate,
+    this.scheduledSlot,
+    this.selectedAddress,
+    this.serviceNotes,
+    this.doctorType,
+    this.concern,
   });
 
   int get lineTotal =>
@@ -1411,6 +1427,13 @@ class CartItem {
         isRental: isRental,
         rentalMonths: rentalMonths ?? this.rentalMonths,
         quantity: quantity ?? this.quantity,
+        isService: isService,
+        scheduledDate: scheduledDate,
+        scheduledSlot: scheduledSlot,
+        selectedAddress: selectedAddress,
+        serviceNotes: serviceNotes,
+        doctorType: doctorType,
+        concern: concern,
       );
 
   Map<String, dynamic> toJson() => {
@@ -1423,6 +1446,13 @@ class CartItem {
         'isRental': isRental,
         'rentalMonths': rentalMonths,
         'quantity': quantity,
+        'isService': isService,
+        'scheduledDate': scheduledDate?.toIso8601String(),
+        'scheduledSlot': scheduledSlot,
+        'selectedAddress': selectedAddress,
+        'serviceNotes': serviceNotes,
+        'doctorType': doctorType,
+        'concern': concern,
       };
 
   factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
@@ -1435,6 +1465,15 @@ class CartItem {
         isRental: json['isRental'] as bool? ?? false,
         rentalMonths: json['rentalMonths'] as int? ?? 1,
         quantity: json['quantity'] as int? ?? 1,
+        isService: json['isService'] as bool? ?? false,
+        scheduledDate: json['scheduledDate'] != null
+            ? DateTime.tryParse(json['scheduledDate'] as String)
+            : null,
+        scheduledSlot: json['scheduledSlot'] as String?,
+        selectedAddress: json['selectedAddress'] as String?,
+        serviceNotes: json['serviceNotes'] as String?,
+        doctorType: json['doctorType'] as String?,
+        concern: json['concern'] as String?,
       );
 }
 

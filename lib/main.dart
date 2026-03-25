@@ -342,10 +342,11 @@ class _HousepitalAppState extends State<HousepitalApp> {
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
                 builder: (_) => BookingConfirmationScreen(
-                      serviceName: args['serviceName'] as String,
-                      scheduledDate: args['scheduledDate'] as DateTime,
-                      scheduledSlot: args['scheduledSlot'] as String,
+                      cartItems: args['cartItems'] as List<CartItem>?,
                       totalAmount: args['totalAmount'] as int,
+                      serviceName: args['serviceName'] as String?,
+                      scheduledDate: args['scheduledDate'] as DateTime?,
+                      scheduledSlot: args['scheduledSlot'] as String?,
                     ));
           case '/booking-history':
             final tab = settings.arguments as int? ?? 0;
