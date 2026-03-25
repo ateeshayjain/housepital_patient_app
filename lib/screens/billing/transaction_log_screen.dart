@@ -55,6 +55,7 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
               child: PaginatedListView<PaymentTransaction>(
                 key: _listKey,
                 pageSize: 20,
+                showEmptyOnError: true,
                 fetchPage: (page, pageSize) =>
                     ApiService().getTransactionsPaginated(
                   patientId,

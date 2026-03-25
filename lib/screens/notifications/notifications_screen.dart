@@ -41,6 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: PaginatedListView<AppNotification>(
         key: _listKey,
         pageSize: 20,
+        showEmptyOnError: true,
         fetchPage: (page, pageSize) =>
             ApiService().getNotificationsPaginated(
           page: page,
@@ -56,6 +57,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 16),
               Text(l.t('no_data'),
                   style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: HousepitalColors.grey)),
+              const SizedBox(height: 8),
+              const Text(
+                  'No notifications yet',
+                  style: TextStyle(
+                      fontSize: 13,
                       color: HousepitalColors.greyLight)),
             ],
           ),

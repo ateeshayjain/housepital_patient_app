@@ -13,6 +13,9 @@ class PaginatedListView<T> extends StatefulWidget {
   /// Widget to show when the list is completely empty (page 1 returns []).
   final Widget? emptyWidget;
 
+  /// If true, show emptyWidget instead of error state when API fails on initial load.
+  final bool showEmptyOnError;
+
   /// Number of items per page.
   final int pageSize;
 
@@ -21,6 +24,7 @@ class PaginatedListView<T> extends StatefulWidget {
     required this.fetchPage,
     required this.itemBuilder,
     this.emptyWidget,
+    this.showEmptyOnError = false,
     this.pageSize = 20,
   });
 
@@ -134,6 +138,32 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
     // Error on initial load (no items yet)
     if (_items.isEmpty && _error != null) {
+      // If showEmptyOnError is true, show the empty state instead of error
+      if (widget.showEmptyOnError) {
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          color: HousepitalColors.orange,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: widget.emptyWidget ??
+                    const Center(
+                      child: Text(
+                        'No items found',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: HousepitalColors.greyLight,
+                        ),
+                      ),
+                    ),
+              ),
+            ],
+          ),
+        );
+      }
+
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

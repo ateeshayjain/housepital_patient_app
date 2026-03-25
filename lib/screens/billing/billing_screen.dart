@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/orders_provider.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
@@ -16,84 +18,85 @@ class BillingScreen extends StatefulWidget {
 class _BillingScreenState extends State<BillingScreen> {
   String _filter = 'all';
 
-  // Mock invoices for preview
-  static final _mockInvoices = [
-    Invoice.fromJson({
-      'id': 'inv1',
-      'invoice_number': 'INV-2026-003',
-      'patient_id': 'p1',
-      'billing_period_start': '2026-03-01',
-      'billing_period_end': '2026-03-15',
-      'line_items': [
-        {'description': 'Nurse (24hr) — 15 days', 'amount': 18000, 'gst': 3240, 'total': 21240, 'type': 'manpower'},
-        {'description': 'Medical consumables', 'amount': 2500, 'gst': 450, 'total': 2950, 'type': 'consumables'},
-      ],
-      'subtotal': 20500,
-      'gst_total': 3690,
-      'grand_total': 24190,
-      'due_date': DateTime.now().add(const Duration(days: 5)).toIso8601String(),
-      'status': 'pending',
-    }),
-    Invoice.fromJson({
-      'id': 'inv2',
-      'invoice_number': 'INV-2026-002',
-      'patient_id': 'p1',
-      'billing_period_start': '2026-02-16',
-      'billing_period_end': '2026-02-28',
-      'line_items': [
-        {'description': 'Nurse (24hr) — 13 days', 'amount': 15600, 'gst': 2808, 'total': 18408, 'type': 'manpower'},
-        {'description': 'ECG at Home', 'amount': 500, 'gst': 90, 'total': 590, 'type': 'diagnostics'},
-      ],
-      'subtotal': 16100,
-      'gst_total': 2898,
-      'grand_total': 18998,
-      'due_date': '2026-03-10',
-      'status': 'overdue',
-    }),
-    Invoice.fromJson({
-      'id': 'inv3',
-      'invoice_number': 'INV-2026-001',
-      'patient_id': 'p1',
-      'billing_period_start': '2026-02-01',
-      'billing_period_end': '2026-02-15',
-      'line_items': [
-        {'description': 'Nurse (24hr) — 15 days', 'amount': 18000, 'gst': 3240, 'total': 21240, 'type': 'manpower'},
-      ],
-      'subtotal': 18000,
-      'gst_total': 3240,
-      'grand_total': 21240,
-      'due_date': '2026-02-25',
-      'status': 'paid',
-    }),
-  ];
-
-  List<Invoice> get _filteredInvoices {
-    if (_filter == 'all') return _mockInvoices;
-    return _mockInvoices.where((i) => i.status == _filter).toList();
+  List<Map<String, dynamic>> _filteredOrders(List<Map<String, dynamic>> orders) {
+    if (_filter == 'all') return orders;
+    return orders.where((o) => o['status'] == _filter).toList();
   }
 
-  int get _totalDue => _mockInvoices
-      .where((i) => i.status != 'paid')
-      .fold(0, (sum, i) => sum + i.grandTotal);
+  int _totalOutstanding(List<Map<String, dynamic>> orders) {
+    return orders
+        .where((o) =>
+            o['status'] == 'confirmed' || o['status'] == 'in_progress')
+        .fold(0, (sum, o) => sum + ((o['totalAmount'] as int?) ?? 0));
+  }
 
-  int get _totalPaid => _mockInvoices
-      .where((i) => i.status == 'paid')
-      .fold(0, (sum, i) => sum + i.grandTotal);
+  int _totalPaid(List<Map<String, dynamic>> orders) {
+    return orders
+        .where((o) => o['status'] == 'completed')
+        .fold(0, (sum, o) => sum + ((o['totalAmount'] as int?) ?? 0));
+  }
 
-  int get _overdueCount => _mockInvoices.where((i) => i.status == 'overdue').length;
+  int _overdueCount(List<Map<String, dynamic>> orders) {
+    // Orders confirmed more than 7 days ago count as overdue
+    final now = DateTime.now();
+    return orders.where((o) {
+      if (o['status'] != 'confirmed') return false;
+      final createdAt = DateTime.tryParse(o['createdAt'] as String? ?? '');
+      if (createdAt == null) return false;
+      return now.difference(createdAt).inDays > 7;
+    }).length;
+  }
 
-  // Mock spend summary data by category
-  static const _spendSummary = [
-    {'category': 'Manpower', 'amount': 51600, 'icon': Icons.people, 'color': Color(0xFF1565C0)},
-    {'category': 'Equipment', 'amount': 2500, 'icon': Icons.medical_services, 'color': Color(0xFFE65100)},
-    {'category': 'Diagnostics', 'amount': 500, 'icon': Icons.biotech, 'color': Color(0xFF2E7D32)},
-  ];
+  /// Compute spend summary grouped by category (service vs equipment)
+  List<Map<String, dynamic>> _spendSummary(List<Map<String, dynamic>> orders) {
+    int serviceSpend = 0;
+    int equipmentSpend = 0;
 
-  int get _totalSpend => _spendSummary.fold(0, (sum, item) => sum + (item['amount'] as int));
+    for (final order in orders) {
+      final items = order['items'] as List<dynamic>? ?? [];
+      for (final itemJson in items) {
+        final item = itemJson is Map<String, dynamic>
+            ? CartItem.fromJson(itemJson)
+            : null;
+        if (item == null) continue;
+        if (item.isService) {
+          serviceSpend += item.lineTotal;
+        } else {
+          equipmentSpend += item.lineTotal;
+        }
+      }
+    }
+
+    final result = <Map<String, dynamic>>[];
+    if (serviceSpend > 0) {
+      result.add({
+        'category': 'Services',
+        'amount': serviceSpend,
+        'icon': Icons.medical_services,
+        'color': const Color(0xFF1565C0),
+      });
+    }
+    if (equipmentSpend > 0) {
+      result.add({
+        'category': 'Equipment',
+        'amount': equipmentSpend,
+        'icon': Icons.inventory_2,
+        'color': const Color(0xFFE65100),
+      });
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final ordersProvider = context.watch<OrdersProvider>();
+    final orders = ordersProvider.orders;
+    final filtered = _filteredOrders(orders);
+    final totalDue = _totalOutstanding(orders);
+    final totalPaidAmount = _totalPaid(orders);
+    final overdue = _overdueCount(orders);
+    final spend = _spendSummary(orders);
 
     return Scaffold(
       appBar: AppBar(
@@ -102,8 +105,8 @@ class _BillingScreenState extends State<BillingScreen> {
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, '/transactions'),
             icon: const Icon(Icons.receipt_long, size: 18, color: HousepitalColors.orangeText),
-            label: const Text('Transactions',
-                style: TextStyle(color: HousepitalColors.orangeText, fontSize: 13)),
+            label: Text(l.t('transaction_history'),
+                style: const TextStyle(color: HousepitalColors.orangeText, fontSize: 13)),
           ),
         ],
       ),
@@ -113,35 +116,36 @@ class _BillingScreenState extends State<BillingScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Balance card
-            _buildBalanceCard(l),
+            _buildBalanceCard(l, totalDue, overdue),
             const SizedBox(height: 16),
 
             // Summary stats row
-            _buildSummaryRow(),
+            _buildSummaryRow(totalPaidAmount, orders.length, overdue),
             const SizedBox(height: 20),
 
             // Spend Summary section
-            _buildSpendSummary(),
-            const SizedBox(height: 20),
+            if (spend.isNotEmpty) ...[
+              _buildSpendSummary(spend),
+              const SizedBox(height: 20),
+            ],
 
-            // Invoices header + filter
+            // Orders / Invoices header + filter
             Row(
               children: [
-                const Expanded(
-                  child: Text('Invoices',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text(l.t('my_orders'),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 ),
                 PopupMenuButton<String>(
                   initialValue: _filter,
                   onSelected: (v) => setState(() => _filter = v),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'all', child: Text('All')),
-                    PopupMenuItem(value: 'pending', child: Text('Pending')),
-                    PopupMenuItem(value: 'overdue', child: Text('Overdue')),
-                    PopupMenuItem(value: 'paid', child: Text('Paid')),
+                  itemBuilder: (_) => [
+                    PopupMenuItem(value: 'all', child: Text(l.t('all'))),
+                    PopupMenuItem(value: 'confirmed', child: Text(l.t('status_confirmed'))),
+                    PopupMenuItem(value: 'completed', child: Text(l.t('completed'))),
                   ],
                   child: Semantics(
-                    label: 'Filter invoices, currently showing ${_filter == 'all' ? 'All' : _filter}',
+                    label: 'Filter orders, currently showing ${_filter == 'all' ? 'All' : _filter}',
                     button: true,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -149,7 +153,7 @@ class _BillingScreenState extends State<BillingScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _filter == 'all' ? 'All' : _filter[0].toUpperCase() + _filter.substring(1),
+                            _filter == 'all' ? l.t('all') : _filter[0].toUpperCase() + _filter.substring(1),
                             style: const TextStyle(
                                 fontSize: 13, color: HousepitalColors.orangeText, fontWeight: FontWeight.w500),
                           ),
@@ -163,25 +167,32 @@ class _BillingScreenState extends State<BillingScreen> {
             ),
             const SizedBox(height: 12),
 
-            if (_filteredInvoices.isEmpty)
+            if (filtered.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text(l.t('no_data'),
-                      style: const TextStyle(color: HousepitalColors.greyLight)),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.receipt_long_outlined,
+                          size: 48, color: HousepitalColors.greyLight),
+                      const SizedBox(height: 12),
+                      Text(l.t('no_data'),
+                          style: const TextStyle(color: HousepitalColors.greyLight)),
+                    ],
+                  ),
                 ),
               )
             else
-              ..._filteredInvoices.map((invoice) => _buildInvoiceCard(invoice, l)),
+              ...filtered.map((order) => _buildOrderCard(order, l)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBalanceCard(AppLocalizations l) {
+  Widget _buildBalanceCard(AppLocalizations l, int totalDue, int overdueCount) {
     return Semantics(
-      label: 'Total outstanding balance: ${DateHelper.formatCurrency(_totalDue)}, $_overdueCount invoices overdue',
+      label: 'Total outstanding balance: ${DateHelper.formatCurrency(totalDue)}, $overdueCount orders overdue',
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -197,11 +208,11 @@ class _BillingScreenState extends State<BillingScreen> {
                 style: TextStyle(fontSize: 14, color: Colors.white70)),
             const SizedBox(height: 4),
             Text(
-              DateHelper.formatCurrency(_totalDue),
+              DateHelper.formatCurrency(totalDue),
               style: const TextStyle(
                   fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white),
             ),
-            if (_overdueCount > 0) ...[
+            if (overdueCount > 0) ...[
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -210,82 +221,84 @@ class _BillingScreenState extends State<BillingScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '$_overdueCount invoice${_overdueCount > 1 ? 's' : ''} overdue',
+                  '$overdueCount order${overdueCount > 1 ? 's' : ''} overdue',
                   style: const TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  final paymentService = PaymentService();
-                  paymentService.openCheckout(
-                    amount: _totalDue * 100, // Convert to paise
-                    description: 'Outstanding balance payment',
-                    onSuccess: () {
-                      paymentService.dispose();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Payment successful!'),
-                            backgroundColor: HousepitalColors.success,
-                          ),
-                        );
-                      }
-                    },
-                    onFailure: (message) {
-                      paymentService.dispose();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Payment failed: $message'),
-                            backgroundColor: HousepitalColors.error,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: HousepitalColors.orange,
+            if (totalDue > 0) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final paymentService = PaymentService();
+                    paymentService.openCheckout(
+                      amount: totalDue * 100,
+                      description: 'Outstanding balance payment',
+                      onSuccess: () {
+                        paymentService.dispose();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l.t('payment_successful')),
+                              backgroundColor: HousepitalColors.success,
+                            ),
+                          );
+                        }
+                      },
+                      onFailure: (message) {
+                        paymentService.dispose();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${l.t('payment_failed')}: $message'),
+                              backgroundColor: HousepitalColors.error,
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: HousepitalColors.orange,
+                  ),
+                  child: Text(l.t('pay_now')),
                 ),
-                child: Text(l.t('pay_now')),
               ),
-            ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSummaryRow() {
+  Widget _buildSummaryRow(int totalPaidAmount, int totalOrders, int overdueCount) {
     return Row(
       children: [
         Expanded(
           child: Semantics(
-            label: 'Total paid: ${DateHelper.formatCurrency(_totalPaid)}',
-            child: _summaryTile('Total Paid', DateHelper.formatCurrency(_totalPaid),
+            label: 'Total paid: ${DateHelper.formatCurrency(totalPaidAmount)}',
+            child: _summaryTile('Total Paid', DateHelper.formatCurrency(totalPaidAmount),
                 Icons.check_circle, HousepitalColors.success),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Semantics(
-            label: 'Total invoices: ${_mockInvoices.length}',
-            child: _summaryTile('Invoices', '${_mockInvoices.length}',
+            label: 'Total orders: $totalOrders',
+            child: _summaryTile('Orders', '$totalOrders',
                 Icons.receipt, HousepitalColors.grey),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Semantics(
-            label: 'Overdue invoices: $_overdueCount',
-            child: _summaryTile('Overdue', '$_overdueCount',
-                Icons.warning_amber, _overdueCount > 0 ? HousepitalColors.error : HousepitalColors.greyLight),
+            label: 'Overdue orders: $overdueCount',
+            child: _summaryTile('Overdue', '$overdueCount',
+                Icons.warning_amber, overdueCount > 0 ? HousepitalColors.error : HousepitalColors.greyLight),
           ),
         ),
       ],
@@ -310,15 +323,17 @@ class _BillingScreenState extends State<BillingScreen> {
     );
   }
 
-  Widget _buildSpendSummary() {
+  Widget _buildSpendSummary(List<Map<String, dynamic>> spend) {
+    final totalSpend = spend.fold(0, (sum, item) => sum + (item['amount'] as int));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Spend Summary',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
-        Text('This month by category',
-            style: const TextStyle(fontSize: 13, color: HousepitalColors.greyLight)),
+        const Text('By category',
+            style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight)),
         const SizedBox(height: 12),
 
         // Stacked bar
@@ -329,9 +344,9 @@ class _BillingScreenState extends State<BillingScreen> {
             child: SizedBox(
               height: 12,
               child: Row(
-                children: _spendSummary.map((item) {
-                  final fraction = _totalSpend > 0
-                      ? (item['amount'] as int) / _totalSpend
+                children: spend.map((item) {
+                  final fraction = totalSpend > 0
+                      ? (item['amount'] as int) / totalSpend
                       : 0.0;
                   return Expanded(
                     flex: (fraction * 1000).round().clamp(1, 1000),
@@ -345,10 +360,10 @@ class _BillingScreenState extends State<BillingScreen> {
         const SizedBox(height: 12),
 
         // Category rows
-        ..._spendSummary.map((item) {
+        ...spend.map((item) {
           final amount = item['amount'] as int;
-          final percentage = _totalSpend > 0
-              ? ((amount / _totalSpend) * 100).toStringAsFixed(1)
+          final percentage = totalSpend > 0
+              ? ((amount / totalSpend) * 100).toStringAsFixed(1)
               : '0';
           return Semantics(
             label: '${item['category']}: ${DateHelper.formatCurrency(amount)}, $percentage percent',
@@ -394,26 +409,42 @@ class _BillingScreenState extends State<BillingScreen> {
     );
   }
 
-  Widget _buildInvoiceCard(Invoice invoice, AppLocalizations l) {
+  Widget _buildOrderCard(Map<String, dynamic> order, AppLocalizations l) {
+    final status = order['status'] as String? ?? 'confirmed';
+    final totalAmount = order['totalAmount'] as int? ?? 0;
+    final bookingNumber = order['id'] as String? ?? '';
+    final createdAt = DateTime.tryParse(order['createdAt'] as String? ?? '');
+    final items = order['items'] as List<dynamic>? ?? [];
+    final itemCount = items.length;
+    final firstItemName = items.isNotEmpty
+        ? (items.first is Map<String, dynamic>
+            ? (items.first['name'] as String? ?? 'Order')
+            : 'Order')
+        : 'Order';
+
     Color statusColor;
-    switch (invoice.status) {
-      case 'paid':
+    switch (status) {
+      case 'completed':
         statusColor = HousepitalColors.success;
         break;
-      case 'overdue':
+      case 'cancelled':
         statusColor = HousepitalColors.error;
         break;
       default:
         statusColor = HousepitalColors.warning;
     }
 
+    final subtitle = itemCount > 1
+        ? '$firstItemName + ${itemCount - 1} more'
+        : firstItemName;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Semantics(
-        label: 'Invoice ${invoice.invoiceNumber}, amount ${DateHelper.formatCurrency(invoice.grandTotal)}, status ${invoice.status}',
+        label: 'Order $bookingNumber, amount ${DateHelper.formatCurrency(totalAmount)}, status $status',
         button: true,
         child: HousepitalCard(
-          onTap: () => Navigator.pushNamed(context, '/invoice-detail', arguments: invoice),
+          onTap: () => Navigator.pushNamed(context, '/order-tracking', arguments: order),
           child: Row(
             children: [
               Container(
@@ -431,14 +462,21 @@ class _BillingScreenState extends State<BillingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      invoice.invoiceNumber,
+                      bookingNumber,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black),
                     ),
                     Text(
-                      '${DateHelper.formatDateShort(invoice.billingPeriodStart)} – ${DateHelper.formatDateShort(invoice.billingPeriodEnd)}',
+                      subtitle,
                       style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (createdAt != null)
+                      Text(
+                        DateHelper.formatRelative(createdAt),
+                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                      ),
                   ],
                 ),
               ),
@@ -446,11 +484,11 @@ class _BillingScreenState extends State<BillingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    DateHelper.formatCurrency(invoice.grandTotal),
+                    DateHelper.formatCurrency(totalAmount),
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600, color: HousepitalColors.black),
                   ),
-                  StatusBadge(text: invoice.status.toUpperCase(), color: statusColor),
+                  StatusBadge(text: status.toUpperCase(), color: statusColor),
                 ],
               ),
             ],
