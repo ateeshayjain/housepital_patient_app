@@ -79,7 +79,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 4 | Equipment Detail Page               | EquipmentDetailScreen    | GET /equipment       | Done           | Variant selection, rent/buy, add-to-cart     |
 | 5 | Package Detail Page                 | PackageDetailScreen      | --                   | Done           | Static care package info                     |
 | 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | Coupon system fully wired in cart + booking  |
-| 7 | Cart System                         | CartScreen               | --                   | Done           | CartProvider with SharedPreferences persistence, coupon support |
+| 7 | Cart System                         | CartScreen               | --                   | Done -- rewritten | Flat CartItem model, List-based CartProvider with index-based ops, SharedPreferences persistence, coupon support (WELCOME10). Rewritten 2026-03-25 to fix grey screen / empty cart bugs. |
 | 8 | Universal Search                    | UniversalSearchScreen    | --                   | Done           | Local search across services                 |
 | 9 | Manpower Price Display              | ServiceCatalogScreen     | master Excel sync    | Done           | Prices now shown (synced from master Excel). MRP + strikethrough on equipment. |
 | 10| Slot Availability Check             | ServiceBookingScreen     | GET /services/:id/slots | Done        | getAvailableSlots API checks real-time availability |

@@ -2022,7 +2022,14 @@ class _EquipmentItemCard extends StatelessWidget {
     if (result != null && context.mounted) {
       final navigator = Navigator.of(context);
       final messenger = ScaffoldMessenger.of(context);
-      if (result['action'] == 'added_to_cart') {
+      if (result['action'] == 'add_to_cart') {
+        // Add to cart using parent's context (guaranteed to have CartProvider)
+        final cart = Provider.of<CartProvider>(context, listen: false);
+        cart.addItem(
+          item,
+          isRental: result['isRental'] == true,
+          rentalMonths: (result['rentalMonths'] as int?) ?? 1,
+        );
         final itemName = result['itemName'] as String;
         final isRental = result['isRental'] == true;
         messenger
@@ -2627,13 +2634,19 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       },
                     });
                   } else {
-                    // Buy flow → add to cart, then pop with result
-                    final cart = Provider.of<CartProvider>(context, listen: false);
-                    cart.addItem(item, isRental: _isRental, rentalMonths: _isRental ? _rentalMonths : 1);
+                    // Pop with item data — parent will add to cart using its own context
                     Navigator.of(context).pop<Map<String, dynamic>>({
-                      'action': 'added_to_cart',
+                      'action': 'add_to_cart',
+                      'itemId': item.id,
                       'itemName': item.name,
+                      'itemBrand': item.brand,
+                      'itemImageUrl': item.imageUrl,
+                      'unitPrice': _isRental
+                          ? (item.rentalPrice?.toInt() ?? 0)
+                          : (item.price?.toInt() ?? 0),
+                      'mrp': item.mrp?.toInt(),
                       'isRental': _isRental,
+                      'rentalMonths': _isRental ? _rentalMonths : 1,
                     });
                   }
                 },

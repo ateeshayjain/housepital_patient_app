@@ -1,8 +1,8 @@
 # Test Map -- Housepital Patient App
 
-**Last updated:** 2026-03-24
-**Total test count:** 973
-**Pass rate:** 973/973 (all passing)
+**Last updated:** 2026-03-25
+**Total test count:** 1036
+**Pass rate:** 1036/1036 (all passing)
 
 ---
 
@@ -30,14 +30,14 @@
 | `lib/models/models.dart` (Patient) | `test/models/patient_model_test.dart` | exists | PASS | YES |
 | `lib/models/models.dart` (Payment) | `test/models/payment_models_test.dart` | exists | PASS | YES |
 | `lib/models/models.dart` (EquipmentOrder) | `test/models/equipment_order_test.dart` | exists | PASS | YES |
-| `lib/models/models.dart` (CartItem) | covered by cart_provider_test | -- | PASS | YES |
+| `lib/models/models.dart` (CartItem) | `test/models/cart_item_test.dart` | 24 | PASS | YES |
 | `lib/models/models.dart` (EquipmentItem) | covered by cart_provider_test | -- | PASS | YES |
 
 ### PROVIDERS (target: 80%+)
 
 | Provider | Test File | Tests | Status | Critical? |
 |----------|-----------|-------|--------|-----------|
-| `lib/providers/cart_provider.dart` | `test/providers/cart_provider_test.dart` | 36 | PASS | YES |
+| `lib/providers/cart_provider.dart` | `test/providers/cart_provider_test.dart` | 48 | PASS | YES |
 | `lib/providers/my_care_provider.dart` | `test/providers/my_care_provider_test.dart` | 18 | PASS | YES |
 | `lib/providers/medication_provider.dart` | `test/providers/medication_provider_test.dart` | exists | PASS | YES |
 | `lib/providers/cart_provider.dart` (persistence) | `test/providers/cart_persistence_test.dart` | exists | PASS | YES |
@@ -53,6 +53,7 @@
 | Equipment Detail | `test/screens/services/equipment_detail_test.dart` | exists | PASS | NO |
 | Service Catalog | `test/screens/services/service_catalog_test.dart` | exists | PASS | NO |
 | Assessment Form | `test/screens/services/assessment_form_test.dart` | exists | PASS | YES |
+| Cart Screen (logic) | `test/screens/cart/cart_screen_test.dart` | 27 | PASS | YES |
 | Cart Coupon | `test/screens/cart/cart_coupon_test.dart` | exists | PASS | YES |
 | Address Selection | `test/screens/checkout/address_test.dart` | exists | PASS | NO |
 | Booking Confirmation | `test/screens/services/booking_confirmation_test.dart` | exists | PASS | YES |
@@ -136,6 +137,9 @@
 | 39 | `test/services/video_call_service_test.dart` | PASS |
 | 40 | `test/services/medication_reminder_test.dart` | PASS |
 | 41 | `test/widgets/paginated_list_test.dart` | PASS |
+| 42 | `test/models/cart_item_test.dart` | PASS |
+| 43 | `test/screens/cart/cart_screen_test.dart` | PASS |
+| 44 | `test/integration/cart_flow_test.dart` | PASS |
 
 ---
 

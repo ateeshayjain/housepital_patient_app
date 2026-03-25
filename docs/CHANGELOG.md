@@ -4,6 +4,32 @@
 
 ---
 
+## [2026-03-25 (Session 5)] -- Cart Rewrite, Comprehensive Cart Tests
+
+### Cart Rewrite
+- **CartProvider rewritten:** Replaced nested EquipmentItem-based cart with flat `CartItem` model and `List<CartItem>` with index-based operations
+- **CartItem model:** Flat data class with `equipmentId`, `name`, `brand`, `imageUrl`, `unitPrice`, `mrp`, `isRental`, `rentalMonths`, `quantity`, `lineTotal`, `copyWith`, `toJson`/`fromJson`
+- **CartScreen rewritten:** Uses index-based operations, coupon section with WELCOME10 (10% off, max Rs.500), delivery charge logic (free above Rs.999, Rs.49 below)
+- **Persistence:** SharedPreferences with flat JSON serialization (no nested EquipmentItem deserialization failure)
+
+### New Test Files (3)
+- `test/models/cart_item_test.dart` -- 24 tests for flat CartItem model (constructor, defaults, lineTotal, copyWith, toJson, fromJson, round-trip)
+- `test/screens/cart/cart_screen_test.dart` -- 27 tests for cart screen data/logic (empty state, addItem, subtotal, delivery charge, total, coupon WELCOME10, remove, clear)
+- `test/integration/cart_flow_test.dart` -- 12 tests for end-to-end cart flow (add->update->remove, rental save/restore, clear all, duplicates, merge, notifications)
+
+### Existing Test Updates
+- `test/screens/cart/cart_coupon_test.dart` -- verified compatible with new CartProvider API (no changes needed)
+
+### Known Issues Resolved
+- BUG-27: Cart shows empty after adding items (flat CartItem model fixes deserialization)
+- BUG-28: Cart grey screen on reopen (flat JSON persistence)
+
+### Breaking Changes
+- CartProvider API is now index-based (not key-based)
+- CartItem is a flat model (no nested EquipmentItem)
+
+---
+
 ## [2026-03-24 (Session 4)] -- P0/P1 Features, Pricing Sync, 16 New Features, 973 Tests
 
 ### New Screens (10)

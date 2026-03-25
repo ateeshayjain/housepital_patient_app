@@ -4,6 +4,56 @@ Session-by-session diary of what was built, decisions made, and context for the 
 
 ---
 
+## Session 2026-03-25 (Session 5) -- Cart Rewrite + Comprehensive Cart Tests
+
+### What was built:
+- Complete cart rewrite: CartProvider now uses flat `CartItem` model with `List<CartItem>` and index-based operations
+- CartItem model: flat data class replacing nested EquipmentItem serialization that caused grey screen / empty cart bugs
+- CartScreen rewritten with coupon section (WELCOME10: 10% off capped at Rs.500), delivery charge logic (free above Rs.999)
+- 3 new test files: cart_item_test.dart (24 tests), cart_screen_test.dart (27 tests), cart_flow_test.dart (12 tests)
+- Verified existing cart_coupon_test.dart compatibility with new API
+
+### Files created:
+- test/models/cart_item_test.dart (NEW -- 24 tests)
+- test/screens/cart/cart_screen_test.dart (NEW -- 27 tests)
+- test/integration/cart_flow_test.dart (NEW -- 12 tests)
+
+### Files modified:
+- docs/ARCHITECTURE.md (CartProvider description updated)
+- docs/KNOWN_ISSUES.md (BUG-27, BUG-28 marked resolved)
+- docs/CHANGELOG.md (session 5 entry added)
+- docs/BUILD_LOG.md (this file)
+- docs/FEATURE_TRACKER.md (cart status updated)
+- docs/TROUBLESHOOTING.md (cart empty after adding items entry)
+- docs/TEST_MAP.md (new test files added, count updated)
+
+### Database changes:
+- None
+
+### Known issues resolved:
+- BUG-27: Cart shows empty after adding items (flat CartItem model)
+- BUG-28: Cart grey screen on reopen after app restart (flat JSON persistence)
+
+### Decisions made:
+- CartItem is a flat value object (no nested EquipmentItem) to prevent serialization failures
+- Index-based cart operations (not key-based) for simplicity and List compatibility
+- WELCOME10 coupon: 10% off, max Rs.500 discount, hardcoded for offline support
+
+### Dependencies added:
+- None
+
+### Test results:
+- 63 new tests added (24 + 27 + 12)
+- Total: 1036 tests (was 973)
+
+### Next session should:
+- Complete Razorpay production mode setup
+- Connect MSG91 for SMS/WhatsApp notifications
+- Add auth_provider tests (P0 gap)
+- Add payment_service tests (P0 gap)
+
+---
+
 ## Session 2026-03-24 (Session 4) -- Pricing Sync, 16 P0/P1 Features, Medication Reminders, Lab Tests, Bottom Sheet Fixes
 
 ### What was built:

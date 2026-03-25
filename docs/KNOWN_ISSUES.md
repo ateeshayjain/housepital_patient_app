@@ -53,6 +53,8 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 |--------|--------------------------------------------------------------------------|------------|----------|
 | BUG-21 | No loading skeleton/shimmer on all screens -- some screens use CircularProgressIndicator instead of shimmer placeholders | 2026-03-20 | Open |
 | BUG-22 | Cart badge count not shown on bottom nav bar                             | 2026-03-21 | Open |
+| BUG-27 | ~~Cart shows empty after adding items (grey screen / deserialization failure)~~ | 2026-03-22 | Resolved 2026-03-25 |
+| BUG-28 | ~~Cart grey screen on reopen after app restart~~ | 2026-03-23 | Resolved 2026-03-25 |
 | BUG-23 | No deep linking support -- app cannot be opened from a URL               | 2026-03-20 | Open |
 | BUG-24 | ~~Coordinator chat (Firestore chat_messages) has no UI screen yet~~ | 2026-03-20 | Resolved 2026-03-24 |
 
@@ -109,6 +111,8 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 | BUG-24 | Coordinator chat had no UI screen                                      | 2026-03-20 | 2026-03-24 | ChatScreen using Firestore chat_messages        |
 | BUG-25 | Bottom sheet navigation shows grey screen (pop-then-push pattern)      | 2026-03-23 | 2026-03-24 | Replaced with return-result-to-parent pattern   |
 | BUG-26 | Razorpay crashes on web platform                                       | 2026-03-23 | 2026-03-24 | Guarded with kIsWeb check                       |
+| BUG-27 | Cart shows empty after adding items (grey screen / deserialization)    | 2026-03-22 | 2026-03-25 | Cart rewrite: flat CartItem model replaces nested EquipmentItem serialization |
+| BUG-28 | Cart grey screen on reopen after app restart                           | 2026-03-23 | 2026-03-25 | Cart rewrite: List<CartItem> with SharedPreferences persistence via flat JSON |
 
 ---
 

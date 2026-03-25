@@ -417,6 +417,21 @@ killall dart
 
 ---
 
+## Cart Issues
+
+### Problem: Cart shows empty after adding items
+
+**Cause:** The old CartProvider used a nested `EquipmentItem` object inside the cart item. When serializing to/from SharedPreferences, the deeply nested `EquipmentItem.fromJson()` would fail silently on missing or changed fields, causing all cart items to be silently dropped on deserialization. This resulted in the cart appearing empty after app restart even though items were added.
+
+**Solution:**
+The cart was rewritten (2026-03-25) with a flat `CartItem` model that contains only the fields needed for cart display and calculation (`equipmentId`, `name`, `brand`, `imageUrl`, `unitPrice`, `mrp`, `isRental`, `rentalMonths`, `quantity`). The flat model serializes cleanly to/from JSON without nested object dependencies. `CartItem.fromJson()` uses safe defaults for all fields, so corrupt or partial JSON entries are handled gracefully instead of throwing.
+
+**Key files:**
+- `lib/models/models.dart` -- `CartItem` class
+- `lib/providers/cart_provider.dart` -- `CartProvider` with `List<CartItem>` and index-based operations
+
+---
+
 ## Test Failures
 
 ### Problem: 3 pre-existing widget test failures in `my_care_widgets_test.dart`

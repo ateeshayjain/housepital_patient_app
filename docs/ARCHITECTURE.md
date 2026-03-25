@@ -254,7 +254,7 @@ Six `ChangeNotifierProvider` instances initialized in `main.dart`:
 | `AuthProvider`        | Login, OTP, session            | AuthState, user profile, Firebase token         |
 | `AppProvider`         | Global app state               | Current patient, dashboard data, locale          |
 | `BillingProvider`     | Billing + payments             | Billing summary, invoices, EMI plans, transactions |
-| `CartProvider`        | Shopping cart                  | Cart items, saved-for-later items (SharedPreferences persisted) |
+| `CartProvider`        | Shopping cart                  | List<CartItem> with index-based ops, SharedPreferences persistence. Flat CartItem model (no nested EquipmentItem). |
 | `MyCareProvider`      | Active services hub            | Active services list, service detail, staff      |
 | `MedicationProvider`  | Medication management          | Medication list, logs, stock, reminders          |
 
