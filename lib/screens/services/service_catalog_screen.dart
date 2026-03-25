@@ -1981,11 +1981,30 @@ class _EquipmentItemCard extends StatelessWidget {
       ),
       builder: (_) => _EquipmentDetailSheet(item: item, icon: icon),
     );
-    // Navigate AFTER bottom sheet is fully closed, using parent context
+    // Handle result AFTER bottom sheet is fully closed, using parent context
     if (result != null && context.mounted) {
-      final route = result['route'] as String;
-      debugPrint('Equipment sheet result: route=$route, args=${result['args']}');
-      Navigator.of(context).pushNamed(route, arguments: result['args']);
+      if (result['action'] == 'added_to_cart') {
+        final itemName = result['itemName'] as String;
+        final isRental = result['isRental'] == true;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text('$itemName ${isRental ? "rental " : ""}added to cart'),
+              backgroundColor: HousepitalColors.success,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'View Cart',
+                textColor: Colors.white,
+                onPressed: () => Navigator.of(context).pushNamed('/cart'),
+              ),
+            ),
+          );
+      } else if (result.containsKey('route')) {
+        final route = result['route'] as String;
+        Navigator.of(context).pushNamed(route, arguments: result['args']);
+      }
     }
   }
 }
@@ -2569,27 +2588,14 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       },
                     });
                   } else {
-                    // Buy flow → add to cart
+                    // Buy flow → add to cart, then pop with result
                     final cart = Provider.of<CartProvider>(context, listen: false);
-                    cart.addItem(item, isRental: false, rentalMonths: 1);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Text('${item.name} added to cart'),
-                          backgroundColor: HousepitalColors.success,
-                          duration: const Duration(seconds: 3),
-                          behavior: SnackBarBehavior.floating,
-                          action: SnackBarAction(
-                            label: 'VIEW CART',
-                            textColor: Colors.white,
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/cart');
-                            },
-                          ),
-                        ),
-                      );
+                    cart.addItem(item, isRental: _isRental, rentalMonths: _isRental ? _rentalMonths : 1);
+                    Navigator.of(context).pop<Map<String, dynamic>>({
+                      'action': 'added_to_cart',
+                      'itemName': item.name,
+                      'isRental': _isRental,
+                    });
                   }
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
