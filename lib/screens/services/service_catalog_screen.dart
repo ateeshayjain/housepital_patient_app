@@ -1984,6 +1984,7 @@ class _EquipmentItemCard extends StatelessWidget {
     // Navigate AFTER bottom sheet is fully closed, using parent context
     if (result != null && context.mounted) {
       final route = result['route'] as String;
+      debugPrint('Equipment sheet result: route=$route, args=${result['args']}');
       Navigator.of(context).pushNamed(route, arguments: result['args']);
     }
   }
@@ -2370,9 +2371,12 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       ),
                       Text(
                         _isRental
-                            ? DateHelper.formatCurrency(
-                                item.price!.toInt())
-                            : '${DateHelper.formatCurrency(item.rentalPrice!.toInt())}/month',
+                            ? (item.price != null
+                                ? DateHelper.formatCurrency(item.price!.toInt())
+                                : 'On request')
+                            : (item.rentalPrice != null
+                                ? '${DateHelper.formatCurrency(item.rentalPrice!.toInt())}/month'
+                                : 'On request'),
                         style: const TextStyle(
                           fontSize: 13,
                           color: HousepitalColors.greyLight,
@@ -2482,8 +2486,10 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                       style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w600)),
                   Text(
-                    DateHelper.formatCurrency(
-                        (item.rentalPrice! * _rentalMonths).toInt()),
+                    item.rentalPrice != null
+                        ? DateHelper.formatCurrency(
+                            (item.rentalPrice! * _rentalMonths).toInt())
+                        : 'On request',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
