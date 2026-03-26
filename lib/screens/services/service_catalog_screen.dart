@@ -1989,14 +1989,21 @@ class _EquipmentItemCard extends StatelessWidget {
                   child: item.imageUrl != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(14),
-                          child: CachedNetworkImage(
-                            imageUrl: item.imageUrl!,
-                            fit: BoxFit.contain,
-                            placeholder: (_, __) => Icon(icon,
-                                color: HousepitalColors.orange, size: 32),
-                            errorWidget: (_, __, ___) => Icon(icon,
-                                color: HousepitalColors.orange, size: 32),
-                          ),
+                          child: item.imageUrl!.startsWith('assets/')
+                              ? Image.asset(
+                                  item.imageUrl!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => Icon(icon,
+                                      color: HousepitalColors.orange, size: 32),
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: item.imageUrl!,
+                                  fit: BoxFit.contain,
+                                  placeholder: (_, __) => Icon(icon,
+                                      color: HousepitalColors.orange, size: 32),
+                                  errorWidget: (_, __, ___) => Icon(icon,
+                                      color: HousepitalColors.orange, size: 32),
+                                ),
                         )
                       : Icon(icon,
                           color: HousepitalColors.orange, size: 32),

@@ -442,21 +442,31 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               onTap: () => _openFullScreenImage(index),
               child: Container(
                 color: HousepitalColors.background,
-                child: CachedNetworkImage(
-                  imageUrl: images[index],
-                  fit: BoxFit.contain,
-                  placeholder: (_, __) => const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: HousepitalColors.orange,
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Icon(
-                    _equipmentIcon,
-                    size: 56,
-                    color: HousepitalColors.orange,
-                  ),
-                ),
+                child: images[index].startsWith('assets/')
+                    ? Image.asset(
+                        images[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Icon(
+                          _equipmentIcon,
+                          size: 56,
+                          color: HousepitalColors.orange,
+                        ),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: images[index],
+                        fit: BoxFit.contain,
+                        placeholder: (_, __) => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: HousepitalColors.orange,
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Icon(
+                          _equipmentIcon,
+                          size: 56,
+                          color: HousepitalColors.orange,
+                        ),
+                      ),
               ),
             );
           },
@@ -1889,18 +1899,28 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
             minScale: 1.0,
             maxScale: 4.0,
             child: Center(
-              child: CachedNetworkImage(
-                imageUrl: widget.images[index],
-                fit: BoxFit.contain,
-                placeholder: (_, __) => const CircularProgressIndicator(
-                  color: HousepitalColors.orange,
-                ),
-                errorWidget: (_, __, ___) => const Icon(
-                  Icons.broken_image,
-                  size: 64,
-                  color: Colors.white54,
-                ),
-              ),
+              child: widget.images[index].startsWith('assets/')
+                  ? Image.asset(
+                      widget.images[index],
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: Colors.white54,
+                      ),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: widget.images[index],
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => const CircularProgressIndicator(
+                        color: HousepitalColors.orange,
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: Colors.white54,
+                      ),
+                    ),
             ),
           );
         },

@@ -64,6 +64,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/products/
     - assets/i18n/
     - assets/equipment_catalog.json
     - assets/lab_tests_catalog.json

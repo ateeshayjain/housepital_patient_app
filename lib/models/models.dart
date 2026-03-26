@@ -1007,6 +1007,7 @@ class EquipmentItem {
   final double? mrp;
   final String? useCase;
 
+
   EquipmentItem({
     required this.id,
     required this.name,
@@ -1030,6 +1031,7 @@ class EquipmentItem {
     this.imageUrls,
     this.mrp,
     this.useCase,
+
   });
 
   /// Legacy getter — derives type from availability flags.
@@ -1079,6 +1081,7 @@ class EquipmentItem {
         'image_urls': imageUrls,
         'mrp': mrp,
         'use_case': useCase,
+
       };
 
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
@@ -1106,6 +1109,7 @@ class EquipmentItem {
             : null,
         mrp: (json['mrp'] as num?)?.toDouble(),
         useCase: json['use_case'] as String?,
+
       );
 }
 
