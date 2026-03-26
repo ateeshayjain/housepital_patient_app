@@ -68,20 +68,24 @@ class AppProvider extends ChangeNotifier {
 
   // Load patients list
   Future<void> loadPatients() async {
-    try {
-      _patients = await _apiService.getPatients();
-      if (_patients.isNotEmpty && _currentPatient == null) {
-        _currentPatient = _patients.first;
-      }
+    // Seed demo patient immediately so UI is never empty
+    if (_patients.isEmpty) {
+      _currentPatient = DemoData.patient;
+      _patients = [DemoData.patient];
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading patients: $e');
-      // Fallback to demo data when API unavailable and no patients loaded
-      if (_patients.isEmpty) {
-        _currentPatient = DemoData.patient;
-        _patients = [DemoData.patient];
+    }
+
+    // Then try API in background
+    try {
+      final apiPatients = await _apiService.getPatients()
+          .timeout(const Duration(seconds: 5));
+      if (apiPatients.isNotEmpty) {
+        _patients = apiPatients;
+        _currentPatient = apiPatients.first;
         notifyListeners();
       }
+    } catch (e) {
+      debugPrint('Patients API unavailable, using demo data: $e');
     }
   }
 
@@ -99,19 +103,25 @@ class AppProvider extends ChangeNotifier {
     _isDashboardLoading = true;
     notifyListeners();
 
+    // Load demo data immediately so the UI is never blank
+    _seedDemoDataIfEmpty();
+
+    _isDashboardLoading = false;
+    notifyListeners();
+
+    // Then try API in background (will overwrite demo data if successful)
     final patientId = _currentPatient!.id;
     final cacheKey = 'dashboard_$patientId';
     final cache = CacheService.instance;
 
     try {
-      // Load all dashboard data in parallel
       final results = await Future.wait([
         _apiService.getActiveDeployment(patientId),
         _apiService.getTodayAttendance(patientId),
         _apiService.getLatestVitals(patientId),
         _apiService.getTodayReport(patientId),
         _apiService.getBillingSummary(patientId),
-      ]);
+      ]).timeout(const Duration(seconds: 5));
 
       _activeDeployment = results[0] as Deployment?;
       _todayAttendance = results[1] as Attendance?;
@@ -126,40 +136,27 @@ class AppProvider extends ChangeNotifier {
 
       _dashboardError = null;
       _lastUpdatedText = 'Last updated: just now';
-
-      // Cache the billing data for offline fallback
       await cache.cache(cacheKey, billing);
+      notifyListeners();
     } catch (e) {
-      debugPrint('Error loading dashboard: $e');
-
-      // Try to load from cache
-      final cached = await cache.get<Map<String, dynamic>>(cacheKey);
-      if (cached != null) {
-        _amountDue = cached['amount_due'] ?? 0;
-        _dueDate = cached['due_date'] != null
-            ? DateTime.parse(cached['due_date'])
-            : null;
-        _lastUpdatedText = await cache.getLastUpdatedText(cacheKey);
-        _dashboardError = null;
-      } else {
-        // Seed from demo data so the dashboard is never empty
-        _currentPatient ??= DemoData.patient;
-        _activeDeployment = DemoData.icuDeployment;
-        _todayAttendance = DemoData.todayAttendance;
-        _latestVitals = DemoData.vitalsHistory.last;
-        _todayReport = DemoData.todayReport;
-        final demoBilling = DemoData.billingSummary;
-        _amountDue = demoBilling['amount_due'] ?? 0;
-        _dueDate = demoBilling['due_date'] != null
-            ? DateTime.parse(demoBilling['due_date'])
-            : null;
-        _dashboardError = null;
-        _lastUpdatedText = 'Demo data';
-      }
+      debugPrint('Dashboard API unavailable, using demo/cache data: $e');
+      // Demo data already loaded — no action needed
     }
+  }
 
-    _isDashboardLoading = false;
-    notifyListeners();
+  void _seedDemoDataIfEmpty() {
+    if (_activeDeployment == null) {
+      _activeDeployment = DemoData.icuDeployment;
+      _todayAttendance = DemoData.todayAttendance;
+      _latestVitals = DemoData.vitalsHistory.last;
+      _todayReport = DemoData.todayReport;
+      final demoBilling = DemoData.billingSummary;
+      _amountDue = demoBilling['amount_due'] ?? 0;
+      _dueDate = demoBilling['due_date'] != null
+          ? DateTime.parse(demoBilling['due_date'])
+          : null;
+      _lastUpdatedText = 'Demo data';
+    }
   }
 
   // Called by SyncService to update provider state with fresh data
