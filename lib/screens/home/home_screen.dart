@@ -257,12 +257,14 @@ class _HomeScreenState extends State<HomeScreen> {
         subtitle: 'Trusted by 5,000+ families in Delhi NCR',
         gradientColors: [const Color(0xFFFF8C00), const Color(0xFFFF6B35)],
         icon: Icons.home_filled,
+        imagePath: 'assets/images/branding/hero_care.jpg',
       ),
       _BannerSlide(
         title: '24/7 ICU Setup\nat Home',
         subtitle: 'Critical care nursing & medical equipment',
         gradientColors: [const Color(0xFF1565C0), const Color(0xFF42A5F5)],
         icon: Icons.monitor_heart,
+        imagePath: 'assets/images/branding/hero_nurse.jpg',
       ),
       _BannerSlide(
         title: 'Free Health\nAssessment',
@@ -274,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MainShell.switchToTab(2);
           ServiceCatalogScreen.switchToSubTab(0);
         },
+        imagePath: 'assets/images/branding/hero_family.jpg',
       ),
     ];
 
@@ -294,11 +297,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: slide.gradientColors,
-                    ),
+                    image: slide.imagePath != null
+                        ? DecorationImage(
+                            image: AssetImage(slide.imagePath!),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withValues(alpha: 0.45),
+                              BlendMode.darken,
+                            ),
+                          )
+                        : null,
+                    gradient: slide.imagePath == null
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: slide.gradientColors,
+                          )
+                        : null,
                     boxShadow: [
                       BoxShadow(
                         color: slide.gradientColors.first.withValues(alpha: 0.3),
@@ -1583,6 +1598,7 @@ class _BannerSlide {
   final IconData icon;
   final String? ctaText;
   final VoidCallback? onCtaTap;
+  final String? imagePath;
 
   _BannerSlide({
     required this.title,
@@ -1591,6 +1607,7 @@ class _BannerSlide {
     required this.icon,
     this.ctaText,
     this.onCtaTap,
+    this.imagePath,
   });
 }
 
