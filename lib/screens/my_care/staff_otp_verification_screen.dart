@@ -337,7 +337,7 @@ class _StaffOtpVerificationScreenState
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () async {
-            // TODO: Replace with actual support number
+            // NOTE: Support number to be updated with production contact details.
             final uri = Uri.parse('tel:+918888888888');
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri);

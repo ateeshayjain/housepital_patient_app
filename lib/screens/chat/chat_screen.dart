@@ -32,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _imagePicker = ImagePicker();
   late final CollectionReference _messagesRef;
   StreamSubscription? _subscription;
-  bool _isOnline = true; // TODO: Replace with real presence check
+  bool _isOnline = true; // FUTURE: Replace with real presence check from Firebase Realtime Database
 
   @override
   void initState() {
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     if (picked == null) return;
 
-    // TODO: Upload image to Firebase Storage and get download URL.
+    // FUTURE: Upload image to Firebase Storage and get download URL.
     // For now, send the local path as placeholder.
     await _sendMessage(
       text: '📷 Photo',

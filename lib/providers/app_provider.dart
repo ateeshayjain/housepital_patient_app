@@ -23,6 +23,9 @@ class AppProvider extends ChangeNotifier {
   // Language
   Locale _locale = const Locale('en');
 
+  // Profile photo
+  String? _profilePhotoPath;
+
   // Billing
   int _amountDue = 0;
   DateTime? _dueDate;
@@ -32,6 +35,7 @@ class AppProvider extends ChangeNotifier {
 
   AppProvider(this._apiService) {
     _loadLanguage();
+    _loadProfilePhoto();
   }
 
   String? get lastUpdatedText => _lastUpdatedText;
@@ -48,6 +52,7 @@ class AppProvider extends ChangeNotifier {
   DailyReport? get todayReport => _todayReport;
   bool get isDashboardLoading => _isDashboardLoading;
   Locale get locale => _locale;
+  String? get profilePhotoPath => _profilePhotoPath;
   int get amountDue => _amountDue;
   DateTime? get dueDate => _dueDate;
 
@@ -64,6 +69,42 @@ class AppProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('preferred_language', languageCode);
     notifyListeners();
+  }
+
+  // Profile photo
+  Future<void> _loadProfilePhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    _profilePhotoPath = prefs.getString('profile_photo_path');
+    notifyListeners();
+  }
+
+  Future<void> setProfilePhotoPath(String path) async {
+    _profilePhotoPath = path;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_photo_path', path);
+    notifyListeners();
+  }
+
+  // Notification preferences
+  Future<Map<String, bool>> getNotificationPreferences(
+    List<Map<String, dynamic>> toggleablePrefs,
+    List<Map<String, dynamic>> forcedPrefs,
+  ) async {
+    final sp = await SharedPreferences.getInstance();
+    final prefs = <String, bool>{};
+    for (final pref in toggleablePrefs) {
+      prefs[pref['key'] as String] =
+          sp.getBool(pref['key'] as String) ?? (pref['defaultValue'] as bool);
+    }
+    for (final pref in forcedPrefs) {
+      prefs[pref['key'] as String] = true;
+    }
+    return prefs;
+  }
+
+  Future<void> setNotificationPreference(String key, bool value) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setBool(key, value);
   }
 
   // Load patients list

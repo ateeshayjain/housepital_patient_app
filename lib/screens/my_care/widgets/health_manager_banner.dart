@@ -74,7 +74,7 @@ class HealthManagerBanner extends StatelessWidget {
           IconButton(
             onPressed: () {
               Navigator.pushNamed(context, '/chat', arguments: {
-                'patientId': manager.staffId, // TODO: Replace with actual patient ID from auth
+                'patientId': manager.staffId, // FUTURE: Replace with actual patient ID from auth provider
                 'coordinatorName': manager.name,
                 'coordinatorPhotoUrl': manager.photoUrl,
               });

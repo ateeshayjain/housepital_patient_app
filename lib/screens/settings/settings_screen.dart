@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -26,8 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadProfilePhoto() async {
-    final prefs = await SharedPreferences.getInstance();
-    final path = prefs.getString('profile_photo_path');
+    final path = context.read<AppProvider>().profilePhotoPath;
     if (path != null && File(path).existsSync() && mounted) {
       setState(() => _profilePhotoPath = path);
     }
@@ -66,8 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_photo_path', image.path);
+    await context.read<AppProvider>().setProfilePhotoPath(image.path);
     if (mounted) {
       setState(() => _profilePhotoPath = image.path);
     }

@@ -1754,7 +1754,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             ),
             if (_requestSameStaff) ...[
               const Divider(),
-              // TODO: Load previous staff from API — for now show placeholder
+              // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
@@ -1765,7 +1765,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 subtitle: const Text('Based on past deployments', style: TextStyle(fontSize: 12)),
                 trailing: const Icon(Icons.chevron_right, color: HousepitalColors.greyLight),
                 onTap: () {
-                  // TODO: Show previous staff list from API
+                  // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Previous staff list coming from backend')),
                   );

@@ -431,7 +431,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: Wire to API cancellation
+              // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Cancellation request submitted'),

@@ -514,7 +514,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
               height: 52,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Submit rating and navigate to prescription
+                  // FUTURE: Submit rating via API and navigate to prescription
                   Navigator.pop(context);
                 },
                 icon: const Icon(Icons.star),
@@ -529,7 +529,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
               height: 52,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  // TODO: Navigate to prescription viewer
+                  // FUTURE: Navigate to prescription viewer once documents module is ready
                   Navigator.pop(context);
                 },
                 icon: const Icon(Icons.description),

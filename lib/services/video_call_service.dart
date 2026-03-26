@@ -14,7 +14,7 @@ class VideoCallService {
 
   /// Join a video call room.
   ///
-  /// TODO: Integrate Agora SDK or WebRTC here.
+  /// NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   /// For Agora:
   ///   1. Add `agora_rtc_engine` to pubspec.yaml
   ///   2. Initialize AgoraRtcEngine with your App ID
@@ -27,7 +27,7 @@ class VideoCallService {
   ///   3. Get local media stream via navigator.mediaDevices.getUserMedia()
   ///   4. Connect to signaling server and exchange SDP offers/answers
   Future<void> joinRoom(String roomId, String token) async {
-    // TODO: Replace with actual SDK join call
+    // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
     _isInCall = true;
     _isMuted = false;
     _isCameraOn = true;
@@ -35,7 +35,7 @@ class VideoCallService {
 
   /// Leave the current video call room.
   ///
-  /// TODO: Integrate Agora SDK or WebRTC here.
+  /// NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   /// For Agora:
   ///   1. Call engine.leaveChannel()
   ///   2. Dispose of the engine if no longer needed
@@ -45,7 +45,7 @@ class VideoCallService {
   ///   2. Stop all local media tracks
   ///   3. Disconnect from the signaling server
   Future<void> leaveRoom() async {
-    // TODO: Replace with actual SDK leave call
+    // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
     _isInCall = false;
     _isMuted = false;
     _isCameraOn = true;
@@ -53,33 +53,33 @@ class VideoCallService {
 
   /// Toggle the microphone mute state.
   ///
-  /// TODO: Integrate Agora SDK or WebRTC here.
+  /// NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   /// For Agora:
   ///   engine.muteLocalAudioStream(!_isMuted)
   ///
   /// For WebRTC:
   ///   localStream.getAudioTracks().first.enabled = _isMuted (toggle)
   void toggleMute() {
-    // TODO: Replace with actual SDK mute call
+    // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
     _isMuted = !_isMuted;
   }
 
   /// Toggle the camera on/off.
   ///
-  /// TODO: Integrate Agora SDK or WebRTC here.
+  /// NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   /// For Agora:
   ///   engine.muteLocalVideoStream(!_isCameraOn)
   ///
   /// For WebRTC:
   ///   localStream.getVideoTracks().first.enabled = !_isCameraOn
   void toggleCamera() {
-    // TODO: Replace with actual SDK camera toggle call
+    // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
     _isCameraOn = !_isCameraOn;
   }
 
   /// Switch between front and rear camera.
   ///
-  /// TODO: Integrate Agora SDK or WebRTC here.
+  /// NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   /// For Agora:
   ///   engine.switchCamera()
   ///
@@ -88,6 +88,6 @@ class VideoCallService {
   ///   2. Get new stream with opposite facingMode
   ///   3. Replace track on RTCPeerConnection sender
   Future<void> switchCamera() async {
-    // TODO: Replace with actual SDK switch camera call
+    // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
   }
 }

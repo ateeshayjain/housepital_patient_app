@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../providers/app_provider.dart';
 
 class _NotifPref {
   final String key;
@@ -98,15 +99,14 @@ class _NotificationPreferencesScreenState
   }
 
   Future<void> _loadPreferences() async {
-    final sp = await SharedPreferences.getInstance();
-    final prefs = <String, bool>{};
-
-    for (final pref in _toggleablePrefs) {
-      prefs[pref.key] = sp.getBool(pref.key) ?? pref.defaultValue;
-    }
-    for (final pref in _forcedPrefs) {
-      prefs[pref.key] = true; // always ON
-    }
+    final appProvider = context.read<AppProvider>();
+    final toggleable = _toggleablePrefs
+        .map((p) => {'key': p.key, 'defaultValue': p.defaultValue})
+        .toList();
+    final forced = _forcedPrefs
+        .map((p) => {'key': p.key, 'defaultValue': true})
+        .toList();
+    final prefs = await appProvider.getNotificationPreferences(toggleable, forced);
 
     setState(() {
       _prefs.addAll(prefs);
@@ -116,8 +116,7 @@ class _NotificationPreferencesScreenState
 
   Future<void> _updatePref(String key, bool value) async {
     setState(() => _prefs[key] = value);
-    final sp = await SharedPreferences.getInstance();
-    await sp.setBool(key, value);
+    await context.read<AppProvider>().setNotificationPreference(key, value);
   }
 
   @override

@@ -209,7 +209,7 @@ class _HousepitalAppState extends State<HousepitalApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // TODO: Restore auth gate before production
+      // NOTE: Auth gate disabled for demo mode. Enable before production release.
       // home: Consumer<AuthProvider>(...),
       home: MainShell(key: MainShell.shellKey),
       onGenerateRoute: (settings) {

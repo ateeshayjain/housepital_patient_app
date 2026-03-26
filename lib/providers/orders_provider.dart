@@ -69,6 +69,19 @@ class OrdersProvider extends ChangeNotifier {
     }
   }
 
+  /// Cancel assessment
+  void cancelAssessment(String assessmentId) {
+    final index = _assessments.indexWhere((a) => a['id'] == assessmentId);
+    if (index >= 0) {
+      _assessments[index] = {
+        ..._assessments[index],
+        'status': 'cancelled',
+        'cancelledAt': DateTime.now().toIso8601String(),
+      };
+      _persistAndNotify();
+    }
+  }
+
   /// Cancel order
   void cancelOrder(String orderId, String reason) {
     final index = _orders.indexWhere((o) => o['id'] == orderId);

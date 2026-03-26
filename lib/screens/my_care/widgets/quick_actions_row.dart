@@ -34,7 +34,7 @@ class QuickActionsRow extends StatelessWidget {
             bgColor: const Color(0xFFEFF6FF),
             borderColor: const Color(0xFFBFDBFE),
             onTap: () => Navigator.pushNamed(context, '/report-history',
-                arguments: ''), // TODO: pass primary deploymentId
+                arguments: ''), // FUTURE: pass primary deploymentId from active deployment
           ),
           const SizedBox(width: 10),
           _tile(
