@@ -1112,6 +1112,43 @@ class _ManpowerTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        // Visual category hero header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFFF8C00), Color(0xFFFF6B35)],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Professional Care at Home',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Background-verified nurses, caretakers & specialists',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         _SearchBar(
           searchQuery: searchQuery,
           controller: searchController,
@@ -1153,8 +1190,26 @@ class _StaffRoleCard extends StatelessWidget {
     required this.onNavigate,
   });
 
+  Color get _roleColor {
+    switch (role.title) {
+      case 'Nurse':
+        return HousepitalColors.serviceNursing;
+      case 'Caretaker':
+        return HousepitalColors.serviceCaretaker;
+      case 'Japa Maid':
+      case 'Nanny':
+        return HousepitalColors.serviceJapaNanny;
+      case 'Physiotherapist':
+        return HousepitalColors.servicePhysio;
+      default:
+        return HousepitalColors.serviceNursing;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final color = _roleColor;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
@@ -1167,80 +1222,100 @@ class _StaffRoleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.orangeLight,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(role.icon,
-                      color: HousepitalColors.orange, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        role.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        role.subtitle,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: HousepitalColors.greyLight,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
+                      child: Icon(role.icon, color: color, size: 28),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.star,
-                              size: 14, color: HousepitalColors.orange),
-                          const SizedBox(width: 3),
                           Text(
-                            '${role.rating}',
+                            role.title,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: HousepitalColors.grey,
+                              color: HousepitalColors.black,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(height: 2),
                           Text(
-                            '(${role.reviewCount})',
+                            role.subtitle,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               color: HousepitalColors.greyLight,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(width: 12),
-                          const Icon(Icons.schedule,
-                              size: 14,
-                              color: HousepitalColors.greyLight),
-                          const SizedBox(width: 3),
-                          Text(
-                            role.availableShifts.join(' / '),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: HousepitalColors.greyLight,
-                            ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.star,
+                                  size: 14, color: HousepitalColors.orange),
+                              const SizedBox(width: 3),
+                              Text(
+                                '${role.rating}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: HousepitalColors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${role.reviewCount} reviews)',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: HousepitalColors.greyLight,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: HousepitalColors.greyLight, size: 22),
+                  ],
                 ),
-                const Icon(Icons.chevron_right,
-                    color: HousepitalColors.greyLight, size: 22),
+                const SizedBox(height: 10),
+                // Shift chips
+                Row(
+                  children: role.availableShifts.map((shift) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: color.withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          shift,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
@@ -1651,9 +1726,46 @@ class _EquipmentTabState extends State<_EquipmentTab> {
 
     return Column(
       children: [
-        // Search
+        // Visual category hero header
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF059669), Color(0xFF34D399)],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Medical Equipment & Consumables',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Buy or rent \u2014 delivered in 24 hours',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Search
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _searchQuery = v),
@@ -2865,6 +2977,43 @@ class _ConsultationsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
+        // Visual category hero header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Expert Medical Consultations',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Doctor visits, mental health & therapy',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         _SearchBar(
           searchQuery: searchQuery,
           controller: searchController,

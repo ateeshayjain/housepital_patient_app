@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
 import '../../config/theme.dart';
@@ -13,6 +14,7 @@ import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
@@ -30,6 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Duration _onDutySince = Duration.zero;
   List<PaymentReminder> _paymentReminders = [];
 
+  // Banner carousel
+  final PageController _bannerController = PageController();
+  Timer? _bannerTimer;
+  int _currentBannerPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     _startDutyTimer();
     _loadPaymentReminders();
+    _startBannerAutoScroll();
   }
 
   Future<void> _loadPaymentReminders() async {
@@ -61,9 +69,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _startBannerAutoScroll() {
+    _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_bannerController.hasClients) return;
+      final nextPage = (_currentBannerPage + 1) % 3;
+      _bannerController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
   @override
   void dispose() {
     _dutyTimer?.cancel();
+    _bannerTimer?.cancel();
+    _bannerController.dispose();
     super.dispose();
   }
 
@@ -83,45 +105,20 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, l, app),
+                _buildHeroBanner(context),
+                _buildGreeting(context, app),
                 if (app.isDashboardLoading)
                   const Padding(
                     padding: EdgeInsets.all(48),
                     child: LoadingWidget(),
                   )
                 else ...[
-                  _buildVitalsHighlights(context, l, app),
+                  _buildHealthTeamCard(context, l, app),
                   if (app.activeDeployment != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: InkWell(
-                        onTap: () => MainShell.switchToTab(1),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF7ED),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFFDE0C0)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.favorite, color: HousepitalColors.orange, size: 20),
-                              const SizedBox(width: 8),
-                              Text(l.t('view_my_care'),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: HousepitalColors.orange)),
-                              const Spacer(),
-                              const Icon(Icons.arrow_forward_ios,
-                                  size: 14, color: HousepitalColors.orange),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  _buildStaffSection(context, l, app),
+                    _buildActiveServicesQuickView(context, l, app),
+                  _buildVitalsHighlights(context, l, app),
+                  _buildQuickActionsGrid(context, l),
                   _buildDailyReportSection(context, l, app),
-                  _buildServicesSection(context, l),
                   _buildPaymentBanner(context, l, app),
                   const SizedBox(height: 16),
                   SOSButton(onTap: () => Navigator.pushNamed(context, '/sos')),
@@ -157,10 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                if (app.currentPatient != null)
+                if (app.currentPatient != null && app.patients.length > 1)
                   Semantics(
                     label: 'Switch patient. Current: ${app.currentPatient!.name}',
-                    button: app.patients.length > 1,
+                    button: true,
                     child: InkWell(
                       onTap: () => _showPatientSwitcher(context, app),
                       borderRadius: BorderRadius.circular(8),
@@ -177,11 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: HousepitalColors.grey,
                               ),
                             ),
-                            if (app.patients.length > 1) ...[
-                              const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down,
-                                  color: HousepitalColors.grey, size: 20),
-                            ],
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_drop_down,
+                                color: HousepitalColors.grey, size: 20),
                           ],
                         ),
                       ),
@@ -190,7 +185,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // Search icon
           Semantics(
             label: 'Search',
             button: true,
@@ -199,7 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.pushNamed(context, '/search'),
             ),
           ),
-          // Cart icon with badge
           Consumer<CartProvider>(
             builder: (_, cart, __) => Semantics(
               label: 'Cart${cart.itemCount > 0 ? ", ${cart.itemCount} items" : ""}',
@@ -224,12 +217,187 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.pushNamed(context, '/notifications'),
             ),
           ),
-          Semantics(
-            label: 'Settings',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.person_outline),
-              onPressed: () => Navigator.pushNamed(context, '/settings'),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hero Banner Carousel
+  // ---------------------------------------------------------------------------
+  Widget _buildHeroBanner(BuildContext context) {
+    final slides = [
+      _BannerSlide(
+        title: 'Hospital-like Expertise,\nHome-like Care',
+        subtitle: 'Trusted by 5,000+ families in Delhi NCR',
+        gradientColors: [const Color(0xFFFF8C00), const Color(0xFFFF6B35)],
+        icon: Icons.home_filled,
+      ),
+      _BannerSlide(
+        title: '24/7 ICU Setup\nat Home',
+        subtitle: 'Critical care nursing & medical equipment',
+        gradientColors: [const Color(0xFF1565C0), const Color(0xFF42A5F5)],
+        icon: Icons.monitor_heart,
+      ),
+      _BannerSlide(
+        title: 'Free Health\nAssessment',
+        subtitle: 'Book now — no obligations',
+        gradientColors: [const Color(0xFF2E7D32), const Color(0xFF66BB6A)],
+        icon: Icons.health_and_safety,
+        ctaText: 'Book Now',
+        onCtaTap: () {
+          MainShell.switchToTab(2);
+          ServiceCatalogScreen.switchToSubTab(0);
+        },
+      ),
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _bannerController,
+            onPageChanged: (index) {
+              setState(() => _currentBannerPage = index);
+            },
+            itemCount: slides.length,
+            itemBuilder: (context, index) {
+              final slide = slides[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: slide.gradientColors,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: slide.gradientColors.first.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                slide.title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                slide.subtitle,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                              if (slide.ctaText != null) ...[
+                                const SizedBox(height: 10),
+                                GestureDetector(
+                                  onTap: slide.onCtaTap,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      slide.ctaText!,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: slide.gradientColors.first,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          slide.icon,
+                          size: 56,
+                          color: Colors.white.withValues(alpha: 0.25),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Dot indicators
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(slides.length, (index) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: _currentBannerPage == index ? 20 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: _currentBannerPage == index
+                    ? HousepitalColors.orange
+                    : HousepitalColors.divider,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Personal Greeting
+  // ---------------------------------------------------------------------------
+  Widget _buildGreeting(BuildContext context, AppProvider app) {
+    final patientName = app.currentPatient?.name ?? 'there';
+    final firstName = patientName.split(' ').first;
+    final hasActiveService = app.activeDeployment != null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hi $firstName!',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: HousepitalColors.orangeText,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            hasActiveService
+                ? "Here's your care summary"
+                : 'Welcome back',
+            style: const TextStyle(
+              fontSize: 14,
+              color: HousepitalColors.greyLight,
             ),
           ),
         ],
@@ -238,11 +406,168 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Vitals — Apple Health minimal style
+  // Health Team Card
+  // ---------------------------------------------------------------------------
+  Widget _buildHealthTeamCard(
+      BuildContext context, AppLocalizations l, AppProvider app) {
+    final deployment = app.activeDeployment;
+    final patient = app.currentPatient;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: HousepitalColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.groups, color: HousepitalColors.orange, size: 22),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Your Health Team',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: HousepitalColors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (deployment != null) ...[
+                // Health Manager row
+                _TeamMemberRow(
+                  role: 'Health Manager',
+                  name: 'Housepital Care Team',
+                  icon: Icons.support_agent,
+                  color: HousepitalColors.orange,
+                  phone: AppConstants.supportPhone,
+                ),
+                const SizedBox(height: 10),
+                // Assigned staff row
+                _TeamMemberRow(
+                  role: deployment.staffRole ?? 'Staff',
+                  name: deployment.staffName ?? 'Assigned',
+                  icon: Icons.medical_services,
+                  color: HousepitalColors.serviceNursing,
+                  phone: AppConstants.supportPhone,
+                ),
+                if (patient?.doctorName != null &&
+                    patient!.doctorName!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _TeamMemberRow(
+                    role: 'Doctor',
+                    name: patient.doctorName!,
+                    icon: Icons.medical_information,
+                    color: HousepitalColors.servicePhysio,
+                    phone: patient.doctorPhone,
+                  ),
+                ],
+              ] else
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: HousepitalColors.greyLight, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Your care team will appear here once services are active',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: HousepitalColors.greyLight,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Active Services Quick View
+  // ---------------------------------------------------------------------------
+  Widget _buildActiveServicesQuickView(
+      BuildContext context, AppLocalizations l, AppProvider app) {
+    final deployment = app.activeDeployment;
+    if (deployment == null) return const SizedBox.shrink();
+
+    final attendance = app.todayAttendance;
+    final status = attendance?.status ?? 'waiting';
+    final statusColor = AttendanceHelper.getStatusColor(status);
+    final daysRemaining = deployment.endDate != null
+        ? deployment.endDate!.difference(DateTime.now()).inDays
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 4),
+        SectionHeader(
+          title: 'Active Services',
+          actionText: l.t('see_all'),
+          onAction: () => MainShell.switchToTab(1),
+        ),
+        SizedBox(
+          height: 110,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _ActiveServiceCard(
+                serviceName: deployment.staffRole ?? 'Care Service',
+                staffName: deployment.staffName ?? 'Assigned',
+                daysRemaining: daysRemaining,
+                isCheckedIn: status == 'checked_in',
+                onTap: () => MainShell.switchToTab(1),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Vitals with color-coded status dots
   // ---------------------------------------------------------------------------
   Widget _buildVitalsHighlights(
       BuildContext context, AppLocalizations l, AppProvider app) {
     final vitals = app.latestVitals;
+
+    Color _vitalStatusColor(String type, double? value) {
+      if (value == null) return HousepitalColors.greyLight;
+      final zone = classifyVital(type, value);
+      switch (zone) {
+        case 'green':
+          return HousepitalColors.vitalNormal;
+        case 'yellow':
+          return HousepitalColors.vitalBorderline;
+        case 'red':
+          return HousepitalColors.vitalAlert;
+        default:
+          return HousepitalColors.greyLight;
+      }
+    }
 
     return Column(
       children: [
@@ -253,7 +578,6 @@ class _HomeScreenState extends State<HomeScreen> {
           onAction: () => Navigator.pushNamed(context, '/vitals'),
         ),
         const SizedBox(height: 4),
-        // Horizontal scrolling vitals row — clean, minimal
         SizedBox(
           height: 72,
           child: ListView(
@@ -266,35 +590,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? '${vitals!.systolic!.toInt()}/${vitals.diastolic?.toInt() ?? ""}'
                     : '--',
                 unit: 'mmHg',
-                color: const Color(0xFFE53935),
+                color: _vitalStatusColor('bp_systolic', vitals?.systolic),
                 onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'bp'),
               ),
               _VitalPill(
                 label: 'SpO2',
                 value: vitals?.spo2?.toInt().toString() ?? '--',
                 unit: '%',
-                color: const Color(0xFF1565C0),
+                color: _vitalStatusColor('spo2', vitals?.spo2),
                 onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'spo2'),
               ),
               _VitalPill(
                 label: 'Pulse',
                 value: vitals?.pulse?.toInt().toString() ?? '--',
                 unit: 'bpm',
-                color: const Color(0xFFE53935),
+                color: _vitalStatusColor('pulse', vitals?.pulse),
                 onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'pulse'),
               ),
               _VitalPill(
                 label: 'Temp',
                 value: vitals?.temperature?.toStringAsFixed(1) ?? '--',
                 unit: '\u00B0F',
-                color: const Color(0xFFEF6C00),
+                color: _vitalStatusColor('temperature', vitals?.temperature),
                 onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'temperature'),
               ),
               _VitalPill(
                 label: 'Sugar',
                 value: vitals?.sugar?.toInt().toString() ?? '--',
                 unit: 'mg/dl',
-                color: const Color(0xFF7B1FA2),
+                color: _vitalStatusColor('sugar', vitals?.sugar),
                 onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'sugar'),
               ),
             ],
@@ -305,352 +629,123 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Staff Section — Redesigned with photo, verified badge, shift, quick actions
+  // Quick Actions Grid (2x3)
   // ---------------------------------------------------------------------------
-  Widget _buildStaffSection(
-      BuildContext context, AppLocalizations l, AppProvider app) {
-    final deployment = app.activeDeployment;
-    final attendance = app.todayAttendance;
-
-    if (deployment == null) return const SizedBox.shrink();
-
-    final status = attendance?.status ?? 'waiting';
-    final statusColor = AttendanceHelper.getStatusColor(status);
-    final statusIcon = AttendanceHelper.getStatusIcon(status);
-
-    String statusText;
-    switch (status) {
-      case 'checked_in':
-        statusText = l.t('attendance_checked_in', {
-          'time': attendance?.checkInTime != null
-              ? DateHelper.formatTime(attendance!.checkInTime!)
-              : ''
-        });
-        break;
-      case 'late':
-        statusText = l.t('attendance_late', {
-          'time': attendance?.checkInTime != null
-              ? DateHelper.formatTime(attendance!.checkInTime!)
-              : ''
-        });
-        break;
-      case 'absent':
-        statusText = l.t('attendance_absent');
-        break;
-      case 'on_leave':
-        statusText = l.t('attendance_on_leave',
-            {'name': attendance?.replacementName ?? ''});
-        break;
-      case 'checked_out':
-        statusText = l.t('attendance_checked_out', {
-          'time': attendance?.checkOutTime != null
-              ? DateHelper.formatTime(attendance!.checkOutTime!)
-              : ''
-        });
-        break;
-      default:
-        statusText = l.t('attendance_waiting');
-    }
-
-    // Calculate on-duty duration
-    final dutyHours = attendance?.checkInTime != null
-        ? DateTime.now().difference(attendance!.checkInTime!)
-        : Duration.zero;
-    final dutyHoursText = dutyHours.inHours > 0
-        ? '${dutyHours.inHours}h ${dutyHours.inMinutes % 60}m'
-        : '${dutyHours.inMinutes}m';
+  Widget _buildQuickActionsGrid(BuildContext context, AppLocalizations l) {
+    final actions = [
+      _QuickAction(
+        icon: Icons.medical_services,
+        label: 'Book Nurse',
+        color: HousepitalColors.serviceNursing,
+        onTap: () {
+          MainShell.switchToTab(2);
+          ServiceCatalogScreen.switchToSubTab(0);
+        },
+      ),
+      _QuickAction(
+        icon: Icons.local_shipping,
+        label: 'Book Equipment',
+        color: HousepitalColors.serviceEquipment,
+        onTap: () {
+          MainShell.switchToTab(2);
+          ServiceCatalogScreen.switchToSubTab(1);
+        },
+      ),
+      _QuickAction(
+        icon: Icons.science,
+        label: 'Lab Tests',
+        color: HousepitalColors.servicePhysio,
+        onTap: () {
+          MainShell.switchToTab(2);
+          ServiceCatalogScreen.switchToSubTab(5);
+        },
+      ),
+      _QuickAction(
+        icon: Icons.medical_information,
+        label: 'Doctor Visit',
+        color: HousepitalColors.serviceCarePackage,
+        onTap: () {
+          MainShell.switchToTab(2);
+          ServiceCatalogScreen.switchToSubTab(2);
+        },
+      ),
+      _QuickAction(
+        icon: Icons.medication,
+        label: 'Medications',
+        color: HousepitalColors.serviceJapaNanny,
+        onTap: () => Navigator.pushNamed(context, '/medications'),
+      ),
+      _QuickAction(
+        icon: Icons.emergency,
+        label: 'SOS',
+        color: HousepitalColors.error,
+        onTap: () => Navigator.pushNamed(context, '/sos'),
+      ),
+    ];
 
     return Column(
       children: [
-        const SizedBox(height: 16),
-        const SectionHeader(
-          title: 'Your Staff',
-        ),
+        const SizedBox(height: 8),
+        SectionHeader(title: l.t('book_services')),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: HousepitalCard(
-            onTap: () => Navigator.pushNamed(context, '/staff-profile',
-                arguments: deployment.staffId),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Staff info row
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: HousepitalColors.orangeLight,
-                      backgroundImage: deployment.staffPhoto != null
-                          ? NetworkImage(deployment.staffPhoto!)
-                          : null,
-                      child: deployment.staffPhoto == null
-                          ? const Icon(Icons.person,
-                              color: HousepitalColors.orange, size: 28)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  deployment.staffName ?? 'Staff',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: HousepitalColors.black,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Semantics(
-                                label: 'Verified staff',
-                                child: const Icon(Icons.verified,
-                                    color: HousepitalColors.success, size: 18),
-                              ),
-                            ],
+          child: GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.05,
+            children: actions.map((action) {
+              return Semantics(
+                label: action.label,
+                button: true,
+                child: Material(
+                  color: HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  elevation: 1,
+                  shadowColor: Colors.black12,
+                  child: InkWell(
+                    onTap: action.onTap,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: action.color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            deployment.staffRole ?? 'Caretaker',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: HousepitalColors.greyLight,
-                            ),
+                          child: Icon(action.icon,
+                              color: action.color, size: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          action.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: HousepitalColors.grey,
                           ),
-                          const SizedBox(height: 4),
-                          // Rating stars
-                          if (deployment.staffRating != null)
-                            Row(
-                              children: [
-                                ..._buildRatingStars(deployment.staffRating!),
-                                const SizedBox(width: 6),
-                                Text(
-                                  deployment.staffRating!.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: HousepitalColors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    StatusBadge(
-                      text: status.replaceAll('_', ' ').toUpperCase(),
-                      color: statusColor,
-                      icon: statusIcon,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-
-                // Status + duty info row
-                Row(
-                  children: [
-                    Icon(statusIcon, size: 16, color: statusColor),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: statusColor,
-                          fontWeight: FontWeight.w500,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    // Shift info
-                    const Icon(Icons.schedule,
-                        size: 14, color: HousepitalColors.greyLight),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getShiftLabel(deployment.shiftType),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: HousepitalColors.greyLight,
-                      ),
-                    ),
-                    if (attendance?.checkInTime != null &&
-                        status == 'checked_in') ...[
-                      const SizedBox(width: 16),
-                      const Icon(Icons.timelapse,
-                          size: 14, color: HousepitalColors.greyLight),
-                      const SizedBox(width: 4),
-                      Text(
-                        'On duty: $dutyHoursText',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: HousepitalColors.greyLight,
-                        ),
-                      ),
-                    ],
-                    const Spacer(),
-                    Text(
-                      l.t('day_count', {
-                        'current': deployment.daysSinceStart.toString(),
-                        'total': (deployment.totalDays ?? 90).toString(),
-                      }),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: HousepitalColors.greyLight,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Quick action buttons — 44pt touch targets
-                Row(
-                  children: [
-                    Expanded(
-                      child: _QuickActionButton(
-                        icon: Icons.phone,
-                        label: 'Call',
-                        semanticsLabel: 'Call ${deployment.staffName ?? "staff"}',
-                        onTap: () {
-                          // Dial Housepital support (staff phone not in model yet)
-                          launchUrl(Uri.parse('tel:${AppConstants.supportPhone}'));
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _QuickActionButton(
-                        icon: Icons.message,
-                        label: 'Message',
-                        semanticsLabel:
-                            'Message ${deployment.staffName ?? "staff"}',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RaiseConcernScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _QuickActionButton(
-                        icon: Icons.star_border,
-                        label: 'Rate',
-                        semanticsLabel:
-                            'Rate ${deployment.staffName ?? "staff"}',
-                        onTap: () {
-                          _showRatingDialog(context, deployment);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            }).toList(),
           ),
         ),
       ],
     );
   }
 
-  String _getShiftLabel(String shiftType) {
-    switch (shiftType) {
-      case '12hr_day':
-        return '8 AM - 8 PM';
-      case '12hr_night':
-        return '8 PM - 8 AM';
-      case '24hr':
-        return '24-hour shift';
-      default:
-        return shiftType;
-    }
-  }
-
-  void _showRatingDialog(BuildContext context, Deployment deployment) {
-    double selectedRating = 0;
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Rate ${deployment.staffName ?? "Staff"}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('How was your experience?'),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (i) {
-                  return IconButton(
-                    icon: Icon(
-                      i < selectedRating ? Icons.star : Icons.star_border,
-                      color: HousepitalColors.orange,
-                      size: 36,
-                    ),
-                    onPressed: () =>
-                        setDialogState(() => selectedRating = (i + 1).toDouble()),
-                  );
-                }),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: selectedRating > 0
-                  ? () {
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Thank you for your feedback!'),
-                        ),
-                      );
-                    }
-                  : null,
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildRatingStars(double rating) {
-    final List<Widget> stars = [];
-    for (int i = 1; i <= 5; i++) {
-      if (rating >= i) {
-        stars.add(const Icon(Icons.star,
-            size: 14, color: HousepitalColors.orange));
-      } else if (rating >= i - 0.5) {
-        stars.add(const Icon(Icons.star_half,
-            size: 14, color: HousepitalColors.orange));
-      } else {
-        stars.add(const Icon(Icons.star_border,
-            size: 14, color: HousepitalColors.greyLight));
-      }
-    }
-    return stars;
-  }
-
   // ---------------------------------------------------------------------------
-  // Daily Report Section — Progress ring + task list
+  // Daily Report Section
   // ---------------------------------------------------------------------------
   Widget _buildDailyReportSection(
       BuildContext context, AppLocalizations l, AppProvider app) {
@@ -682,7 +777,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Progress ring + summary
                       Row(
                         children: [
                           Semantics(
@@ -751,8 +845,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 16),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-
-                      // Task sections with checkmarks
                       ...report.sections.map((section) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Row(
@@ -791,8 +883,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       const SizedBox(height: 8),
-
-                      // View Full Report button
                       SizedBox(
                         width: double.infinity,
                         child: Semantics(
@@ -831,92 +921,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Quick Services — improved touch targets, InkWell
-  // ---------------------------------------------------------------------------
-  Widget _buildServicesSection(BuildContext context, AppLocalizations l) {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        SectionHeader(title: l.t('book_services')),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: HousepitalCard(
-            child: Row(
-              children: [
-                _serviceChip(
-                    context, Icons.people, 'Manpower', () {
-                      MainShell.switchToTab(2);
-                      ServiceCatalogScreen.switchToSubTab(0);
-                    }),
-                const SizedBox(width: 12),
-                _serviceChip(
-                    context, Icons.local_shipping, 'Equipment', () {
-                      MainShell.switchToTab(2);
-                      ServiceCatalogScreen.switchToSubTab(1);
-                    }),
-                const SizedBox(width: 12),
-                _serviceChip(
-                    context, Icons.biotech, 'Lab Tests', () {
-                      MainShell.switchToTab(2);
-                      ServiceCatalogScreen.switchToSubTab(5);
-                    }),
-                const SizedBox(width: 12),
-                _serviceChip(
-                    context, Icons.arrow_forward, l.t('see_all'), () {
-                      MainShell.switchToTab(2);
-                      ServiceCatalogScreen.switchToSubTab(0);
-                    }),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _serviceChip(
-      BuildContext context, IconData icon, String label, VoidCallback onTap) {
-    return Expanded(
-      child: Semantics(
-        label: label,
-        button: true,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 80, // >= 44pt touch target
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.orangeLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child:
-                      Icon(icon, color: HousepitalColors.orange, size: 22),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                      fontSize: 12, color: HousepitalColors.grey),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-  // Payment Reminders Section (Airtel-style)
+  // Payment Reminders
   // ---------------------------------------------------------------------------
   Widget _buildPaymentBanner(
       BuildContext context, AppLocalizations l, AppProvider app) {
@@ -929,7 +934,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Urgent reminder banner (2 days or less)
           if (urgentReminders.isNotEmpty)
             ...urgentReminders.map((r) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -1022,8 +1026,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 )),
-
-          // Upcoming payments summary (all reminders)
           if (reminders.length > urgentReminders.length) ...[
             const SizedBox(height: 4),
             GestureDetector(
@@ -1220,7 +1222,217 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // =============================================================================
-// Vital Pill — Apple Health minimal style
+// Banner Slide data
+// =============================================================================
+class _BannerSlide {
+  final String title;
+  final String subtitle;
+  final List<Color> gradientColors;
+  final IconData icon;
+  final String? ctaText;
+  final VoidCallback? onCtaTap;
+
+  _BannerSlide({
+    required this.title,
+    required this.subtitle,
+    required this.gradientColors,
+    required this.icon,
+    this.ctaText,
+    this.onCtaTap,
+  });
+}
+
+// =============================================================================
+// Quick Action data
+// =============================================================================
+class _QuickAction {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+}
+
+// =============================================================================
+// Team Member Row
+// =============================================================================
+class _TeamMemberRow extends StatelessWidget {
+  final String role;
+  final String name;
+  final IconData icon;
+  final Color color;
+  final String? phone;
+
+  const _TeamMemberRow({
+    required this.role,
+    required this.name,
+    required this.icon,
+    required this.color,
+    this.phone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: HousepitalColors.black,
+                ),
+              ),
+              Text(
+                role,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: HousepitalColors.greyLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (phone != null && phone!.isNotEmpty) ...[
+          Semantics(
+            label: 'Call $role',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.phone, size: 20),
+              color: HousepitalColors.success,
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+            ),
+          ),
+          Semantics(
+            label: 'WhatsApp $role',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.chat, size: 20),
+              color: const Color(0xFF25D366),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              onPressed: () => launchUrl(
+                Uri.parse('https://wa.me/91$phone'),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// Active Service Card
+// =============================================================================
+class _ActiveServiceCard extends StatelessWidget {
+  final String serviceName;
+  final String staffName;
+  final int? daysRemaining;
+  final bool isCheckedIn;
+  final VoidCallback onTap;
+
+  const _ActiveServiceCard({
+    required this.serviceName,
+    required this.staffName,
+    this.daysRemaining,
+    required this.isCheckedIn,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(14),
+        elevation: 1,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: 200,
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        serviceName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: HousepitalColors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: isCheckedIn
+                            ? HousepitalColors.success
+                            : HousepitalColors.greyLight,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  staffName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: HousepitalColors.greyLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                if (daysRemaining != null)
+                  Text(
+                    '$daysRemaining days remaining',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: HousepitalColors.orange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Vital Pill
 // =============================================================================
 class _VitalPill extends StatelessWidget {
   final String label;
@@ -1260,7 +1472,6 @@ class _VitalPill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Color dot
                   Container(
                     width: 8,
                     height: 8,
@@ -1320,58 +1531,7 @@ class _VitalPill extends StatelessWidget {
 }
 
 // =============================================================================
-// Quick Action Button — 44pt touch target
-// =============================================================================
-class _QuickActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String semanticsLabel;
-  final VoidCallback onTap;
-
-  const _QuickActionButton({
-    required this.icon,
-    required this.label,
-    required this.semanticsLabel,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: semanticsLabel,
-      button: true,
-      child: Material(
-        color: HousepitalColors.orangeLight,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 48, // >= 44pt
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 18, color: HousepitalColors.orangeText),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.orangeText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Progress Ring Painter — circular progress indicator
+// Progress Ring Painter
 // =============================================================================
 class _ProgressRingPainter extends CustomPainter {
   final double progress;
@@ -1391,7 +1551,6 @@ class _ProgressRingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
 
-    // Background arc
     final bgPaint = Paint()
       ..color = backgroundColor
       ..style = PaintingStyle.stroke
@@ -1400,7 +1559,6 @@ class _ProgressRingPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    // Progress arc
     final progressPaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -1410,7 +1568,7 @@ class _ProgressRingPainter extends CustomPainter {
     final sweepAngle = 2 * math.pi * progress;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2, // Start from top
+      -math.pi / 2,
       sweepAngle,
       false,
       progressPaint,

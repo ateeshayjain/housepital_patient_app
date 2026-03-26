@@ -1,33 +1,136 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String? _profilePhotoPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilePhoto();
+  }
+
+  Future<void> _loadProfilePhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString('profile_photo_path');
+    if (path != null && File(path).existsSync() && mounted) {
+      setState(() => _profilePhotoPath = path);
+    }
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Change Profile Photo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt, color: HousepitalColors.orange),
+            title: const Text('Take Photo'),
+            onTap: () => Navigator.pop(ctx, ImageSource.camera),
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library, color: HousepitalColors.orange),
+            title: const Text('Choose from Gallery'),
+            onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+
+    if (source == null) return;
+
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    if (image == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_photo_path', image.path);
+    if (mounted) {
+      setState(() => _profilePhotoPath = image.path);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final app = context.watch<AppProvider>();
+    final patientName = app.currentPatient?.name ?? 'Patient';
+    final initials = patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P';
 
     return Scaffold(
       appBar: AppBar(title: Text(l.t('settings_title'))),
       body: ListView(
         children: [
-          // User profile section
+          // User profile section with photo
           Container(
             padding: const EdgeInsets.all(20),
             color: HousepitalColors.white,
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: HousepitalColors.orangeLight,
-                  child: const Icon(Icons.person,
-                      size: 32, color: HousepitalColors.orange),
+                GestureDetector(
+                  onTap: _pickProfilePhoto,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 36,
+                        backgroundColor: HousepitalColors.orangeLight,
+                        backgroundImage: _profilePhotoPath != null
+                            ? FileImage(File(_profilePhotoPath!))
+                            : null,
+                        child: _profilePhotoPath == null
+                            ? Text(
+                                initials,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w700,
+                                  color: HousepitalColors.orange,
+                                ),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.orange,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: HousepitalColors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 14,
+                            color: HousepitalColors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -35,7 +138,7 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        app.currentPatient?.name ?? 'Patient',
+                        patientName,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -182,7 +285,7 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text('हिंदी (Hindi)'),
+            title: const Text('\u0939\u093f\u0902\u0926\u0940 (Hindi)'),
             trailing: app.locale.languageCode == 'hi'
                 ? const Icon(Icons.check, color: HousepitalColors.orange)
                 : null,

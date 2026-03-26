@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
@@ -29,6 +33,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
   // Emergency contacts
   late List<_EmergencyContactEntry> _emergencyContacts;
+
+  // Profile photo
+  String? _profilePhotoPath;
 
   // Medical conditions
   late List<String> _conditions;
@@ -75,6 +82,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               relationController: TextEditingController(text: ec.relation ?? ''),
             ))
         .toList();
+
+    // Load profile photo
+    _loadProfilePhoto();
 
     // Initialize conditions
     _conditions = List<String>.from(patient?.conditions ?? []);
@@ -139,6 +149,54 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     setState(() {
       _conditions.removeAt(index);
     });
+  }
+
+  Future<void> _loadProfilePhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString('profile_photo_path');
+    if (path != null && File(path).existsSync() && mounted) {
+      setState(() => _profilePhotoPath = path);
+    }
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Change Profile Photo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt, color: HousepitalColors.orange),
+            title: const Text('Take Photo'),
+            onTap: () => Navigator.pop(ctx, ImageSource.camera),
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library, color: HousepitalColors.orange),
+            title: const Text('Choose from Gallery'),
+            onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+
+    if (source == null) return;
+
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    if (image == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_photo_path', image.path);
+    if (mounted) {
+      setState(() => _profilePhotoPath = image.path);
+    }
   }
 
   void _addMedication() {
@@ -260,6 +318,56 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ==================== Profile Photo ====================
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: GestureDetector(
+                  onTap: _pickProfilePhoto,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 48,
+                        backgroundColor: HousepitalColors.orangeLight,
+                        backgroundImage: _profilePhotoPath != null
+                            ? FileImage(File(_profilePhotoPath!))
+                            : null,
+                        child: _profilePhotoPath == null
+                            ? Text(
+                                _nameController.text.isNotEmpty
+                                    ? _nameController.text[0].toUpperCase()
+                                    : 'P',
+                                style: const TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w700,
+                                  color: HousepitalColors.orange,
+                                ),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: HousepitalColors.orange,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: HousepitalColors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: HousepitalColors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             // ==================== Basic Info ====================
             TextFormField(
               controller: _nameController,
