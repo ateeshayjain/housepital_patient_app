@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CacheService {
@@ -28,7 +29,8 @@ class CacheService {
       final timestamp = wrapper['timestamp'] as int;
       if (_isExpired(timestamp)) return null;
       return wrapper['data'] as T?;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('CacheService: failed to parse cache for $key: $e');
       return null;
     }
   }
@@ -62,7 +64,8 @@ class CacheService {
       final timestamp = wrapper['timestamp'] as int;
       final cached = DateTime.fromMillisecondsSinceEpoch(timestamp);
       return DateTime.now().difference(cached).inMinutes;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('CacheService: failed to parse cache age for $key: $e');
       return null;
     }
   }

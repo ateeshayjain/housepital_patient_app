@@ -50,15 +50,7 @@ class MyCareProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
-      // Fallback to demo data when API unavailable
-      if (_activeServices.isEmpty) {
-        _activeServices = DemoData.activeServices;
-        _healthManager = DemoData.healthManager;
-        _lastFetchedAt = DateTime.now();
-        _error = null;
-      } else {
-        _error = 'Unable to load services. Pull down to retry.';
-      }
+      _error = 'Unable to load services. Pull down to retry.';
     }
 
     _isLoading = false;
