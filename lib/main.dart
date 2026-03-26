@@ -15,6 +15,7 @@ import 'services/api_service.dart';
 import 'services/firebase_service.dart';
 import 'utils/app_localizations.dart';
 
+import 'screens/splash_screen.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/otp_screen.dart';
 import 'screens/auth/onboarding_screen.dart';
@@ -211,10 +212,13 @@ class _HousepitalAppState extends State<HousepitalApp> {
       ],
       // NOTE: Auth gate disabled for demo mode. Enable before production release.
       // home: Consumer<AuthProvider>(...),
-      home: MainShell(key: MainShell.shellKey),
+      home: const SplashScreen(),
       onGenerateRoute: (settings) {
         try {
         switch (settings.name) {
+          case '/home':
+            return MaterialPageRoute(
+                builder: (_) => MainShell(key: MainShell.shellKey));
           case '/otp':
             return MaterialPageRoute(builder: (_) => const OtpScreen());
           case '/onboarding':

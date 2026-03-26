@@ -222,6 +222,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   bool get _canBuy => _catalogItem?.availableForSale ?? true;
 
+  /// Whether the item has a valid price (non-null, non-zero).
+  bool get _hasPrice {
+    if (_canRent) {
+      return _catalogItem?.rentalPrice != null && _catalogItem!.rentalPrice != 0;
+    }
+    final price = _catalogItem?.price ?? widget.service.basePriceMin?.toDouble();
+    return price != null && price != 0;
+  }
+
   String? get _priceText {
     if (_catalogItem?.price != null) {
       return '\u20B9${_catalogItem!.price!.toStringAsFixed(0)}';
@@ -1485,110 +1494,130 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   ),
                 ),
               ),
-            Row(
-              children: [
-                // Add to Cart / Go to Cart button
-                Expanded(
-                  child: SizedBox(
-                    height: 52,
-                    child: _showAddedConfirmation
-                        ? OutlinedButton.icon(
-                            onPressed: null,
-                            icon: const Icon(Icons.check_circle, size: 18,
-                                color: HousepitalColors.success),
-                            label: const Text('Added!',
-                                style: TextStyle(color: HousepitalColors.success)),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                  color: HousepitalColors.success, width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          )
-                        : inCart
-                            ? OutlinedButton.icon(
-                                onPressed: () {
-                                  final nav = Navigator.of(context, rootNavigator: true);
-                                  Navigator.of(context).pop();
-                                  nav.pushNamed('/cart');
-                                },
-                                icon: const Icon(Icons.shopping_cart, size: 18),
-                                label: const Text('Go to Cart'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: HousepitalColors.success,
-                                  side: const BorderSide(
-                                      color: HousepitalColors.success, width: 1.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              )
-                            : OutlinedButton.icon(
-                                onPressed: () => _addToCart(context),
-                                icon: const Icon(Icons.shopping_cart_outlined,
-                                    size: 18),
-                                label: const Text('Add to Cart'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: HousepitalColors.orange,
-                                  side: const BorderSide(
-                                      color: HousepitalColors.orange, width: 1.5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Primary action button
-                Expanded(
-                  child: SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_canRent) {
-                          // Rental flow → Rental Agreement screen
-                          Navigator.pushNamed(context, '/rental-agreement',
-                            arguments: {
-                              'itemName': _catalogItem!.name,
-                              'monthlyRate': (_catalogItem!.rentalPrice ?? 0).toInt(),
-                              'durationMonths': _selectedRentalMonths,
-                            },
-                          );
-                        } else {
-                          // Buy flow → add to cart and go to cart
-                          if (!inCart) _addToCart(context);
-                          Navigator.pushNamed(context, '/cart');
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HousepitalColors.orange,
-                        foregroundColor: HousepitalColors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      child: Text(_canRent ? 'Rent Now' : 'Buy Now'),
+            if (!_hasPrice)
+              // No price available — show contact prompt
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.phone_outlined, size: 18),
+                  label: const Text('Price on request \u2014 contact us'),
+                  style: ElevatedButton.styleFrom(
+                    disabledBackgroundColor: Colors.grey.shade200,
+                    disabledForegroundColor: Colors.grey.shade600,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-              ],
-            ),
+              )
+            else
+              Row(
+                children: [
+                  // Add to Cart / Go to Cart button
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: _showAddedConfirmation
+                          ? OutlinedButton.icon(
+                              onPressed: null,
+                              icon: const Icon(Icons.check_circle, size: 18,
+                                  color: HousepitalColors.success),
+                              label: const Text('Added!',
+                                  style: TextStyle(color: HousepitalColors.success)),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                    color: HousepitalColors.success, width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            )
+                          : inCart
+                              ? OutlinedButton.icon(
+                                  onPressed: () {
+                                    final nav = Navigator.of(context, rootNavigator: true);
+                                    Navigator.of(context).pop();
+                                    nav.pushNamed('/cart');
+                                  },
+                                  icon: const Icon(Icons.shopping_cart, size: 18),
+                                  label: const Text('Go to Cart'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: HousepitalColors.success,
+                                    side: const BorderSide(
+                                        color: HousepitalColors.success, width: 1.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                )
+                              : OutlinedButton.icon(
+                                  onPressed: () => _addToCart(context),
+                                  icon: const Icon(Icons.shopping_cart_outlined,
+                                      size: 18),
+                                  label: const Text('Add to Cart'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: HousepitalColors.orange,
+                                    side: const BorderSide(
+                                        color: HousepitalColors.orange, width: 1.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Primary action button
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_canRent) {
+                            // Rental flow → Rental Agreement screen
+                            Navigator.pushNamed(context, '/rental-agreement',
+                              arguments: {
+                                'itemName': _catalogItem!.name,
+                                'monthlyRate': (_catalogItem!.rentalPrice ?? 0).toInt(),
+                                'durationMonths': _selectedRentalMonths,
+                              },
+                            );
+                          } else {
+                            // Buy flow → add to cart and go to cart
+                            if (!inCart) _addToCart(context);
+                            Navigator.pushNamed(context, '/cart');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HousepitalColors.orange,
+                          foregroundColor: HousepitalColors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: Text(_canRent ? 'Rent Now' : 'Buy Now'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

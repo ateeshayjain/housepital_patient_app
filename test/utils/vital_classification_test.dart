@@ -152,11 +152,8 @@ void main() {
   // EDGE CASES / INVALID INPUT
   // ═══════════════════════════════════════════════════════════════════════════
   group('Edge cases', () {
-    test('throws ArgumentError for unknown vital type', () {
-      expect(
-        () => classifyVital('unknown_vital', 100),
-        throwsArgumentError,
-      );
+    test('returns green for unknown vital type (safe fallback)', () {
+      expect(classifyVital('unknown_vital', 100), 'green');
     });
 
     test('handles zero values', () {

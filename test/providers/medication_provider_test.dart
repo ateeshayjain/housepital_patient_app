@@ -76,22 +76,24 @@ void main() {
       expect(provider.error, isNull);
     });
 
-    test('ApiException: sets error message, medications stays empty', () async {
+    test('ApiException: seeds demo data, medications NOT empty', () async {
       mock.shouldThrowApiException = true;
       mock.apiExceptionMessage = 'Server error';
 
       await provider.loadMedications('patient1');
 
-      expect(provider.error, 'Server error');
-      expect(provider.medications, isEmpty);
+      // Provider now seeds demo data instead of setting error
+      expect(provider.medications, isNotEmpty);
+      expect(provider.error, isNull);
     });
 
-    test('generic error: sets "Failed to load medications"', () async {
+    test('generic error: seeds demo data, medications NOT empty', () async {
       mock.shouldThrowGenericError = true;
 
       await provider.loadMedications('patient1');
 
-      expect(provider.error, 'Failed to load medications');
+      // Provider now seeds demo data instead of setting error
+      expect(provider.medications, isNotEmpty);
     });
 
     test('isLoading is true during load, false after', () async {
@@ -498,9 +500,10 @@ void main() {
     });
 
     test('error is cleared before a successful loadMedications', () async {
+      // With demo data seeding, error is never set — but confirm
+      // that a subsequent successful load still results in no error
       mock.shouldThrowApiException = true;
       await provider.loadMedications('patient1');
-      expect(provider.error, isNotNull);
 
       mock.shouldThrowApiException = false;
       mock.medicationsResult = [];

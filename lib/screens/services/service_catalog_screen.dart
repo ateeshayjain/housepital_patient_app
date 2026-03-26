@@ -2755,46 +2755,68 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                 ),
               ),
             ),
-          ] else
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  if (_isRental) {
-                    // Rental → pop with 'rent' action; parent navigates to rental agreement
-                    Navigator.of(context).pop<Map<String, dynamic>>({
-                      'action': 'rent',
-                      'monthlyRate': (item.rentalPrice ?? 0).toInt(),
-                      'rentalMonths': _rentalMonths,
-                    });
-                  } else {
-                    // Buy → add to cart directly via parent context
-                    Navigator.of(context).pop<Map<String, dynamic>>({
-                      'action': 'add_to_cart',
-                      'itemId': item.id,
-                      'itemName': item.name,
-                      'itemBrand': item.brand,
-                      'itemImageUrl': item.imageUrl,
-                      'unitPrice': (item.price?.toInt() ?? 0),
-                      'mrp': item.mrp?.toInt(),
-                      'isRental': false,
-                      'rentalMonths': 1,
-                    });
-                  }
-                },
-                icon: const Icon(Icons.shopping_cart_outlined, size: 20),
-                label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+          ] else ...[
+            // Check if price is available
+            if ((_isRental && (item.rentalPrice == null || item.rentalPrice == 0)) ||
+                (!_isRental && (item.price == null || item.price == 0)))
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.phone_outlined, size: 20),
+                  label: const Text('Price on request \u2014 contact us'),
+                  style: ElevatedButton.styleFrom(
+                    disabledBackgroundColor: Colors.grey.shade200,
+                    disabledForegroundColor: Colors.grey.shade600,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (_isRental) {
+                      // Rental → pop with 'rent' action; parent navigates to rental agreement
+                      Navigator.of(context).pop<Map<String, dynamic>>({
+                        'action': 'rent',
+                        'monthlyRate': (item.rentalPrice ?? 0).toInt(),
+                        'rentalMonths': _rentalMonths,
+                      });
+                    } else {
+                      // Buy → add to cart directly via parent context
+                      Navigator.of(context).pop<Map<String, dynamic>>({
+                        'action': 'add_to_cart',
+                        'itemId': item.id,
+                        'itemName': item.name,
+                        'itemBrand': item.brand,
+                        'itemImageUrl': item.imageUrl,
+                        'unitPrice': (item.price?.toInt() ?? 0),
+                        'mrp': item.mrp?.toInt(),
+                        'isRental': false,
+                        'rentalMonths': 1,
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.shopping_cart_outlined, size: 20),
+                  label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HousepitalColors.orange,
+                    foregroundColor: HousepitalColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
-            ),
+          ],
         ],
       ),
       ),
