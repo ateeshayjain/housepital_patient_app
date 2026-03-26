@@ -119,8 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildQuickActionsGrid(context, l),
                   _buildPaymentBanner(context, l, app),
                   const SizedBox(height: 16),
-                  SOSButton(onTap: () => Navigator.pushNamed(context, '/sos')),
-                  const SizedBox(height: 24),
                 ],
               ],
             ),
@@ -426,27 +424,26 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.groups, color: HousepitalColors.orange, size: 22),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.groups, color: HousepitalColors.orange, size: 18),
+                  const SizedBox(width: 6),
                   const Text(
                     'Your Health Team',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: HousepitalColors.black,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               if (deployment != null) ...[
-                // Health Manager row
                 _TeamMemberRow(
                   role: 'Health Manager',
                   name: 'Housepital Care Team',
@@ -454,8 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: HousepitalColors.orange,
                   phone: AppConstants.supportPhone,
                 ),
-                const SizedBox(height: 10),
-                // Assigned staff row
+                const SizedBox(height: 6),
                 _TeamMemberRow(
                   role: deployment.staffRole ?? 'Staff',
                   name: deployment.staffName ?? 'Assigned',
@@ -465,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 if (patient?.doctorName != null &&
                     patient!.doctorName!.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   _TeamMemberRow(
                     role: 'Doctor',
                     name: patient.doctorName!,
@@ -516,32 +512,70 @@ class _HomeScreenState extends State<HomeScreen> {
         ? deployment.endDate!.difference(DateTime.now()).inDays
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 4),
-        SectionHeader(
-          title: 'Active Services',
-          actionText: l.t('see_all'),
-          onAction: () => MainShell.switchToTab(1),
-        ),
-        SizedBox(
-          height: 110,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: GestureDetector(
+        onTap: () => MainShell.switchToTab(1),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Row(
             children: [
-              _ActiveServiceCard(
-                serviceName: deployment.staffRole ?? 'Care Service',
-                staffName: deployment.staffName ?? 'Assigned',
-                daysRemaining: daysRemaining,
-                isCheckedIn: status == 'checked_in',
-                onTap: () => MainShell.switchToTab(1),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.successLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.medical_services, color: HousepitalColors.success, size: 22),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      deployment.staffRole ?? 'Care Service',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      deployment.staffName ?? 'Assigned',
+                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                status == 'checked_in' ? 'On Duty' : 'Waiting',
+                style: TextStyle(fontSize: 12, color: statusColor, fontWeight: FontWeight.w500),
+              ),
+              if (daysRemaining != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '${daysRemaining}d left',
+                  style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                ),
+              ],
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -681,8 +715,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      decoration: BoxDecoration(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: actions.map((action) {
