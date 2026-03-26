@@ -113,11 +113,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: LoadingWidget(),
                   )
                 else ...[
+                  // 1. Your Health Team
+                  _sectionLabel('Your Health Team', onSeeAll: () => MainShell.switchToTab(1)),
                   _buildHealthTeamCard(context, l, app),
-                  if (app.activeDeployment != null)
+
+                  // 2. Current Services
+                  if (app.activeDeployment != null) ...[
+                    _sectionLabel('Current Services', onSeeAll: () => MainShell.switchToTab(1)),
                     _buildActiveServicesQuickView(context, l, app),
+                  ],
+
+                  // 3. Today's Vitals
+                  if (app.latestVitals != null) ...[
+                    _sectionLabel("Today's Vitals", onSeeAll: () => Navigator.pushNamed(context, '/vitals')),
+                    _buildVitalsStrip(app),
+                  ],
+
+                  // 4. Book Services
+                  _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
                   _buildQuickActionsGrid(context, l),
+
+                  // 5. Today's Report
+                  if (app.todayReport != null) ...[
+                    _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
+                    _buildReportSnippet(app),
+                  ],
+
+                  // 6. Upcoming Payments
+                  _sectionLabel('Upcoming Payments', onSeeAll: () => MainShell.switchToTab(3)),
                   _buildPaymentBanner(context, l, app),
+
+                  // 7. Medications
+                  _sectionLabel('Medications', onSeeAll: () => Navigator.pushNamed(context, '/medications')),
+                  _buildMedicationsSnippet(context),
+
                   const SizedBox(height: 16),
                 ],
               ],
@@ -762,7 +791,171 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Daily Report Section
+  // Section Label with "See All"
+  // ---------------------------------------------------------------------------
+  Widget _sectionLabel(String title, {VoidCallback? onSeeAll}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(title,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700, color: HousepitalColors.black)),
+          ),
+          if (onSeeAll != null)
+            GestureDetector(
+              onTap: onSeeAll,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text('See All',
+                    style: TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Vitals Strip (compact)
+  // ---------------------------------------------------------------------------
+  Widget _buildVitalsStrip(AppProvider app) {
+    final v = app.latestVitals!;
+    return SizedBox(
+      height: 62,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _miniVitalChip('BP', '${v.systolic?.toInt() ?? "--"}/${v.diastolic?.toInt() ?? "--"}', v.systolic, 'systolic'),
+          _miniVitalChip('SpO2', '${v.spo2?.toInt() ?? "--"}%', v.spo2, 'spo2'),
+          _miniVitalChip('Pulse', '${v.pulse?.toInt() ?? "--"}', v.pulse, 'pulse'),
+          _miniVitalChip('Temp', '${v.temperature ?? "--"}°F', v.temperature, 'temperature'),
+          _miniVitalChip('Sugar', '${v.sugar?.toInt() ?? "--"}', v.sugar, 'sugar'),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniVitalChip(String label, String value, double? raw, String type) {
+    Color dot = HousepitalColors.greyLight;
+    if (raw != null) {
+      final s = classifyVital(type, raw);
+      dot = s == 'green' ? HousepitalColors.success : s == 'yellow' ? HousepitalColors.warning : HousepitalColors.error;
+    }
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/vitals'),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: HousepitalColors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: HousepitalColors.divider),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(width: 6, height: 6, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(fontSize: 10, color: HousepitalColors.greyLight)),
+            ]),
+            const SizedBox(height: 2),
+            Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Report Snippet
+  // ---------------------------------------------------------------------------
+  Widget _buildReportSnippet(AppProvider app) {
+    final r = app.todayReport!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: HousepitalColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HousepitalColors.divider),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40, height: 40,
+              child: Stack(alignment: Alignment.center, children: [
+                CircularProgressIndicator(
+                  value: r.totalTasks > 0 ? r.completedTasks / r.totalTasks : 0,
+                  backgroundColor: HousepitalColors.greyLighter,
+                  color: HousepitalColors.success,
+                  strokeWidth: 3,
+                ),
+                Text('${r.completedTasks}/${r.totalTasks}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${r.completedTasks} of ${r.totalTasks} tasks done', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  if (r.staffNotes != null)
+                    Text(r.staffNotes!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Medications Snippet
+  // ---------------------------------------------------------------------------
+  Widget _buildMedicationsSnippet(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(context, '/medications'),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.medication, color: HousepitalColors.orange, size: 22),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('5 active medications', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text('Next: Pantoprazole at 7:00 AM', style: TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Daily Report Section (legacy — kept for reference)
   // ---------------------------------------------------------------------------
   Widget _buildDailyReportSection(
       BuildContext context, AppLocalizations l, AppProvider app) {
