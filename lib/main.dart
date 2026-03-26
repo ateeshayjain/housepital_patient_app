@@ -213,6 +213,7 @@ class _HousepitalAppState extends State<HousepitalApp> {
       // home: Consumer<AuthProvider>(...),
       home: MainShell(key: MainShell.shellKey),
       onGenerateRoute: (settings) {
+        try {
         switch (settings.name) {
           case '/otp':
             return MaterialPageRoute(builder: (_) => const OtpScreen());
@@ -433,6 +434,32 @@ class _HousepitalAppState extends State<HousepitalApp> {
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));
+        }
+        } catch (e) {
+          debugPrint('Route error for ${settings.name}: $e');
+          return MaterialPageRoute(
+            builder: (ctx) => Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Navigation error: ${settings.name}',
+                        style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 8),
+                    Text('$e', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
         }
       },
     );
