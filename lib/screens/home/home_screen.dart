@@ -143,10 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _sectionLabel('Upcoming Payments', onSeeAll: () => MainShell.switchToTab(3)),
                   _buildPaymentBanner(context, l, app),
 
-                  // 7. Medications
-                  _sectionLabel('Medications', onSeeAll: () => Navigator.pushNamed(context, '/medications')),
-                  _buildMedicationsSnippet(context),
-
                   const SizedBox(height: 16),
                 ],
               ],
@@ -731,10 +727,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       _QuickAction(
-        icon: Icons.medication,
-        label: 'Medications',
+        icon: Icons.receipt_long,
+        label: 'My Orders',
         color: HousepitalColors.serviceJapaNanny,
-        onTap: () => Navigator.pushNamed(context, '/medications'),
+        onTap: () => Navigator.pushNamed(context, '/booking-history'),
       ),
       _QuickAction(
         icon: Icons.emergency,
@@ -823,11 +819,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildVitalsStrip(AppProvider app) {
     final v = app.latestVitals!;
-    return SizedBox(
-      height: 62,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
         children: [
           _miniVitalChip('BP', '${v.systolic?.toInt() ?? "--"}/${v.diastolic?.toInt() ?? "--"}', v.systolic, 'bp_systolic'),
           _miniVitalChip('SpO2', '${v.spo2?.toInt() ?? "--"}%', v.spo2, 'spo2'),
@@ -845,14 +839,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final s = classifyVital(type, raw);
       dot = s == 'green' ? HousepitalColors.success : s == 'yellow' ? HousepitalColors.warning : HousepitalColors.error;
     }
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/vitals'),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: HousepitalColors.white,
-          borderRadius: BorderRadius.circular(10),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(context, '/vitals'),
+        child: Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(10),
           border: Border.all(color: HousepitalColors.divider),
         ),
         child: Column(
@@ -867,6 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           ],
         ),
+      ),
       ),
     );
   }
