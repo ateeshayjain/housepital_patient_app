@@ -47,6 +47,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
     final patientId = context.read<AppProvider>().currentPatient?.id;
     if (patientId != null) {
       context.read<MyCareProvider>().loadMyCareData(patientId);
+    } else {
+      // Patient not loaded yet — seed demo data directly
+      context.read<MyCareProvider>().loadMyCareData('pat_demo_rajesh');
     }
   }
 
@@ -226,12 +229,62 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           if (myCare.activeServices.any((s) => s.hasStaff))
             StaffAttendanceSection(services: myCare.activeServices),
 
-          // 6. Billing Summary
+          // 6. Medications Summary
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text('Medications',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/medications'),
+                  child: Text(l.t('see_all'),
+                      style: const TextStyle(
+                          color: HousepitalColors.orange, fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/medications'),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HousepitalColors.divider),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.medication, color: HousepitalColors.orange, size: 22),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('5 active medications',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text('Amlodipine, Metformin, Aspirin, Pantoprazole, Insulin',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 7. Billing Summary
           if (myCare.activeServices.any((s) => s.totalPaid != null))
             BillingSummarySection(services: myCare.activeServices),
-
-          // 7. Quick Actions
-          const QuickActionsRow(),
         ],
       ),
     );
