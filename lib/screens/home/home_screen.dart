@@ -139,9 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildReportSnippet(app),
                   ],
 
-                  // 6. Upcoming Payments
-                  _sectionLabel('Upcoming Payments', onSeeAll: () => MainShell.switchToTab(3)),
-                  _buildPaymentBanner(context, l, app),
+                  // 6. Payments
+                  _buildPaymentCards(context, app),
 
                   const SizedBox(height: 16),
                 ],
@@ -916,6 +915,148 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ---------------------------------------------------------------------------
   // Medications Snippet
+  // ---------------------------------------------------------------------------
+  // Payment Cards (Overdue + Upcoming with early pay discount)
+  // ---------------------------------------------------------------------------
+  Widget _buildPaymentCards(BuildContext context, AppProvider app) {
+    final amountDue = app.amountDue;
+    final dueDate = app.dueDate;
+    final isOverdue = dueDate != null && dueDate.isBefore(DateTime.now());
+    final earlyPayDiscount = (amountDue * 0.01).round(); // 1% off
+    final earlyPayAmount = amountDue - earlyPayDiscount;
+
+    if (amountDue <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text('Payments',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+
+          // Overdue card (red)
+          if (isOverdue)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: HousepitalColors.error.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: HousepitalColors.error.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber, color: HousepitalColors.error, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Overdue Payment',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HousepitalColors.error)),
+                        Text('₹${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate!)}',
+                            style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => MainShell.switchToTab(3),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HousepitalColors.error,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Pay Now', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+
+          // Upcoming payment card (orange) with early pay discount
+          if (!isOverdue)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: HousepitalColors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: HousepitalColors.divider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: HousepitalColors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Upcoming Payment',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                            if (dueDate != null)
+                              Text('Due on ${DateHelper.formatDate(dueDate)}',
+                                  style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                          ],
+                        ),
+                      ),
+                      Text(DateHelper.formatCurrency(amountDue),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HousepitalColors.orange)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Early pay incentive
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HousepitalColors.successLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.savings, color: HousepitalColors.success, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Pay early & save ${DateHelper.formatCurrency(earlyPayDiscount)}!',
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.success)),
+                              Text('Pay ${DateHelper.formatCurrency(earlyPayAmount)} instead of ${DateHelper.formatCurrency(amountDue)} (1% off)',
+                                  style: const TextStyle(fontSize: 11, color: HousepitalColors.grey)),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => MainShell.switchToTab(3),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HousepitalColors.success,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          child: const Text('Pay Early', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   Widget _buildMedicationsSnippet(BuildContext context) {
     return Padding(
