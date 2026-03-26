@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/demo_data.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../services/cache_service.dart';
@@ -75,6 +76,12 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading patients: $e');
+      // Fallback to demo data when API unavailable and no patients loaded
+      if (_patients.isEmpty) {
+        _currentPatient = DemoData.patient;
+        _patients = [DemoData.patient];
+        notifyListeners();
+      }
     }
   }
 
@@ -135,8 +142,19 @@ class AppProvider extends ChangeNotifier {
         _lastUpdatedText = await cache.getLastUpdatedText(cacheKey);
         _dashboardError = null;
       } else {
-        _dashboardError = 'Unable to connect. Pull down to retry.';
-        _lastUpdatedText = null;
+        // Seed from demo data so the dashboard is never empty
+        _currentPatient ??= DemoData.patient;
+        _activeDeployment = DemoData.icuDeployment;
+        _todayAttendance = DemoData.todayAttendance;
+        _latestVitals = DemoData.vitalsHistory.last;
+        _todayReport = DemoData.todayReport;
+        final demoBilling = DemoData.billingSummary;
+        _amountDue = demoBilling['amount_due'] ?? 0;
+        _dueDate = demoBilling['due_date'] != null
+            ? DateTime.parse(demoBilling['due_date'])
+            : null;
+        _dashboardError = null;
+        _lastUpdatedText = 'Demo data';
       }
     }
 

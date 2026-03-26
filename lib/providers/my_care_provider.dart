@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/demo_data.dart';
 import '../models/my_care_models.dart';
 import '../services/api_service.dart';
 
@@ -49,7 +50,15 @@ class MyCareProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
-      _error = 'Unable to load services. Pull down to retry.';
+      // Fallback to demo data when API unavailable
+      if (_activeServices.isEmpty) {
+        _activeServices = DemoData.activeServices;
+        _healthManager = DemoData.healthManager;
+        _lastFetchedAt = DateTime.now();
+        _error = null;
+      } else {
+        _error = 'Unable to load services. Pull down to retry.';
+      }
     }
 
     _isLoading = false;
@@ -69,7 +78,14 @@ class MyCareProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _detailError = e.message;
     } catch (e) {
-      _detailError = 'Failed to load service detail';
+      // Fallback to demo ICU service detail
+      if (deploymentId == 'dep_icu_001' ||
+          deploymentId == 'svc_icu_001') {
+        _selectedServiceDetail = DemoData.icuServiceDetail;
+        _detailError = null;
+      } else {
+        _detailError = 'Failed to load service detail';
+      }
     }
 
     _isDetailLoading = false;

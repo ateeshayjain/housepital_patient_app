@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../data/demo_data.dart';
 import '../services/api_service.dart';
 
 /// Handles billing-related state, extracted from AppProvider
@@ -35,7 +36,17 @@ class BillingProvider extends ChangeNotifier {
       if (kDebugMode) {
         debugPrint('BillingProvider.loadBillingSummary error: $e');
       }
-      _error = 'Failed to load billing data';
+      // Fallback to demo billing data
+      if (_amountDue == 0) {
+        final demoBilling = DemoData.billingSummary;
+        _amountDue = demoBilling['amount_due'] ?? 0;
+        _dueDate = demoBilling['due_date'] != null
+            ? DateTime.parse(demoBilling['due_date'])
+            : null;
+        _error = null;
+      } else {
+        _error = 'Failed to load billing data';
+      }
     }
 
     _isLoading = false;

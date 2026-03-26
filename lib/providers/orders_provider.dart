@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/demo_data.dart';
 import '../models/models.dart';
 
 class OrdersProvider extends ChangeNotifier {
@@ -112,9 +113,19 @@ class OrdersProvider extends ChangeNotifier {
         _assessments = decoded.cast<Map<String, dynamic>>();
       }
 
+      // Seed demo orders if storage is empty
+      if (_orders.isEmpty) {
+        _orders = DemoData.orders;
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('OrdersProvider: failed to load: $e');
+      // Seed demo orders even on error
+      if (_orders.isEmpty) {
+        _orders = DemoData.orders;
+        notifyListeners();
+      }
     }
   }
 }

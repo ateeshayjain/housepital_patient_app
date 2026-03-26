@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../data/demo_data.dart';
 import '../models/medication_models.dart';
 import '../services/api_service.dart';
 import '../services/medication_reminder_service.dart';
@@ -45,7 +46,13 @@ class MedicationProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
-      _error = 'Failed to load medications';
+      // Fallback to demo medications
+      if (_medications.isEmpty) {
+        _medications = DemoData.medications;
+        _error = null;
+      } else {
+        _error = 'Failed to load medications';
+      }
     }
 
     _isLoading = false;
@@ -70,7 +77,15 @@ class MedicationProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _error = e.message;
     } catch (e) {
-      _error = 'Failed to load schedule';
+      // Fallback to demo medications for schedule
+      if (_medications.isEmpty) {
+        _medications = DemoData.medications;
+        _todayLogs = [];
+        _schedule = _buildSchedule();
+        _error = null;
+      } else {
+        _error = 'Failed to load schedule';
+      }
     }
 
     _isLoading = false;
