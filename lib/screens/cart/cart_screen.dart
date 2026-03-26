@@ -492,6 +492,7 @@ class _CartScreenState extends State<CartScreen> {
             );
 
         cart.clear();
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         Navigator.pushReplacementNamed(context, '/booking-confirmation',
             arguments: {
               'cartItems': items,
