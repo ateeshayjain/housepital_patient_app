@@ -116,9 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildHealthTeamCard(context, l, app),
                   if (app.activeDeployment != null)
                     _buildActiveServicesQuickView(context, l, app),
-                  _buildVitalsHighlights(context, l, app),
                   _buildQuickActionsGrid(context, l),
-                  _buildDailyReportSection(context, l, app),
                   _buildPaymentBanner(context, l, app),
                   const SizedBox(height: 16),
                   SOSButton(onTap: () => Navigator.pushNamed(context, '/sos')),
@@ -683,64 +681,43 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        SectionHeader(title: l.t('book_services')),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.05,
-            children: actions.map((action) {
-              return Semantics(
-                label: action.label,
-                button: true,
-                child: Material(
-                  color: HousepitalColors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  elevation: 1,
-                  shadowColor: Colors.black12,
-                  child: InkWell(
-                    onTap: action.onTap,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: action.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(action.icon,
-                              color: action.color, size: 24),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          action.label,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: HousepitalColors.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: actions.map((action) {
+          return Expanded(
+            child: GestureDetector(
+              onTap: action.onTap,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: action.color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Icon(action.icon, color: action.color, size: 20),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    action.label,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: HousepitalColors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 

@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/my_care_provider.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../../screens/main_shell.dart';
 import 'widgets/health_manager_banner.dart';
@@ -114,15 +115,122 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                 ),
               )),
 
-          // 3. Today's Staff Attendance
+          // 3. Today's Vitals
+          if (app.latestVitals != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(l.t('today_vitals'),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700)),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/vitals'),
+                    child: Text(l.t('see_all'),
+                        style: const TextStyle(
+                            color: HousepitalColors.orange, fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 72,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _vitalPill('BP', '${app.latestVitals!.systolic?.toInt() ?? "--"}/${app.latestVitals!.diastolic?.toInt() ?? "--"}', 'mmHg', app.latestVitals!.systolic, 'systolic'),
+                  _vitalPill('SpO2', '${app.latestVitals!.spo2?.toInt() ?? "--"}', '%', app.latestVitals!.spo2, 'spo2'),
+                  _vitalPill('Pulse', '${app.latestVitals!.pulse?.toInt() ?? "--"}', 'bpm', app.latestVitals!.pulse, 'pulse'),
+                  _vitalPill('Temp', '${app.latestVitals!.temperature ?? "--"}', '°F', app.latestVitals!.temperature, 'temperature'),
+                  _vitalPill('Sugar', '${app.latestVitals!.sugar?.toInt() ?? "--"}', 'mg/dl', app.latestVitals!.sugar, 'sugar'),
+                ],
+              ),
+            ),
+          ],
+
+          // 4. Today's Report
+          if (app.todayReport != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(l.t('today_report'),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700)),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport),
+                    child: Text(l.t('details'),
+                        style: const TextStyle(
+                            color: HousepitalColors.orange, fontSize: 13)),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: HousepitalCard(
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: app.todayReport!.totalTasks > 0
+                                ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
+                                : 0,
+                            backgroundColor: HousepitalColors.greyLighter,
+                            color: HousepitalColors.success,
+                            strokeWidth: 4,
+                          ),
+                          Text(
+                            '${app.todayReport!.completedTasks}/${app.todayReport!.totalTasks}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${app.todayReport!.completedTasks} of ${app.todayReport!.totalTasks} tasks completed',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          if (app.todayReport!.staffNotes != null)
+                            Text(
+                              app.todayReport!.staffNotes!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          // 5. Today's Staff Attendance
           if (myCare.activeServices.any((s) => s.hasStaff))
             StaffAttendanceSection(services: myCare.activeServices),
 
-          // 4. Billing Summary
+          // 6. Billing Summary
           if (myCare.activeServices.any((s) => s.totalPaid != null))
             BillingSummarySection(services: myCare.activeServices),
 
-          // 5. Quick Actions
+          // 7. Quick Actions
           const QuickActionsRow(),
         ],
       ),
@@ -175,6 +283,63 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               child: Text(l.t('view_vitals_history')),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _vitalPill(String label, String value, String unit, double? rawValue, String vitalType) {
+    Color statusColor = HousepitalColors.greyLight;
+    if (rawValue != null) {
+      final status = classifyVital(vitalType, rawValue);
+      statusColor = status == 'green'
+          ? HousepitalColors.success
+          : status == 'yellow'
+              ? HousepitalColors.warning
+              : HousepitalColors.error;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(context, '/vitals'),
+        child: Container(
+          width: 90,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: HousepitalColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(label,
+                      style: const TextStyle(
+                          fontSize: 11, color: HousepitalColors.greyLight)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(unit,
+                  style: const TextStyle(
+                      fontSize: 10, color: HousepitalColors.greyLight)),
+            ],
+          ),
         ),
       ),
     );
