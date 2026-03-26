@@ -395,7 +395,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           style: OutlinedButton.styleFrom(
             foregroundColor: HousepitalColors.orange,
             side: const BorderSide(color: HousepitalColors.orange),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
         ),
         if (_canCancel) ...[
@@ -407,7 +407,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
             style: OutlinedButton.styleFrom(
               foregroundColor: HousepitalColors.error,
               side: const BorderSide(color: HousepitalColors.error),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ],

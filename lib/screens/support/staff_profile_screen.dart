@@ -519,7 +519,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           child: Column(
             children: [
               Row(

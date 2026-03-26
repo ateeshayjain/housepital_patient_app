@@ -338,7 +338,7 @@ class _MessageBubble extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSent
               ? HousepitalColors.orange
@@ -388,7 +388,7 @@ class _MessageBubble extends StatelessWidget {
                   Text(
                     _formatTime(timestamp!),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: isSent
                           ? Colors.white.withValues(alpha: 0.7)
                           : Colors.grey[500],

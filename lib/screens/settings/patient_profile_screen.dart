@@ -349,7 +349,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         right: 0,
                         bottom: 0,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: HousepitalColors.orange,
                             shape: BoxShape.circle,

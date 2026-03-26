@@ -283,7 +283,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   child: Text(
                     orderType.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: HousepitalColors.grey,
                       letterSpacing: 0.5,

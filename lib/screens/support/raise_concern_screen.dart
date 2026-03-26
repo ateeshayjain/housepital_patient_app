@@ -219,7 +219,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                                   color: HousepitalColors.error,
                                   shape: BoxShape.circle,
                                 ),
-                                padding: const EdgeInsets.all(3),
+                                padding: const EdgeInsets.all(4),
                                 child: const Icon(Icons.close,
                                     size: 14, color: Colors.white),
                               ),

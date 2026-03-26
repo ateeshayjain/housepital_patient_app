@@ -304,7 +304,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
           child: Text(
             faq.category,
             style: const TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: HousepitalColors.orange),
           ),

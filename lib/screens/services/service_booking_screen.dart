@@ -726,7 +726,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                             child: Text(
                               level.toUpperCase(),
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: levelColor,
                               ),
@@ -1416,7 +1416,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             },
             child: Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
                     ? HousepitalColors.orange
@@ -1599,7 +1599,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           return GestureDetector(
             onTap: () => setState(() => _selectedDate = date),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
                     ? HousepitalColors.orange
@@ -1708,7 +1708,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Price summary
       if (widget.service.basePriceMin != null)
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: HousepitalColors.successLight,
             borderRadius: BorderRadius.circular(10),
@@ -1730,7 +1730,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 12),
       Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: HousepitalColors.greyLighter,
           borderRadius: BorderRadius.circular(12),
@@ -1779,7 +1779,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
       // ── Autopay for Recurring Service ──
       Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: HousepitalColors.infoLight,
           borderRadius: BorderRadius.circular(12),
@@ -1825,7 +1825,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               _loadSlotsForDate(date);
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -1898,7 +1898,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               child: GestureDetector(
                 onTap: () => setState(() => _physioPeriod = days),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -1929,7 +1929,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       const SizedBox(height: 16),
       if (widget.service.basePriceMin != null)
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: HousepitalColors.successLight,
             borderRadius: BorderRadius.circular(10),
@@ -2205,7 +2205,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.infoLight,
                   borderRadius: BorderRadius.circular(8),
@@ -2391,7 +2391,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           const SizedBox(height: 4),
           Text(label,
               style: const TextStyle(
-                  fontSize: 10, color: HousepitalColors.greyLight)),
+                  fontSize: 11, color: HousepitalColors.greyLight)),
         ],
       ),
     );

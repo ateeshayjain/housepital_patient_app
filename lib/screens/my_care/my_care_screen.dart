@@ -305,7 +305,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
         onTap: () => Navigator.pushNamed(context, '/vitals'),
         child: Container(
           width: 90,
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: HousepitalColors.white,
             borderRadius: BorderRadius.circular(12),
@@ -337,7 +337,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                       fontSize: 16, fontWeight: FontWeight.w700)),
               Text(unit,
                   style: const TextStyle(
-                      fontSize: 10, color: HousepitalColors.greyLight)),
+                      fontSize: 11, color: HousepitalColors.greyLight)),
             ],
           ),
         ),

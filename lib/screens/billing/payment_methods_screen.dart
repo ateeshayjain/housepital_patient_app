@@ -237,7 +237,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -276,7 +276,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               ),
               child: const Text('Auto-pay ON',
                   style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: HousepitalColors.success)),
             ),

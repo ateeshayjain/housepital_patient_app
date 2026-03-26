@@ -49,7 +49,7 @@ class StatusBadge extends StatelessWidget {
     return Semantics(
       label: 'Status: $text',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
@@ -127,7 +127,7 @@ class VitalCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: 90,
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: HousepitalColors.divider),
@@ -170,7 +170,7 @@ class VitalCard extends StatelessWidget {
                     Text(
                       status,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: statusColor,
                       ),
@@ -314,7 +314,7 @@ class SOSButton extends StatelessWidget {
             splashColor: Colors.white24,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               child: const Column(
                 children: [
                   Row(

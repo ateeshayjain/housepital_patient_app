@@ -226,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Badge(
                   isLabelVisible: cart.itemCount > 0,
                   label: Text('${cart.itemCount}',
-                      style: const TextStyle(fontSize: 10)),
+                      style: const TextStyle(fontSize: 11)),
                   backgroundColor: HousepitalColors.orange,
                   child: const Icon(Icons.shopping_cart_outlined),
                 ),
@@ -453,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -547,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () => MainShell.switchToTab(1),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: HousepitalColors.white,
             borderRadius: BorderRadius.circular(14),
@@ -556,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.successLight,
                   borderRadius: BorderRadius.circular(10),
@@ -762,7 +762,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: action.color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
@@ -773,7 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     action.label,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: HousepitalColors.grey,
                     ),
@@ -861,7 +861,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 6, height: 6, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(fontSize: 10, color: HousepitalColors.greyLight)),
+              Text(label, style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
             ]),
             const SizedBox(height: 2),
             Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
@@ -896,7 +896,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: HousepitalColors.success,
                   strokeWidth: 3,
                 ),
-                Text('${r.completedTasks}/${r.totalTasks}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                Text('${r.completedTasks}/${r.totalTasks}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
               ]),
             ),
             const SizedBox(width: 12),
@@ -1149,7 +1149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: r.urgencyColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
@@ -1184,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 child: const Text('Auto-pay OFF',
                                     style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         color: HousepitalColors.greyLight)),
                               ),
                           ],
@@ -1306,7 +1306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (_, i) {
                   final r = reminders[i];
                   return Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade200),
@@ -1581,7 +1581,7 @@ class _ActiveServiceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Container(
             width: 200,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,

@@ -663,7 +663,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
     if (!hasBuyPrice && !hasRentPrice) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: HousepitalColors.orangeLight,
           borderRadius: BorderRadius.circular(8),
@@ -977,7 +977,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       ? HousepitalColors.greyLighter
                       : HousepitalColors.white,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
                       SizedBox(
@@ -1221,7 +1221,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: HousepitalColors.background,
           borderRadius: BorderRadius.circular(10),

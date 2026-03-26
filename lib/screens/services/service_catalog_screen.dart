@@ -473,7 +473,7 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
                           '$count',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                       ),
@@ -1834,7 +1834,7 @@ class _EquipmentTabState extends State<_EquipmentTab> {
                         onTap: () => setState(() => _selectedCategory = cat),
                         child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? HousepitalColors.orange
@@ -2051,7 +2051,7 @@ class _EquipmentItemCard extends StatelessWidget {
                         child: Text(
                           '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
                           style: const TextStyle(
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: HousepitalColors.success,
                           ),
@@ -2109,7 +2109,7 @@ class _EquipmentItemCard extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: fg,
         ),
@@ -2525,7 +2525,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
           // Price section
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: HousepitalColors.orangeLight,
               borderRadius: BorderRadius.circular(10),
@@ -2658,7 +2658,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
                   }),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     '$_rentalMonths ${_rentalMonths == 1 ? "month" : "months"}',
                     style: const TextStyle(
@@ -2707,7 +2707,7 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
           if (item.needsAssessment) ...[
             Container(
               margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: HousepitalColors.infoLight,
                 borderRadius: BorderRadius.circular(8),
@@ -3940,7 +3940,7 @@ class _LabTestCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 // Icon

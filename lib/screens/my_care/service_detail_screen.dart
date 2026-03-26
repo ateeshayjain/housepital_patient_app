@@ -250,7 +250,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             ),
                             Text('on shift',
                                 style: TextStyle(
-                                    fontSize: 10, color: Colors.grey[400])),
+                                    fontSize: 11, color: Colors.grey[400])),
                           ],
                         )
                       : null,
@@ -308,7 +308,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               return Column(
                 children: [
                   Text(DateHelper.formatDateShort(day.date),
-                      style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                   const SizedBox(height: 4),
                   Container(
                     width: 12,

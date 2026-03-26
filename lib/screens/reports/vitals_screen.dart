@@ -405,7 +405,7 @@ class _VitalsScreenState extends State<VitalsScreen>
   Widget _statCard(String label, String value, String unit, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: HousepitalColors.white,
           borderRadius: BorderRadius.circular(12),

@@ -77,7 +77,7 @@ class CareReportSection extends StatelessWidget {
                   if (report.staffNotes != null) ...[
                     const Divider(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),

@@ -353,7 +353,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             child: Text(
               doc.fileType.toUpperCase(),
               style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: HousepitalColors.grey),
             ),

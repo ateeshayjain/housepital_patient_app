@@ -85,7 +85,7 @@ class SOSScreen extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: HousepitalColors.sos,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

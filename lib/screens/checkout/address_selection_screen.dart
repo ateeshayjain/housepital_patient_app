@@ -231,7 +231,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                   itemBuilder: (context, index) {
                     final addr = _addresses[index];
                     return Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -266,7 +266,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text('Default',
-                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: HousepitalColors.orange)),
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: HousepitalColors.orange)),
                                 ),
                               ],
                               const Spacer(),

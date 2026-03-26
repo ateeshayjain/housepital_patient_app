@@ -130,7 +130,7 @@ class _EmiScreenState extends State<EmiScreen> {
                   // Header
                   Container(
                     color: HousepitalColors.greyLighter,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: const Row(
                       children: [
                         Expanded(flex: 2, child: Text('Month', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
@@ -143,7 +143,7 @@ class _EmiScreenState extends State<EmiScreen> {
                     final dueDate = DateTime(now.year, now.month + i + 1, 1);
                     return Container(
                       color: i.isEven ? HousepitalColors.white : HousepitalColors.greyLighter.withValues(alpha: 0.5),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
                           Expanded(flex: 2, child: Text('Month ${i + 1}', style: const TextStyle(fontSize: 13))),
@@ -163,7 +163,7 @@ class _EmiScreenState extends State<EmiScreen> {
                   // Total row
                   Container(
                     color: HousepitalColors.orangeLight,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
                         const Expanded(flex: 4, child: Text('Total', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),

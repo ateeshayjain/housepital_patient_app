@@ -207,7 +207,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildCouponSection(CartProvider cart) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: HousepitalColors.orangeLight.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
@@ -562,7 +562,7 @@ class _CartItemCard extends StatelessWidget {
         : 0;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -788,7 +788,7 @@ class _CartItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(4),
         child: Icon(icon, size: 16, color: HousepitalColors.orange),
       ),
     );
@@ -810,7 +810,7 @@ class _SavedItemCard extends StatelessWidget {
     final cart = Provider.of<CartProvider>(context, listen: false);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),

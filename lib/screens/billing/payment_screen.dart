@@ -538,7 +538,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
                 color: isSelected
                     ? HousepitalColors.orangeLight

@@ -762,7 +762,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         if (isUnderqualified) ...[
           const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: HousepitalColors.warningLight,
               borderRadius: BorderRadius.circular(10),

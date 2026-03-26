@@ -77,7 +77,7 @@ class VitalsTrendGrid extends StatelessWidget {
                   child: Text(
                     card.status[0].toUpperCase() + card.status.substring(1),
                     style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: statusColor),
                   ),

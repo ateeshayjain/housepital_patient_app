@@ -503,7 +503,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   child: Text(
                     '${(r.data as CarePackage).discountPercent.toInt()}% OFF',
                     style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.white),
                   ),

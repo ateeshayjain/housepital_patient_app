@@ -179,7 +179,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6, left: 28),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
@@ -229,7 +229,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                 if (sm.log!.staffName != null)
                   Text('by ${sm.log!.staffName}',
                       style:
-                          TextStyle(fontSize: 10, color: Colors.grey[400])),
+                          TextStyle(fontSize: 11, color: Colors.grey[400])),
               ],
             )
           else if (!isGiven && !isMissed)

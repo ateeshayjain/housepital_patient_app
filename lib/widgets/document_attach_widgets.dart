@@ -139,7 +139,7 @@ void showAttachOptionsSheet(
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.infoLight,
                   borderRadius: BorderRadius.circular(10),
@@ -157,7 +157,7 @@ void showAttachOptionsSheet(
             ),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.orangeLight,
                   borderRadius: BorderRadius.circular(10),
@@ -175,7 +175,7 @@ void showAttachOptionsSheet(
             ),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.orangeLight,
                   borderRadius: BorderRadius.circular(10),
@@ -193,7 +193,7 @@ void showAttachOptionsSheet(
             ),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: HousepitalColors.orangeLight,
                   borderRadius: BorderRadius.circular(10),

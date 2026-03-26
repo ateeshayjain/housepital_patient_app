@@ -515,7 +515,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                                 ? 'By Staff'
                                                 : 'Self',
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: 11,
                                               fontWeight: FontWeight.w600,
                                               color:
                                                   med.takenBy == 'staff'
