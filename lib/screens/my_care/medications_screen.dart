@@ -18,10 +18,8 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      final patientId = context.read<AppProvider>().currentPatient?.id;
-      if (patientId != null) {
-        context.read<MedicationProvider>().loadMedications(patientId);
-      }
+      final patientId = context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
+      context.read<MedicationProvider>().loadMedications(patientId);
     });
   }
 

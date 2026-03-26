@@ -242,7 +242,12 @@ class _HousepitalAppState extends State<HousepitalApp> {
                 builder: (_) =>
                     VitalsScreen(initialVital: vitalType));
           case '/report-detail':
-            final reportId = settings.arguments as String;
+            final args = settings.arguments;
+            final reportId = args is String
+                ? args
+                : args is DailyReport
+                    ? (args).id
+                    : '';
             return MaterialPageRoute(
                 builder: (_) =>
                     DailyReportScreen(reportId: reportId));
