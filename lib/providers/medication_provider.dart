@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../data/demo_data.dart';
 import '../models/medication_models.dart';
 import '../services/api_service.dart';
 import '../services/medication_reminder_service.dart';
@@ -36,20 +37,27 @@ class MedicationProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {
-      _medications = await _apiService.getMedications(patientId);
-      // Reschedule all local reminders after loading
-      if (!kIsWeb) {
-        MedicationReminderService().rescheduleAll(activeMedications);
-      }
-    } on ApiException catch (e) {
-      _error = e.message;
-    } catch (e) {
-      _error = 'Failed to load medications';
+    // Seed demo data immediately
+    if (_medications.isEmpty) {
+      _medications = DemoData.medications;
     }
 
     _isLoading = false;
     notifyListeners();
+
+    // Then try API in background
+    try {
+      final apiMeds = await _apiService.getMedications(patientId)
+          .timeout(const Duration(seconds: 5));
+      _medications = apiMeds;
+      if (!kIsWeb) {
+        MedicationReminderService().rescheduleAll(activeMedications);
+      }
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Medications API unavailable, using demo data: $e');
+    }
   }
 
   /// Load today's medication schedule (meds + logs, grouped by time slot).

@@ -38,23 +38,32 @@ class MyCareProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {
-      final results = await Future.wait([
-        _apiService.getActiveServices(patientId),
-        _apiService.getHealthManager(patientId),
-      ]);
-
-      _activeServices = results[0] as List<ActiveService>;
-      _healthManager = results[1] as HealthManager?;
+    // Seed demo data immediately so UI is never empty
+    if (_activeServices.isEmpty) {
+      _activeServices = DemoData.activeServices;
+      _healthManager = DemoData.healthManager;
       _lastFetchedAt = DateTime.now();
-    } on ApiException catch (e) {
-      _error = e.message;
-    } catch (e) {
-      _error = 'Unable to load services. Pull down to retry.';
     }
 
     _isLoading = false;
     notifyListeners();
+
+    // Then try API in background (overwrites demo if successful)
+    try {
+      final results = await Future.wait([
+        _apiService.getActiveServices(patientId),
+        _apiService.getHealthManager(patientId),
+      ]).timeout(const Duration(seconds: 5));
+
+      _activeServices = results[0] as List<ActiveService>;
+      _healthManager = results[1] as HealthManager?;
+      _lastFetchedAt = DateTime.now();
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('MyCare API unavailable, using demo data: $e');
+      // NOTE: Demo data already loaded — no action needed
+    }
   }
 
   /// Load full detail for a single service/deployment.
