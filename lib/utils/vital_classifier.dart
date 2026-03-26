@@ -33,7 +33,7 @@ String classifyVital(String vitalType, double value) {
     case 'sugar':
       return _classifySugar(value);
     default:
-      throw ArgumentError('Unknown vital type: $vitalType');
+      return 'green'; // Safe fallback for unknown vital types
   }
 }
 

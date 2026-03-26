@@ -144,7 +144,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  _vitalPill('BP', '${app.latestVitals!.systolic?.toInt() ?? "--"}/${app.latestVitals!.diastolic?.toInt() ?? "--"}', 'mmHg', app.latestVitals!.systolic, 'systolic'),
+                  _vitalPill('BP', '${app.latestVitals!.systolic?.toInt() ?? "--"}/${app.latestVitals!.diastolic?.toInt() ?? "--"}', 'mmHg', app.latestVitals!.systolic, 'bp_systolic'),
                   _vitalPill('SpO2', '${app.latestVitals!.spo2?.toInt() ?? "--"}', '%', app.latestVitals!.spo2, 'spo2'),
                   _vitalPill('Pulse', '${app.latestVitals!.pulse?.toInt() ?? "--"}', 'bpm', app.latestVitals!.pulse, 'pulse'),
                   _vitalPill('Temp', '${app.latestVitals!.temperature ?? "--"}', '°F', app.latestVitals!.temperature, 'temperature'),

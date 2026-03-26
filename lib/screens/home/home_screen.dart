@@ -829,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _miniVitalChip('BP', '${v.systolic?.toInt() ?? "--"}/${v.diastolic?.toInt() ?? "--"}', v.systolic, 'systolic'),
+          _miniVitalChip('BP', '${v.systolic?.toInt() ?? "--"}/${v.diastolic?.toInt() ?? "--"}', v.systolic, 'bp_systolic'),
           _miniVitalChip('SpO2', '${v.spo2?.toInt() ?? "--"}%', v.spo2, 'spo2'),
           _miniVitalChip('Pulse', '${v.pulse?.toInt() ?? "--"}', v.pulse, 'pulse'),
           _miniVitalChip('Temp', '${v.temperature ?? "--"}°F', v.temperature, 'temperature'),
