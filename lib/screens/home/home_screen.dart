@@ -116,33 +116,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 1. Your Health Team
                   _sectionLabel('Your Health Team', onSeeAll: () => MainShell.switchToTab(1)),
                   _buildHealthTeamCard(context, l, app),
+                  const SizedBox(height: 8),
 
                   // 2. Current Services
                   if (app.activeDeployment != null) ...[
                     _sectionLabel('Current Services', onSeeAll: () => MainShell.switchToTab(1)),
                     _buildActiveServicesQuickView(context, l, app),
+                    const SizedBox(height: 8),
                   ],
 
                   // 3. Today's Vitals
                   if (app.latestVitals != null) ...[
                     _sectionLabel("Today's Vitals", onSeeAll: () => Navigator.pushNamed(context, '/vitals')),
                     _buildVitalsStrip(app),
+                    const SizedBox(height: 8),
                   ],
 
                   // 4. Book Services
                   _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
                   _buildQuickActionsGrid(context, l),
+                  const SizedBox(height: 8),
 
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
                     _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
                     _buildReportSnippet(app),
+                    const SizedBox(height: 8),
                   ],
 
                   // 6. Payments
                   _buildPaymentCards(context, app),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                 ],
               ],
             ),
@@ -842,8 +847,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: GestureDetector(
         onTap: () => Navigator.pushNamed(context, '/vitals'),
         child: Container(
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
           decoration: BoxDecoration(
             color: HousepitalColors.white,
             borderRadius: BorderRadius.circular(10),
