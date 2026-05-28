@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
+// audit batch 4 (Agent I): centralized validators replace inline regex check.
+import '../../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,9 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // audit M-7: Indian mobile prefix validation (TRAI uses 6–9 leading digit).
-  bool _isValidIndianMobile(String value) {
-    return RegExp(r'^[6-9]\d{9}$').hasMatch(value);
-  }
+  // audit batch 4 (Agent I): delegates to shared Validators.indianMobile so
+  // the regex lives in exactly one place. Kept as a bool wrapper so the
+  // button-enable check below can stay a synchronous predicate.
+  bool _isValidIndianMobile(String value) =>
+      Validators.indianMobile(value) == null;
 
   Future<void> _onSendOtp() async {
     final auth = context.read<AuthProvider>();
@@ -162,12 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     // audit M-7: Indian mobile prefix check — was a length-only
                     // check, which let 0XXXXXXXXX / landlines through.
-                    validator: (value) {
-                      if (value == null || !_isValidIndianMobile(value)) {
-                        return 'Enter a valid 10-digit Indian mobile (starts with 6-9)';
-                      }
-                      return null;
-                    },
+                    // audit batch 4 (Agent I): wired to Validators.indianMobile.
+                    validator: Validators.indianMobile,
                     onChanged: (_) => setState(() {}),
                   ),
 

@@ -1,7 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+// audit batch 4 (Agent J): Crashlytics + Performance Monitoring wiring.
+// Dependencies were added to pubspec.yaml by Agent H in this same batch.
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:provider/provider.dart';
 
 import 'config/firebase_options.dart';
@@ -9,6 +16,7 @@ import 'config/theme.dart';
 import 'models/models.dart';
 import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/billing_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/theme_provider.dart';
@@ -71,50 +79,133 @@ import 'services/medication_reminder_service.dart';
 import 'utils/notification_router.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // audit batch 4 (Agent J): wrap the whole app in runZonedGuarded so async
+  // errors (futures that never get awaited, timers, etc.) are captured by
+  // Crashlytics instead of silently going to the console.
+  await runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
-  // Initialise local medication reminders (no-op on web).
-  if (!kIsWeb) {
-    await MedicationReminderService().init();
-  }
+    // ── audit batch 4 (Agent J): Crashlytics + Performance ────────────────
+    // Production-only: in debug we want errors loud in the console, not
+    // shipped to a remote sink that won't surface them for hours.
+    if (!kDebugMode) {
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(true);
+      await FirebasePerformance.instance
+          .setPerformanceCollectionEnabled(true);
+    } else {
+      // In debug builds, keep both surfaces off so test runs and hot reloads
+      // don't pollute the production project.
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(false);
+      await FirebasePerformance.instance
+          .setPerformanceCollectionEnabled(false);
+    }
 
-  final firebaseService = FirebaseService();
-  final apiService = ApiService();
+    // audit batch 4 (Agent J): friendly fallback when a widget build throws.
+    // Default ErrorWidget shows the red error screen which is fine in debug
+    // but terrifies users in production. This keeps the app navigable.
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      // Still log in debug so devs see what failed.
+      if (kDebugMode) {
+        FlutterError.presentError(details);
+      }
+      return Material(
+        color: Colors.transparent,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.error_outline, size: 48, color: Colors.red),
+                SizedBox(height: 12),
+                Text(
+                  "Something went wrong showing this screen.",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "We've logged the issue. Please go back and try again.",
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    };
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(firebaseService, apiService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AppProvider(apiService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final cartProvider = CartProvider();
-            cartProvider.loadFromStorage(); // fire and forget — loads async
-            return cartProvider;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (_) => OrdersProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => MyCareProvider(apiService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => MedicationProvider(apiService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ThemeProvider(),
-        ),
-      ],
-      child: const HousepitalApp(),
-    ),
-  );
+    // Initialise local medication reminders (no-op on web).
+    if (!kIsWeb) {
+      await MedicationReminderService().init();
+    }
+
+    final firebaseService = FirebaseService();
+    final apiService = ApiService();
+
+    // audit batch 4 (Agent J): construct AuthProvider eagerly so we can wire
+    // its `handleUnauthorized` into ApiService.onUnauthorized — the API
+    // client doesn't depend on AuthProvider directly (no circular import);
+    // it only takes a callback.
+    final authProvider = AuthProvider(firebaseService, apiService);
+    apiService.onUnauthorized = authProvider.handleUnauthorized;
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+          ChangeNotifierProvider(
+            create: (_) => AppProvider(apiService),
+          ),
+          // audit batch 4 (Agent J): wire BillingProvider into the tree. It
+          // was previously orphaned (defined but never provided). BillingScreen
+          // still reads off AppProvider today — see TODO in billing_screen.dart
+          // to migrate to BillingProvider in a follow-up.
+          ChangeNotifierProvider(
+            create: (_) => BillingProvider(apiService),
+          ),
+          ChangeNotifierProvider(
+            create: (_) {
+              final cartProvider = CartProvider();
+              cartProvider.loadFromStorage(); // fire and forget — loads async
+              return cartProvider;
+            },
+          ),
+          ChangeNotifierProvider(
+            create: (_) => OrdersProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => MyCareProvider(apiService),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => MedicationProvider(apiService),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => ThemeProvider(),
+          ),
+        ],
+        child: const HousepitalApp(),
+      ),
+    );
+  }, (error, stack) {
+    // audit batch 4 (Agent J): uncaught async errors land here.
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    } else {
+      // ignore: avoid_print
+      debugPrint('Uncaught zone error: $error\n$stack');
+    }
+  });
 }
 
 class HousepitalApp extends StatefulWidget {

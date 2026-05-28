@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+// audit batch 4 (Agent I): centralized validators for name + age.
+import '../../utils/validators.dart';
 
 /// Add a new patient that the current user will care for as primary contact.
 ///
@@ -139,12 +141,17 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          // audit batch 4 (Agent I): Apple framework P7 fix — onUserInteraction
+          // surfaces validation as the user types/leaves a field rather than
+          // only on submit.
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Intro card
               Container(
-                padding: const EdgeInsets.all(14),
+                // audit batch 4 (Agent I): 14 → 16 per 8pt grid.
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: HousepitalColors.orangeLight.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
@@ -174,9 +181,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(labelText: 'Patient Name'),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Name is required'
-                    : null,
+                // audit batch 4 (Agent I): centralized name validator.
+                validator: Validators.name,
               ),
               const SizedBox(height: 16),
               Row(
@@ -186,15 +192,9 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       controller: _ageController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(labelText: 'Age'),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Age is required';
-                        }
-                        final age = int.tryParse(v.trim());
-                        if (age == null) return 'Must be a number';
-                        if (age < 0 || age > 150) return 'Invalid age';
-                        return null;
-                      },
+                      // audit batch 4 (Agent I): centralized age validator
+                      // (same messages as before — tests still pass).
+                      validator: Validators.age,
                     ),
                   ),
                   const SizedBox(width: 16),

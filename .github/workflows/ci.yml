@@ -37,8 +37,51 @@ jobs:
       # expanded reporter gives full failure context (expected/actual + stack)
       # directly in CI logs — the default compact reporter buries failures
       # behind hundreds of later pass lines.
+      #
+      # --coverage emits coverage/lcov.info which the next step parses to
+      # enforce a minimum line-coverage threshold.
       - name: Test
-        run: flutter test --reporter=expanded
+        run: flutter test --coverage --reporter=expanded
+
+      # Coverage gate. Fails the build if line coverage drops below the
+      # threshold. Starting baseline is intentionally conservative (50%) —
+      # raise it in lockstep as new tests land (target 70% by next quarter).
+      #
+      # Why parse lcov.info ourselves: codecov / coveralls add an external
+      # dependency we don't need yet, and lcov is installable from apt in
+      # ~3s. The grep/awk pipeline only reads `coverage_summary.txt` which
+      # we wrote ourselves — no GitHub Actions context interpolation in
+      # `run:` (safer against script injection per GH security guidance).
+      - name: Coverage gate
+        env:
+          COVERAGE_THRESHOLD: "50.0"
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lcov
+          lcov --summary coverage/lcov.info | tee coverage_summary.txt
+          pct=$(grep -oE "lines\.+: [0-9.]+%" coverage_summary.txt | head -1 | grep -oE "[0-9.]+")
+          echo "Line coverage: ${pct}%"
+          ok=$(awk -v p="$pct" -v t="$COVERAGE_THRESHOLD" 'BEGIN{print (p >= t) ? 1 : 0}')
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::Coverage ${pct}% is below threshold ${COVERAGE_THRESHOLD}%"
+            exit 1
+          fi
+
+      # Upload coverage on EVERY run (not just failures) so trends can be
+      # tracked across PRs. Retention 14 days is enough for a sprint of
+      # back-comparison without bloating storage.
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        env:
+          RUN_ID: ${{ github.run_id }}
+        with:
+          name: coverage-${{ env.RUN_ID }}
+          path: |
+            coverage/lcov.info
+            coverage_summary.txt
+          retention-days: 14
+          if-no-files-found: warn
 
       # Build the production web bundle. Tree-shake-icons is enabled (default)
       # — it shrinks MaterialIcons-Regular from 1.6MB to ~34KB. If it ever

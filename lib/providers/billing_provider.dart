@@ -1,18 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../data/demo_data.dart';
-import '../services/api_service.dart';
+import '../services/i_api_service.dart';
 
 /// Handles billing-related state, extracted from AppProvider
 /// to maintain Single Responsibility.
 class BillingProvider extends ChangeNotifier {
-  final ApiService _apiService;
+  // audit batch 4 (Agent J): depend on IApiService (DIP).
+  final IApiService _apiService;
 
   int _amountDue = 0;
   DateTime? _dueDate;
   bool _isLoading = false;
   String? _error;
 
-  BillingProvider(this._apiService);
+  BillingProvider(IApiService api) : _apiService = api;
 
   int get amountDue => _amountDue;
   DateTime? get dueDate => _dueDate;

@@ -8,6 +8,9 @@ import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
+// audit batch 4 (Agent I): centralized validator caps description length
+// (audit F finding — was unbounded, 10MB DoS risk).
+import '../../utils/validators.dart';
 
 class RaiseConcernScreen extends StatefulWidget {
   const RaiseConcernScreen({super.key});
@@ -121,6 +124,9 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          // audit batch 4 (Agent I): onUserInteraction so the user sees the
+          // 1000-char cap warning before they finish typing 10MB.
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -143,9 +149,11 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                   hintText: 'Describe the issue in detail...',
                 ),
                 maxLines: 4,
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Please describe the issue'
-                    : null,
+                // audit batch 4 (Agent I): audit F — cap at 1000 chars
+                // to block oversized bodies. `maxLength` shows the counter.
+                maxLength: 1000,
+                validator: (v) =>
+                    Validators.description(v, max: 1000),
               ),
               const SizedBox(height: 16),
 

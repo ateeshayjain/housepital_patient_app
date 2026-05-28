@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/demo_data.dart';
 import '../models/models.dart';
-import '../services/api_service.dart';
 import '../services/cache_service.dart';
+import '../services/i_api_service.dart';
 
 class AppProvider extends ChangeNotifier {
-  final ApiService _apiService;
-  ApiService get apiService => _apiService;
+  // audit batch 4 (Agent J): depend on the IApiService interface, not the
+  // concrete ApiService, to satisfy Dependency Inversion (SOLID) and let
+  // tests inject lightweight fakes without subclassing the real client.
+  final IApiService _apiService;
+  IApiService get apiService => _apiService;
 
   // Current user role for permission gating.
   // Defaults to PRIMARY_CONTACT so the demo retains full access; a future
@@ -43,7 +46,7 @@ class AppProvider extends ChangeNotifier {
   String? _dashboardError;
   String? _lastUpdatedText;
 
-  AppProvider(this._apiService) {
+  AppProvider(IApiService api) : _apiService = api {
     _loadLanguage();
     _loadProfilePhoto();
   }

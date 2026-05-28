@@ -36,6 +36,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // Defaults to 1 (safe modulo) and is overwritten on the first build.
   int _slideCount = 1;
 
+  // audit batch 4 (Agent L): tracks AnimatedScale press state for cards that
+  // implement Apple's 0.98 press feedback (P5 — feedback latency under 100ms).
+  final Map<String, double> _pressedScale = {};
+
+  // audit batch 4 (Agent L): guard so we only attempt to start the banner
+  // auto-scroll once. We defer the start to didChangeDependencies because that
+  // is the first lifecycle hook where MediaQuery is available — required for
+  // the reduced-motion (P8) check.
+  bool _bannerAutoScrollStarted = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +60,23 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
     _startDutyTimer();
-    _startBannerAutoScroll();
+    // audit batch 4 (Agent L): banner auto-scroll start moved to
+    // didChangeDependencies so MediaQuery.disableAnimations is available.
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_bannerAutoScrollStarted) {
+      _bannerAutoScrollStarted = true;
+      // audit batch 4 (Agent L): WCAG 2.3.3 / Apple P8 — honor the user's
+      // "Reduce Motion" / "Reduce Animations" OS setting. When disabled,
+      // skip the timer entirely so the carousel stays on the slide the user
+      // last saw and the dot indicator stops shifting on its own.
+      if (!MediaQuery.of(context).disableAnimations) {
+        _startBannerAutoScroll();
+      }
+    }
   }
 
   void _startDutyTimer() {
@@ -72,6 +98,16 @@ class _HomeScreenState extends State<HomeScreen> {
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  // audit batch 4 (Agent L): Apple cards spec — 0.98 scale on tap, 100ms.
+  // Identified by a string key so multiple tappable cards can share the map.
+  void _onCardPressDown(String id) {
+    setState(() => _pressedScale[id] = 0.98);
+  }
+
+  void _onCardPressUpOrCancel(String id) {
+    setState(() => _pressedScale[id] = 1.0);
   }
 
   @override
@@ -180,59 +216,76 @@ class _HomeScreenState extends State<HomeScreen> {
     final caregiverName = contact?.name ?? 'your family caregiver';
     final caregiverPhone = contact?.phone;
 
+    // audit batch 4 (Agent L): Apple cards spec P5 — primary tappable cards
+    // confirm touch with a 0.98 scale, 100ms duration. Tracks press state via
+    // _pressedScale map keyed by 'call_caregiver'.
+    const cardId = 'call_caregiver';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Material(
-        color: HousepitalColors.orange,
-        borderRadius: BorderRadius.circular(16),
-        elevation: 1,
-        shadowColor: Colors.black12,
-        child: InkWell(
+      child: AnimatedScale(
+        scale: _pressedScale[cardId] ?? 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Material(
+          color: HousepitalColors.orange,
           borderRadius: BorderRadius.circular(16),
-          onTap: caregiverPhone != null
-              ? () => launchUrl(Uri.parse('tel:$caregiverPhone'))
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
+          elevation: 1,
+          shadowColor: Colors.black12,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: caregiverPhone != null
+                ? () => launchUrl(Uri.parse('tel:$caregiverPhone'))
+                : null,
+            onTapDown: caregiverPhone != null
+                ? (_) => _onCardPressDown(cardId)
+                : null,
+            onTapUp: caregiverPhone != null
+                ? (_) => _onCardPressUpOrCancel(cardId)
+                : null,
+            onTapCancel: caregiverPhone != null
+                ? () => _onCardPressUpOrCancel(cardId)
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.phone_in_talk,
+                        color: Colors.white, size: 32),
                   ),
-                  child: const Icon(Icons.phone_in_talk,
-                      color: Colors.white, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Call my family caregiver',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Call my family caregiver',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        caregiverPhone != null
-                            ? 'Tap to call $caregiverName · $caregiverPhone'
-                            : 'No family contact saved yet',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.95),
+                        const SizedBox(height: 4),
+                        Text(
+                          caregiverPhone != null
+                              ? 'Tap to call $caregiverName · $caregiverPhone'
+                              : 'No family contact saved yet',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.95),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -328,26 +381,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   Semantics(
                     label: 'Switch patient. Current: ${app.currentPatient!.name}',
                     button: true,
-                    child: InkWell(
-                      onTap: () => _showPatientSwitcher(context, app),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              l.t('dashboard_care',
-                                  {'name': app.currentPatient!.name}),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: HousepitalColors.grey,
+                    // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — chip is
+                    // visually 14pt text + 20pt icon (~28pt total), short of
+                    // the 44pt minimum. ConstrainedBox lifts the hit region to
+                    // 44pt without growing the visible chip; align centers it.
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      child: InkWell(
+                        onTap: () => _showPatientSwitcher(context, app),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l.t('dashboard_care',
+                                    {'name': app.currentPatient!.name}),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: HousepitalColors.grey,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.arrow_drop_down,
-                                color: HousepitalColors.grey, size: 20),
-                          ],
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_drop_down,
+                                  color: HousepitalColors.grey, size: 20),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -847,45 +907,56 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: actions.map((action) {
+          // audit batch 4 (Agent L): Apple cards spec P5 — each quick-action
+          // tile gets a 0.98 scale press feedback (100ms). Keyed by label so
+          // each tile tracks its own pressed state independently.
+          final tileId = 'quick_${action.label}';
           return Expanded(
             child: Semantics(
               button: true,
               label: action.label,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: action.onTap,
-                  child: Container(
-                    // WCAG 2.5.5 — guarantee at least a 44pt tap target.
-                    constraints: const BoxConstraints(minHeight: 56),
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: action.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+              child: AnimatedScale(
+                scale: _pressedScale[tileId] ?? 1.0,
+                duration: const Duration(milliseconds: 100),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: action.onTap,
+                    onTapDown: (_) => _onCardPressDown(tileId),
+                    onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+                    onTapCancel: () => _onCardPressUpOrCancel(tileId),
+                    child: Container(
+                      // WCAG 2.5.5 — guarantee at least a 44pt tap target.
+                      constraints: const BoxConstraints(minHeight: 56),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: action.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(action.icon,
+                                color: action.color, size: 20),
                           ),
-                          child: Icon(action.icon,
-                              color: action.color, size: 20),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          action.label,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HousepitalColors.grey,
+                          const SizedBox(height: 4),
+                          Text(
+                            action.label,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: HousepitalColors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -910,7 +981,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => Navigator.pushNamed(context, '/daimaa'),
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(18),
+            // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap from off-grid
+            // 18 to 16. Visual change is negligible (2pt) but aligns with the
+            // rest of the home cards.
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -1015,14 +1089,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 15, fontWeight: FontWeight.w700, color: HousepitalColors.black)),
           ),
           if (onSeeAll != null)
-            GestureDetector(
-              onTap: onSeeAll,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text('See All',
-                    style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
+            // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — guarantee a
+            // 44pt minimum tap target. Previous GestureDetector wrapped only
+            // 12pt text + 4pt vertical padding (~20pt total). TextButton gives
+            // us Material's 48dp default plus a hit region that comfortably
+            // clears 44pt without growing the visible "See All" label.
+            TextButton(
+              onPressed: onSeeAll,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                foregroundColor: HousepitalColors.orange,
+                tapTargetSize: MaterialTapTargetSize.padded,
+                visualDensity: VisualDensity.standard,
               ),
+              child: const Text('See All',
+                  style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
             ),
         ],
       ),
@@ -1209,7 +1292,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const Text('Overdue Payment',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HousepitalColors.error)),
-                        Text('₹${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
+                        // audit batch 4 (Agent L): drop the duplicate ₹ —
+                        // DateHelper.formatCurrency already prepends the
+                        // symbol, so the previous string rendered as "₹₹3,000".
+                        Text('${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
                             style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
                       ],
                     ),

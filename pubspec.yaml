@@ -27,6 +27,12 @@ dependencies:
   cloud_firestore: ^5.6.8
   # audit M-9: needed for uploading chat photos & concern evidence to Firebase Storage
   firebase_storage: ^12.4.0
+  # audit batch-4: Crashlytics for production crash reporting + Performance
+  # for HTTP / startup tracing. Initialization wired separately (Agent J)
+  # — adding the dependency only here so pub.dev resolution is stable across
+  # parallel agents in this batch.
+  firebase_crashlytics: ^4.3.5
+  firebase_performance: ^0.10.1+5
 
   # Networking
   http: ^1.4.0

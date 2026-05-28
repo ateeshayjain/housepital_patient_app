@@ -1,3 +1,9 @@
+// audit batch 4 (Agent J): TODO — migrate billing state off AppProvider and
+// onto the now-wired BillingProvider (lib/providers/billing_provider.dart).
+// AppProvider currently bundles billing into loadDashboard(); BillingProvider
+// gives this screen a dedicated loadBillingSummary() + isLoading/error that
+// don't tangle with the dashboard's lifecycle. Out of scope for this batch
+// (provider wiring only) — leaving the screen wired to AppProvider for now.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';

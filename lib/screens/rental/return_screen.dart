@@ -227,7 +227,8 @@ class _ReturnScreenState extends State<ReturnScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap 14 to 16.
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: HousepitalColors.successLight,
         borderRadius: BorderRadius.circular(12),

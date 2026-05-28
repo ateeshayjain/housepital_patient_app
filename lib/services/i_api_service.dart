@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
 
@@ -45,7 +46,21 @@ abstract class IApiService {
   // ── Reports ───────────────────────────────────────────────
   Future<DailyReport?> getTodayReport(String patientId);
   Future<List<DailyReport>> getReportHistory(String patientId, {int page});
+  // audit batch 4 (Agent J): paginated report fetch (used by report history screen).
+  Future<List<DailyReport>> getReportHistoryPaginated(
+    String patientId, {
+    int page,
+    int pageSize,
+  });
   Future<DailyReport> getReportDetail(String reportId);
+
+  // audit batch 4 (Agent J): paginated attendance fetch (used by attendance
+  // history screen) — keyed by deploymentId, not patientId.
+  Future<List<Attendance>> getAttendanceHistoryPaginated(
+    String deploymentId, {
+    int page,
+    int pageSize,
+  });
 
   // ── Deployments ───────────────────────────────────────────
   Future<Deployment?> getActiveDeployment(String patientId);
@@ -117,6 +132,19 @@ abstract class IApiService {
   Future<MedicationFull> updateMedication(
       String patientId, String medicationId, Map<String, dynamic> body);
   Future<void> deleteMedication(String patientId, String medicationId);
+  // audit batch 4 (Agent J): logs + stock — used by MedicationProvider.
+  Future<List<MedicationLog>> getMedicationLogs(
+    String patientId, {
+    String? date,
+  });
+  Future<void> updateMedicationStock(
+      String patientId, String medicationId, int stockCount);
+
+  // ── My Care ──────────────────────────────────────────────
+  // audit batch 4 (Agent J): MyCareProvider depends on these methods.
+  Future<List<ActiveService>> getActiveServices(String patientId);
+  Future<HealthManager?> getHealthManager(String patientId);
+  Future<ServiceDetail> getDeploymentServiceDetail(String deploymentId);
 
   // ── Equipment ─────────────────────────────────────────────
   Future<List<EquipmentItem>> getEquipmentCatalog({

@@ -1,0 +1,484 @@
+// audit batch 4 (Agent K): extracted from service_catalog_screen.dart
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import '../../../config/theme.dart';
+import '../../../models/models.dart';
+import '../../../utils/helpers.dart';
+import '../cards/diagnostic_card.dart';
+import '../sheets/lab_test_detail_sheet.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/trust_badges.dart';
+
+/// Lab Tests tab — loads `assets/lab_tests_catalog.json` and surfaces an
+/// individually-searchable lab test catalog, with the existing "popular
+/// packages" (Fever Panel, Wellness, etc.) pinned at the top of the list
+/// when no filter is active.
+class LabTestsTab extends StatefulWidget {
+  /// The existing lab packages (Fever Panel, Wellness, etc.) shown as
+  /// "Popular Packages" at the top.
+  final List<ServiceItem> packageServices;
+  final Map<String, IconData> iconMap;
+  final void Function(BuildContext, ServiceItem) onNavigateService;
+
+  const LabTestsTab({
+    super.key,
+    required this.packageServices,
+    required this.iconMap,
+    required this.onNavigateService,
+  });
+
+  @override
+  State<LabTestsTab> createState() => _LabTestsTabState();
+}
+
+class _LabTestsTabState extends State<LabTestsTab> {
+  List<LabTestItem> _allTests = [];
+  bool _isLoading = true;
+  String _selectedCategory = 'All';
+  String _searchQuery = '';
+  String _sortBy = 'Name A-Z';
+  final _searchController = TextEditingController();
+
+  List<String> _categories = ['All'];
+
+  static const _sortOptions = [
+    'Name A-Z',
+    'Price: Low to High',
+    'Price: High to Low',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalog();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCatalog() async {
+    try {
+      final jsonStr =
+          await rootBundle.loadString('assets/lab_tests_catalog.json');
+      final List<dynamic> list = json.decode(jsonStr);
+      _allTests = list.map((e) => LabTestItem.fromJson(e)).toList();
+      // Build category list
+      final cats = <String>{};
+      for (final t in _allTests) {
+        if (t.category != null) cats.add(t.category!);
+      }
+      _categories = ['All', ...cats.toList()..sort()];
+    } catch (e) {
+      debugPrint('Error loading lab tests catalog: $e');
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  List<LabTestItem> get _filtered {
+    var items = _allTests;
+    // Category filter
+    if (_selectedCategory != 'All') {
+      items = items.where((i) => i.category == _selectedCategory).toList();
+    }
+    // Search
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      items = items
+          .where((i) =>
+              i.name.toLowerCase().contains(q) ||
+              (i.alsoKnownAs?.toLowerCase().contains(q) ?? false) ||
+              (i.commonlyPrescribedFor?.toLowerCase().contains(q) ?? false) ||
+              (i.description?.toLowerCase().contains(q) ?? false))
+          .toList();
+    }
+    // Sort
+    switch (_sortBy) {
+      case 'Price: Low to High':
+        items = List.of(items)
+          ..sort((a, b) =>
+              (a.price ?? 999999).compareTo(b.price ?? 999999));
+        break;
+      case 'Price: High to Low':
+        items = List.of(items)
+          ..sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+        break;
+      default: // Name A-Z
+        items = List.of(items)
+          ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+    }
+    return items;
+  }
+
+  void _showLabTestDetail(BuildContext context, LabTestItem test) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LabTestDetailSheet(
+        test: test,
+        onBook: () {
+          widget.onNavigateService(context, test.toServiceItem());
+        },
+        onRelatedTap: (name) {
+          Navigator.of(context).pop();
+          setState(() {
+            _searchQuery = name.trim();
+            _searchController.text = name.trim();
+            _selectedCategory = 'All';
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: HousepitalColors.orange));
+    }
+
+    final filtered = _filtered;
+    final packages = widget.packageServices;
+
+    return Column(
+      children: [
+        // Search
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Search lab tests, symptoms...',
+              prefixIcon:
+                  const Icon(Icons.search, color: HousepitalColors.greyLight),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: HousepitalColors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        // Trust badges
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: TrustBadgeBar(
+            badges: [
+              TrustBadge(icon: Icons.workspace_premium, text: 'NABL Accredited Labs'),
+              TrustBadge(icon: Icons.home, text: 'Home Collection'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Category chips + sort
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final cat = _categories[index];
+                      final isSelected = cat == _selectedCategory;
+                      final count = cat == 'All'
+                          ? _allTests.length
+                          : _allTests.where((i) => i.category == cat).length;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedCategory = cat),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? HousepitalColors.orange
+                                : HousepitalColors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? HousepitalColors.orange
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Text(
+                            '$cat ($count)',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? HousepitalColors.white
+                                  : HousepitalColors.grey,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.sort, color: HousepitalColors.grey),
+                onSelected: (v) => setState(() => _sortBy = v),
+                itemBuilder: (_) => _sortOptions
+                    .map((o) => PopupMenuItem(
+                          value: o,
+                          child: Row(
+                            children: [
+                              if (o == _sortBy)
+                                const Icon(Icons.check,
+                                    size: 18, color: HousepitalColors.orange)
+                              else
+                                const SizedBox(width: 18),
+                              const SizedBox(width: 8),
+                              Text(o),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Results count
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${filtered.length} tests found',
+              style: const TextStyle(
+                  fontSize: 13, color: HousepitalColors.greyLight),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Content list
+        Expanded(
+          child: filtered.isEmpty
+              ? const CatalogEmptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  itemCount:
+                      (packages.isNotEmpty && _searchQuery.isEmpty && _selectedCategory == 'All')
+                          ? filtered.length + packages.length + 2
+                          : filtered.length,
+                  itemBuilder: (context, index) {
+                    // Show packages section at the top when no search/filter active
+                    if (packages.isNotEmpty &&
+                        _searchQuery.isEmpty &&
+                        _selectedCategory == 'All') {
+                      if (index == 0) {
+                        return const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Text(
+                            'Popular Packages',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black,
+                            ),
+                          ),
+                        );
+                      }
+                      if (index <= packages.length) {
+                        final pkg = packages[index - 1];
+                        return DiagnosticCard(
+                          service: pkg,
+                          iconMap: widget.iconMap,
+                          onNavigate: widget.onNavigateService,
+                        );
+                      }
+                      if (index == packages.length + 1) {
+                        return const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Text(
+                            'All Individual Tests',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black,
+                            ),
+                          ),
+                        );
+                      }
+                      // Offset for individual tests
+                      final testIndex = index - packages.length - 2;
+                      final test = filtered[testIndex];
+                      return _LabTestCard(
+                        test: test,
+                        onTap: () => _showLabTestDetail(context, test),
+                      );
+                    }
+                    // No packages header — just individual tests
+                    final test = filtered[index];
+                    return _LabTestCard(
+                      test: test,
+                      onTap: () => _showLabTestDetail(context, test),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Lab Test Card ────────────────────────────────────────────────────────────
+
+class _LabTestCard extends StatelessWidget {
+  final LabTestItem test;
+  final VoidCallback onTap;
+
+  const _LabTestCard({required this.test, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Material(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(14),
+        elevation: 1,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.infoLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.science,
+                      color: HousepitalColors.info, size: 22),
+                ),
+                const SizedBox(width: 12),
+                // Name + badges
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        test.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: HousepitalColors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (test.sampleType != null)
+                            _MiniChip(
+                                icon: Icons.colorize, label: test.sampleType!),
+                          if (test.reportTat != null)
+                            _MiniChip(
+                                icon: Icons.schedule, label: test.reportTat!),
+                          if (test.fastingRequired)
+                            const _MiniChip(
+                                icon: Icons.no_food,
+                                label: 'Fasting',
+                                color: HousepitalColors.warning),
+                          if (test.homeCollection)
+                            const _MiniChip(
+                                icon: Icons.home,
+                                label: 'Home',
+                                color: HousepitalColors.success),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Price
+                if (test.price != null)
+                  Text(
+                    DateHelper.formatCurrency(test.price!),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: HousepitalColors.orangeText,
+                    ),
+                  ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right,
+                    color: HousepitalColors.greyLight, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _MiniChip({
+    required this.icon,
+    required this.label,
+    this.color = HousepitalColors.greyLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+}

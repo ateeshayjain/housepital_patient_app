@@ -1,18 +1,156 @@
-rules_version='2'
+rules_version = '2';
+
+// =============================================================================
+// HOUSEPITAL PATIENT APP — FIRESTORE SECURITY RULES
+// =============================================================================
+//
+// !!  CRITICAL  !!  THIS FILE MUST BE DEPLOYED TO FIREBASE CONSOLE  !!
+//
+// Just editing this file in the repo does NOT update the live rules.
+// After merging, run from the backend repo (housepital-backend) where
+// `firebase.json` is configured:
+//
+//   firebase deploy --only firestore:rules --project housepital-patient
+//
+// Verify the live rules at:
+//   https://console.firebase.google.com/project/housepital-patient/firestore/rules
+//
+// History:
+// - Pre 2026-05-28: open allow-all rule with timestamp expiry (2026-04-21).
+//   This expired ~5 weeks before this hardening commit; production was
+//   effectively running on "default deny" since 2026-04-21 (confirmed
+//   intentional behaviour of the Firebase test rule).
+// - 2026-05-28 (audit batch 4 — F audit finding BUG-33): replaced with
+//   per-collection auth-scoped rules below. Default-deny at top, then
+//   explicit allows for each collection the patient app actually uses.
+//
+// Audit trail:
+// - Patient app reads / writes (from grep across lib/):
+//     chat_messages/{patientId}/messages   — lib/screens/chat/chat_screen.dart
+//     patients/{patientId}/attendance      — lib/services/firebase_service.dart
+//     patients/{patientId}/vitals          — lib/services/firebase_service.dart
+//     users/{userId}/notifications         — lib/services/firebase_service.dart
+//     active_sessions/{sessionId}          — lib/screens/orders + my_care
+//   Staff app writes vitals/attendance/active_sessions (separate repo).
+//
+// Defence-in-depth note: REST API auth (Firebase ID token verification in
+// the backend Cloud Functions) is the primary authorisation layer. These
+// rules are a secondary guard for any client that talks directly to
+// Firestore (chat, presence, real-time listeners).
+//
+// =============================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Default DENY everything. Every collection below must explicitly opt-in.
+    // -------------------------------------------------------------------------
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 4, 21);
+      allow read, write: if false;
     }
+
+    // -------------------------------------------------------------------------
+    // chat_messages/{patientId}/messages/{messageId}
+    //   In-app chat between patient/family and Housepital coordinator.
+    //   Schema: { text, senderId, timestamp, type, imageUrl? }
+    //   Today: senderId == widget.patientId (sent by patient context).
+    //   The coordinator side writes via the backend service account, which
+    //   bypasses these rules — so we only need to authorise the patient side.
+    //   Rule: authenticated users may read/create messages where
+    //   senderId matches their own uid OR the message is in their patient
+    //   thread. We use a loose match (auth.uid == patientId) since the app
+    //   currently keys threads by patientId; tighten when user→patient
+    //   mapping (user_patients collection) is wired.
+    // -------------------------------------------------------------------------
+    match /chat_messages/{patientId} {
+      allow read: if request.auth != null && request.auth.uid == patientId;
+
+      match /messages/{messageId} {
+        allow read: if request.auth != null && request.auth.uid == patientId;
+        allow create: if request.auth != null
+                      && request.auth.uid == patientId
+                      && request.resource.data.senderId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() < 5000;
+        // Messages are append-only. No edits, no deletes from the client.
+        allow update, delete: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // patients/{patientId}/attendance/{date}
+    // patients/{patientId}/vitals/{vitalId}
+    //   Staff app writes; patient app reads. Reads gated by uid == patientId.
+    //   Writes denied — must come from the backend (Cloud Functions / staff
+    //   app service account) which bypasses these rules.
+    // -------------------------------------------------------------------------
+    match /patients/{patientId} {
+      // Read only the patient document itself if patient owns it.
+      allow read: if request.auth != null && request.auth.uid == patientId;
+      allow write: if false; // backend-only writes
+
+      match /attendance/{date} {
+        allow read: if request.auth != null && request.auth.uid == patientId;
+        allow write: if false; // staff app writes via service account
+      }
+
+      match /vitals/{vitalId} {
+        allow read: if request.auth != null && request.auth.uid == patientId;
+        allow write: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // users/{userId}/notifications/{notificationId}
+    //   In-app notification feed. Owner-only read; writes from backend.
+    //   We allow update so the client can mark a notification as read.
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if false; // backend creates notifications
+        // Allow mark-as-read by mutating only the `read` field.
+        allow update: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['read', 'read_at']);
+        allow delete: if false;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // active_sessions/{sessionId}
+    //   Real-time staff-on-duty presence. Documents are keyed by deployment
+    //   or booking id; the client filters by patientId field. Reads allowed
+    //   when the doc's patientId matches the caller's uid. No client writes.
+    // -------------------------------------------------------------------------
+    match /active_sessions/{sessionId} {
+      allow read: if request.auth != null
+                  && resource.data.patientId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // fcm_tokens/{userId}
+    //   Per-user push notification token. Owner-only read/write so a user
+    //   can register / rotate their own token at app start.
+    // -------------------------------------------------------------------------
+    match /fcm_tokens/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // -------------------------------------------------------------------------
+    // TODO (still to model — backend-write only, NOT in default deny scope yet):
+    //   - audit_logs/{logId}     — server-only writes; deny all client access
+    //   - chat_threads/{threadId} — currently unused; chat_messages is flat
+    //   - user_patients/{uid}     — auth→patient mapping (planned)
+    // If those collections appear later, ADD explicit allow-deny rules below
+    // before they fall through to the default-deny above.
+    // -------------------------------------------------------------------------
   }
 }

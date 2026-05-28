@@ -103,7 +103,8 @@ class SOSScreen extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap 14 to 16.
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),

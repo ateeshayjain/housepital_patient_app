@@ -7,7 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'api_service.dart';
+import 'i_api_service.dart';
 
 class FirebaseService {
   FirebaseAuth? _auth;
@@ -298,7 +298,9 @@ class FirebaseService {
   /// [navigatorKey] – a GlobalKey<NavigatorState> so we can push routes from
   /// notification taps without a local BuildContext.
   Future<void> setupFCM({
-    ApiService? apiService,
+    // audit batch 4 (Agent J): accept the interface (DIP) — callers pass
+    // AuthProvider.apiService which now returns IApiService.
+    IApiService? apiService,
     Function(RemoteMessage message)? onForegroundMessage,
     Function(RemoteMessage message)? onMessageOpenedApp,
     GlobalKey<NavigatorState>? navigatorKey,
