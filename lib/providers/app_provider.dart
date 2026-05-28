@@ -9,6 +9,16 @@ class AppProvider extends ChangeNotifier {
   final ApiService _apiService;
   ApiService get apiService => _apiService;
 
+  // Current user role for permission gating.
+  // Defaults to PRIMARY_CONTACT so the demo retains full access; a future
+  // sign-in flow will set this from the authenticated user's profile.
+  String _currentUserRole = 'PRIMARY_CONTACT';
+  String get currentUserRole => _currentUserRole;
+  void setUserRole(String role) {
+    _currentUserRole = role;
+    notifyListeners();
+  }
+
   // Current patient context
   Patient? _currentPatient;
   List<Patient> _patients = [];
@@ -137,6 +147,17 @@ class AppProvider extends ChangeNotifier {
     loadDashboard();
   }
 
+  /// Add a new patient to the current user's care list.
+  ///
+  /// The creator becomes the primary contact for the new patient. This is an
+  /// in-memory append for now; future iterations will persist to
+  /// SharedPreferences and/or the backend.
+  Future<void> addPatient(Patient patient) async {
+    _patients = [..._patients, patient];
+    notifyListeners();
+    // TODO(persistence): persist to SharedPreferences / backend.
+  }
+
   // Load dashboard data from API with offline caching
   Future<void> loadDashboard() async {
     if (_currentPatient == null) return;
@@ -169,11 +190,10 @@ class AppProvider extends ChangeNotifier {
       _latestVitals = results[2] as VitalReading?;
       _todayReport = results[3] as DailyReport?;
 
-      final billing = results[4] as Map<String, dynamic>;
-      _amountDue = billing['amount_due'] ?? 0;
-      _dueDate = billing['due_date'] != null
-          ? DateTime.parse(billing['due_date'])
-          : null;
+      final billing = (results[4] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      _amountDue = (billing['amount_due'] as num?)?.toInt() ?? 0;
+      final dueDateRaw = billing['due_date'];
+      _dueDate = dueDateRaw is String ? DateTime.tryParse(dueDateRaw) : null;
 
       _dashboardError = null;
       _lastUpdatedText = 'Last updated: just now';
@@ -192,10 +212,9 @@ class AppProvider extends ChangeNotifier {
       _latestVitals = DemoData.vitalsHistory.last;
       _todayReport = DemoData.todayReport;
       final demoBilling = DemoData.billingSummary;
-      _amountDue = demoBilling['amount_due'] ?? 0;
-      _dueDate = demoBilling['due_date'] != null
-          ? DateTime.parse(demoBilling['due_date'])
-          : null;
+      _amountDue = (demoBilling['amount_due'] as num?)?.toInt() ?? 0;
+      final demoDueRaw = demoBilling['due_date'];
+      _dueDate = demoDueRaw is String ? DateTime.tryParse(demoDueRaw) : null;
       _lastUpdatedText = 'Demo data';
     }
   }
@@ -221,10 +240,9 @@ class AppProvider extends ChangeNotifier {
       }
     }
     if (billingSummary != null) {
-      _amountDue = billingSummary['amount_due'] ?? 0;
-      _dueDate = billingSummary['due_date'] != null
-          ? DateTime.parse(billingSummary['due_date'])
-          : null;
+      _amountDue = (billingSummary['amount_due'] as num?)?.toInt() ?? 0;
+      final dueRaw = billingSummary['due_date'];
+      _dueDate = dueRaw is String ? DateTime.tryParse(dueRaw) : null;
     }
     notifyListeners();
   }

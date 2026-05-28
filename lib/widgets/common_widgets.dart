@@ -288,6 +288,42 @@ class ErrorRetryWidget extends StatelessWidget {
   }
 }
 
+/// Shows an AlertDialog asking the user to confirm a destructive action.
+///
+/// Returns `true` if the user confirmed, `false` if cancelled or dismissed.
+/// The confirm button is styled with [HousepitalColors.error] to make the
+/// destructive intent visually clear.
+Future<bool> confirmDestructiveAction(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String confirmLabel = 'Delete',
+  String cancelLabel = 'Cancel',
+}) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(cancelLabel),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: HousepitalColors.error,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(confirmLabel),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
 class SOSButton extends StatelessWidget {
   final VoidCallback onTap;
 

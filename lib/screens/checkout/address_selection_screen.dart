@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
+import '../../widgets/common_widgets.dart';
 
 class SavedAddress {
   String label;
@@ -156,7 +157,16 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     _save();
   }
 
-  void _deleteAddress(int index) {
+  Future<void> _deleteAddress(int index) async {
+    final addr = _addresses[index];
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Delete this address?',
+      message:
+          '"${addr.label}" (${addr.flatHouse}, ${addr.street}) will be removed from your saved addresses.',
+      confirmLabel: 'Delete',
+    );
+    if (!confirmed || !mounted) return;
     setState(() {
       final wasDefault = _addresses[index].isDefault;
       _addresses.removeAt(index);

@@ -6,14 +6,17 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
+import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/medication_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/permissions.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../main_shell.dart';
@@ -41,8 +44,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<AppProvider>().loadPatients().then((_) {
-        context.read<AppProvider>().loadDashboard();
+      final app = context.read<AppProvider>();
+      app.loadPatients().then((_) {
+        app.loadDashboard();
+        final patientId = app.currentPatient?.id;
+        if (patientId != null && mounted) {
+          context.read<MedicationProvider>().loadMedications(patientId);
+        }
       });
     });
     _startDutyTimer();
@@ -93,6 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final app = context.watch<AppProvider>();
+    final role = app.currentUserRole;
+    final isPatientSelf = role == UserRole.patientSelf;
+    final canBook = canUserPerform(role, UserAction.book) ||
+        canUserPerform(role, UserAction.requestBooking);
 
     return Scaffold(
       body: SafeArea(
@@ -113,6 +125,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: LoadingWidget(),
                   )
                 else ...[
+                  // Patient-self always sees the big call card up top — that's
+                  // the one action available to them.
+                  if (isPatientSelf) _buildCallCaregiverCard(context, app),
+
                   // 1. Your Health Team
                   _sectionLabel('Your Health Team', onSeeAll: () => MainShell.switchToTab(1)),
                   _buildHealthTeamCard(context, l, app),
@@ -132,10 +148,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                   ],
 
-                  // 4. Book Services
-                  _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
-                  _buildQuickActionsGrid(context, l),
+                  // 3a. Medications snippet (only renders if active meds exist)
+                  _buildMedicationsSnippet(context),
                   const SizedBox(height: 8),
+
+                  // 4. Book Services — hidden from view-only roles.
+                  if (canBook) ...[
+                    _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
+                    _buildQuickActionsGrid(context, l),
+                    const SizedBox(height: 8),
+
+                    // 4b. Dai Maa sub-brand entry
+                    _buildDaiMaaEntry(context),
+                    const SizedBox(height: 8),
+                  ],
 
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
@@ -144,8 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                   ],
 
-                  // 6. Payments
-                  _buildPaymentCards(context, app),
+                  // 6. Payments — only show to roles that can actually pay.
+                  if (canUserPerform(role, UserAction.pay))
+                    _buildPaymentCards(context, app),
 
                   const SizedBox(height: 24),
                 ],
@@ -155,6 +182,132 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // PATIENT_SELF — big "Call my caregiver" card.
+  // ---------------------------------------------------------------------------
+  Widget _buildCallCaregiverCard(BuildContext context, AppProvider app) {
+    final patient = app.currentPatient;
+    final contact = (patient?.emergencyContacts?.isNotEmpty ?? false)
+        ? patient!.emergencyContacts!.first
+        : null;
+    final caregiverName = contact?.name ?? 'your family caregiver';
+    final caregiverPhone = contact?.phone;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Material(
+        color: HousepitalColors.orange,
+        borderRadius: BorderRadius.circular(16),
+        elevation: 1,
+        shadowColor: Colors.black12,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: caregiverPhone != null
+              ? () => launchUrl(Uri.parse('tel:$caregiverPhone'))
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.phone_in_talk,
+                      color: Colors.white, size: 32),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Call my family caregiver',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        caregiverPhone != null
+                            ? 'Tap to call $caregiverName · $caregiverPhone'
+                            : 'No family contact saved yet',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.95),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Role badge — pill shown below the greeting that clarifies what this user
+  // can do. Hover/long-press shows the tooltip for limited roles.
+  // ---------------------------------------------------------------------------
+  Widget _buildRoleBadge(String role) {
+    String label;
+    String? tooltip;
+    Color color;
+    switch (role) {
+      case UserRole.primaryContact:
+        label = 'Primary Contact';
+        color = HousepitalColors.orange;
+        break;
+      case UserRole.familyMember:
+        label = 'Family Member';
+        color = HousepitalColors.info;
+        tooltip =
+            'You can view & rate. To book or pay, contact your primary contact.';
+        break;
+      case UserRole.patientSelf:
+        label = 'Patient';
+        color = HousepitalColors.greyLight;
+        tooltip =
+            "You're viewing your own care. Tap the big call button to reach your family.";
+        break;
+      default:
+        return const SizedBox.shrink();
+    }
+
+    final pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_outline, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+          if (tooltip != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.info_outline, size: 12, color: color),
+          ],
+        ],
+      ),
+    );
+
+    return tooltip != null ? Tooltip(message: tooltip, child: pill) : pill;
   }
 
   // ---------------------------------------------------------------------------
@@ -253,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeroBanner(BuildContext context) {
     final slides = [
       _BannerSlide(
-        title: 'Hospital-like Expertise,\nHome-like Care',
+        title: 'Hospital-like expertise.\nHome-like care.',
         subtitle: 'Trusted by 5,000+ families in Delhi NCR',
         gradientColors: [const Color(0xFFFF8C00), const Color(0xFFFF6B35)],
         icon: Icons.home_filled,
@@ -294,7 +447,12 @@ class _HomeScreenState extends State<HomeScreen> {
               final slide = slides[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
+                child: Semantics(
+                  container: true,
+                  image: slide.imagePath != null,
+                  label:
+                      'Promotional banner ${index + 1} of ${slides.length}. ${slide.title.replaceAll('\n', ' ')}. ${slide.subtitle}',
+                  child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     image: slide.imagePath != null
@@ -382,6 +540,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+                ),
               );
             },
           ),
@@ -430,7 +589,11 @@ class _HomeScreenState extends State<HomeScreen> {
               color: HousepitalColors.orangeText,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
+          // Role pill — orange for primary contact, blue for family,
+          // grey for the patient themselves. Tooltip explains limitations.
+          _buildRoleBadge(app.currentUserRole),
+          const SizedBox(height: 4),
           Text(
             hasActiveService
                 ? "Here's your care summary"
@@ -749,7 +912,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.receipt_long,
         label: 'My Orders',
         color: HousepitalColors.serviceJapaNanny,
-        onTap: () => Navigator.pushNamed(context, '/booking-history'),
+        onTap: () => Navigator.pushNamed(context, '/my-orders'),
       ),
       _QuickAction(
         icon: Icons.emergency,
@@ -771,36 +934,155 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: actions.map((action) {
           return Expanded(
-            child: GestureDetector(
-              onTap: action.onTap,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: action.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+            child: Semantics(
+              button: true,
+              label: action.label,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: action.onTap,
+                  child: Container(
+                    // WCAG 2.5.5 — guarantee at least a 44pt tap target.
+                    constraints: const BoxConstraints(minHeight: 56),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: action.color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(action.icon,
+                              color: action.color, size: 20),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          action.label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HousepitalColors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    child: Icon(action.icon, color: action.color, size: 20),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    action.label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: HousepitalColors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
               ),
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dai Maa sub-brand entry card
+  // ---------------------------------------------------------------------------
+  Widget _buildDaiMaaEntry(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, '/daimaa'),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [DaiMaaColors.plum, DaiMaaColors.lavender],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: DaiMaaColors.plum.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        DaiMaaColors.lockup,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Mother & Baby Care',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        DaiMaaColors.tagline,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Explore Dai Maa',
+                              style: TextStyle(
+                                color: DaiMaaColors.plum,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.arrow_forward,
+                                color: DaiMaaColors.plum, size: 14),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.child_friendly,
+                  size: 56,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -853,35 +1135,67 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _miniVitalChip(String label, String value, double? raw, String type) {
-    Color dot = HousepitalColors.greyLight;
+    Color statusColor = HousepitalColors.greyLight;
+    IconData statusIcon = Icons.remove_circle_outline;
+    String statusLabel = 'No reading';
     if (raw != null) {
       final s = classifyVital(type, raw);
-      dot = s == 'green' ? HousepitalColors.success : s == 'yellow' ? HousepitalColors.warning : HousepitalColors.error;
+      if (s == 'green') {
+        statusColor = HousepitalColors.success;
+        statusIcon = Icons.check_circle;
+        statusLabel = 'Normal';
+      } else if (s == 'yellow') {
+        statusColor = HousepitalColors.warning;
+        statusIcon = Icons.info_outline;
+        statusLabel = 'Borderline';
+      } else {
+        statusColor = HousepitalColors.error;
+        statusIcon = Icons.warning_amber;
+        statusLabel = 'Alert';
+      }
     }
     return Expanded(
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(context, '/vitals'),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-          decoration: BoxDecoration(
-            color: HousepitalColors.white,
+      child: Semantics(
+        button: true,
+        label: '$label $value, $statusLabel',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.pushNamed(context, '/vitals'),
             borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: HousepitalColors.divider),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              // WCAG 2.5.5 — bump vertical padding so the chip clears 44pt.
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              decoration: BoxDecoration(
+                color: HousepitalColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: HousepitalColors.divider),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    // WCAG 1.4.1 — convey zone with icon + color, not color
+                    // alone. The icon is decorative (status is in the
+                    // Semantics label above).
+                    Icon(statusIcon, size: 12, color: statusColor),
+                    const SizedBox(width: 4),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            color: HousepitalColors.greyLight)),
+                  ]),
+                  const SizedBox(height: 2),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 6, height: 6, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
-              const SizedBox(width: 4),
-              Text(label, style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
-            ]),
-            const SizedBox(height: 2),
-            Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
       ),
     );
   }
@@ -1079,6 +1393,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ---------------------------------------------------------------------------
   Widget _buildMedicationsSnippet(BuildContext context) {
+    final medProv = context.watch<MedicationProvider>();
+    final active = medProv.activeMedications;
+    if (active.isEmpty) return const SizedBox.shrink();
+
+    // Find next upcoming scheduled medication today
+    final now = DateTime.now();
+    DateTime? nextTime;
+    String? nextName;
+    for (final med in active) {
+      for (final timeStr in med.timeSlots) {
+        final parts = timeStr.split(':');
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+        final candidate =
+            DateTime(now.year, now.month, now.day, hour, minute);
+        if (candidate.isAfter(now) &&
+            (nextTime == null || candidate.isBefore(nextTime))) {
+          nextTime = candidate;
+          nextName = med.name;
+        }
+      }
+    }
+
+    final subtitle = (nextTime != null && nextName != null)
+        ? 'Next: $nextName at ${_formatTime(nextTime)}'
+        : 'No more doses scheduled today';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
@@ -1090,25 +1431,42 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: HousepitalColors.divider),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.medication, color: HousepitalColors.orange, size: 22),
-              SizedBox(width: 12),
+              const Icon(Icons.medication,
+                  color: HousepitalColors.orange, size: 22),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('5 active medications', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text('Next: Pantoprazole at 7:00 AM', style: TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                    Text(
+                      '${active.length} active medication${active.length == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                          fontSize: 11, color: HousepitalColors.greyLight),
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+              const Icon(Icons.chevron_right,
+                  color: HousepitalColors.greyLight, size: 18),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime t) {
+    final hour12 = t.hour == 0 ? 12 : (t.hour > 12 ? t.hour - 12 : t.hour);
+    final minute = t.minute.toString().padLeft(2, '0');
+    final period = t.hour < 12 ? 'AM' : 'PM';
+    return '$hour12:$minute $period';
   }
 
   // ---------------------------------------------------------------------------

@@ -34,6 +34,10 @@ class PaymentService {
 
   PaymentService({ApiService? apiService})
       : _apiService = apiService ?? ApiService() {
+    assert(
+      AppConstants.razorpayKey != 'rzp_test_XXXXXXXXXX',
+      'Razorpay key not configured. Set RAZORPAY_KEY env var.',
+    );
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handleError);
@@ -110,38 +114,56 @@ class PaymentService {
   }
 
   void _handleSuccess(PaymentSuccessResponse response) async {
-    if (kDebugMode) debugPrint('Payment success');
+    if (kDebugMode) debugPrint('Payment success — verifying on backend');
 
-    // Verify payment on backend before calling success callback
-    try {
-      await _verifyPaymentOnBackend(response);
-    } catch (e) {
-      // Payment went through on Razorpay side — backend can reconcile later.
-      debugPrint('WARNING: Payment succeeded but backend verification failed: $e');
+    // Verify payment on backend BEFORE calling success callback.
+    // If verification fails, the booking must NOT be marked confirmed and
+    // the cart must NOT auto-clear — callers should treat this as a failure
+    // and surface the pending verification state to the user.
+    final verification = await _verifyPaymentOnBackend(response);
+
+    switch (verification) {
+      case _VerificationOutcome.verified:
+        _onSuccessCallback?.call();
+        break;
+      case _VerificationOutcome.skippedDemo:
+        // Demo mode (no order_id/signature) — keep existing demo behaviour
+        // so flows still complete locally without a backend.
+        _onSuccessCallback?.call();
+        break;
+      case _VerificationOutcome.failed:
+        _onFailureCallback?.call(
+          "Payment under verification — we'll confirm in 24 hours",
+        );
+        break;
     }
-
-    _onSuccessCallback?.call();
   }
 
   /// Verifies the payment signature on the backend.
-  Future<void> _verifyPaymentOnBackend(PaymentSuccessResponse response) async {
-    try {
-      if (response.paymentId != null &&
-          response.orderId != null &&
-          response.signature != null) {
-        await _apiService.verifyPayment(
-          razorpayPaymentId: response.paymentId!,
-          razorpayOrderId: response.orderId!,
-          razorpaySignature: response.signature!,
-        );
-        if (kDebugMode) debugPrint('Payment verified on backend');
-      } else {
-        if (kDebugMode) debugPrint('Payment verification skipped (demo mode — missing order/signature)');
+  /// Returns an outcome the caller can branch on instead of swallowing failures.
+  Future<_VerificationOutcome> _verifyPaymentOnBackend(
+      PaymentSuccessResponse response) async {
+    if (response.paymentId == null ||
+        response.orderId == null ||
+        response.signature == null) {
+      if (kDebugMode) {
+        debugPrint(
+            'Payment verification skipped (demo mode — missing order/signature)');
       }
+      return _VerificationOutcome.skippedDemo;
+    }
+
+    try {
+      await _apiService.verifyPayment(
+        razorpayPaymentId: response.paymentId!,
+        razorpayOrderId: response.orderId!,
+        razorpaySignature: response.signature!,
+      );
+      if (kDebugMode) debugPrint('Payment verified on backend');
+      return _VerificationOutcome.verified;
     } catch (e) {
       if (kDebugMode) debugPrint('Payment verification failed: $e');
-      // Don't fail the user — payment went through on Razorpay side.
-      // Backend can reconcile later.
+      return _VerificationOutcome.failed;
     }
   }
 
@@ -157,4 +179,11 @@ class PaymentService {
   void dispose() {
     _razorpay.clear();
   }
+}
+
+/// Internal outcome of backend payment signature verification.
+enum _VerificationOutcome {
+  verified,
+  failed,
+  skippedDemo,
 }

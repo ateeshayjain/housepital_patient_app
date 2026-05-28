@@ -194,7 +194,7 @@ firestore.rules                # 5 Firestore collection security rules
 | Cloud SQL connection    | MySQL host/user/pass/db                   | cloudSql.ts / env    |
 
 - API URL format: `https://asia-south1-<project-id>.cloudfunctions.net/api/<route>`
-- Current API base in constants.dart: `https://api.housepital.com/v1`
+- Current API base in constants.dart: `https://api.housepital.in/v1`
 - Cloud Function region: `asia-south1`
 - Cloud Function memory: `256MB`, timeout: `60s`
 

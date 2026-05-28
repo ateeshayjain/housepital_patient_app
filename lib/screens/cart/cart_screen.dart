@@ -3,10 +3,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/orders_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
+import '../../utils/permissions.dart';
+import '../../widgets/common_widgets.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -261,10 +264,15 @@ class _CartScreenState extends State<CartScreen> {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _removeCoupon,
-                    child: const Icon(Icons.close,
+                  // WCAG 2.5.5 — IconButton enforces 48x48 tap target.
+                  IconButton(
+                    onPressed: _removeCoupon,
+                    icon: const Icon(Icons.close,
                         size: 18, color: HousepitalColors.greyLight),
+                    tooltip: 'Remove coupon',
+                    constraints: const BoxConstraints(
+                        minWidth: 44, minHeight: 44),
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ),
@@ -278,6 +286,8 @@ class _CartScreenState extends State<CartScreen> {
                     controller: _couponController,
                     textCapitalization: TextCapitalization.characters,
                     decoration: InputDecoration(
+                      // WCAG 3.3.2 — persistent label that survives typing.
+                      labelText: 'Coupon code',
                       hintText: 'Enter coupon code',
                       hintStyle: const TextStyle(fontSize: 13),
                       isDense: true,
@@ -421,27 +431,79 @@ class _CartScreenState extends State<CartScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            // Checkout button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () => _checkout(context, cart, adjustedTotal),
-                icon: const Icon(Icons.lock_outline, size: 18),
-                label: Text(
-                  'Checkout (${DateHelper.formatCurrency(adjustedTotal)})',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
+            // Checkout button — gated by the `pay` permission. Family members
+            // and patients see a "Request Booking" button that sends the cart
+            // to the primary contact for approval.
+            Builder(builder: (context) {
+              final role = context.watch<AppProvider>().currentUserRole;
+              if (canUserPerform(role, UserAction.pay)) {
+                return SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _checkout(context, cart, adjustedTotal),
+                    icon: const Icon(Icons.lock_outline, size: 18),
+                    label: Text(
+                      'Checkout (${DateHelper.formatCurrency(adjustedTotal)})',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HousepitalColors.orange,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                );
+              }
+              if (canUserPerform(role, UserAction.requestBooking)) {
+                return SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showRequestBookingModal(context),
+                    icon: const Icon(Icons.send_outlined, size: 18),
+                    label: const Text(
+                      'Request Booking',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HousepitalColors.info,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                );
+              }
+              return Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.greyLighter,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HousepitalColors.orange,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.lock_outline,
+                        size: 16, color: HousepitalColors.greyLight),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Ask your family caregiver to place this order.',
+                        style: TextStyle(
+                            fontSize: 13, color: HousepitalColors.grey),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),
@@ -461,6 +523,34 @@ class _CartScreenState extends State<CartScreen> {
                 fontWeight: FontWeight.w600,
                 color: valueColor ?? HousepitalColors.black)),
       ],
+    );
+  }
+
+  /// Stub: surface a confirmation that the request was "sent" to the primary
+  /// contact. No real persistence yet — the backend wiring lands in the
+  /// next iteration.
+  void _showRequestBookingModal(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: HousepitalColors.success),
+            SizedBox(width: 8),
+            Expanded(child: Text('Request Sent')),
+          ],
+        ),
+        content: const Text(
+          "Booking request sent to your primary contact for approval. "
+          "They'll receive a notification to confirm and pay.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -771,14 +861,24 @@ class _CartItemCard extends StatelessWidget {
               ],
             ),
           ),
-          // Delete button
-          GestureDetector(
-            onTap: () => cart.removeItem(index),
-            child: const Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.close,
-                  size: 18, color: HousepitalColors.greyLight),
-            ),
+          // Delete button — WCAG 2.5.5 tap target + destructive confirm.
+          IconButton(
+            tooltip: 'Remove ${cartItem.name} from cart',
+            constraints:
+                const BoxConstraints(minWidth: 44, minHeight: 44),
+            padding: EdgeInsets.zero,
+            onPressed: () async {
+              final confirmed = await confirmDestructiveAction(
+                context,
+                title: 'Remove item?',
+                message:
+                    '"${cartItem.name}" will be removed from your cart.',
+                confirmLabel: 'Remove',
+              );
+              if (confirmed) cart.removeItem(index);
+            },
+            icon: const Icon(Icons.close,
+                size: 18, color: HousepitalColors.greyLight),
           ),
         ],
       ),
@@ -878,14 +978,15 @@ class _SavedItemCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          // Remove
-          GestureDetector(
-            onTap: () => cart.removeSaved(index),
-            child: const Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.close,
-                  size: 16, color: HousepitalColors.greyLight),
-            ),
+          // Remove — WCAG 2.5.5 tap target.
+          IconButton(
+            tooltip: 'Remove ${cartItem.name} from saved items',
+            constraints:
+                const BoxConstraints(minWidth: 44, minHeight: 44),
+            padding: EdgeInsets.zero,
+            onPressed: () => cart.removeSaved(index),
+            icon: const Icon(Icons.close,
+                size: 16, color: HousepitalColors.greyLight),
           ),
         ],
       ),

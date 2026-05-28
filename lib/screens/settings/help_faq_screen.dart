@@ -151,7 +151,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
       category: 'Account',
       question: 'How do I delete my account?',
       answer:
-          'Please contact support via email at support@housepital.in. Account deletion is processed within 7 working days as per our data retention policy.',
+          'Please contact support via email at wecare@housepital.in. Account deletion is processed within 7 working days as per our data retention policy.',
     ),
   ];
 
@@ -353,7 +353,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                 icon: Icons.email,
                 label: 'Email',
                 color: Colors.blue,
-                onTap: () => _launchUrl('mailto:support@housepital.in'),
+                onTap: () => _launchUrl('mailto:wecare@housepital.in'),
               ),
               _contactButton(
                 icon: Icons.chat,

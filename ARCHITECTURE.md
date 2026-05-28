@@ -79,7 +79,7 @@ screens/
 
 5 service classes, each owning a single domain. All async, all wrapped in try-catch.
 
-**ApiService** — REST client wrapping the `http` package. Base URL: `https://api.housepital.com/v1`. Auto-injects Bearer token on every request. Covers all endpoints: patients, dashboard, attendance, vitals, reports, active services, health manager, medications, services, invoices, family, concerns, notifications. Throws a custom `ApiException` for error handling.
+**ApiService** — REST client wrapping the `http` package. Base URL: `https://api.housepital.in/v1`. Auto-injects Bearer token on every request. Covers all endpoints: patients, dashboard, attendance, vitals, reports, active services, health manager, medications, services, invoices, family, concerns, notifications. Throws a custom `ApiException` for error handling.
 
 **FirebaseService** — Firebase Auth (Phone OTP send/verify/logout) and FCM (token registration, permissions, topic subscription).
 

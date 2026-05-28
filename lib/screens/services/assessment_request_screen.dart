@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
@@ -191,6 +192,10 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     _autoPopulateFromPatient();
   }
 
+  bool get _isDaiMaa =>
+      _serviceType == _ServiceType.japa ||
+      _serviceType == _ServiceType.nanny;
+
   _ServiceType _resolveServiceType() {
     final id = widget.service.id;
     if (id.startsWith('mp-nurse-')) return _ServiceType.nurse;
@@ -304,7 +309,14 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.service.name)),
+      backgroundColor: _isDaiMaa ? DaiMaaColors.cream : null,
+      appBar: AppBar(
+        title: Text(widget.service.name),
+        backgroundColor: _isDaiMaa ? DaiMaaColors.plum : null,
+        foregroundColor: _isDaiMaa ? Colors.white : null,
+        iconTheme:
+            _isDaiMaa ? const IconThemeData(color: Colors.white) : null,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -312,12 +324,25 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_isDaiMaa) ...[
+                DaiMaaBrandHeader(
+                  title: _serviceType == _ServiceType.japa
+                      ? 'Japa Maid'
+                      : 'Nanny',
+                  subtitle: _serviceType == _ServiceType.japa
+                      ? 'Mother & newborn care (0 – 7 months)'
+                      : 'Childcare (7 months – 5 years)',
+                ),
+                const SizedBox(height: 20),
+              ],
               Text(
                 _getFormTitle(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: _isDaiMaa
+                      ? DaiMaaColors.plum
+                      : HousepitalColors.black,
                 ),
               ),
               const SizedBox(height: 4),
@@ -425,15 +450,26 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
+                  style: _isDaiMaa
+                      ? ElevatedButton.styleFrom(
+                          backgroundColor: DaiMaaColors.plum,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        )
+                      : null,
                   onPressed: () => _submitRequest(context, l),
                   child: Text(l.t('submit')),
                 ),
               ),
 
               const SizedBox(height: 12),
-              const Text(
-                'Our care coordinator will call you within 2 hours to discuss details and pricing.',
-                style: TextStyle(
+              Text(
+                _isDaiMaa
+                    ? 'Our Dai Maa coordinator will call you within 2 hours at ${DaiMaaColors.phoneDisplay}.'
+                    : 'Our care coordinator will call you within 2 hours to discuss details and pricing.',
+                style: const TextStyle(
                   fontSize: 12,
                   color: HousepitalColors.greyLight,
                 ),
@@ -1392,14 +1428,25 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        icon: const Icon(Icons.check_circle,
-            color: HousepitalColors.success, size: 48),
+        icon: Icon(
+          Icons.check_circle,
+          color: _isDaiMaa ? DaiMaaColors.plum : HousepitalColors.success,
+          size: 48,
+        ),
         title: Text(l.t('concern_submitted')),
-        content: const Text(
-          'Your request has been received. Our care coordinator will call you within 2 hours to discuss details and pricing.',
+        content: Text(
+          _isDaiMaa
+              ? 'Your request has been received. Our Dai Maa coordinator will call you within 2 hours at ${DaiMaaColors.phoneDisplay}.'
+              : 'Your request has been received. Our care coordinator will call you within 2 hours to discuss details and pricing.',
         ),
         actions: [
           ElevatedButton(
+            style: _isDaiMaa
+                ? ElevatedButton.styleFrom(
+                    backgroundColor: DaiMaaColors.plum,
+                    foregroundColor: Colors.white,
+                  )
+                : null,
             onPressed: () {
               Navigator.pop(context); // close dialog
               Navigator.pushReplacementNamed(

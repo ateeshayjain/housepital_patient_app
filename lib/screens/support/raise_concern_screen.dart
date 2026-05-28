@@ -207,6 +207,8 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                               width: 80,
                               height: 80,
                               fit: BoxFit.cover,
+                              semanticLabel:
+                                  'Evidence photo ${index + 1} of ${_evidencePhotos.length}',
                             ),
                           ),
                           Positioned(

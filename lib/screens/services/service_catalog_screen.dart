@@ -2,14 +2,17 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import 'package:provider/provider.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../data/care_packages.dart';
 import '../../utils/helpers.dart';
+import '../../utils/permissions.dart';
 
 class ServiceCatalogScreen extends StatefulWidget {
   const ServiceCatalogScreen({super.key});
@@ -571,6 +574,17 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   }
 
   void _navigateToService(BuildContext context, ServiceItem service) {
+    // Permission gate — primary contacts go straight through; everyone else
+    // either gets the "request booking" stub or a read-only nudge.
+    final role = context.read<AppProvider>().currentUserRole;
+    if (!canUserPerform(role, UserAction.book)) {
+      if (canUserPerform(role, UserAction.requestBooking)) {
+        showRequestBookingStub(context, service.name);
+      } else {
+        showViewOnlyToast(context);
+      }
+      return;
+    }
     if (service.isInstant) {
       Navigator.pushNamed(context, '/service-booking', arguments: service);
     } else {
@@ -1190,6 +1204,8 @@ class _StaffRoleCard extends StatelessWidget {
     required this.onNavigate,
   });
 
+  bool get _isDaiMaa => role.title == 'Japa Maid' || role.title == 'Nanny';
+
   Color get _roleColor {
     switch (role.title) {
       case 'Nurse':
@@ -1198,7 +1214,8 @@ class _StaffRoleCard extends StatelessWidget {
         return HousepitalColors.serviceCaretaker;
       case 'Japa Maid':
       case 'Nanny':
-        return HousepitalColors.serviceJapaNanny;
+        // Dai Maa sub-brand — use plum so the role inherits brand color
+        return DaiMaaColors.plum;
       case 'Physiotherapist':
         return HousepitalColors.servicePhysio;
       default:
@@ -1209,6 +1226,9 @@ class _StaffRoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _roleColor;
+    final iconBgColor = _isDaiMaa
+        ? DaiMaaColors.lavender.withValues(alpha: 0.25)
+        : color.withValues(alpha: 0.12);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -1216,11 +1236,20 @@ class _StaffRoleCard extends StatelessWidget {
         color: HousepitalColors.white,
         borderRadius: BorderRadius.circular(14),
         elevation: 1,
-        shadowColor: Colors.black12,
+        shadowColor: _isDaiMaa
+            ? DaiMaaColors.plum.withValues(alpha: 0.18)
+            : Colors.black12,
         child: InkWell(
           onTap: () => _showRoleDetail(context),
           borderRadius: BorderRadius.circular(14),
-          child: Padding(
+          child: Container(
+            decoration: _isDaiMaa
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                        Border.all(color: DaiMaaColors.plum, width: 1.5),
+                  )
+                : null,
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -1230,7 +1259,7 @@ class _StaffRoleCard extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
+                        color: iconBgColor,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(role.icon, color: color, size: 28),
@@ -1240,13 +1269,25 @@ class _StaffRoleCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            role.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: HousepitalColors.black,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  role.title,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: _isDaiMaa
+                                        ? DaiMaaColors.plum
+                                        : HousepitalColors.black,
+                                  ),
+                                ),
+                              ),
+                              if (_isDaiMaa) ...[
+                                const SizedBox(width: 6),
+                                const DaiMaaBadge(),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -1587,18 +1628,30 @@ class _StaffRoleCard extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Request Assessment button
+              // Request Assessment button — gated by booking permission so
+              // family members get the "request booking" stub instead.
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Find the first matching service to pass to assessment
                     final matchingService = services.firstWhere(
                       (s) => s.name.toLowerCase().contains(
                           role.title.toLowerCase().split(' ').first),
                       orElse: () => services.first,
                     );
+                    final userRole =
+                        context.read<AppProvider>().currentUserRole;
+                    if (!canUserPerform(userRole, UserAction.book)) {
+                      if (canUserPerform(
+                          userRole, UserAction.requestBooking)) {
+                        showRequestBookingStub(
+                            context, matchingService.name);
+                      } else {
+                        showViewOnlyToast(context);
+                      }
+                      return;
+                    }
                     // Push first (context still valid), sheet auto-dismisses
                     Navigator.of(context).pushNamed('/assessment-request',
                         arguments: matchingService);
@@ -1993,6 +2046,7 @@ class _EquipmentItemCard extends StatelessWidget {
                               ? Image.asset(
                                   item.imageUrl!,
                                   fit: BoxFit.contain,
+                                  semanticLabel: '${item.name} product photo',
                                   errorBuilder: (_, __, ___) => Icon(icon,
                                       color: HousepitalColors.orange, size: 32),
                                 )
@@ -2141,6 +2195,18 @@ class _EquipmentItemCard extends StatelessWidget {
     if (result != null && context.mounted) {
       final navigator = Navigator.of(context, rootNavigator: true);
       final messenger = ScaffoldMessenger.maybeOf(context);
+      // Gate any write action (add-to-cart / rental commitment) by role.
+      final role = context.read<AppProvider>().currentUserRole;
+      final isWriteAction = result['action'] == 'rent' ||
+          result['action'] == 'add_to_cart';
+      if (isWriteAction && !canUserPerform(role, UserAction.book)) {
+        if (canUserPerform(role, UserAction.requestBooking)) {
+          showRequestBookingStub(context, item.name);
+        } else {
+          showViewOnlyToast(context);
+        }
+        return;
+      }
       if (result['action'] == 'rent') {
         // Rental flow: navigate to rental agreement for confirmation
         final agreed = await navigator.pushNamed('/rental-agreement', arguments: {
@@ -2827,6 +2893,44 @@ class _EquipmentDetailSheetState extends State<_EquipmentDetailSheet> {
       ),
     );
   }
+}
+
+/// Show the "request sent to primary contact" confirmation dialog.
+/// Used wherever a FAMILY_MEMBER taps a Book/Add-to-Cart button.
+void showRequestBookingStub(BuildContext context, String itemName) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.check_circle, color: HousepitalColors.success),
+          SizedBox(width: 8),
+          Expanded(child: Text('Request Sent')),
+        ],
+      ),
+      content: Text(
+        '"$itemName" booking request sent to your primary contact for approval. '
+        "They'll receive a notification to confirm and pay.",
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Show a snackbar nudge for PATIENT_SELF (view-only) users.
+void showViewOnlyToast(BuildContext context) {
+  ScaffoldMessenger.maybeOf(context)
+    ?..hideCurrentSnackBar()
+    ..showSnackBar(const SnackBar(
+      content: Text(
+          "You're viewing your own care. Ask your family caregiver to book this."),
+      backgroundColor: HousepitalColors.greyLight,
+    ));
 }
 
 /// Splits catalog text by `|` or newline — catalog uses both formats.

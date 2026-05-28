@@ -446,6 +446,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                     ? Image.asset(
                         images[index],
                         fit: BoxFit.contain,
+                        semanticLabel: '$_name product photo',
                         errorBuilder: (_, __, ___) => Icon(
                           _equipmentIcon,
                           size: 56,
@@ -1903,6 +1904,7 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                   ? Image.asset(
                       widget.images[index],
                       fit: BoxFit.contain,
+                      semanticLabel: 'Product photo ${index + 1} of ${widget.images.length}',
                       errorBuilder: (_, __, ___) => const Icon(
                         Icons.broken_image,
                         size: 64,

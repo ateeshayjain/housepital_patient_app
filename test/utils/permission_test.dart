@@ -12,6 +12,10 @@ void main() {
       expect(canUserPerform('PRIMARY_CONTACT', 'book'), isTrue);
     });
 
+    test('can request booking', () {
+      expect(canUserPerform('PRIMARY_CONTACT', 'request_booking'), isTrue);
+    });
+
     test('can pay', () {
       expect(canUserPerform('PRIMARY_CONTACT', 'pay'), isTrue);
     });
@@ -53,8 +57,12 @@ void main() {
       expect(canUserPerform('FAMILY_MEMBER', 'raise_concern'), isTrue);
     });
 
-    test('can book', () {
-      expect(canUserPerform('FAMILY_MEMBER', 'book'), isTrue);
+    test('can request booking (pending primary contact approval)', () {
+      expect(canUserPerform('FAMILY_MEMBER', 'request_booking'), isTrue);
+    });
+
+    test('CANNOT book directly', () {
+      expect(canUserPerform('FAMILY_MEMBER', 'book'), isFalse);
     });
 
     test('CANNOT pay', () {
@@ -80,6 +88,10 @@ void main() {
 
     test('CANNOT book', () {
       expect(canUserPerform('PATIENT_SELF', 'book'), isFalse);
+    });
+
+    test('CANNOT request booking', () {
+      expect(canUserPerform('PATIENT_SELF', 'request_booking'), isFalse);
     });
 
     test('CANNOT pay', () {
@@ -123,11 +135,11 @@ void main() {
   // getAllowedActions
   // ═══════════════════════════════════════════════════════════════════════════
   group('getAllowedActions', () {
-    test('PRIMARY_CONTACT has 7 actions', () {
+    test('PRIMARY_CONTACT has 8 actions', () {
       final actions = getAllowedActions('PRIMARY_CONTACT');
-      expect(actions.length, 7);
+      expect(actions.length, 8);
       expect(actions, containsAll([
-        'book', 'pay', 'edit_patient', 'manage_family',
+        'book', 'request_booking', 'pay', 'edit_patient', 'manage_family',
         'view', 'rate', 'raise_concern',
       ]));
     });
@@ -135,7 +147,10 @@ void main() {
     test('FAMILY_MEMBER has 4 actions', () {
       final actions = getAllowedActions('FAMILY_MEMBER');
       expect(actions.length, 4);
-      expect(actions, containsAll(['view', 'book', 'rate', 'raise_concern']));
+      expect(actions,
+          containsAll(['view', 'request_booking', 'rate', 'raise_concern']));
+      expect(actions, isNot(contains('book')));
+      expect(actions, isNot(contains('pay')));
     });
 
     test('PATIENT_SELF has 1 action', () {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/my_care_provider.dart';
@@ -225,6 +226,12 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ),
           ],
 
+          // 4a. Daily Care Rating
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _DailyCareRatingCard(),
+          ),
+
           // 5. Today's Staff Attendance
           if (myCare.activeServices.any((s) => s.hasStaff))
             StaffAttendanceSection(services: myCare.activeServices),
@@ -394,6 +401,194 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Daily Care Rating Card
+// ---------------------------------------------------------------------------
+class _DailyCareRatingCard extends StatefulWidget {
+  const _DailyCareRatingCard();
+
+  @override
+  State<_DailyCareRatingCard> createState() => _DailyCareRatingCardState();
+}
+
+class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
+  int? _ratedToday;
+  bool _loaded = false;
+
+  String get _todayKey {
+    final now = DateTime.now();
+    final y = now.year.toString().padLeft(4, '0');
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    return 'daily_rating_$y-$m-$d';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingRating();
+  }
+
+  Future<void> _loadExistingRating() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getInt(_todayKey);
+    if (mounted) {
+      setState(() {
+        _ratedToday = existing;
+        _loaded = true;
+      });
+    }
+  }
+
+  Future<void> _onRate(int stars) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_todayKey, stars);
+    if (!mounted) return;
+    setState(() => _ratedToday = stars);
+
+    if (stars >= 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Thanks for rating! We've shared your feedback with the team."),
+        ),
+      );
+    } else {
+      _showLowRatingModal(stars);
+    }
+  }
+
+  void _showLowRatingModal(int stars) {
+    final controller = TextEditingController();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("We're sorry. What went wrong?",
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText:
+                      'Tell us what we can do better (visible to your coordinator)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(sheetCtx).pop();
+                    Navigator.pushNamed(
+                      context,
+                      '/raise-concern',
+                      arguments: {
+                        'rating': stars,
+                        'preFilledNote': controller.text.trim(),
+                        'source': 'daily_care_rating',
+                      },
+                    );
+                  },
+                  child: const Text('Send to coordinator'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) {
+      // Avoid flicker: render nothing until SharedPreferences resolves
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "How was today's care?",
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          if (_ratedToday != null)
+            Row(
+              children: [
+                ...List.generate(5, (i) {
+                  final filled = i < _ratedToday!;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Icon(
+                      filled ? Icons.star : Icons.star_border,
+                      color: HousepitalColors.orange,
+                      size: 24,
+                    ),
+                  );
+                }),
+                const SizedBox(width: 8),
+                const Text('Rated today',
+                    style: TextStyle(
+                        fontSize: 12, color: HousepitalColors.greyLight)),
+              ],
+            )
+          else ...[
+            Row(
+              children: List.generate(5, (i) {
+                final stars = i + 1;
+                return Expanded(
+                  child: Semantics(
+                    label: 'Rate $stars star${stars == 1 ? '' : 's'}',
+                    button: true,
+                    child: IconButton(
+                      onPressed: () => _onRate(stars),
+                      icon: const Icon(Icons.star_border,
+                          color: HousepitalColors.orange, size: 32),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Tap to rate. Your feedback helps us improve.',
+              style:
+                  TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+            ),
+          ],
+        ],
       ),
     );
   }

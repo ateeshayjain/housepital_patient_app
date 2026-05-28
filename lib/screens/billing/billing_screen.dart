@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
 
 class BillingScreen extends StatefulWidget {
@@ -91,6 +93,8 @@ class _BillingScreenState extends State<BillingScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final ordersProvider = context.watch<OrdersProvider>();
+    final role = context.watch<AppProvider>().currentUserRole;
+    final canPay = canUserPerform(role, UserAction.pay);
     final orders = ordersProvider.orders;
     final filtered = _filteredOrders(orders);
     final totalDue = _totalOutstanding(orders);
@@ -116,7 +120,7 @@ class _BillingScreenState extends State<BillingScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Balance card
-            _buildBalanceCard(l, totalDue, overdue),
+            _buildBalanceCard(l, totalDue, overdue, canPay: canPay),
             const SizedBox(height: 16),
 
             // Summary stats row
@@ -190,7 +194,8 @@ class _BillingScreenState extends State<BillingScreen> {
     );
   }
 
-  Widget _buildBalanceCard(AppLocalizations l, int totalDue, int overdueCount) {
+  Widget _buildBalanceCard(AppLocalizations l, int totalDue, int overdueCount,
+      {required bool canPay}) {
     return Semantics(
       label: 'Total outstanding balance: ${DateHelper.formatCurrency(totalDue)}, $overdueCount orders overdue',
       child: Container(
@@ -228,46 +233,70 @@ class _BillingScreenState extends State<BillingScreen> {
             ],
             if (totalDue > 0) ...[
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final paymentService = PaymentService();
-                    paymentService.openCheckout(
-                      amount: totalDue * 100,
-                      description: 'Outstanding balance payment',
-                      onSuccess: () {
-                        paymentService.dispose();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l.t('payment_successful')),
-                              backgroundColor: HousepitalColors.success,
-                            ),
-                          );
-                        }
-                      },
-                      onFailure: (message) {
-                        paymentService.dispose();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${l.t('payment_failed')}: $message'),
-                              backgroundColor: HousepitalColors.error,
-                            ),
-                          );
-                        }
-                      },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: HousepitalColors.orange,
+              if (canPay)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final paymentService = PaymentService();
+                      paymentService.openCheckout(
+                        amount: totalDue * 100,
+                        description: 'Outstanding balance payment',
+                        onSuccess: () {
+                          paymentService.dispose();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l.t('payment_successful')),
+                                backgroundColor: HousepitalColors.success,
+                              ),
+                            );
+                          }
+                        },
+                        onFailure: (message) {
+                          paymentService.dispose();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text('${l.t('payment_failed')}: $message'),
+                                backgroundColor: HousepitalColors.error,
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: HousepitalColors.orange,
+                    ),
+                    child: Text(l.t('pay_now')),
                   ),
-                  child: Text(l.t('pay_now')),
+                )
+              else
+                // Read-only roles see a clear hint instead of the Pay button.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lock_outline, size: 16, color: Colors.white),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Only the primary contact can pay this balance.',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ],
         ),
@@ -444,7 +473,14 @@ class _BillingScreenState extends State<BillingScreen> {
         label: 'Order $bookingNumber, amount ${DateHelper.formatCurrency(totalAmount)}, status $status',
         button: true,
         child: HousepitalCard(
-          onTap: () => Navigator.pushNamed(context, '/order-tracking', arguments: order),
+          onTap: () => Navigator.pushNamed(
+            context,
+            '/order-tracking',
+            arguments: <String, dynamic>{
+              'bookingId': order['id'] as String?,
+              'orderType': order['type'] as String? ?? 'equipment',
+            },
+          ),
           child: Row(
             children: [
               Container(

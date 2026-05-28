@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
 
 class FamilyMembersScreen extends StatefulWidget {
@@ -262,18 +265,22 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final role = context.watch<AppProvider>().currentUserRole;
+    final canManage = canUserPerform(role, UserAction.manageFamily);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l.t('family_members')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddMemberSheet(context),
-        backgroundColor: HousepitalColors.orange,
-        foregroundColor: HousepitalColors.white,
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add Family Member'),
-      ),
+      floatingActionButton: canManage
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddMemberSheet(context),
+              backgroundColor: HousepitalColors.orange,
+              foregroundColor: HousepitalColors.white,
+              icon: const Icon(Icons.person_add),
+              label: const Text('Add Family Member'),
+            )
+          : null,
       body: _members.isEmpty
           ? Center(
               child: Column(
@@ -308,6 +315,9 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
               itemCount: _members.length,
               itemBuilder: (context, index) {
                 final member = _members[index];
+                // Only primary contacts can swipe-to-remove; everyone else sees
+                // a static card.
+                if (!canManage) return _buildMemberCard(member);
                 return Dismissible(
                   key: Key(member.id),
                   direction: DismissDirection.endToStart,
