@@ -275,6 +275,23 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final l = AppLocalizations.of(context)!;
     final s = widget.service;
 
+    // audit M-1: manpower bookings MUST flow through assessment-request, not
+    // the buy-now booking screen — never quote upfront prices for caretaker,
+    // nursing, japa, nanny. Defensive redirect if a stale link/deep-link
+    // lands a manpower service here.
+    if (s.category == 'manpower') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          '/assessment-request',
+          arguments: s,
+        );
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(s.name),
@@ -510,7 +527,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
             ],
-            if (s.basePriceMin != null) ...[
+            // audit M-1: never quote upfront price for manpower services
+            // even if a stale basePriceMin somehow reaches here — show
+            // "Price on assessment" instead. (Defensive: the redirect at the
+            // top of build() should keep us out of this branch entirely.)
+            if (s.category == 'manpower') ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Price on assessment',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HousepitalColors.orange,
+                ),
+              ),
+            ] else if (s.basePriceMin != null) ...[
               const SizedBox(height: 8),
               Text(
                 '${DateHelper.formatCurrency(s.basePriceMin!)} - ${DateHelper.formatCurrency(s.basePriceMax ?? s.basePriceMin!)}',

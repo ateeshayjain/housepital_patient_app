@@ -47,32 +47,22 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     _members = List.from(_mockMembers);
   }
 
-  void _showDeleteConfirmation(BuildContext context, FamilyMember member) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove Family Member'),
-        content: Text('Are you sure you want to remove ${member.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _members.removeWhere((m) => m.id == member.id);
-              });
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${member.name} removed')),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: HousepitalColors.error),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+  // audit M-13: migrated to shared confirmDestructiveAction helper for
+  // consistent red CTA, haptic, and copy across destructive flows.
+  Future<void> _showDeleteConfirmation(FamilyMember member) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Remove family member?',
+      message: 'Are you sure you want to remove ${member.name}?',
+      confirmLabel: 'Remove',
+    );
+    if (!ok || !mounted) return;
+    setState(() {
+      _members.removeWhere((m) => m.id == member.id);
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${member.name} removed')),
     );
   }
 
@@ -335,7 +325,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     ),
                   ),
                   confirmDismiss: (direction) async {
-                    _showDeleteConfirmation(context, member);
+                    _showDeleteConfirmation(member);
                     return false;
                   },
                   child: _buildMemberCard(member),

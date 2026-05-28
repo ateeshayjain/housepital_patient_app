@@ -765,7 +765,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -884,7 +885,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: _docIconColor(doc.type).withOpacity(0.1),
+                        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+                        color: _docIconColor(doc.type).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -979,7 +981,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(

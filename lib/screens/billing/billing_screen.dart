@@ -451,6 +451,14 @@ class _BillingScreenState extends State<BillingScreen> {
             : 'Order')
         : 'Order';
 
+    // audit M-12: surface pending refund so users tracking a cancellation
+    // know money is on the way and roughly when.
+    final refundStatus = order['refundStatus'] as String?;
+    final refundAmount = (order['refundAmount'] as num?)?.toInt() ?? 0;
+    final refundEta = DateTime.tryParse(order['refundEta'] as String? ?? '');
+    final showRefundLine =
+        refundStatus == 'pending' && refundAmount > 0;
+
     Color statusColor;
     switch (status) {
       case 'completed':
@@ -481,52 +489,89 @@ class _BillingScreenState extends State<BillingScreen> {
               'orderType': order['type'] as String? ?? 'equipment',
             },
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: HousepitalColors.orangeLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.receipt_long, color: HousepitalColors.orange),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      bookingNumber,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black),
-                    ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (createdAt != null)
-                      Text(
-                        DateHelper.formatRelative(createdAt),
-                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
-                      ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  Text(
-                    DateHelper.formatCurrency(totalAmount),
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: HousepitalColors.orangeLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.receipt_long, color: HousepitalColors.orange),
                   ),
-                  StatusBadge(text: status.toUpperCase(), color: statusColor),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          bookingNumber,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                        ),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (createdAt != null)
+                          Text(
+                            DateHelper.formatRelative(createdAt),
+                            style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        DateHelper.formatCurrency(totalAmount),
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                      ),
+                      StatusBadge(text: status.toUpperCase(), color: statusColor),
+                    ],
+                  ),
                 ],
               ),
+              // audit M-12: pending refund chip
+              if (showRefundLine) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.infoLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_balance_wallet,
+                          size: 14, color: HousepitalColors.info),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          refundEta != null
+                              ? 'Refund: ${DateHelper.formatCurrency(refundAmount)} pending (by ${DateHelper.formatDate(refundEta)})'
+                              : 'Refund: ${DateHelper.formatCurrency(refundAmount)} pending',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: HousepitalColors.info,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches: [main]
@@ -8,12 +9,54 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          # Pinned to match local dev SDK. Bump in lockstep across the team
+          # to avoid behavioural drift (textScaler clamping, RadioGroup
+          # deprecation, tree-shake-icons kernel-size assertions all moved
+          # between minor versions).
+          flutter-version: '3.41.2'
           channel: 'stable'
-      - run: flutter pub get
-      - run: flutter test
-      - run: flutter build web --release
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Run analyzer BEFORE tests — fail fast on lint/type errors.
+      # `--fatal-infos` would be too strict for the current backlog of
+      # pre-existing info-level deprecations (~284 warnings as of
+      # audit-batch-1). When that backlog is cleared, add --fatal-warnings
+      # and eventually --fatal-infos.
+      - name: Analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      # `flutter test` exits 1 on test failure (verified 2026-05-28). The
+      # expanded reporter gives full failure context (expected/actual + stack)
+      # directly in CI logs — the default compact reporter buries failures
+      # behind hundreds of later pass lines.
+      - name: Test
+        run: flutter test --reporter=expanded
+
+      # Build the production web bundle. Tree-shake-icons is enabled (default)
+      # — it shrinks MaterialIcons-Regular from 1.6MB to ~34KB. If it ever
+      # fails with a kernel-size assertion, the workaround is
+      # --no-tree-shake-icons (logged in docs/KNOWN_ISSUES.md).
+      - name: Build web (release)
+        run: flutter build web --release
+
+      # On any failure, upload the build output + coverage for post-mortem.
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        env:
+          RUN_ID: ${{ github.run_id }}
+        with:
+          name: ci-debug-${{ env.RUN_ID }}
+          path: |
+            build/web/
+            coverage/
+          retention-days: 7
+          if-no-files-found: ignore

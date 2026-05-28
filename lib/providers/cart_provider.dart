@@ -29,7 +29,10 @@ class CartProvider extends ChangeNotifier {
   // ── Cart operations ─────────────────────────────────────────
 
   void addItem(EquipmentItem equipment, {bool isRental = false, int rentalMonths = 1}) {
-    debugPrint('CartProvider.addItem: ${equipment.name}, id=${equipment.id}, isRental=$isRental, price=${equipment.price}, rentalPrice=${equipment.rentalPrice}');
+    // audit M-17 (extension): removed verbose per-add debugPrint that leaks
+    // equipment names + prices to logcat in debug/profile builds. The two
+    // remaining debugPrints below (persist/load error paths) are kept —
+    // those are exception handlers, which is the legitimate use case.
     // Check if already in cart (same equipment + same mode)
     final existingIndex = _items.indexWhere(
       (i) => i.equipmentId == equipment.id && i.isRental == isRental,

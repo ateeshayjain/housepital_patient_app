@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 
@@ -291,6 +293,40 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
     );
   }
 
+  /// audit M-9: upload photos in batches of up to 3 in parallel.
+  /// Returns a list of successfully-uploaded download URLs (skipping failures).
+  /// We don't have a ticket id yet (it's assigned server-side on submit), so
+  /// scope by patientId + a single timestamp prefix per submission attempt.
+  Future<List<String>> _uploadEvidence(String patientId) async {
+    if (_evidencePhotos.isEmpty) return const [];
+
+    final firebaseService = context.read<AuthProvider>().firebaseService;
+    final batchTs = DateTime.now().millisecondsSinceEpoch;
+    const concurrencyCap = 3;
+
+    final urls = <String>[];
+    for (var start = 0; start < _evidencePhotos.length; start += concurrencyCap) {
+      final end = (start + concurrencyCap < _evidencePhotos.length)
+          ? start + concurrencyCap
+          : _evidencePhotos.length;
+      final futures = <Future<String?>>[];
+      for (var i = start; i < end; i++) {
+        final photo = _evidencePhotos[i];
+        final filename = p.basename(photo.path);
+        futures.add(firebaseService.uploadFile(
+          localPath: photo.path,
+          storagePath: 'concerns/${patientId}_$batchTs/${i}_$filename',
+          contentType: 'image/jpeg',
+        ));
+      }
+      final results = await Future.wait(futures);
+      for (final r in results) {
+        if (r != null) urls.add(r);
+      }
+    }
+    return urls;
+  }
+
   Future<void> _submitConcern(BuildContext context, AppLocalizations l) async {
     final patient = context.read<AppProvider>().currentPatient;
     if (patient == null) return;
@@ -298,7 +334,21 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final evidencePaths = _evidencePhotos.map((p) => p.path).toList();
+      // audit M-9: upload evidence photos to Firebase Storage before submitting.
+      // Previously local device paths were sent as URLs and coordinators
+      // couldn't open them.
+      final evidenceUrls = await _uploadEvidence(patient.id);
+      final failedCount = _evidencePhotos.length - evidenceUrls.length;
+      if (failedCount > 0 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded — they're saved locally for retry.",
+            ),
+            backgroundColor: HousepitalColors.warning,
+          ),
+        );
+      }
 
       await context.read<AppProvider>().apiService.raiseConcern(
         patientId: patient.id,
@@ -306,7 +356,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         description: _descriptionController.text.trim(),
         urgency: _urgency,
         preferredResolution: _resolution,
-        evidenceUrls: evidencePaths.isNotEmpty ? evidencePaths : null,
+        evidenceUrls: evidenceUrls.isNotEmpty ? evidenceUrls : null,
       );
 
       if (!mounted) return;

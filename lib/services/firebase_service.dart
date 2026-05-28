@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io' show File;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -92,6 +94,44 @@ class FirebaseService {
       await auth.signOut();
     } catch (e) {
       debugPrint('FirebaseService: signOut failed: $e');
+    }
+  }
+
+  // ==================== STORAGE ====================
+
+  // audit M-9: upload local files to Firebase Storage and return public download URL.
+  // Previously chat/raise-concern wrote local device paths into Firestore, which
+  // coordinators couldn't open.
+  /// Uploads a local file to Firebase Storage and returns the public download URL.
+  /// Returns null on failure (caller should handle the null gracefully).
+  ///
+  /// On web (`kIsWeb`) this is a no-op returning null — file uploads from a web
+  /// blob need a different code path (use `putData` with bytes). The current
+  /// call sites (chat photo, concern evidence) are mobile-only flows.
+  Future<String?> uploadFile({
+    required String localPath,
+    required String storagePath, // e.g. "chat/{patientId}/{ts}_{filename}"
+    String? contentType,
+  }) async {
+    if (kIsWeb) {
+      debugPrint('FirebaseService.uploadFile: skipped on web (use putData for web blobs)');
+      return null;
+    }
+    try {
+      final file = File(localPath);
+      if (!await file.exists()) {
+        debugPrint('FirebaseService.uploadFile: local file does not exist: $localPath');
+        return null;
+      }
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      final metadata = contentType != null
+          ? SettableMetadata(contentType: contentType)
+          : null;
+      await ref.putFile(file, metadata);
+      return await ref.getDownloadURL();
+    } catch (e, st) {
+      debugPrint('FirebaseService.uploadFile failed: $e\n$st');
+      return null;
     }
   }
 

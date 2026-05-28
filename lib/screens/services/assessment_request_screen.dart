@@ -308,8 +308,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
+    // Dai Maa surface adapts to the active theme (cream in light,
+    // plum-tinted dark in dark). App bar stays plum in both modes so the
+    // sub-brand still owns the top of the screen.
     return Scaffold(
-      backgroundColor: _isDaiMaa ? DaiMaaColors.cream : null,
+      backgroundColor: _isDaiMaa ? daiMaaScaffold(context) : null,
       appBar: AppBar(
         title: Text(widget.service.name),
         backgroundColor: _isDaiMaa ? DaiMaaColors.plum : null,
@@ -340,9 +343,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  // daiMaaPrimaryText() returns plum in light, a lightened
+                  // brand variant in dark to maintain AA contrast.
                   color: _isDaiMaa
-                      ? DaiMaaColors.plum
-                      : HousepitalColors.black,
+                      ? daiMaaPrimaryText(context)
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -1430,7 +1435,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
       builder: (context) => AlertDialog(
         icon: Icon(
           Icons.check_circle,
-          color: _isDaiMaa ? DaiMaaColors.plum : HousepitalColors.success,
+          // Use the dark-adaptive Dai Maa accent so the icon stays visible
+          // on dark dialog surfaces.
+          color: _isDaiMaa
+              ? daiMaaAccent(context)
+              : HousepitalColors.success,
           size: 48,
         ),
         title: Text(l.t('concern_submitted')),

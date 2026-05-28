@@ -98,14 +98,44 @@ class OrdersProvider extends ChangeNotifier {
   }
 
   /// Cancel order
+  ///
+  /// audit M-12: also captures refund expectations so the billing screen
+  /// (and downstream finance reconciliation) has something concrete to show
+  /// the user instead of a silent "cancelled" state with no money trail.
+  /// Refund rule (operational default until backend ships proper logic):
+  ///   - cancelled within 24h of booking → full refund minus a ₹100 booking fee
+  ///   - cancelled later                  → 50% of totalAmount, no fee
+  /// ETA is fixed at 7 days from cancellation.
   void cancelOrder(String orderId, String reason) {
     final index = _orders.indexWhere((o) => o['id'] == orderId);
     if (index >= 0) {
+      final order = _orders[index];
+      final totalAmount = (order['totalAmount'] as num?)?.toInt() ?? 0;
+      final createdAt = DateTime.tryParse(order['createdAt'] as String? ?? '');
+      final now = DateTime.now();
+      final withinGrace = createdAt != null &&
+          now.difference(createdAt) <= const Duration(hours: 24);
+
+      int refundAmount;
+      if (totalAmount <= 0) {
+        refundAmount = 0;
+      } else if (withinGrace) {
+        const bookingFee = 100;
+        refundAmount =
+            (totalAmount - bookingFee).clamp(0, totalAmount).toInt();
+      } else {
+        refundAmount = (totalAmount * 0.5).round();
+      }
+
       _orders[index] = {
-        ..._orders[index],
+        ...order,
         'status': 'cancelled',
         'cancelReason': reason,
-        'cancelledAt': DateTime.now().toIso8601String(),
+        'cancelledAt': now.toIso8601String(),
+        'refundAmount': refundAmount,
+        'refundStatus': refundAmount > 0 ? 'pending' : 'none',
+        'refundEta':
+            now.add(const Duration(days: 7)).toIso8601String(),
       };
       _persistAndNotify();
     }

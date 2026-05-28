@@ -1423,6 +1423,33 @@ class CartItem {
   int get lineTotal =>
       isRental ? unitPrice * rentalMonths * quantity : unitPrice * quantity;
 
+  // audit M-14: derive the GST rate that should apply to this line item
+  // based on its category (we infer the category from `isService` and `brand`,
+  // which is overloaded for services to carry the service category).
+  //
+  //  - 0.00 → healthcare/nursing manpower (GST-exempt under Notification 12/2017)
+  //  - 0.05 → diagnostic lab tests
+  //  - 0.18 → durable medical equipment
+  //
+  // We kept this as a computed getter rather than a stored field because all
+  // construction sites (cart_provider.addService / addItem) already encode the
+  // category — adding a stored field that 100% of callers ignore would just
+  // become dead weight. If we later need to override per-item (e.g. an
+  // exemption certificate flow), we can promote this to a stored field.
+  double get gstRate {
+    if (isService) {
+      final cat = brand.toLowerCase();
+      if (cat.contains('lab') ||
+          cat.contains('diagnostic') ||
+          cat.contains('test')) {
+        return 0.05;
+      }
+      // nurse / caretaker / physio / japa / nanny / doctor visit etc.
+      return 0.0;
+    }
+    return 0.18; // equipment buy or rent
+  }
+
   CartItem copyWith({int? quantity, int? rentalMonths}) => CartItem(
         equipmentId: equipmentId,
         name: name,

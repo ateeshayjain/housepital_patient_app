@@ -116,6 +116,43 @@ void main() {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CARETAKER — view + raise concern only (audit M-5)
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('CARETAKER permissions', () {
+    test('can view', () {
+      expect(canUserPerform('CARETAKER', 'view'), isTrue);
+    });
+
+    test('can raise concern', () {
+      expect(canUserPerform('CARETAKER', 'raise_concern'), isTrue);
+    });
+
+    test('CANNOT book', () {
+      expect(canUserPerform('CARETAKER', 'book'), isFalse);
+    });
+
+    test('CANNOT request booking (narrower than FAMILY_MEMBER)', () {
+      expect(canUserPerform('CARETAKER', 'request_booking'), isFalse);
+    });
+
+    test('CANNOT pay', () {
+      expect(canUserPerform('CARETAKER', 'pay'), isFalse);
+    });
+
+    test('CANNOT edit patient', () {
+      expect(canUserPerform('CARETAKER', 'edit_patient'), isFalse);
+    });
+
+    test('CANNOT manage family', () {
+      expect(canUserPerform('CARETAKER', 'manage_family'), isFalse);
+    });
+
+    test('CANNOT rate', () {
+      expect(canUserPerform('CARETAKER', 'rate'), isFalse);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Edge cases
   // ═══════════════════════════════════════════════════════════════════════════
   group('Edge cases', () {
@@ -157,6 +194,16 @@ void main() {
       final actions = getAllowedActions('PATIENT_SELF');
       expect(actions.length, 1);
       expect(actions, contains('view'));
+    });
+
+    test('CARETAKER has 2 actions (view + raise_concern)', () {
+      final actions = getAllowedActions('CARETAKER');
+      expect(actions.length, 2);
+      expect(actions, containsAll(['view', 'raise_concern']));
+      expect(actions, isNot(contains('book')));
+      expect(actions, isNot(contains('request_booking')));
+      expect(actions, isNot(contains('pay')));
+      expect(actions, isNot(contains('rate')));
     });
 
     test('unknown role returns empty set', () {
