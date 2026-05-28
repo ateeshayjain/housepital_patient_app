@@ -200,7 +200,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _gender,
+                      initialValue: _gender,
                       decoration: const InputDecoration(labelText: 'Gender'),
                       items: const [
                         DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -217,7 +217,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _relationship,
+                initialValue: _relationship,
                 decoration:
                     const InputDecoration(labelText: 'Relationship to you'),
                 items: _relationships
@@ -234,7 +234,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _city,
+                initialValue: _city,
                 decoration: const InputDecoration(labelText: 'City'),
                 items: _cities
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))

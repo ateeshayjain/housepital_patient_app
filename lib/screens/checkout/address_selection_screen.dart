@@ -462,7 +462,7 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
-                value: _city,
+                initialValue: _city,
                 decoration: const InputDecoration(labelText: 'City'),
                 items: _cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) { if (v != null) setState(() => _city = v); },

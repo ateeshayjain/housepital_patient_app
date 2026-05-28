@@ -12,7 +12,6 @@ import 'api_service.dart';
 class FirebaseService {
   FirebaseAuth? _auth;
   FirebaseMessaging? _messaging;
-  bool _initialized = false;
   StreamSubscription<String>? _tokenRefreshSub;
 
   String? _verificationId;
@@ -74,7 +73,12 @@ class FirebaseService {
     );
   }
 
-  Future<UserCredential> verifyOtp(String otp) async {
+  // Returns Future<void> (was Future<UserCredential>) — the only caller,
+  // [AuthProvider.verifyOtp], discards the credential and calls
+  // [getIdToken] separately. Narrowing the return type lets unit tests
+  // substitute a fake without needing to construct a real [UserCredential]
+  // (which has a private constructor that requires real Firebase init).
+  Future<void> verifyOtp(String otp) async {
     if (_verificationId == null) {
       throw Exception('No verification ID. Send OTP first.');
     }
@@ -82,7 +86,7 @@ class FirebaseService {
       verificationId: _verificationId!,
       smsCode: otp,
     );
-    return await auth.signInWithCredential(credential);
+    await auth.signInWithCredential(credential);
   }
 
   Future<String?> getIdToken() async {

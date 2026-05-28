@@ -442,36 +442,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
     );
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: HousepitalColors.greyLight),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: HousepitalColors.greyLight,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: HousepitalColors.black,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _nextStepItem(String number, String title, String desc) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

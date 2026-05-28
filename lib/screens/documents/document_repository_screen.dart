@@ -662,7 +662,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: _categories
                     .where((c) => c != 'all')

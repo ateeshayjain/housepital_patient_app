@@ -117,7 +117,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
             )),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _returnReason,
+              initialValue: _returnReason,
               decoration: InputDecoration(
                 hintText: 'Select reason',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -333,7 +333,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
           builder: (_) => AlertDialog(
             title: const Text('Return Scheduled'),
             content: Text(
-              'Your return pickup is scheduled for ${_pickupDate!.day}/${_pickupDate!.month}/${_pickupDate!.year} (${ _timeSlot}). '
+              'Your return pickup is scheduled for ${_pickupDate!.day}/${_pickupDate!.month}/${_pickupDate!.year} ($_timeSlot). '
               'Our team will collect the equipment.\n\n'
               'Estimated refund: ${DateHelper.formatCurrency(estimate)} within 5–7 business days. '
               "You'll see it on your billing screen.",
@@ -352,9 +352,16 @@ class _ReturnScreenState extends State<ReturnScreen> {
         );
       }
     } catch (e) {
+      // audit F: don't leak raw exception text (could contain SQL stack
+      // traces or internal error details). Log internally; show generic UI.
+      debugPrint('ReturnScreen submit failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to schedule return: $e')),
+          const SnackBar(
+            content: Text(
+              'Couldn\'t schedule your return right now. Please try again or call our coordinator.',
+            ),
+          ),
         );
       }
     } finally {

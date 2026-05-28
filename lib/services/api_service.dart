@@ -20,7 +20,15 @@ class ApiService implements IApiService {
   /// Base delay between retries (doubles on each attempt).
   static const Duration _retryDelay = Duration(seconds: 1);
 
-  ApiService({this.baseUrl = AppConstants.apiBaseUrl});
+  /// Underlying HTTP client. Defaults to a real [http.Client]; tests can
+  /// inject a [MockClient] from `package:http/testing.dart` to stub responses.
+  /// Added for BUG-10 test coverage — backward compatible (optional named arg).
+  final http.Client _client;
+
+  ApiService({
+    this.baseUrl = AppConstants.apiBaseUrl,
+    http.Client? client,
+  }) : _client = client ?? http.Client();
 
   @override
   void setAuthToken(String token) {
@@ -74,13 +82,13 @@ class ApiService implements IApiService {
   Future<Map<String, dynamic>> _get(String path,
       {Map<String, String>? queryParams}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
-    final response = await _withRetry(() => http.get(uri, headers: _headers));
+    final response = await _withRetry(() => _client.get(uri, headers: _headers));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _post(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => http.post(
+    final response = await _withRetry(() => _client.post(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
@@ -90,7 +98,7 @@ class ApiService implements IApiService {
 
   Future<Map<String, dynamic>> _put(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => http.put(
+    final response = await _withRetry(() => _client.put(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
       body: body != null ? jsonEncode(body) : null,
@@ -99,7 +107,7 @@ class ApiService implements IApiService {
   }
 
   Future<Map<String, dynamic>> _delete(String path) async {
-    final response = await _withRetry(() => http.delete(
+    final response = await _withRetry(() => _client.delete(
       Uri.parse('$baseUrl$path'),
       headers: _headers,
     ));

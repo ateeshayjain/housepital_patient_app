@@ -181,7 +181,7 @@ class _NotificationPreferencesScreenState
     return SwitchListTile(
       value: _prefs[pref.key] ?? pref.defaultValue,
       onChanged: (v) => _updatePref(pref.key, v),
-      activeColor: HousepitalColors.orange,
+      activeThumbColor: HousepitalColors.orange,
       title: Text(pref.title,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
       subtitle: Text(pref.subtitle,
@@ -226,7 +226,7 @@ class _NotificationPreferencesScreenState
       trailing: Switch(
         value: true,
         onChanged: null,
-        activeColor: HousepitalColors.orange,
+        activeThumbColor: HousepitalColors.orange,
       ),
     );
   }

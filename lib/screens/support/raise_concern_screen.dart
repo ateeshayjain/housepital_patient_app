@@ -125,7 +125,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 decoration: InputDecoration(labelText: l.t('concern_category')),
                 items: _categories.map((c) => DropdownMenuItem(
                   value: c['value'],
@@ -168,7 +168,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _resolution,
+                initialValue: _resolution,
                 decoration: InputDecoration(labelText: l.t('concern_resolution')),
                 items: const [
                   DropdownMenuItem(value: 'counseling', child: Text('Counseling of staff')),
