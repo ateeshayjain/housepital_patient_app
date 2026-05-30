@@ -351,8 +351,11 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: const Duration(seconds: 6),
             content: Text(
-              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded — they're saved locally for retry.",
+              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded. "
+              'Your concern was submitted without them — reply to the '
+              "coordinator's message in chat to add photos.",
             ),
             backgroundColor: HousepitalColors.warning,
           ),

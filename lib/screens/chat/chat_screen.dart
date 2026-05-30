@@ -1,6 +1,7 @@
 // lib/screens/chat/chat_screen.dart
 
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
@@ -100,6 +101,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _pickAndSendImage() async {
+    // Photo upload relies on dart:io File via firebaseService.uploadFile,
+    // which is skipped on web. Tell the user honestly instead of letting the
+    // upload silently fail.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo upload is available on the mobile app.'),
+        ),
+      );
+      return;
+    }
+
     // audit M-9: capture provider synchronously before any async gap so we
     // don't risk reading a stale BuildContext after picker/upload returns.
     final firebaseService = context.read<AuthProvider>().firebaseService;

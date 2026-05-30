@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/constants.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
+import '../utils/logger.dart';
 import 'i_api_service.dart';
 
 class ApiService implements IApiService {
@@ -60,10 +60,9 @@ class ApiService implements IApiService {
         // Retry on 5xx server errors
         if (response.statusCode >= 500 && attempt < _maxRetries) {
           attempt++;
-          if (kDebugMode) {
-            debugPrint(
-                'Retrying request (attempt $attempt/$_maxRetries) after ${response.statusCode}');
-          }
+          Log.debug(
+              'Retrying request (attempt $attempt/$_maxRetries) after ${response.statusCode}',
+              tag: 'ApiService');
           await Future.delayed(_retryDelay * attempt);
           continue;
         }
@@ -71,18 +70,14 @@ class ApiService implements IApiService {
       } on SocketException {
         if (attempt >= _maxRetries) rethrow;
         attempt++;
-        if (kDebugMode) {
-          debugPrint(
-              'Network error, retrying (attempt $attempt/$_maxRetries)');
-        }
+        Log.debug('Network error, retrying (attempt $attempt/$_maxRetries)',
+            tag: 'ApiService');
         await Future.delayed(_retryDelay * attempt);
       } on TimeoutException {
         if (attempt >= _maxRetries) rethrow;
         attempt++;
-        if (kDebugMode) {
-          debugPrint(
-              'Timeout, retrying (attempt $attempt/$_maxRetries)');
-        }
+        Log.debug('Timeout, retrying (attempt $attempt/$_maxRetries)',
+            tag: 'ApiService');
         await Future.delayed(_retryDelay * attempt);
       }
     }
@@ -367,6 +362,7 @@ class ApiService implements IApiService {
     await _post('/bookings/$bookingId/cancel', body: {'reason': reason});
   }
 
+  @override
   Future<void> submitRating({
     required String bookingId,
     required int rating,
@@ -380,6 +376,7 @@ class ApiService implements IApiService {
 
   // ==================== ASSESSMENTS ====================
 
+  @override
   Future<AssessmentRequest> createAssessmentRequest({
     required String patientId,
     required String serviceCategory,
@@ -393,6 +390,7 @@ class ApiService implements IApiService {
     return AssessmentRequest.fromJson(data['assessment']);
   }
 
+  @override
   Future<List<AssessmentRequest>> getAssessments(String patientId) async {
     final data = await _get('/patients/$patientId/assessments');
     return (data['assessments'] as List)
@@ -485,6 +483,7 @@ class ApiService implements IApiService {
 
   // ==================== RATINGS ====================
 
+  @override
   Future<void> submitDailyRating({
     required String patientId,
     required String deploymentId,
@@ -511,6 +510,7 @@ class ApiService implements IApiService {
   }
 
   /// Paginated notifications.
+  @override
   Future<List<AppNotification>> getNotificationsPaginated({
     int page = 1,
     int pageSize = 20,
@@ -547,6 +547,7 @@ class ApiService implements IApiService {
     await _post('/patients/$patientId/family/invite', body: {'phone': phone});
   }
 
+  @override
   Future<void> removeFamilyMemberLegacy(String memberId) async {
     await _put('/family/$memberId/remove');
   }
@@ -560,6 +561,7 @@ class ApiService implements IApiService {
 
   // ==================== COUPONS ====================
 
+  @override
   Future<Coupon> validateCoupon(String code, String serviceCategory, int orderAmount) async {
     final data = await _post('/coupons/validate', body: {
       'code': code,
@@ -569,22 +571,29 @@ class ApiService implements IApiService {
     return Coupon.fromJson(data);
   }
 
+  @override
   Future<List<Coupon>> getAvailableCoupons(String? category) async {
-    final data = await _get('/coupons${category != null ? '?category=$category' : ''}');
+    final params = <String, String>{};
+    if (category != null) params['category'] = category;
+    final data =
+        await _get('/coupons', queryParams: params.isNotEmpty ? params : null);
     return (data as List).map((c) => Coupon.fromJson(c)).toList();
   }
 
   // ==================== TRANSACTIONS ====================
 
+  @override
   Future<List<PaymentTransaction>> getTransactions(String patientId, {String? status, int? limit}) async {
-    String url = '/patients/$patientId/transactions?';
-    if (status != null) url += 'status=$status&';
-    if (limit != null) url += 'limit=$limit';
-    final data = await _get(url);
+    final params = <String, String>{};
+    if (status != null) params['status'] = status;
+    if (limit != null) params['limit'] = '$limit';
+    final data = await _get('/patients/$patientId/transactions',
+        queryParams: params.isNotEmpty ? params : null);
     return (data as List).map((t) => PaymentTransaction.fromJson(t)).toList();
   }
 
   /// Paginated transaction list.
+  @override
   Future<List<PaymentTransaction>> getTransactionsPaginated(
     String patientId, {
     String? status,
@@ -603,6 +612,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<PaymentTransaction> getTransactionDetail(String transactionId) async {
     final data = await _get('/transactions/$transactionId');
     return PaymentTransaction.fromJson(data);
@@ -610,6 +620,7 @@ class ApiService implements IApiService {
 
   // ==================== ENHANCED BILLING ====================
 
+  @override
   Future<BillingSummary> getBillingSummaryFull(String patientId) async {
     final data = await _get('/patients/$patientId/billing/summary');
     return BillingSummary.fromJson(data);
@@ -627,11 +638,13 @@ class ApiService implements IApiService {
 
   // ==================== PROFILE ====================
 
+  @override
   Future<Patient> updatePatientProfile(String patientId, Map<String, dynamic> data) async {
     final result = await _put('/patients/$patientId', body: data);
     return Patient.fromJson(result);
   }
 
+  @override
   Future<FamilyMember> addFamilyMember(String patientId, Map<String, dynamic> data) async {
     final result = await _post('/patients/$patientId/family', body: data);
     return FamilyMember.fromJson(result);
@@ -642,6 +655,7 @@ class ApiService implements IApiService {
     await _post('/patients/$patientId/family/$memberId/remove', body: {});
   }
 
+  @override
   Future<FamilyMember> updateFamilyMember(String patientId, String memberId, Map<String, dynamic> data) async {
     final result = await _put('/patients/$patientId/family/$memberId', body: data);
     return FamilyMember.fromJson(result);
@@ -774,16 +788,19 @@ class ApiService implements IApiService {
 
   // ── Assessment Actions ──────────────────────────────────────
 
+  @override
   Future<void> acceptAssessment(String assessmentId) async {
     await _put('/assessments/$assessmentId/accept', body: {});
   }
 
+  @override
   Future<void> declineAssessment(String assessmentId) async {
     await _put('/assessments/$assessmentId/decline', body: {});
   }
 
   // ── Equipment Reviews ──────────────────────────────────────
 
+  @override
   Future<List<EquipmentReview>> getEquipmentReviews(String itemId) async {
     final data = await _get('/equipment/$itemId/reviews');
     return (data['reviews'] as List)
@@ -791,6 +808,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<void> submitEquipmentReview(String itemId, int rating, String text) async {
     await _post('/equipment/$itemId/reviews', body: {
       'rating': rating,
@@ -800,6 +818,7 @@ class ApiService implements IApiService {
 
   // ── Staff Replacement ─────────────────────────────────────
 
+  @override
   Future<Map<String, dynamic>> requestReplacement(
     String deploymentId,
     String reason,
@@ -813,6 +832,7 @@ class ApiService implements IApiService {
 
   // ── Equipment Returns ─────────────────────────────────────
 
+  @override
   Future<Map<String, dynamic>> scheduleReturn({
     required String orderId,
     required String reason,

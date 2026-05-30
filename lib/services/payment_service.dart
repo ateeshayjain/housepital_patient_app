@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../config/constants.dart';
+import '../utils/logger.dart';
 import 'api_service.dart';
 import 'i_api_service.dart';
 
@@ -69,7 +70,7 @@ class PaymentService {
       );
       return result['order_id'] as String?;
     } catch (e) {
-      if (kDebugMode) debugPrint('Create order failed: $e');
+      Log.warn('Create order failed', error: e, tag: 'PaymentService');
       return null;
     }
   }
@@ -113,13 +114,13 @@ class PaymentService {
     try {
       _razorpay.open(options);
     } catch (e) {
-      if (kDebugMode) debugPrint('Razorpay open error: $e');
+      Log.warn('Razorpay open error', error: e, tag: 'PaymentService');
       _onFailureCallback?.call('Failed to open payment gateway');
     }
   }
 
   void _handleSuccess(PaymentSuccessResponse response) async {
-    if (kDebugMode) debugPrint('Payment success — verifying on backend');
+    Log.debug('Payment success — verifying on backend', tag: 'PaymentService');
 
     // Verify payment on backend BEFORE calling success callback.
     // If verification fails, the booking must NOT be marked confirmed and
@@ -151,10 +152,8 @@ class PaymentService {
     if (response.paymentId == null ||
         response.orderId == null ||
         response.signature == null) {
-      if (kDebugMode) {
-        debugPrint(
-            'Payment verification skipped (demo mode — missing order/signature)');
-      }
+      Log.debug('Payment verification skipped (demo mode — missing order/signature)',
+          tag: 'PaymentService');
       return _VerificationOutcome.skippedDemo;
     }
 
@@ -164,21 +163,21 @@ class PaymentService {
         razorpayOrderId: response.orderId!,
         razorpaySignature: response.signature!,
       );
-      if (kDebugMode) debugPrint('Payment verified on backend');
+      Log.debug('Payment verified on backend', tag: 'PaymentService');
       return _VerificationOutcome.verified;
     } catch (e) {
-      if (kDebugMode) debugPrint('Payment verification failed: $e');
+      Log.warn('Payment verification failed', error: e, tag: 'PaymentService');
       return _VerificationOutcome.failed;
     }
   }
 
   void _handleError(PaymentFailureResponse response) {
-    if (kDebugMode) debugPrint('Payment error: ${response.code}');
+    Log.warn('Payment error: ${response.code}', tag: 'PaymentService');
     _onFailureCallback?.call(response.message ?? 'Payment failed');
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
-    if (kDebugMode) debugPrint('External wallet selected');
+    Log.debug('External wallet selected', tag: 'PaymentService');
   }
 
   void dispose() {

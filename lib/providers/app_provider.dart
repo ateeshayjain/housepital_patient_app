@@ -4,6 +4,7 @@ import '../data/demo_data.dart';
 import '../models/models.dart';
 import '../services/cache_service.dart';
 import '../services/i_api_service.dart';
+import '../utils/logger.dart';
 
 class AppProvider extends ChangeNotifier {
   // audit batch 4 (Agent J): depend on the IApiService interface, not the
@@ -139,7 +140,8 @@ class AppProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Patients API unavailable, using demo data: $e');
+      Log.warn('Patients API unavailable, using demo data',
+          error: e, tag: 'AppProvider');
     }
   }
 
@@ -203,7 +205,8 @@ class AppProvider extends ChangeNotifier {
       await cache.cache(cacheKey, billing);
       notifyListeners();
     } catch (e) {
-      debugPrint('Dashboard API unavailable, using demo/cache data: $e');
+      Log.warn('Dashboard API unavailable, using demo/cache data',
+          error: e, tag: 'AppProvider');
       // Demo data already loaded — no action needed
     }
   }

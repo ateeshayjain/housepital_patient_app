@@ -5,6 +5,7 @@ import '../models/medication_models.dart';
 import '../services/api_service.dart';
 import '../services/i_api_service.dart';
 import '../services/medication_reminder_service.dart';
+import '../utils/logger.dart';
 
 class MedicationProvider extends ChangeNotifier {
   // audit batch 4 (Agent J): depend on IApiService (DIP).
@@ -58,7 +59,8 @@ class MedicationProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
     } catch (e) {
-      debugPrint('Medications API unavailable, using demo data: $e');
+      Log.warn('Medications API unavailable, using demo data',
+          error: e, tag: 'MedicationProvider');
     }
   }
 

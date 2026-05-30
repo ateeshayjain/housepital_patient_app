@@ -837,7 +837,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (₹$_ivPrice/visit). Nurse level cannot be changed.',
+                        'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (${DateHelper.formatCurrency(_ivPrice ?? 0)}/visit). Nurse level cannot be changed.',
                         style: TextStyle(
                           fontSize: 13,
                           color: _nurseLevelColor[_ivNurseLevel],
@@ -1779,9 +1779,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('$_servicePeriod days × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}/day',
+              Text('$_servicePeriod days × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}/day',
                   style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
-              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)).toStringAsFixed(0)}',
+              Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
             ],
           ),
@@ -2000,9 +2000,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('$_physioPeriod sessions × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}',
+              Text('$_physioPeriod sessions × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}',
                   style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
-              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)).toStringAsFixed(0)}',
+              Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
             ],
           ),

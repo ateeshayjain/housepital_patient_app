@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -582,35 +581,34 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             },
           ),
           // audit M-16: file_picker is not in pubspec.yaml, so a real
-          // PDF-selection flow isn't available. On web we hide the button
-          // entirely (no native dialer/email fallback that helps here);
-          // on mobile we replace the misleading "coming soon" toast with an
-          // honest pointer to the wecare@ inbox.
-          if (!kIsWeb)
-            ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.picture_as_pdf, color: Colors.green),
+          // PDF-selection flow isn't available yet. The honest "email to
+          // wecare@" pointer works identically on web and mobile (it's just a
+          // SnackBar, no dart:io), so we show it on all platforms rather than
+          // hiding the control with no explanation on web.
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(10),
               ),
-              title: const Text('Upload PDF'),
-              subtitle: const Text(
-                  'Email PDFs to wecare@housepital.in for now'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'),
-                    backgroundColor: HousepitalColors.info,
-                  ),
-                );
-              },
+              child: const Icon(Icons.picture_as_pdf, color: Colors.green),
             ),
+            title: const Text('Upload PDF'),
+            subtitle: const Text(
+                'Email PDFs to wecare@housepital.in for now'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'),
+                  backgroundColor: HousepitalColors.info,
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 16),
         ],
       ),

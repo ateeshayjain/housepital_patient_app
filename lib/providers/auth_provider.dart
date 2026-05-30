@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/firebase_service.dart';
 import '../services/i_api_service.dart';
+import '../utils/logger.dart';
 
 enum AuthState { initial, loading, otpSent, authenticated, onboarding, error }
 
@@ -96,7 +97,7 @@ class AuthProvider extends ChangeNotifier {
       _apiService.setAuthToken(fresh);
       return true;
     } catch (e) {
-      if (kDebugMode) debugPrint('Token refresh failed: $e');
+      Log.warn('Token refresh failed', error: e, tag: 'AuthProvider');
       return false;
     }
   }

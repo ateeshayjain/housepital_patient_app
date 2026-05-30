@@ -5,6 +5,7 @@ import '../models/my_care_models.dart';
 // (thrown by the implementation, caught in loadServiceDetail).
 import '../services/api_service.dart';
 import '../services/i_api_service.dart';
+import '../utils/logger.dart';
 
 class MyCareProvider extends ChangeNotifier {
   // audit batch 4 (Agent J): depend on IApiService (DIP).
@@ -65,7 +66,8 @@ class MyCareProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
     } catch (e) {
-      debugPrint('MyCare API unavailable, using demo data: $e');
+      Log.warn('MyCare API unavailable, using demo data',
+          error: e, tag: 'MyCareProvider');
       // NOTE: Demo data already loaded — no action needed
     }
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
+import '../utils/logger.dart';
 
 /// Represents a saved payment method for auto-pay.
 class SavedPaymentMethod {
@@ -92,7 +93,8 @@ class PaymentReminderService {
               ))
           .toList();
     } catch (e) {
-      debugPrint('PaymentReminderService: getSavedMethods failed: $e');
+      Log.warn('getSavedMethods failed',
+          error: e, tag: 'PaymentReminderService');
       return [];
     }
   }
@@ -115,7 +117,8 @@ class PaymentReminderService {
               ))
           .toList();
     } catch (e) {
-      debugPrint('PaymentReminderService: getUpcomingReminders failed: $e');
+      Log.warn('getUpcomingReminders failed',
+          error: e, tag: 'PaymentReminderService');
       return [];
     }
   }

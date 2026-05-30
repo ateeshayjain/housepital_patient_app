@@ -233,7 +233,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   String? get _priceText {
     if (_catalogItem?.price != null) {
-      return '\u20B9${_catalogItem!.price!.toStringAsFixed(0)}';
+      return DateHelper.formatCurrency(_catalogItem!.price!.round());
     }
     if (widget.service.basePriceMin != null) {
       return DateHelper.formatCurrency(widget.service.basePriceMin!);
@@ -243,7 +243,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   String? get _rentalPriceText {
     if (_catalogItem?.rentalPrice != null) {
-      return '\u20B9${_catalogItem!.rentalPrice!.toStringAsFixed(0)}/mo';
+      return '${DateHelper.formatCurrency(_catalogItem!.rentalPrice!.round())}/mo';
     }
     return null;
   }
@@ -286,11 +286,11 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       specs['Brand'] = cat.brand;
       specs['Category'] = cat.category;
       if (cat.price != null) {
-        specs['Sale Price'] = '\u20B9${cat.price!.toStringAsFixed(0)}';
+        specs['Sale Price'] = DateHelper.formatCurrency(cat.price!.round());
       }
       if (cat.rentalPrice != null) {
         specs['Rental Price'] =
-            '\u20B9${cat.rentalPrice!.toStringAsFixed(0)}/month';
+            '${DateHelper.formatCurrency(cat.rentalPrice!.round())}/month';
       }
       if (cat.breakevenDays != null) {
         specs['Rent vs Buy'] =
@@ -720,7 +720,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         if (hasBuyPrice) ...[
           if (hasMrp) ...[
             Text(
-              '\u20B9${_catalogItem!.mrp!.toStringAsFixed(0)}',
+              DateHelper.formatCurrency(_catalogItem!.mrp!.round()),
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,

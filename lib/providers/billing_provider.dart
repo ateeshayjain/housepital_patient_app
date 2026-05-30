@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../data/demo_data.dart';
 import '../services/i_api_service.dart';
+import '../utils/logger.dart';
 
 /// Handles billing-related state, extracted from AppProvider
 /// to maintain Single Responsibility.
@@ -34,9 +35,7 @@ class BillingProvider extends ChangeNotifier {
           : null;
       _error = null;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('BillingProvider.loadBillingSummary error: $e');
-      }
+      Log.warn('loadBillingSummary error', error: e, tag: 'BillingProvider');
       // Fallback to demo billing data
       if (_amountDue == 0) {
         final demoBilling = DemoData.billingSummary;
