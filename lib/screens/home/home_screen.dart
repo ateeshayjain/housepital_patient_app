@@ -424,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Consumer<CartProvider>(
-            builder: (_, cart, __) => Semantics(
+            builder: (_, cart, _) => Semantics(
               label: 'Cart${cart.itemCount > 0 ? ", ${cart.itemCount} items" : ""}',
               button: true,
               child: IconButton(
@@ -770,9 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final attendance = app.todayAttendance;
     final status = attendance?.status ?? 'waiting';
     final statusColor = AttendanceHelper.getStatusColor(status);
-    final daysRemaining = deployment.endDate != null
-        ? deployment.endDate!.difference(DateTime.now()).inDays
-        : null;
+    final daysRemaining = deployment.endDate?.difference(DateTime.now()).inDays;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),

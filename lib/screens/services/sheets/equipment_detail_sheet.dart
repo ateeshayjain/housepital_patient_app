@@ -82,7 +82,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                         child: CachedNetworkImage(
                           imageUrl: item.imageUrl!,
                           fit: BoxFit.contain,
-                          errorWidget: (_, __, ___) => Icon(icon,
+                          errorWidget: (_, _, _) => Icon(icon,
                               color: HousepitalColors.orange, size: 28),
                         ),
                       )

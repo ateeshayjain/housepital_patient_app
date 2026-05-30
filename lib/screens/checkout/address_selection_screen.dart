@@ -221,8 +221,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 3,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, __) => Container(
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, _) => Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -297,7 +297,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _addresses.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final addr = _addresses[index];
                     return Container(

@@ -98,7 +98,7 @@ class InvoiceDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             ...invoice.lineItems
                 .map((item) => _buildLineItem(item))
-                .toList(),
+                ,
             const SizedBox(height: 16),
 
             // Totals

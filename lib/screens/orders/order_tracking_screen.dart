@@ -371,7 +371,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                   if (isCurrent)
                     AnimatedBuilder(
                       animation: _pulseAnimation,
-                      builder: (_, __) => Container(
+                      builder: (_, _) => Container(
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(

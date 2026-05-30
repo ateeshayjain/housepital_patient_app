@@ -103,7 +103,7 @@ void main() {
       }
 
       expect(result, isNotNull);
-      expect(result!['route'], equals('/assessment-request'));
+      expect(result['route'], equals('/assessment-request'));
     });
   });
 

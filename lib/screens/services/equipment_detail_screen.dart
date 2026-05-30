@@ -447,7 +447,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         images[index],
                         fit: BoxFit.contain,
                         semanticLabel: '$_name product photo',
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           _equipmentIcon,
                           size: 56,
                           color: HousepitalColors.orange,
@@ -456,13 +456,13 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                     : CachedNetworkImage(
                         imageUrl: images[index],
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => const Center(
+                        placeholder: (_, _) => const Center(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: HousepitalColors.orange,
                           ),
                         ),
-                        errorWidget: (_, __, ___) => Icon(
+                        errorWidget: (_, _, _) => Icon(
                           _equipmentIcon,
                           size: 56,
                           color: HousepitalColors.orange,
@@ -1903,7 +1903,7 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                       widget.images[index],
                       fit: BoxFit.contain,
                       semanticLabel: 'Product photo ${index + 1} of ${widget.images.length}',
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.broken_image,
                         size: 64,
                         color: Colors.white54,
@@ -1912,10 +1912,10 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                   : CachedNetworkImage(
                       imageUrl: widget.images[index],
                       fit: BoxFit.contain,
-                      placeholder: (_, __) => const CircularProgressIndicator(
+                      placeholder: (_, _) => const CircularProgressIndicator(
                         color: HousepitalColors.orange,
                       ),
-                      errorWidget: (_, __, ___) => const Icon(
+                      errorWidget: (_, _, _) => const Icon(
                         Icons.broken_image,
                         size: 64,
                         color: Colors.white54,

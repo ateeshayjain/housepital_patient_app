@@ -31,14 +31,14 @@ Map<String, dynamic> _medicationJson({
       'dosage': dosage,
       'form': form,
       'frequency': frequency,
-      if (timeSlots != null) 'time_slots': timeSlots,
-      if (instructions != null) 'instructions': instructions,
-      if (prescribedBy != null) 'prescribed_by': prescribedBy,
-      if (prescribedDate != null) 'prescribed_date': prescribedDate,
-      if (endDate != null) 'end_date': endDate,
-      if (stockCount != null) 'stock_count': stockCount,
-      if (stockUnit != null) 'stock_unit': stockUnit,
-      if (prescriptionPhotoUrl != null) 'prescription_photo_url': prescriptionPhotoUrl,
+      'time_slots': ?timeSlots,
+      'instructions': ?instructions,
+      'prescribed_by': ?prescribedBy,
+      'prescribed_date': ?prescribedDate,
+      'end_date': ?endDate,
+      'stock_count': ?stockCount,
+      'stock_unit': ?stockUnit,
+      'prescription_photo_url': ?prescriptionPhotoUrl,
       'is_active': isActive,
     };
 
@@ -73,13 +73,13 @@ MedicationLog _buildLog({
     MedicationLog.fromJson({
       'id': id,
       'medication_id': medicationId,
-      if (staffId != null) 'staff_id': staffId,
-      if (staffName != null) 'staff_name': staffName,
+      'staff_id': ?staffId,
+      'staff_name': ?staffName,
       'scheduled_time': scheduledTime,
-      if (actualTime != null) 'actual_time': actualTime,
+      'actual_time': ?actualTime,
       'status': status,
-      if (skipReason != null) 'skip_reason': skipReason,
-      if (notes != null) 'notes': notes,
+      'skip_reason': ?skipReason,
+      'notes': ?notes,
     });
 
 // ---------------------------------------------------------------------------
@@ -416,13 +416,13 @@ void main() {
   // ScheduledMedication
   // =========================================================================
   group('ScheduledMedication', () {
-    MedicationFull _med() => _buildMedication();
+    MedicationFull med0() => _buildMedication();
 
     group('isPast', () {
       test('true when scheduledTime is in the past', () {
         final past = DateTime.now().subtract(const Duration(hours: 2));
         final scheduled = ScheduledMedication(
-          medication: _med(),
+          medication: med0(),
           scheduledTime: past,
         );
         expect(scheduled.isPast, isTrue);
@@ -431,7 +431,7 @@ void main() {
       test('false when scheduledTime is in the future', () {
         final future = DateTime.now().add(const Duration(hours: 2));
         final scheduled = ScheduledMedication(
-          medication: _med(),
+          medication: med0(),
           scheduledTime: future,
         );
         expect(scheduled.isPast, isFalse);
@@ -443,11 +443,11 @@ void main() {
   // MedicationScheduleSlot
   // =========================================================================
   group('MedicationScheduleSlot', () {
-    MedicationFull _med({String id = 'med-1'}) => MedicationFull.fromJson(
+    MedicationFull med0({String id = 'med-1'}) => MedicationFull.fromJson(
           _medicationJson(id: id, name: 'Med $id'),
         );
 
-    ScheduledMedication _scheduledWith({
+    ScheduledMedication scheduledWith({
       required MedicationFull med,
       MedicationLog? log,
       bool past = true,
@@ -466,9 +466,9 @@ void main() {
         time: '08:00',
         icon: '☀️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: _buildLog(status: 'administered')),
-          _scheduledWith(med: _med(id: 'med-2'), log: _buildLog(status: 'administered')),
-          _scheduledWith(med: _med(id: 'med-3'), log: _buildLog(status: 'skipped')),
+          scheduledWith(med: med0(id: 'med-1'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-2'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-3'), log: _buildLog(status: 'skipped')),
         ],
       );
 
@@ -481,8 +481,8 @@ void main() {
         time: '14:00',
         icon: '🌤️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: _buildLog(status: 'administered')),
-          _scheduledWith(med: _med(id: 'med-2')),
+          scheduledWith(med: med0(id: 'med-1'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-2')),
         ],
       );
 
@@ -495,8 +495,8 @@ void main() {
         time: '08:00',
         icon: '☀️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: _buildLog(status: 'administered')),
-          _scheduledWith(med: _med(id: 'med-2'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-1'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-2'), log: _buildLog(status: 'administered')),
         ],
       );
 
@@ -509,8 +509,8 @@ void main() {
         time: '08:00',
         icon: '☀️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: _buildLog(status: 'administered')),
-          _scheduledWith(med: _med(id: 'med-2'), log: _buildLog(status: 'skipped')),
+          scheduledWith(med: med0(id: 'med-1'), log: _buildLog(status: 'administered')),
+          scheduledWith(med: med0(id: 'med-2'), log: _buildLog(status: 'skipped')),
         ],
       );
 
@@ -534,7 +534,7 @@ void main() {
         time: '21:00',
         icon: '🌙',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: null, past: false),
+          scheduledWith(med: med0(id: 'med-1'), log: null, past: false),
         ],
       );
 
@@ -547,7 +547,7 @@ void main() {
         time: '08:00',
         icon: '☀️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: null, past: true),
+          scheduledWith(med: med0(id: 'med-1'), log: null, past: true),
         ],
       );
 
@@ -560,8 +560,8 @@ void main() {
         time: '14:00',
         icon: '🌤️',
         medications: [
-          _scheduledWith(
-            med: _med(id: 'med-1'),
+          scheduledWith(
+            med: med0(id: 'med-1'),
             log: _buildLog(status: 'administered'),
             past: false,
           ),
@@ -577,8 +577,8 @@ void main() {
         time: '08:00',
         icon: '☀️',
         medications: [
-          _scheduledWith(med: _med(id: 'med-1'), log: null),
-          _scheduledWith(med: _med(id: 'med-2'), log: _buildLog(status: 'missed')),
+          scheduledWith(med: med0(id: 'med-1'), log: null),
+          scheduledWith(med: med0(id: 'med-2'), log: _buildLog(status: 'missed')),
         ],
       );
 
