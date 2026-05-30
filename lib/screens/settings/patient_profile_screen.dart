@@ -193,6 +193,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
+    if (!mounted) return;
     await context.read<AppProvider>().setProfilePhotoPath(image.path);
     if (mounted) {
       setState(() => _profilePhotoPath = image.path);

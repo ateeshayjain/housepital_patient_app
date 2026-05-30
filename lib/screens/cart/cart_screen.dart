@@ -572,6 +572,7 @@ class _CartScreenState extends State<CartScreen> {
     }).then((result) {
       // If payment was successful, save order, clear cart, show confirmation
       if (result == true) {
+        if (!context.mounted) return;
         final items = cart.items.toList();
         // audit M-3: use the instance method `generateUniqueBookingNumber` so the
         // booking id is guaranteed not to collide with any existing order in the

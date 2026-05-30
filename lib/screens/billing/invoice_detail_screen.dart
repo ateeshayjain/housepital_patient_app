@@ -77,8 +77,11 @@ class InvoiceDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.share_outlined),
             tooltip: l.t('share'),
             onPressed: () {
-              Share.share(
-                'Invoice ${invoice.invoiceNumber} — ${DateHelper.formatCurrency(invoice.grandTotal)}',
+              SharePlus.instance.share(
+                ShareParams(
+                  text:
+                      'Invoice ${invoice.invoiceNumber} — ${DateHelper.formatCurrency(invoice.grandTotal)}',
+                ),
               );
             },
           ),

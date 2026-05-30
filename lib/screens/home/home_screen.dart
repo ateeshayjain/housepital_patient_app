@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final app = context.read<AppProvider>();
       app.loadPatients().then((_) {
         app.loadDashboard();

@@ -67,9 +67,9 @@ void main() {
     });
 
     test('null result means parent screen stays on catalog', () {
-      Map<String, dynamic>? result;
-      final shouldNavigate = result != null;
-      expect(shouldNavigate, isFalse);
+      // A null navigation result means the parent stays on the catalog.
+      const Map<String, dynamic>? result = null;
+      expect(result, isNull);
     });
   });
 

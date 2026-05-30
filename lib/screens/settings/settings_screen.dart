@@ -66,6 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
+    if (!mounted) return;
     await context.read<AppProvider>().setProfilePhotoPath(image.path);
     if (mounted) {
       setState(() => _profilePhotoPath = image.path);
@@ -321,36 +322,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               ),
-              _appearanceOption(
-                sheetCtx,
-                title: 'System default',
-                subtitle: 'Match your device setting',
-                value: ThemeMode.system,
+              RadioGroup<ThemeMode>(
                 groupValue: watched.mode,
                 onChanged: (m) {
+                  if (m == null) return;
                   theme.setMode(m);
                   Navigator.pop(sheetCtx);
                 },
-              ),
-              _appearanceOption(
-                sheetCtx,
-                title: 'Light',
-                value: ThemeMode.light,
-                groupValue: watched.mode,
-                onChanged: (m) {
-                  theme.setMode(m);
-                  Navigator.pop(sheetCtx);
-                },
-              ),
-              _appearanceOption(
-                sheetCtx,
-                title: 'Dark',
-                value: ThemeMode.dark,
-                groupValue: watched.mode,
-                onChanged: (m) {
-                  theme.setMode(m);
-                  Navigator.pop(sheetCtx);
-                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _appearanceOption(
+                      sheetCtx,
+                      title: 'System default',
+                      subtitle: 'Match your device setting',
+                      value: ThemeMode.system,
+                    ),
+                    _appearanceOption(
+                      sheetCtx,
+                      title: 'Light',
+                      value: ThemeMode.light,
+                    ),
+                    _appearanceOption(
+                      sheetCtx,
+                      title: 'Dark',
+                      value: ThemeMode.dark,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
             ],
@@ -365,18 +364,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     String? subtitle,
     required ThemeMode value,
-    required ThemeMode groupValue,
-    required ValueChanged<ThemeMode> onChanged,
   }) {
     return RadioListTile<ThemeMode>(
       title: Text(title),
       subtitle: subtitle != null ? Text(subtitle) : null,
       value: value,
-      groupValue: groupValue,
       activeColor: HousepitalColors.orange,
-      onChanged: (m) {
-        if (m != null) onChanged(m);
-      },
     );
   }
 

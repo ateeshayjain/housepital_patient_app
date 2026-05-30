@@ -295,7 +295,7 @@ class FirebaseService {
   /// Full FCM setup — request permission, get token, register handlers.
   /// Wrapped in try-catch so the app doesn't crash without Firebase.
   ///
-  /// [navigatorKey] – a GlobalKey<NavigatorState> so we can push routes from
+  /// [navigatorKey] – a `GlobalKey<NavigatorState>` so we can push routes from
   /// notification taps without a local BuildContext.
   Future<void> setupFCM({
     // audit batch 4 (Agent J): accept the interface (DIP) — callers pass

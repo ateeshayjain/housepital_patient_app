@@ -5,11 +5,9 @@ import 'package:housepital_patient/utils/notification_router.dart';
 void main() {
   group('NotificationRouter.handleNotification', () {
     late String? pushedRoute;
-    late Object? pushedArguments;
 
     setUp(() {
       pushedRoute = null;
-      pushedArguments = null;
     });
 
     /// Builds a minimal MaterialApp that captures Navigator.pushNamed calls.
@@ -17,7 +15,6 @@ void main() {
       return MaterialApp(
         onGenerateRoute: (settings) {
           pushedRoute = settings.name;
-          pushedArguments = settings.arguments;
           return MaterialPageRoute(
             builder: (_) => const Scaffold(body: Text('target')),
             settings: settings,

@@ -671,7 +671,6 @@ void main() {
       };
       final card = VitalCard.fromJson(json);
       expect(card.sparkline, [98.0, 99.0, 97.0]);
-      expect(card.sparkline.every((v) => v is double), isTrue);
     });
   });
 
