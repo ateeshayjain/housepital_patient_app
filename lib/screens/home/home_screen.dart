@@ -139,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, l, app),
-                _buildHeroBanner(context),
                 _buildGreeting(context, app),
                 if (app.isDashboardLoading)
                   const Padding(
@@ -195,6 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 6. Payments — only show to roles that can actually pay.
                   if (canUserPerform(role, UserAction.pay))
                     _buildPaymentCards(context, app),
+
+                  const SizedBox(height: 12),
+
+                  // Hero banner — DEMOTED to the bottom as a promo surface.
+                  _buildHeroBanner(context),
 
                   const SizedBox(height: 24),
                 ],
