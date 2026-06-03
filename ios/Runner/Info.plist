@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Housepital uses the microphone so you can speak to the assistant.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Housepital uses speech recognition to understand your questions.</string>
 </dict>
 </plist>
