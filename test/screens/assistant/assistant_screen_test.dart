@@ -124,11 +124,13 @@ void main() {
           replyText: 'Call karein?',
         );
       final p = _provider(service);
-      String? dialed;
-      p.onPlaceCall = (phone) => dialed = phone;
       await p.sendText('call');
       await tester.pumpWidget(_wrap(p));
       await tester.pump();
+      // Override after mount: the screen wires its own onPlaceCall in
+      // initState; we replace it here so the test can observe the dial.
+      String? dialed;
+      p.onPlaceCall = (phone) => dialed = phone;
 
       await tester.tap(find.text('Confirm'));
       await tester.pump();

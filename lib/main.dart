@@ -74,7 +74,15 @@ import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
 import 'providers/medication_provider.dart';
+import 'providers/assistant_provider.dart';
 import 'services/medication_reminder_service.dart';
+import 'services/assistant_service.dart';
+import 'services/voice_service.dart';
+import 'screens/assistant/assistant_executor.dart';
+import 'screens/assistant/assistant_screen.dart';
+import 'config/constants.dart';
+import 'data/demo_data.dart';
+import 'utils/permissions.dart';
 import 'utils/notification_router.dart';
 
 void main() async {
@@ -195,6 +203,37 @@ void main() async {
           ),
           ChangeNotifierProvider(
             create: (_) => MedicationProvider(apiService),
+          ),
+          // AI Assistant — voice+text Hinglish bot. Stub-backed until the
+          // backend /assistant endpoint ships; voice no-ops on web.
+          ChangeNotifierProvider(
+            create: (_) {
+              final patientId = DemoData.patient.id;
+              // Demo mode: the signed-in user is the primary contact.
+              const role = UserRole.primaryContact;
+              final hm = DemoData.healthManager;
+              final contacts = <String, AssistantContact>{
+                'health_manager':
+                    AssistantContact(name: hm.name, phone: hm.phone),
+                'nurse': const AssistantContact(
+                    name: 'Care team', phone: AppConstants.supportPhone),
+                'sos': const AssistantContact(
+                    name: 'Emergency', phone: AppConstants.emergencyPhone),
+              };
+              return AssistantProvider(
+                service: AssistantService(), // useStub: true until backend ships
+                executor: AssistantExecutor(
+                  api: apiService,
+                  role: role,
+                  patientId: patientId,
+                  contacts: contacts,
+                ),
+                voice: kIsWeb ? NoopVoiceService() : PluginVoiceService(),
+                patientId: patientId,
+                role: role,
+                locale: 'hi',
+              );
+            },
           ),
           ChangeNotifierProvider(
             create: (_) => ThemeProvider(),
@@ -360,6 +399,9 @@ class _HousepitalAppState extends State<HousepitalApp> {
           case '/home':
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));
+          case '/assistant':
+            return MaterialPageRoute(
+                builder: (_) => const AssistantScreen());
           case '/otp':
             return MaterialPageRoute(builder: (_) => const OtpScreen());
           case '/onboarding':

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/theme.dart';
 import '../../models/assistant_models.dart';
@@ -18,6 +19,32 @@ class AssistantScreen extends StatefulWidget {
 class _AssistantScreenState extends State<AssistantScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Wire the side-effect callbacks once the screen is mounted. The provider
+    // never performs side effects itself (keeps it testable) — the UI does.
+    final provider = context.read<AssistantProvider>();
+    provider.onPlaceCall = _dial;
+    provider.onNavigate = _navigateTo;
+  }
+
+  Future<void> _dial(String number) async {
+    final uri = Uri.parse('tel:$number');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      }
+    } catch (_) {
+      // Dial unavailable (e.g. web / no dialer) — fail silently, never crash.
+    }
+  }
+
+  void _navigateTo(String route) {
+    if (!mounted) return;
+    Navigator.pushNamed(context, route);
+  }
 
   @override
   void dispose() {
