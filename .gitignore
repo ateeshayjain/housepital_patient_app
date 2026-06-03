@@ -57,3 +57,4 @@ app.*.map.json
 **/GoogleService-Info.plist
 # Keep the .env.example template:
 !.env.example
+.superpowers/
