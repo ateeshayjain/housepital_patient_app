@@ -882,6 +882,12 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () => Navigator.pushNamed(context, '/my-orders'),
       ),
       _QuickAction(
+        icon: Icons.menu_book,
+        label: 'Care Guides',
+        color: HousepitalColors.serviceCaretaker,
+        onTap: () => Navigator.pushNamed(context, '/articles'),
+      ),
+      _QuickAction(
         icon: Icons.emergency,
         label: 'SOS',
         color: HousepitalColors.error,
