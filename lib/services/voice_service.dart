@@ -2,26 +2,46 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-/// Thin, isolated wrapper over `speech_to_text` (mic → text) and
-/// `flutter_tts` (text → speech).
+/// Abstraction over voice I/O so the provider/executor stay unit-testable
+/// without a device (tests provide a lightweight fake instead of extending
+/// the plugin-using [PluginVoiceService], whose constructor touches platform
+/// channels).
+abstract class VoiceService {
+  bool get isListening;
+
+  /// Initialise speech recognition. Returns `false` if speech is unavailable
+  /// (web, no mic, or permission denied) so the caller falls back to text.
+  Future<bool> initSpeech();
+
+  /// Start listening; [onResult] is called with the recognized text.
+  Future<void> listen(void Function(String text) onResult,
+      {String locale = 'hi_IN'});
+
+  Future<void> stopListening();
+
+  /// Speak [text] aloud.
+  Future<void> speak(String text, {String locale = 'hi-IN'});
+}
+
+/// Real implementation — thin, isolated wrapper over `speech_to_text`
+/// (mic → text) and `flutter_tts` (text → speech).
 ///
-/// ALL platform-plugin calls live ONLY here. The provider and executor depend
-/// on this class (mockable) so they stay unit-testable without a device.
+/// ALL platform-plugin calls live ONLY here.
 ///
 /// Web: the voice plugins are limited / unavailable, so every method is
-/// `kIsWeb`-guarded — on web the assistant degrades to text-only (which is
-/// acceptable) and the app still builds and runs.
-class VoiceService {
+/// `kIsWeb`-guarded — on web the assistant degrades to text-only (acceptable)
+/// and the app still builds and runs.
+class PluginVoiceService implements VoiceService {
   final SpeechToText _speech = SpeechToText();
   final FlutterTts _tts = FlutterTts();
 
   bool _available = false;
   bool _listening = false;
 
+  @override
   bool get isListening => _listening;
 
-  /// Initialise speech recognition. Returns `false` if speech is unavailable
-  /// (web, no mic, or permission denied) so the caller can fall back to text.
+  @override
   Future<bool> initSpeech() async {
     if (kIsWeb) return false;
     try {
@@ -41,7 +61,7 @@ class VoiceService {
     }
   }
 
-  /// Start listening; [onResult] is called with the recognized text.
+  @override
   Future<void> listen(
     void Function(String text) onResult, {
     String locale = 'hi_IN',
@@ -59,6 +79,7 @@ class VoiceService {
     }
   }
 
+  @override
   Future<void> stopListening() async {
     if (kIsWeb) return;
     try {
@@ -70,7 +91,7 @@ class VoiceService {
     }
   }
 
-  /// Speak [text] aloud (no-op on web).
+  @override
   Future<void> speak(String text, {String locale = 'hi-IN'}) async {
     if (kIsWeb || text.isEmpty) return;
     try {
@@ -80,4 +101,20 @@ class VoiceService {
       debugPrint('VoiceService: speak failed: $e');
     }
   }
+}
+
+/// A no-op voice service — used where voice is unavailable (e.g. web) or as a
+/// safe default. Satisfies the interface without touching platform channels.
+class NoopVoiceService implements VoiceService {
+  @override
+  bool get isListening => false;
+  @override
+  Future<bool> initSpeech() async => false;
+  @override
+  Future<void> listen(void Function(String text) onResult,
+      {String locale = 'hi_IN'}) async {}
+  @override
+  Future<void> stopListening() async {}
+  @override
+  Future<void> speak(String text, {String locale = 'hi-IN'}) async {}
 }
