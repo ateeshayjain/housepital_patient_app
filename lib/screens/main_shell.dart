@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../utils/app_localizations.dart';
+import '../widgets/assistant_fab.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -47,6 +48,7 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
+      floatingActionButton: const AssistantFab(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),

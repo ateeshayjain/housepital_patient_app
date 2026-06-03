@@ -64,6 +64,9 @@ dependencies:
   google_fonts: ^6.2.1
   # audit M-9: used to derive basename from picker XFile paths for storage keys
   path: ^1.9.0
+  # AI Assistant — voice input/output
+  speech_to_text: ^7.4.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
