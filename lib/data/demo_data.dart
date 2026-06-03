@@ -6,6 +6,7 @@
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
+import '../models/article.dart';
 
 class DemoData {
   DemoData._();
@@ -605,4 +606,148 @@ class DemoData {
         'due_date':
             _daysAgo(15).add(const Duration(days: 30)).toIso8601String(),
       };
+
+  // ── Care Guides / Articles ───────────────────────────────────────────
+  static List<Article> get articles => [
+        Article(
+          id: 'art_bedridden_care',
+          title: 'Caring for a Bedridden Patient at Home',
+          summary:
+              'Simple daily routines that keep a bedridden loved one safe, '
+              'clean and comfortable.',
+          body: '''
+# Caring for a Bedridden Patient at Home
+
+Caring for someone confined to bed can feel overwhelming. A steady daily routine makes it manageable.
+
+## Daily essentials
+- **Reposition every 2 hours** to prevent pressure sores.
+- **Keep skin clean and dry** — change soiled linen promptly.
+- **Offer fluids regularly**, even small sips, to avoid dehydration.
+
+## Watch for warning signs
+- Redness over the hips, heels or lower back.
+- Reduced appetite or confusion.
+- Fever or breathing changes.
+
+If anything seems off, call your Health Manager — early action prevents complications.
+''',
+          coverImageUrl: null,
+          category: 'Home Care',
+          readMinutes: 4,
+          publishedAt: _daysAgo(12),
+        ),
+        Article(
+          id: 'art_post_icu',
+          title: 'Post-ICU Recovery: The First 30 Days',
+          summary:
+              'What to expect after discharge from intensive care and how to '
+              'support a smooth recovery at home.',
+          body: '''
+# Post-ICU Recovery: The First 30 Days
+
+Recovery after an ICU stay is gradual. Patience and consistency matter most.
+
+## Setting up at home
+- Create a calm, well-lit space close to a bathroom.
+- Keep medicines, water and a call bell within reach.
+- Maintain a regular sleep schedule to rebuild strength.
+
+## Rebuilding strength
+- Start with short, gentle walks as advised by the physiotherapist.
+- Follow the prescribed breathing exercises daily.
+- Eat small, protein-rich meals through the day.
+
+Track progress weekly and share concerns with your care team.
+''',
+          coverImageUrl: null,
+          category: 'Recovery',
+          readMinutes: 5,
+          publishedAt: _daysAgo(20),
+        ),
+        Article(
+          id: 'art_diabetes_diet',
+          title: 'Managing the Diabetes Diet for Elders',
+          summary:
+              'Practical, India-friendly meal tips to keep blood sugar steady '
+              'for older adults.',
+          body: '''
+# Managing the Diabetes Diet for Elders
+
+Good food choices help keep blood sugar in a safe range without feeling deprived.
+
+## Build a balanced plate
+- Fill half the plate with **vegetables and dal**.
+- Choose **whole grains** — millets, brown rice or whole-wheat roti.
+- Add a small portion of **protein** with every meal.
+
+## Smart habits
+- Eat at regular times each day.
+- Limit sweets, fried snacks and sugary drinks.
+- Keep a simple log of fasting readings.
+
+Always tailor portions to your doctor's advice.
+''',
+          coverImageUrl: null,
+          category: 'Nutrition',
+          readMinutes: 4,
+          publishedAt: _daysAgo(28),
+        ),
+        Article(
+          id: 'art_bed_sores',
+          title: 'Preventing Bed Sores',
+          summary:
+              'Bed sores are painful but largely preventable. Here is how to '
+              'protect the skin.',
+          body: '''
+# Preventing Bed Sores
+
+Bed sores (pressure injuries) form where skin presses against a surface for too long.
+
+## Prevention basics
+- **Change position every 2 hours**, day and night.
+- Use soft pillows or a pressure-relief mattress.
+- Keep skin clean, dry and moisturised.
+
+## Inspect daily
+- Check bony areas: heels, hips, tailbone, elbows.
+- Look for redness that does not fade within minutes.
+
+Report any open or darkened skin to your nurse immediately.
+''',
+          coverImageUrl: null,
+          category: 'Home Care',
+          readMinutes: 3,
+          publishedAt: _daysAgo(35),
+        ),
+        Article(
+          id: 'art_when_to_call',
+          title: 'When to Call Your Health Manager',
+          summary:
+              'A quick guide to the signs that mean you should reach out for '
+              'help right away.',
+          body: '''
+# When to Call Your Health Manager
+
+Your Health Manager is here to help. Knowing when to call saves precious time.
+
+## Call right away if you notice
+- **Sudden breathlessness** or chest pain.
+- High fever that does not come down.
+- New confusion, fainting or a fall.
+- A wound that is bleeding or looks infected.
+
+## Call the same day for
+- Missed or doubled medicine doses.
+- Poor appetite or low fluid intake for over a day.
+- Questions about the care plan.
+
+When in doubt, it is always okay to call.
+''',
+          coverImageUrl: null,
+          category: 'Guidance',
+          readMinutes: 3,
+          publishedAt: _daysAgo(5),
+        ),
+      ];
 }
