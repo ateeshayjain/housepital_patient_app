@@ -82,7 +82,7 @@ The LLM selects exactly one tool per query; it cannot invent free-form actions.
 | Intent       | Reads (existing API)                | Action                                            |
 |--------------|-------------------------------------|---------------------------------------------------|
 | `get_billing`   | `IApiService.getBillingSummary`  | speaks amount + due date; offers "open Billing"   |
-| `get_duty_days` | `IApiService.getAttendanceHistory` | speaks days present this week/month             |
+| `get_duty_days` | `IApiService.getAttendanceHistory` | speaks days present this week/month — note: existing signature is `getAttendanceHistory(patientId, {page})` with **no period filter**, so week/month slicing is computed **client-side** from the returned history, not a new API param |
 | `place_call`    | health-manager / nurse / SOS number | **confirmation card** → `url_launcher` `tel:`   |
 | `navigate`      | —                                 | `Navigator.pushNamed` to the target screen        |
 
@@ -95,7 +95,12 @@ The LLM selects exactly one tool per query; it cannot invent free-form actions.
 
 ### Safety — confirm before acting (user-chosen)
 - Read-only answers (`get_billing`, `get_duty_days`) render instantly.
-- Any side-effectful action (`place_call`, `navigate`) renders a **confirmation card** ("📞 Calling Sunita Devi · 98xxx — Confirm / Cancel"); the action fires only on Confirm. This is essential because a voice mishear ("call" vs "cancel") must never auto-dial.
+- `place_call` renders a **hard confirmation card** ("📞 Calling Sunita Devi · 98xxx — Confirm / Cancel"); the call fires only on Confirm. Essential because a voice mishear ("call" vs "cancel") must never auto-dial.
+- `navigate` uses a **lighter touch**: it navigates directly but shows a brief inline "Opening Reports…" line in the chat (no blocking card) — navigation is benign and reversible (user just taps back), so a hard gate per navigation would feel heavy. (Resolved per spec review.)
+
+### Malformed / invalid response handling
+- Unknown `action` (not one of the 4 + `none`) → treat as `none`, speak the degradation message.
+- Valid action but invalid/missing `params` (e.g. `navigate` with an unknown route, `place_call` with a `target` that has no phone number on file) → treat as `none` + degradation message; never crash, never dial a null number. Covered by a unit test. (Added per spec review.)
 
 ### Permissions
 The executor respects the existing `canUserPerform(role, action)` matrix. Example: a FAMILY_MEMBER asking to pay hears "I can show the bill, but only the primary contact can pay." Calls/answers permitted per role.
@@ -125,7 +130,7 @@ The executor respects the existing `canUserPerform(role, action)` matrix. Exampl
 
 ### Testing
 - Unit: each tool executor path (billing/duty/call/navigate) with a mocked `IApiService`.
-- Unit: `AssistantResponse` parsing (valid, malformed, unknown action → safe "none").
+- Unit: `AssistantResponse` parsing (valid, malformed, unknown action → safe "none", **valid action + invalid/missing params → safe "none"**).
 - Unit: permission gating (FAMILY_MEMBER pay attempt → blocked message).
 - Widget: confirmation card renders for `place_call`/`navigate`; Confirm fires, Cancel aborts.
 - Widget: network/LLM error → degradation message.
