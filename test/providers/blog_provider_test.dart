@@ -80,8 +80,8 @@ void main() {
 
   test('loadArticle falls back to demo data on API error', () async {
     final p = BlogProvider(_FakeApi(success: false));
-    await p.loadArticle('art_bedridden_care');
+    await p.loadArticle('copd-breathing-exercises-home');
     expect(p.selected, isNotNull);
-    expect(p.selected!.id, 'art_bedridden_care');
+    expect(p.selected!.id, 'copd-breathing-exercises-home');
   });
 }
