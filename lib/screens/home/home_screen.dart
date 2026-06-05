@@ -139,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, l, app),
-                _buildHeroBanner(context),
                 _buildGreeting(context, app),
                 if (app.isDashboardLoading)
                   const Padding(
@@ -195,6 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 6. Payments — only show to roles that can actually pay.
                   if (canUserPerform(role, UserAction.pay))
                     _buildPaymentCards(context, app),
+
+                  const SizedBox(height: 12),
+
+                  // Hero banner — DEMOTED to the bottom as a promo surface.
+                  _buildHeroBanner(context),
 
                   const SizedBox(height: 24),
                 ],
@@ -628,37 +632,27 @@ class _HomeScreenState extends State<HomeScreen> {
   // Personal Greeting
   // ---------------------------------------------------------------------------
   Widget _buildGreeting(BuildContext context, AppProvider app) {
-    final patientName = app.currentPatient?.name ?? 'there';
-    final firstName = patientName.split(' ').first;
-    final hasActiveService = app.activeDeployment != null;
-
+    final firstName = (app.currentPatient?.name ?? 'there').split(' ').first;
+    // Layout B: collapse the greeting to a single line — name + role badge on
+    // one Row. The standalone "Here's your care summary" subtitle is dropped
+    // to reclaim vertical space at the top of the scroll.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
         children: [
-          Text(
-            'Hi $firstName!',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: HousepitalColors.orangeText,
+          Flexible(
+            child: Text(
+              'Hi $firstName!',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: HousepitalColors.orangeText,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          // Role pill — orange for primary contact, blue for family,
-          // grey for the patient themselves. Tooltip explains limitations.
+          const SizedBox(width: 8),
           _buildRoleBadge(app.currentUserRole),
-          const SizedBox(height: 4),
-          Text(
-            hasActiveService
-                ? "Here's your care summary"
-                : 'Welcome back',
-            style: const TextStyle(
-              fontSize: 14,
-              color: HousepitalColors.greyLight,
-            ),
-          ),
         ],
       ),
     );
