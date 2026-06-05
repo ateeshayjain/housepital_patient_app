@@ -2,6 +2,14 @@ class AppConstants {
   // API Configuration - Update with your backend URL
   static const String apiBaseUrl = 'https://api.housepital.in/v1';
 
+  // AI Assistant (Sahayak) endpoint — the Firebase Cloud Function URL.
+  // Set at build time:  --dart-define=ASSISTANT_API_URL=https://...
+  // When empty (default), the assistant runs on the offline Hinglish keyword
+  // stub so the feature still works without the backend. When set, the app
+  // calls the real Claude-powered endpoint.
+  static const String assistantApiUrl =
+      String.fromEnvironment('ASSISTANT_API_URL', defaultValue: '');
+
   // Firebase
   static const String fcmTopic = 'housepital_patient';
 

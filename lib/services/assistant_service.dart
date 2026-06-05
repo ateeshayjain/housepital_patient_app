@@ -24,10 +24,17 @@ class AssistantService {
   final http.Client _client;
   final String baseUrl;
 
+  /// Full URL of the assistant endpoint (the Firebase Cloud Function). When
+  /// non-null it is used directly; otherwise the service POSTs to
+  /// `$baseUrl/assistant`. Lets the app point at the deployed function without
+  /// assuming a path layout.
+  final String? assistantUrl;
+
   AssistantService({
     this.useStub = true,
     http.Client? client,
     this.baseUrl = AppConstants.apiBaseUrl,
+    this.assistantUrl,
   }) : _client = client ?? http.Client();
 
   static const String _degradedMessage =
@@ -40,8 +47,9 @@ class AssistantService {
       return _stubResponse(req.text);
     }
     try {
+      final endpoint = assistantUrl ?? '$baseUrl/assistant';
       final res = await _client.post(
-        Uri.parse('$baseUrl/assistant'),
+        Uri.parse(endpoint),
         headers: const {'Content-Type': 'application/json'},
         body: jsonEncode(req.toJson()),
       );

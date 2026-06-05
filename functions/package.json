@@ -1,0 +1,13 @@
+{
+  "name": "housepital-functions",
+  "description": "Cloud Functions for Housepital Patient App — AI assistant endpoint",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "firebase-functions": "^6.4.0"
+  }
+}

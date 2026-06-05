@@ -220,8 +220,15 @@ void main() async {
                 'sos': const AssistantContact(
                     name: 'Emergency', phone: AppConstants.emergencyPhone),
               };
+              // Real Claude-powered assistant when ASSISTANT_API_URL is set at
+              // build time (the Firebase Cloud Function URL); otherwise the
+              // offline Hinglish keyword stub so the feature still works.
+              final assistantUrl = AppConstants.assistantApiUrl;
               return AssistantProvider(
-                service: AssistantService(), // useStub: true until backend ships
+                service: AssistantService(
+                  useStub: assistantUrl.isEmpty,
+                  assistantUrl: assistantUrl.isEmpty ? null : assistantUrl,
+                ),
                 executor: AssistantExecutor(
                   api: apiService,
                   role: role,
