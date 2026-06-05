@@ -125,17 +125,22 @@ void main() {
 
   // ── Book Services grid ────────────────────────────────────────────────────
 
-  testWidgets('Book Services grid renders the core service tiles',
+  testWidgets('Book Services grid renders contextual + utility tiles',
       (tester) async {
+    // _TestAppProvider seeds icuDeployment (staffRole: 'Critical Care Nurse'),
+    // so the dynamic grid shows "My Nurse" (not "Book Nurse"), and adds
+    // Care Guides. Static tiles (Equipment, Lab Tests, Doctor Visit, My Orders,
+    // SOS) are always visible.
     await _pumpHome(tester);
 
-    // These tiles should always appear in the services grid.
-    expect(find.text('Book Nurse'), findsOneWidget);
-    expect(find.text('Book Equipment'), findsOneWidget);
+    expect(find.text('My Nurse'), findsOneWidget); // contextual: nurse active
+    expect(find.text('Book Nurse'), findsNothing); // replaced by My Nurse
+    expect(find.text('Equipment'), findsOneWidget);
     expect(find.text('Lab Tests'), findsOneWidget);
     expect(find.text('Doctor Visit'), findsOneWidget);
     expect(find.text('SOS'), findsOneWidget);
     expect(find.text('My Orders'), findsOneWidget);
+    expect(find.text('Care Guides'), findsOneWidget); // added in dynamic grid
   });
 
   testWidgets('Book Services section is hidden for view-only roles',
