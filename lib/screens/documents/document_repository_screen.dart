@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -420,16 +422,12 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  // audit M-16: actually launch the document URL via
+                  // url_launcher instead of a "coming soon" stub. Falls back
+                  // to a SnackBar pointing the user at Share if the URL is
+                  // missing/invalid or the launch fails.
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Document viewer coming soon'),
-                          backgroundColor: HousepitalColors.info,
-                        ),
-                      );
-                    },
+                    onPressed: () => _openDocument(doc),
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Open'),
                   ),
@@ -475,30 +473,56 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
     );
   }
 
-  void _confirmDelete(MedicalDocument doc) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Document'),
-        content: Text('Are you sure you want to delete "${doc.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() => _documents.removeWhere((d) => d.id == doc.id));
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Document deleted')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: HousepitalColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+  // audit M-16: attempt to launch the stored document URL in an external
+  // viewer (browser, PDF reader, etc). Closes the detail sheet first so the
+  // SnackBar fallback is visible. If fileUrl is null/empty/invalid or the
+  // launch fails, the user is pointed at Share as a workaround.
+  Future<void> _openDocument(MedicalDocument doc) async {
+    Navigator.pop(context); // close detail sheet
+    final url = doc.fileUrl;
+    if (url == null || url.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Couldn't open this document. Tap Share to send it to yourself."),
+        ),
+      );
+      return;
+    }
+    final uri = Uri.tryParse(url);
+    bool launched = false;
+    if (uri != null) {
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        launched = false;
+      }
+    }
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Couldn't open this document. Tap Share to send it to yourself."),
+        ),
+      );
+    }
+  }
+
+  // audit M-13: migrated to shared confirmDestructiveAction helper for
+  // consistent red CTA, haptic, and copy across destructive flows.
+  Future<void> _confirmDelete(MedicalDocument doc) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Delete document?',
+      message: 'Are you sure you want to delete "${doc.name}"?',
+      confirmLabel: 'Delete',
+    );
+    if (!ok || !mounted) return;
+    setState(() => _documents.removeWhere((d) => d.id == doc.id));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Document deleted')),
     );
   }
 
@@ -548,28 +572,36 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               _uploadFromGallery();
             },
           ),
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.picture_as_pdf, color: Colors.green),
-            ),
-            title: const Text('Upload PDF'),
-            subtitle: const Text('Select a PDF file'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('PDF upload coming soon'),
-                  backgroundColor: HousepitalColors.info,
+          // audit M-16: file_picker is not in pubspec.yaml, so a real
+          // PDF-selection flow isn't available. On web we hide the button
+          // entirely (no native dialer/email fallback that helps here);
+          // on mobile we replace the misleading "coming soon" toast with an
+          // honest pointer to the wecare@ inbox.
+          if (!kIsWeb)
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              );
-            },
-          ),
+                child: const Icon(Icons.picture_as_pdf, color: Colors.green),
+              ),
+              title: const Text('Upload PDF'),
+              subtitle: const Text(
+                  'Email PDFs to wecare@housepital.in for now'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'),
+                    backgroundColor: HousepitalColors.info,
+                  ),
+                );
+              },
+            ),
           const SizedBox(height: 16),
         ],
       ),

@@ -11,6 +11,7 @@ import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
+import 'providers/theme_provider.dart';
 import 'services/api_service.dart';
 import 'services/firebase_service.dart';
 import 'utils/app_localizations.dart';
@@ -106,6 +107,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => MedicationProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
         ),
       ],
       child: const HousepitalApp(),
@@ -214,12 +218,15 @@ class _HousepitalAppState extends State<HousepitalApp> {
   @override
   Widget build(BuildContext context) {
     final appProvider = context.watch<AppProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
       title: 'Housepital',
       navigatorKey: HousepitalApp.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: HousepitalTheme.lightTheme,
+      darkTheme: HousepitalTheme.darkTheme,
+      themeMode: themeProvider.mode,
       locale: appProvider.locale,
       supportedLocales: const [
         Locale('en'),
@@ -406,6 +413,8 @@ class _HousepitalAppState extends State<HousepitalApp> {
                       serviceName: raw['serviceName'] as String?,
                       scheduledDate: raw['scheduledDate'] as DateTime?,
                       scheduledSlot: raw['scheduledSlot'] as String?,
+                      // audit M-2: propagate booking number from cart.
+                      bookingNumber: raw['bookingNumber'] as String?,
                     ));
           case '/booking-history':
           case '/my-orders':

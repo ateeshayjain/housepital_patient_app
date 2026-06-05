@@ -49,29 +49,34 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
 
   static final List<ServiceItem> _manpowerServices = [
     // ── Nursing Staff ──
+    // audit M-1 (extension): basePriceMin REMOVED from ALL manpower seeds
+    // including nurses. User memory rule covers "caretaker, nursing, japa,
+    // nanny" — original M-1 fix only stripped caretaker/japa/nanny; nurse
+    // seeds had basePriceMin retained but the category guard was hiding it
+    // in UI. Now the data layer matches the UI rule.
     ServiceItem(
       id: 'mp-nurse-basic-12', name: 'Nurse (Basic) – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Basic nursing care — vitals monitoring, oral medication, feeding & personal hygiene assistance.',
-      basePriceMin: 900, durationMinutes: 720, iconName: 'medical_services',
+      durationMinutes: 720, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-basic-24', name: 'Nurse (Basic) – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock basic nursing for patients needing continuous monitoring and care.',
-      basePriceMin: 1200, durationMinutes: 1440, iconName: 'medical_services',
+      durationMinutes: 1440, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-adv-12', name: 'Nurse (Advanced) – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Advanced nursing — IV/IM medication, catheter care, RT feeding, sugar & BP monitoring.',
-      basePriceMin: 1200, durationMinutes: 720, iconName: 'medical_services',
+      durationMinutes: 720, iconName: 'medical_services',
     ),
     ServiceItem(
       id: 'mp-nurse-adv-24', name: 'Nurse (Advanced) – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock advanced nursing for patients needing clinical-grade care at home.',
-      basePriceMin: 1500, durationMinutes: 1440, iconName: 'medical_services',
+      durationMinutes: 1440, iconName: 'medical_services',
     ),
     // ── Critical Nurse — ICU setup, assessment required ──
     ServiceItem(
@@ -87,55 +92,60 @@ class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       iconName: 'medical_services',
     ),
     // ── Care-takers ──
+    // audit M-1: basePriceMin REMOVED for caretaker/japa/nanny — manpower
+    // pricing is "Price on assessment" only (user persistent memory rule:
+    // never show prices for caretaker, nursing, japa, nanny services).
     ServiceItem(
       id: 'mp-caretaker-basic-12', name: 'Caretaker (Basic) – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Basic caretaker — bathing, mobility assistance, feeding, companionship & medication reminders.',
-      basePriceMin: 600, durationMinutes: 720, iconName: 'person',
+      durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-basic-24', name: 'Caretaker (Basic) – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock basic caretaker for daily living assistance and companionship.',
-      basePriceMin: 800, durationMinutes: 1440, iconName: 'person',
+      durationMinutes: 1440, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-adv-12', name: 'Caretaker (Advanced) – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Advanced caretaker with IM injection & BP monitoring skills for patients needing medical support.',
-      basePriceMin: 800, durationMinutes: 720, iconName: 'person',
+      durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock advanced caretaker with medical assistance capabilities.',
-      basePriceMin: 1000, durationMinutes: 1440, iconName: 'person',
+      durationMinutes: 1440, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Semi-nurse level caretaker for complex care needs — RT feeding, suctioning assistance.',
-      basePriceMin: 1000, durationMinutes: 720, iconName: 'person',
+      durationMinutes: 720, iconName: 'person',
     ),
     ServiceItem(
       id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Round-the-clock semi-nurse caretaker for patients needing intensive daily care.',
-      basePriceMin: 1200, durationMinutes: 1440, iconName: 'person',
+      durationMinutes: 1440, iconName: 'person',
     ),
     // ── Japa Maid ──
+    // audit M-1: basePriceMin REMOVED — assessment-only pricing.
     ServiceItem(
       id: 'mp-japa-24', name: 'Japa Maid – 24 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Post-delivery care for mother & newborn (0-7 months) — breastfeeding support, baby massage, bathing, umbilical cord care & mother\'s diet preparation.',
-      basePriceMin: 800, durationMinutes: 1440, iconName: 'child_friendly',
+      durationMinutes: 1440, iconName: 'child_friendly',
     ),
     // ── Nanny ──
+    // audit M-1: basePriceMin REMOVED — assessment-only pricing.
     ServiceItem(
       id: 'mp-nanny-12', name: 'Nanny – 12 Hours',
       category: 'manpower', bookingType: 'scheduled',
       description: 'Professional nanny for infants & toddlers (7 months–5 years) — feeding, sleep routine, developmental activities, hygiene & safety supervision.',
-      basePriceMin: 600, durationMinutes: 720, iconName: 'child_care',
+      durationMinutes: 720, iconName: 'child_care',
     ),
     // ── Physiotherapy ──
     ServiceItem(
@@ -1542,8 +1552,9 @@ class _StaffRoleCard extends StatelessWidget {
                                     padding: const EdgeInsets.only(top: 3),
                                     child: Icon(Icons.cancel,
                                         size: 16,
+                                        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
                                         color: HousepitalColors.greyLight
-                                            .withOpacity(0.5)),
+                                            .withValues(alpha: 0.5)),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -1551,8 +1562,9 @@ class _StaffRoleCard extends StatelessWidget {
                                       r,
                                       style: TextStyle(
                                         fontSize: 14,
+                                        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
                                         color: HousepitalColors.greyLight
-                                            .withOpacity(0.7),
+                                            .withValues(alpha: 0.7),
                                         height: 1.3,
                                       ),
                                     ),
@@ -3240,7 +3252,20 @@ class _ConsultationCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          if (service.basePriceMin != null)
+                          // audit M-1: manpower services must never display
+                          // an upfront price — show "Price on assessment"
+                          // instead (user rule: caretaker/nursing/japa/nanny
+                          // pricing is conversation-gated).
+                          if (service.category == 'manpower')
+                            const Text(
+                              'Price on assessment',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: HousepitalColors.orangeText,
+                              ),
+                            )
+                          else if (service.basePriceMin != null)
                             Text(
                               'From ${DateHelper.formatCurrency(service.basePriceMin!)}',
                               style: const TextStyle(
@@ -3373,8 +3398,9 @@ class _DiagnosticCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Semantics(
+        // audit M-1: suppress price in semantics label for manpower services.
         label:
-            '${service.name}. ${service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : ""}. Home collection available. Tap to book slot.',
+            '${service.name}. ${service.category == 'manpower' ? 'Price on assessment' : (service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : "")}. Home collection available. Tap to book slot.',
         button: true,
         child: Material(
           color: HousepitalColors.white,
@@ -3433,7 +3459,17 @@ class _DiagnosticCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        if (service.basePriceMin != null)
+                        // audit M-1: manpower → "Price on assessment".
+                        if (service.category == 'manpower')
+                          const Text(
+                            'Price on assessment',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.orangeText,
+                            ),
+                          )
+                        else if (service.basePriceMin != null)
                           Text(
                             DateHelper.formatCurrency(
                                 service.basePriceMin!),
@@ -3555,8 +3591,9 @@ class _TherapyCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Semantics(
+        // audit M-1: suppress price in semantics label for manpower services.
         label:
-            '${service.name}. ${service.description ?? ""}. ${service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : ""}. Tap to book.',
+            '${service.name}. ${service.description ?? ""}. ${service.category == 'manpower' ? 'Price on assessment' : (service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : "")}. Tap to book.',
         button: true,
         child: Material(
           color: HousepitalColors.white,

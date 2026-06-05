@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
 
@@ -85,7 +86,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // User profile section with photo
           Container(
             padding: const EdgeInsets.all(20),
-            color: HousepitalColors.white,
+            // Use theme card color so the section reads correctly in dark mode.
+            color: Theme.of(context).cardTheme.color ??
+                Theme.of(context).colorScheme.surface,
             child: Row(
               children: [
                 GestureDetector(
@@ -152,8 +155,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right,
-                    color: HousepitalColors.greyLight),
+                Icon(Icons.chevron_right,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6)),
               ],
             ),
           ),
@@ -211,6 +217,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _settingsTile(
             context,
+            icon: Icons.brightness_6_outlined,
+            title: 'Appearance',
+            subtitle: _appearanceLabel(context.watch<ThemeProvider>().mode),
+            onTap: () => _showAppearancePicker(context),
+          ),
+          _settingsTile(
+            context,
             icon: Icons.card_giftcard,
             title: 'Refer & Earn',
             subtitle: 'Earn \u20B9500 per referral',
@@ -251,23 +264,119 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color? textColor,
     required VoidCallback onTap,
   }) {
+    // Theme-aware fallback colours so the tile reads in both light and dark.
+    final theme = Theme.of(context);
+    final defaultIconColor = theme.iconTheme.color ??
+        theme.colorScheme.onSurface.withValues(alpha: 0.8);
+    final defaultTitleColor = theme.colorScheme.onSurface;
+    final defaultSubtitleColor =
+        theme.colorScheme.onSurface.withValues(alpha: 0.6);
+
     return ListTile(
-      leading: Icon(icon, color: textColor ?? HousepitalColors.grey),
+      leading: Icon(icon, color: textColor ?? defaultIconColor),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 15,
-          color: textColor ?? HousepitalColors.black,
+          color: textColor ?? defaultTitleColor,
         ),
       ),
       subtitle: subtitle != null
           ? Text(subtitle,
-              style: const TextStyle(
-                  fontSize: 12, color: HousepitalColors.greyLight))
+              style: TextStyle(fontSize: 12, color: defaultSubtitleColor))
           : null,
-      trailing: const Icon(Icons.chevron_right,
-          color: HousepitalColors.greyLight, size: 20),
+      trailing:
+          Icon(Icons.chevron_right, color: defaultSubtitleColor, size: 20),
       onTap: onTap,
+    );
+  }
+
+  String _appearanceLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+      case ThemeMode.system:
+        return 'System default';
+    }
+  }
+
+  void _showAppearancePicker(BuildContext context) {
+    final theme = context.read<ThemeProvider>();
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetCtx) {
+        // Watch inside the sheet so the radio selection updates live as the
+        // user taps — even though tap also closes the sheet, the visual
+        // confirmation feels responsive.
+        return Consumer<ThemeProvider>(
+          builder: (_, watched, child) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Appearance',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              ),
+              _appearanceOption(
+                sheetCtx,
+                title: 'System default',
+                subtitle: 'Match your device setting',
+                value: ThemeMode.system,
+                groupValue: watched.mode,
+                onChanged: (m) {
+                  theme.setMode(m);
+                  Navigator.pop(sheetCtx);
+                },
+              ),
+              _appearanceOption(
+                sheetCtx,
+                title: 'Light',
+                value: ThemeMode.light,
+                groupValue: watched.mode,
+                onChanged: (m) {
+                  theme.setMode(m);
+                  Navigator.pop(sheetCtx);
+                },
+              ),
+              _appearanceOption(
+                sheetCtx,
+                title: 'Dark',
+                value: ThemeMode.dark,
+                groupValue: watched.mode,
+                onChanged: (m) {
+                  theme.setMode(m);
+                  Navigator.pop(sheetCtx);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _appearanceOption(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    required ThemeMode value,
+    required ThemeMode groupValue,
+    required ValueChanged<ThemeMode> onChanged,
+  }) {
+    return RadioListTile<ThemeMode>(
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle) : null,
+      value: value,
+      groupValue: groupValue,
+      activeColor: HousepitalColors.orange,
+      onChanged: (m) {
+        if (m != null) onChanged(m);
+      },
     );
   }
 

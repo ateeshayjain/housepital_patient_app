@@ -4,6 +4,7 @@ import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../utils/app_localizations.dart';
+import '../../widgets/common_widgets.dart';
 
 class AddEditMedicationScreen extends StatefulWidget {
   final MedicationFull? medication; // null = add mode
@@ -88,7 +89,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
           if (isEditing)
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () => _confirmDelete(context, medProv, l),
+              onPressed: () => _confirmDelete(medProv, l),
             ),
         ],
       ),
@@ -249,35 +250,23 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
     }
   }
 
-  void _confirmDelete(
-      BuildContext context, MedicationProvider medProv, AppLocalizations l) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.t('delete')),
-        content: Text(l.t('confirm_delete_medication')),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l.t('cancel'))),
-          TextButton(
-            onPressed: () async {
-              final patientId =
-                  context.read<AppProvider>().currentPatient?.id;
-              if (patientId != null) {
-                await medProv.deleteMedication(
-                    patientId, widget.medication!.id);
-              }
-              if (mounted) {
-                Navigator.pop(ctx); // close dialog
-                Navigator.pop(context, true); // pop screen
-              }
-            },
-            child: Text(l.t('delete'),
-                style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+  // audit M-13: migrated to shared confirmDestructiveAction helper. This is
+  // the edit-screen delete path; PR #10 only wired the profile screen path.
+  Future<void> _confirmDelete(
+      MedicationProvider medProv, AppLocalizations l) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: l.t('delete'),
+      message: l.t('confirm_delete_medication'),
+      confirmLabel: l.t('delete'),
+      cancelLabel: l.t('cancel'),
     );
+    if (!ok || !mounted) return;
+    final patientId = context.read<AppProvider>().currentPatient?.id;
+    if (patientId != null) {
+      await medProv.deleteMedication(patientId, widget.medication!.id);
+    }
+    if (!mounted) return;
+    Navigator.pop(context, true); // pop screen
   }
 }

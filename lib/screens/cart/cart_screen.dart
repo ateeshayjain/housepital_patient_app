@@ -114,7 +114,8 @@ class _CartScreenState extends State<CartScreen> {
       ),
       body: Consumer<CartProvider>(
         builder: (context, cart, _) {
-          debugPrint('CartScreen BUILD: isEmpty=${cart.isEmpty}, itemCount=${cart.itemCount}, items=${cart.items.map((i) => i.name).toList()}');
+          // audit M-17: removed debugPrint from build method — build logs
+          // should never run in production and the noise was masking real signals.
           if (cart.isEmpty && !cart.hasSavedItems) {
             return _buildEmptyCart(context);
           }
@@ -572,17 +573,23 @@ class _CartScreenState extends State<CartScreen> {
       // If payment was successful, save order, clear cart, show confirmation
       if (result == true) {
         final items = cart.items.toList();
-        final bookingNumber = OrdersProvider.generateBookingNumber();
+        // audit M-3: use the instance method `generateUniqueBookingNumber` so the
+        // booking id is guaranteed not to collide with any existing order in the
+        // provider's in-memory list (PR #10 fix; the static call was a regression).
+        final ordersProvider = context.read<OrdersProvider>();
+        final bookingNumber = ordersProvider.generateUniqueBookingNumber();
 
         // Persist order to OrdersProvider
-        context.read<OrdersProvider>().addOrder(
-              items: items,
-              totalAmount: adjustedTotal,
-              bookingNumber: bookingNumber,
-            );
+        ordersProvider.addOrder(
+          items: items,
+          totalAmount: adjustedTotal,
+          bookingNumber: bookingNumber,
+        );
 
         cart.clear();
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        // audit M-2: propagate booking number so the confirmation screen
+        // does not regenerate a different one (was a UX/order-id mismatch).
         Navigator.pushReplacementNamed(context, '/booking-confirmation',
             arguments: {
               'cartItems': items,
@@ -593,30 +600,20 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  void _confirmClear(BuildContext context, CartProvider cart) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear Cart?'),
-        content:
-            const Text('This will remove all items from your cart.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              cart.clear();
-              _removeCoupon();
-              Navigator.pop(ctx);
-            },
-            child: const Text('Clear',
-                style: TextStyle(color: HousepitalColors.error)),
-          ),
-        ],
-      ),
+  // audit M-13: replaced hand-rolled AlertDialog with shared
+  // confirmDestructiveAction helper so the Clear Cart action gets the same
+  // red CTA, haptic, and string format as other destructive flows. This is
+  // especially important here — clearing the cart can discard ₹10k+ of items.
+  Future<void> _confirmClear(BuildContext context, CartProvider cart) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Clear cart?',
+      message: 'This will remove all items from your cart.',
+      confirmLabel: 'Clear',
     );
+    if (!ok || !mounted) return;
+    cart.clear();
+    _removeCoupon();
   }
 }
 

@@ -2,7 +2,17 @@
 
 Running list of bugs, workarounds, technical debt, and things that work but are not right.
 
-**Last updated:** 2026-03-25
+**Last updated:** 2026-05-28
+
+---
+
+## Build / CI
+
+| ID     | Description                                                              | Found      | Status   |
+|--------|--------------------------------------------------------------------------|------------|----------|
+| CI-01  | `--tree-shake-icons` (default) can fail with a kernel-size assertion mid-batch when concurrent processes touch `lib/` during `flutter build web --release`. Workaround: rerun after `flutter clean`, or pass `--no-tree-shake-icons` (~150KB bundle bloat). Root cause is build-cache invalidation under concurrent edits, not an SDK bug. | 2026-05-28 | Open (workaround documented) |
+| CI-02  | Pinned Flutter to 3.41.2 in `.github/workflows/ci.yml` to match local dev. Bump in lockstep across team — minor versions change `textScaler` semantics, `RadioGroup` deprecation, and `withOpacity` warnings. | 2026-05-28 | Resolved |
+| CI-03  | CI now runs `flutter analyze --no-fatal-warnings --no-fatal-infos` before tests. Tightening to `--fatal-warnings` is blocked on the 284-issue pre-existing backlog (unused imports, deprecations). Tighten once backlog is cleared. | 2026-05-28 | Open (tracked) |
 
 ---
 

@@ -39,6 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _bannerController = PageController();
   Timer? _bannerTimer;
   int _currentBannerPage = 0;
+  // audit M-18: hoisted from `% 3` literal so adding/removing slides in
+  // `_buildHeroBanner` automatically updates auto-scroll wrap-around.
+  // Defaults to 1 (safe modulo) and is overwritten on the first build.
+  int _slideCount = 1;
 
   @override
   void initState() {
@@ -80,7 +84,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _startBannerAutoScroll() {
     _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || !_bannerController.hasClients) return;
-      final nextPage = (_currentBannerPage + 1) % 3;
+      // audit M-18: derive wrap-around from actual slide count (set by
+      // `_buildHeroBanner` on each build) instead of the hardcoded `% 3`.
+      final nextPage = (_currentBannerPage + 1) % _slideCount;
       _bannerController.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 400),
@@ -280,6 +286,13 @@ class _HomeScreenState extends State<HomeScreen> {
         tooltip =
             "You're viewing your own care. Tap the big call button to reach your family.";
         break;
+      // audit M-5: caretaker badge — view-only with concern raising.
+      case UserRole.caretaker:
+        label = 'Caretaker view';
+        color = HousepitalColors.grey;
+        tooltip =
+            'Read-only view for hired caretaker. You can raise concerns; booking and payment are restricted to the family.';
+        break;
       default:
         return const SizedBox.shrink();
     }
@@ -432,6 +445,9 @@ class _HomeScreenState extends State<HomeScreen> {
         imagePath: 'assets/images/branding/hero_family.jpg',
       ),
     ];
+    // audit M-18: stash the count so the auto-scroll timer wraps on the real
+    // slide count rather than a hardcoded `3`.
+    _slideCount = slides.length;
 
     return Column(
       children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
@@ -335,43 +336,68 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
+  // audit M-15: previously fabricated a hardcoded HDFC card on tap, which
+  // misled users into thinking auto-pay was active. Replaced the dialog with
+  // a single-CTA bottom sheet pointing the user at the coordinator to set up
+  // the Razorpay mandate over the phone — the only flow that actually works
+  // today. No fake-card insertion happens anywhere in this path.
   void _showAddCardDialog(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Card'),
-        content: const Text(
-            'Card details will be securely tokenized via Razorpay. You\'ll need to complete a one-time verification of ₹1 (refunded immediately) to enable auto-pay as per RBI e-mandate guidelines.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Set up auto-pay',
+                style:
+                    TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "To add a card for auto-pay, please call our coordinator at +91-90502-00183 (10am–7pm IST). We'll set up the Razorpay mandate together over the phone — takes 3 minutes.",
+                style: TextStyle(
+                    fontSize: 14, color: HousepitalColors.grey, height: 1.4),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final uri = Uri.parse('tel:9050200183');
+                  bool launched = false;
+                  try {
+                    launched = await launchUrl(uri);
+                  } catch (_) {
+                    launched = false;
+                  }
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            "Couldn't open dialer. The number is +91-90502-00183."),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.call),
+                label: const Text('Call coordinator'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() {
-                _methods.add(SavedPaymentMethod(
-                  id: 'pm_1',
-                  type: 'card',
-                  displayName: 'HDFC •••• 4521',
-                  cardNetwork: 'visa',
-                  isDefault: true,
-                  autoPayEnabled: true,
-                ));
-                _autoPayEnabled = true;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Card added and auto-pay enabled. You\'ll be notified 2 days before each debit.'),
-                  backgroundColor: HousepitalColors.success,
-                ),
-              );
-            },
-            child: const Text('Add Card'),
-          ),
-        ],
+        ),
       ),
     );
   }

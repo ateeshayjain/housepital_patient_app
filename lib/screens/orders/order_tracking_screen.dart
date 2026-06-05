@@ -134,8 +134,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Order ID
+                  // audit M-8: guard against substring crash for booking IDs
+                  // shorter than 8 chars (e.g. legacy ids, test fixtures).
                   Text(
-                    'Order #${widget.bookingId.substring(0, 8).toUpperCase()}',
+                    'Order #${(widget.bookingId.length >= 8 ? widget.bookingId.substring(0, 8) : widget.bookingId).toUpperCase()}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
