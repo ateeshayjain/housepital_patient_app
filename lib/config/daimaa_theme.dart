@@ -26,6 +26,57 @@ class DaiMaaColors {
   static const String lockup = 'DAI MAA | A Housepital Company';
 }
 
+/// Dark-mode counterparts for the Dai Maa palette.
+///
+/// Cream #F5F0EB is far too bright on a dark scaffold; we use a plum-tinted
+/// dark surface instead so the sub-brand still feels distinct from the
+/// orange Housepital world without losing the warm, feminine tone.
+///
+/// Contrast checks (vs [surface] #2A1F2A unless noted):
+///   • textPrimary (#F2EAF0) → ~14.5:1 — AAA
+///   • lavenderLight (#D4B5D0) → 8.6:1 — AAA, used for accents & icons
+///   • pinkLight (#F0C8D5) → ~11:1, used for the age-range chip text
+///   • plumLight (#A77BA8) → 4.7:1, AA for primary callouts
+class DaiMaaColorsDark {
+  // Plum-tinted dark surface — keeps a hint of the sub-brand hue.
+  static const Color surface = Color(0xFF2A1F2A);
+  // One step elevated for cards within Dai Maa screens.
+  static const Color surfaceElevated = Color(0xFF362636);
+
+  // Brand-tinted text & accent variants, lightened for AA on dark.
+  static const Color textPrimary = Color(0xFFF2EAF0);
+  static const Color plumLight = Color(0xFFA77BA8);
+  static const Color lavenderLight = Color(0xFFD4B5D0);
+  static const Color pinkLight = Color(0xFFF0C8D5);
+}
+
+/// Returns the appropriate Dai Maa scaffold colour for the current theme.
+Color daiMaaScaffold(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? DaiMaaColorsDark.surface
+        : DaiMaaColors.cream;
+
+/// Returns the card surface colour for use inside Dai Maa screens.
+Color daiMaaCardSurface(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? DaiMaaColorsDark.surfaceElevated
+        : Colors.white;
+
+/// Text colour for headings/labels that sit on a Dai Maa surface (cream in
+/// light, plum-tinted dark in dark). In dark mode plum is too low-contrast,
+/// so we use a lightened variant.
+Color daiMaaPrimaryText(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? DaiMaaColorsDark.textPrimary
+        : DaiMaaColors.plum;
+
+/// Accent text/icon colour for the secondary brand callouts (used where
+/// pure plum is too low-contrast on dark).
+Color daiMaaAccent(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? DaiMaaColorsDark.lavenderLight
+        : DaiMaaColors.plum;
+
 /// Gradient brand header used at the top of any Dai Maa screen or form.
 ///
 /// Shows the lockup, large title, optional subtitle, and the tagline.

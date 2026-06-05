@@ -2,11 +2,9 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../data/care_packages.dart';
 import '../../models/models.dart';
-import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 
@@ -45,7 +43,6 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
   final _focusNode = FocusNode();
   String _query = '';
   List<EquipmentItem> _equipment = [];
-  bool _loaded = false;
 
   // Service data — mirrors ServiceCatalogScreen's static lists (HPL Tariff Annexure)
   // No prices for caretaker/nursing/japa/nanny — assessment first
@@ -155,7 +152,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
         debugPrint('UniversalSearchScreen: failed to load equipment catalog: $e');
       }
     }
-    if (mounted) setState(() => _loaded = true);
+    if (mounted) setState(() {});
   }
 
   List<SearchResult> get _results {
@@ -474,7 +471,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 child: CachedNetworkImage(
                   imageUrl: (r.data as EquipmentItem).imageUrl!,
                   fit: BoxFit.contain,
-                  errorWidget: (_, __, ___) =>
+                  errorWidget: (_, _, _) =>
                       Icon(r.icon, color: r.iconColor, size: 20),
                 ),
               )

@@ -6,12 +6,19 @@
 ///   and request bookings (which the primary contact must approve and pay).
 ///   CANNOT directly book, pay, edit patient, or manage family.
 /// - PATIENT_SELF: View-only access.
+/// - CARETAKER: Hired staff handed temporary read-only view of one patient's
+///   care plan. Can view and raise concerns (so they can flag medical issues
+///   from the field) but cannot book, pay, rate, edit, or even request a
+///   booking — that is the family's call, not the staff's.
+library;
 
 /// All known roles.
 class UserRole {
   static const String primaryContact = 'PRIMARY_CONTACT';
   static const String familyMember = 'FAMILY_MEMBER';
   static const String patientSelf = 'PATIENT_SELF';
+  // audit M-5: hired caretaker — narrow read + concern-raising access.
+  static const String caretaker = 'CARETAKER';
 }
 
 /// All known actions.
@@ -46,6 +53,11 @@ const Map<String, Set<String>> _permissions = {
   },
   'PATIENT_SELF': {
     'view',
+  },
+  // audit M-5: caretaker — narrower than family (no booking, no rating).
+  'CARETAKER': {
+    'view',
+    'raise_concern',
   },
 };
 

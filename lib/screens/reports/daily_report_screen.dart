@@ -154,7 +154,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: _report!.photoUrls!.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               return ClipRRect(
@@ -166,7 +166,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                   fit: BoxFit.cover,
                                   semanticLabel:
                                       'Daily report photo ${index + 1} of ${_report!.photoUrls!.length}',
-                                  errorBuilder: (_, __, ___) => Container(
+                                  errorBuilder: (_, _, _) => Container(
                                     width: 100,
                                     height: 100,
                                     color: HousepitalColors.greyLighter,

@@ -12,6 +12,7 @@
 ///
 /// Boundary convention: the exact boundary value goes to the MORE SEVERE
 /// category (e.g. 140 bp_systolic is RED, not yellow).
+library;
 
 /// Classify a vital sign reading into 'green', 'yellow', or 'red'.
 ///

@@ -121,7 +121,6 @@ void main() {
     test('success: builds schedule slots from medications and logs', () async {
       final today = DateTime.now();
       final morningTime = DateTime(today.year, today.month, today.day, 8, 0);
-      final nightTime = DateTime(today.year, today.month, today.day, 20, 0);
 
       final med = _makeMedication(
         timeSlots: ['08:00', '20:00'],

@@ -308,8 +308,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
+    // Dai Maa surface adapts to the active theme (cream in light,
+    // plum-tinted dark in dark). App bar stays plum in both modes so the
+    // sub-brand still owns the top of the screen.
     return Scaffold(
-      backgroundColor: _isDaiMaa ? DaiMaaColors.cream : null,
+      backgroundColor: _isDaiMaa ? daiMaaScaffold(context) : null,
       appBar: AppBar(
         title: Text(widget.service.name),
         backgroundColor: _isDaiMaa ? DaiMaaColors.plum : null,
@@ -340,9 +343,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
+                  // daiMaaPrimaryText() returns plum in light, a lightened
+                  // brand variant in dark to maintain AA contrast.
                   color: _isDaiMaa
-                      ? DaiMaaColors.plum
-                      : HousepitalColors.black,
+                      ? daiMaaPrimaryText(context)
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -618,7 +623,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         subtitle: 'Helps us understand the patient\'s current state',
         children: [
           DropdownButtonFormField<String>(
-            value: _condition,
+            initialValue: _condition,
             decoration:
                 const InputDecoration(labelText: 'Primary Condition'),
             items: _conditions.map((c) {
@@ -633,7 +638,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _mobility,
+            initialValue: _mobility,
             decoration:
                 const InputDecoration(labelText: 'Mobility Status'),
             items: const [
@@ -696,7 +701,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule & Preference',
         children: [
           DropdownButtonFormField<String>(
-            value: _shiftType,
+            initialValue: _shiftType,
             decoration:
                 const InputDecoration(labelText: 'Shift Type'),
             items: const [
@@ -712,7 +717,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _staffGender,
+            initialValue: _staffGender,
             decoration: const InputDecoration(
                 labelText: 'Preferred Staff Gender'),
             items: const [
@@ -885,7 +890,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _motherCondition,
+            initialValue: _motherCondition,
             decoration:
                 const InputDecoration(labelText: 'Mother\'s Condition'),
             items: const [
@@ -900,7 +905,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _feedingType,
+            initialValue: _feedingType,
             decoration: const InputDecoration(labelText: 'Feeding Type'),
             items: const [
               DropdownMenuItem(
@@ -954,7 +959,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
 
       // Staff gender
       DropdownButtonFormField<String>(
-        value: _staffGender,
+        initialValue: _staffGender,
         decoration:
             const InputDecoration(labelText: 'Preferred Staff Gender'),
         items: const [
@@ -990,7 +995,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _numberOfChildren,
+            initialValue: _numberOfChildren,
             decoration:
                 const InputDecoration(labelText: 'Number of Children'),
             items: const [
@@ -1039,7 +1044,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule & Preference',
         children: [
           DropdownButtonFormField<String>(
-            value: _careSchedule,
+            initialValue: _careSchedule,
             decoration:
                 const InputDecoration(labelText: 'Care Schedule'),
             items: const [
@@ -1056,7 +1061,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _staffGender,
+            initialValue: _staffGender,
             decoration: const InputDecoration(
                 labelText: 'Preferred Staff Gender'),
             items: const [
@@ -1087,7 +1092,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Condition Details',
         children: [
           DropdownButtonFormField<String>(
-            value: _physioConditionType,
+            initialValue: _physioConditionType,
             decoration:
                 const InputDecoration(labelText: 'Condition Type'),
             items: const [
@@ -1111,7 +1116,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _affectedArea,
+            initialValue: _affectedArea,
             decoration:
                 const InputDecoration(labelText: 'Affected Area'),
             items: const [
@@ -1139,7 +1144,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _currentMobilityLevel,
+            initialValue: _currentMobilityLevel,
             decoration: const InputDecoration(
                 labelText: 'Current Mobility Level'),
             items: const [
@@ -1166,7 +1171,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule',
         children: [
           DropdownButtonFormField<String>(
-            value: _preferredVisitTime,
+            initialValue: _preferredVisitTime,
             decoration: const InputDecoration(
                 labelText: 'Preferred Visit Time'),
             items: const [
@@ -1201,7 +1206,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'About Your Situation',
         children: [
           DropdownButtonFormField<String>(
-            value: _lossType,
+            initialValue: _lossType,
             decoration:
                 const InputDecoration(labelText: 'Type of Loss'),
             items: const [
@@ -1223,7 +1228,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _previousCounselling,
+            initialValue: _previousCounselling,
             decoration: const InputDecoration(
                 labelText: 'Any Previous Counselling?'),
             items: const [
@@ -1241,7 +1246,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Session Preference',
         children: [
           DropdownButtonFormField<String>(
-            value: _sessionFormat,
+            initialValue: _sessionFormat,
             decoration: const InputDecoration(
                 labelText: 'Preferred Session Format'),
             items: const [
@@ -1256,7 +1261,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _preferredTiming,
+            initialValue: _preferredTiming,
             decoration: const InputDecoration(
                 labelText: 'Preferred Timing'),
             items: const [
@@ -1291,7 +1296,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'About Your Concern',
         children: [
           DropdownButtonFormField<String>(
-            value: _primaryConcern,
+            initialValue: _primaryConcern,
             decoration:
                 const InputDecoration(labelText: 'Primary Concern'),
             items: const [
@@ -1323,7 +1328,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _currentlyOnMedication,
+            initialValue: _currentlyOnMedication,
             decoration: const InputDecoration(
                 labelText: 'Currently on Medication?'),
             items: const [
@@ -1341,7 +1346,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Session Preference',
         children: [
           DropdownButtonFormField<String>(
-            value: _psychiatrySessionFormat,
+            initialValue: _psychiatrySessionFormat,
             decoration: const InputDecoration(
                 labelText: 'Preferred Session Format'),
             items: const [
@@ -1430,7 +1435,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
       builder: (context) => AlertDialog(
         icon: Icon(
           Icons.check_circle,
-          color: _isDaiMaa ? DaiMaaColors.plum : HousepitalColors.success,
+          // Use the dark-adaptive Dai Maa accent so the icon stays visible
+          // on dark dialog surfaces.
+          color: _isDaiMaa
+              ? daiMaaAccent(context)
+              : HousepitalColors.success,
           size: 48,
         ),
         title: Text(l.t('concern_submitted')),

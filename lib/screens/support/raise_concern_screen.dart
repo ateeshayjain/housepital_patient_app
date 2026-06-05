@@ -1,11 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
+// audit batch 4 (Agent I): centralized validator caps description length
+// (audit F finding — was unbounded, 10MB DoS risk).
+import '../../utils/validators.dart';
 
 class RaiseConcernScreen extends StatefulWidget {
   const RaiseConcernScreen({super.key});
@@ -119,11 +124,14 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          // audit batch 4 (Agent I): onUserInteraction so the user sees the
+          // 1000-char cap warning before they finish typing 10MB.
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 decoration: InputDecoration(labelText: l.t('concern_category')),
                 items: _categories.map((c) => DropdownMenuItem(
                   value: c['value'],
@@ -141,9 +149,11 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                   hintText: 'Describe the issue in detail...',
                 ),
                 maxLines: 4,
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Please describe the issue'
-                    : null,
+                // audit batch 4 (Agent I): audit F — cap at 1000 chars
+                // to block oversized bodies. `maxLength` shows the counter.
+                maxLength: 1000,
+                validator: (v) =>
+                    Validators.description(v, max: 1000),
               ),
               const SizedBox(height: 16),
 
@@ -166,7 +176,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _resolution,
+                initialValue: _resolution,
                 decoration: InputDecoration(labelText: l.t('concern_resolution')),
                 items: const [
                   DropdownMenuItem(value: 'counseling', child: Text('Counseling of staff')),
@@ -196,7 +206,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _evidencePhotos.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       return Stack(
                         children: [
@@ -291,6 +301,40 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
     );
   }
 
+  /// audit M-9: upload photos in batches of up to 3 in parallel.
+  /// Returns a list of successfully-uploaded download URLs (skipping failures).
+  /// We don't have a ticket id yet (it's assigned server-side on submit), so
+  /// scope by patientId + a single timestamp prefix per submission attempt.
+  Future<List<String>> _uploadEvidence(String patientId) async {
+    if (_evidencePhotos.isEmpty) return const [];
+
+    final firebaseService = context.read<AuthProvider>().firebaseService;
+    final batchTs = DateTime.now().millisecondsSinceEpoch;
+    const concurrencyCap = 3;
+
+    final urls = <String>[];
+    for (var start = 0; start < _evidencePhotos.length; start += concurrencyCap) {
+      final end = (start + concurrencyCap < _evidencePhotos.length)
+          ? start + concurrencyCap
+          : _evidencePhotos.length;
+      final futures = <Future<String?>>[];
+      for (var i = start; i < end; i++) {
+        final photo = _evidencePhotos[i];
+        final filename = p.basename(photo.path);
+        futures.add(firebaseService.uploadFile(
+          localPath: photo.path,
+          storagePath: 'concerns/${patientId}_$batchTs/${i}_$filename',
+          contentType: 'image/jpeg',
+        ));
+      }
+      final results = await Future.wait(futures);
+      for (final r in results) {
+        if (r != null) urls.add(r);
+      }
+    }
+    return urls;
+  }
+
   Future<void> _submitConcern(BuildContext context, AppLocalizations l) async {
     final patient = context.read<AppProvider>().currentPatient;
     if (patient == null) return;
@@ -298,18 +342,37 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final evidencePaths = _evidencePhotos.map((p) => p.path).toList();
+      // audit M-9: upload evidence photos to Firebase Storage before submitting.
+      // Previously local device paths were sent as URLs and coordinators
+      // couldn't open them.
+      final evidenceUrls = await _uploadEvidence(patient.id);
+      final failedCount = _evidencePhotos.length - evidenceUrls.length;
+      if (failedCount > 0) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 6),
+            content: Text(
+              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded. "
+              'Your concern was submitted without them — reply to the '
+              "coordinator's message in chat to add photos.",
+            ),
+            backgroundColor: HousepitalColors.warning,
+          ),
+        );
+      }
 
+      if (!context.mounted) return;
       await context.read<AppProvider>().apiService.raiseConcern(
         patientId: patient.id,
         category: _category!,
         description: _descriptionController.text.trim(),
         urgency: _urgency,
         preferredResolution: _resolution,
-        evidenceUrls: evidencePaths.isNotEmpty ? evidencePaths : null,
+        evidenceUrls: evidenceUrls.isNotEmpty ? evidenceUrls : null,
       );
 
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       final slaText = _urgency == 'emergency'
           ? 'We will respond within 2 hours.'
@@ -337,7 +400,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         ),
       );
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit: ${e.message}'),
@@ -345,7 +408,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Something went wrong. Please try again.'),

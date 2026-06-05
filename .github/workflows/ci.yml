@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches: [main]
@@ -8,12 +9,97 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          # Pinned to match local dev SDK. Bump in lockstep across the team
+          # to avoid behavioural drift (textScaler clamping, RadioGroup
+          # deprecation, tree-shake-icons kernel-size assertions all moved
+          # between minor versions).
+          flutter-version: '3.41.2'
           channel: 'stable'
-      - run: flutter pub get
-      - run: flutter test
-      - run: flutter build web --release
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Run analyzer BEFORE tests — fail fast on lint/type errors.
+      # `--fatal-infos` would be too strict for the current backlog of
+      # pre-existing info-level deprecations (~284 warnings as of
+      # audit-batch-1). When that backlog is cleared, add --fatal-warnings
+      # and eventually --fatal-infos.
+      - name: Analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      # `flutter test` exits 1 on test failure (verified 2026-05-28). The
+      # expanded reporter gives full failure context (expected/actual + stack)
+      # directly in CI logs — the default compact reporter buries failures
+      # behind hundreds of later pass lines.
+      #
+      # --coverage emits coverage/lcov.info which the next step parses to
+      # enforce a minimum line-coverage threshold.
+      - name: Test
+        run: flutter test --coverage --reporter=expanded
+
+      # Coverage gate. Fails the build if line coverage drops below the
+      # threshold. Starting baseline is intentionally conservative (50%) —
+      # raise it in lockstep as new tests land (target 70% by next quarter).
+      #
+      # Why parse lcov.info ourselves: codecov / coveralls add an external
+      # dependency we don't need yet, and lcov is installable from apt in
+      # ~3s. The grep/awk pipeline only reads `coverage_summary.txt` which
+      # we wrote ourselves — no GitHub Actions context interpolation in
+      # `run:` (safer against script injection per GH security guidance).
+      - name: Coverage gate
+        env:
+          COVERAGE_THRESHOLD: "50.0"
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lcov
+          lcov --summary coverage/lcov.info | tee coverage_summary.txt
+          pct=$(grep -oE "lines\.+: [0-9.]+%" coverage_summary.txt | head -1 | grep -oE "[0-9.]+")
+          echo "Line coverage: ${pct}%"
+          ok=$(awk -v p="$pct" -v t="$COVERAGE_THRESHOLD" 'BEGIN{print (p >= t) ? 1 : 0}')
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::Coverage ${pct}% is below threshold ${COVERAGE_THRESHOLD}%"
+            exit 1
+          fi
+
+      # Upload coverage on EVERY run (not just failures) so trends can be
+      # tracked across PRs. Retention 14 days is enough for a sprint of
+      # back-comparison without bloating storage.
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        env:
+          RUN_ID: ${{ github.run_id }}
+        with:
+          name: coverage-${{ env.RUN_ID }}
+          path: |
+            coverage/lcov.info
+            coverage_summary.txt
+          retention-days: 14
+          if-no-files-found: warn
+
+      # Build the production web bundle. Tree-shake-icons is enabled (default)
+      # — it shrinks MaterialIcons-Regular from 1.6MB to ~34KB. If it ever
+      # fails with a kernel-size assertion, the workaround is
+      # --no-tree-shake-icons (logged in docs/KNOWN_ISSUES.md).
+      - name: Build web (release)
+        run: flutter build web --release
+
+      # On any failure, upload the build output + coverage for post-mortem.
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        env:
+          RUN_ID: ${{ github.run_id }}
+        with:
+          name: ci-debug-${{ env.RUN_ID }}
+          path: |
+            build/web/
+            coverage/
+          retention-days: 7
+          if-no-files-found: ignore

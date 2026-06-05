@@ -1,7 +1,22 @@
 # Housepital Patient App — Flutter + REST API
 
+[![CI](https://github.com/ateeshayjain/housepital_patient_app/actions/workflows/ci.yml/badge.svg)](https://github.com/ateeshayjain/housepital_patient_app/actions/workflows/ci.yml)
+
 A mobile app for Housepital's patients and their families across Delhi NCR.
 Replaces phone-call-based monitoring with structured, transparent visibility into all active home healthcare services.
+
+## Quick Links
+
+| Resource | Link |
+|---|---|
+| Project meta / onboarding | [PROJECT.md](./PROJECT.md) |
+| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Open PRs | <https://github.com/ateeshayjain/housepital_patient_app/pulls> |
+| Architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| API reference | [docs/API_REFERENCE.md](./docs/API_REFERENCE.md) |
+| Known issues | [docs/KNOWN_ISSUES.md](./docs/KNOWN_ISSUES.md) |
+| Troubleshooting | [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) |
+| Deployment | [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) |
 
 ## Tech Stack
 
@@ -40,13 +55,33 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 ### Steps
 
 ```bash
-flutter create housepital_patient_app
+git clone git@github.com:ateeshayjain/housepital_patient_app.git
 cd housepital_patient_app
-# Copy lib/, test/, assets/, pubspec.yaml
 flutter pub get
-flutter run
+
+# Drop Firebase config files in place (distributed via secure channel —
+# these are gitignored as of 2026-05-28):
+#   android/app/google-services.json
+#   ios/Runner/GoogleService-Info.plist
+
+# Run with the Razorpay test key passed via --dart-define:
+flutter run --dart-define=RAZORPAY_KEY=rzp_test_XXXXXXXXXX
+
+# Or run tests:
 flutter test
+
+# For a production build, pass the live Razorpay key
+# (see docs/KNOWN_ISSUES.md BUG-01):
+flutter build apk --release \
+  --dart-define=RAZORPAY_KEY=rzp_live_XXXXXXXXXX
+flutter build web --release \
+  --dart-define=RAZORPAY_KEY=rzp_live_XXXXXXXXXX
 ```
+
+If `flutter build web --release` ever errors with a kernel-size assertion
+during the tree-shake-icons step, retry with `flutter clean && flutter pub
+get` first; the workaround is `--no-tree-shake-icons` (see
+[docs/KNOWN_ISSUES.md § CI-01](./docs/KNOWN_ISSUES.md)).
 
 ### Firebase Setup
 

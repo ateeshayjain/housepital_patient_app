@@ -765,7 +765,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -884,7 +885,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: _docIconColor(doc.type).withOpacity(0.1),
+                        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+                        color: _docIconColor(doc.type).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -979,7 +981,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -1019,10 +1022,29 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _detailRow('Status', doc.status == 'verified' ? 'Verified' : doc.status == 'expired' ? 'Expired' : 'Pending'),
+            // audit batch 4 (Agent I): _detailRow → shared DetailRow.
+            DetailRow(
+              label: 'Status',
+              value: doc.status == 'verified'
+                  ? 'Verified'
+                  : doc.status == 'expired'
+                      ? 'Expired'
+                      : 'Pending',
+            ),
             if (doc.verifiedAt != null)
-              _detailRow('Verified On', '${doc.verifiedAt!.day}/${doc.verifiedAt!.month}/${doc.verifiedAt!.year}'),
-            _detailRow('Document Type', doc.type.replaceAll('_', ' ').split(' ').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ')),
+              DetailRow(
+                label: 'Verified On',
+                value:
+                    '${doc.verifiedAt!.day}/${doc.verifiedAt!.month}/${doc.verifiedAt!.year}',
+              ),
+            DetailRow(
+              label: 'Document Type',
+              value: doc.type
+                  .replaceAll('_', ' ')
+                  .split(' ')
+                  .map((w) => w[0].toUpperCase() + w.substring(1))
+                  .join(' '),
+            ),
             const SizedBox(height: 16),
             // Placeholder for actual document view
             Container(
@@ -1061,35 +1083,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: HousepitalColors.greyLight,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: HousepitalColors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // audit batch 4 (Agent I): private _detailRow removed — replaced by the
+  // shared DetailRow widget in widgets/common_widgets.dart.
 
   // ---------------------------------------------------------------------------
   // Reviews Section — past feedback from other patients

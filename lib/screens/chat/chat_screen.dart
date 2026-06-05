@@ -1,10 +1,14 @@
 // lib/screens/chat/chat_screen.dart
 
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../providers/auth_provider.dart';
 
 /// In-app chat screen backed by Firestore `chat_messages` collection.
 ///
@@ -32,7 +36,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _imagePicker = ImagePicker();
   late final CollectionReference _messagesRef;
   StreamSubscription? _subscription;
-  bool _isOnline = true; // FUTURE: Replace with real presence check from Firebase Realtime Database
+  final bool _isOnline = true; // FUTURE: Replace with real presence check from Firebase Realtime Database
 
   @override
   void initState() {
@@ -79,13 +83,40 @@ class _ChatScreenState extends State<ChatScreen> {
       'senderId': widget.patientId,
       'timestamp': FieldValue.serverTimestamp(),
       'type': imageUrl != null ? 'image' : 'text',
-      if (imageUrl != null) 'imageUrl': imageUrl,
+      'imageUrl': ?imageUrl,
     });
 
     _msgController.clear();
   }
 
+  /// audit M-20: safely compute avatar initials, tolerating empty or single
+  /// names without crashing on `n[0]` for blank tokens.
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((s) => s.isNotEmpty);
+    if (parts.isEmpty) return 'HP';
+    return parts.map((p) => p[0]).take(2).join().toUpperCase();
+  }
+
   Future<void> _pickAndSendImage() async {
+    // Photo upload relies on dart:io File via firebaseService.uploadFile,
+    // which is skipped on web. Tell the user honestly instead of letting the
+    // upload silently fail.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo upload is available on the mobile app.'),
+        ),
+      );
+      return;
+    }
+
+    // audit M-9: capture provider synchronously before any async gap so we
+    // don't risk reading a stale BuildContext after picker/upload returns.
+    final firebaseService = context.read<AuthProvider>().firebaseService;
+
     final picked = await _imagePicker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1024,
@@ -93,11 +124,32 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     if (picked == null) return;
 
-    // FUTURE: Upload image to Firebase Storage and get download URL.
-    // For now, send the local path as placeholder.
+    // audit M-9: upload to Firebase Storage so the coordinator can actually
+    // open the image. Previously we wrote the local device path, which only
+    // resolves on the sender's phone.
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final filename = p.basename(picked.path);
+    final url = await firebaseService.uploadFile(
+      localPath: picked.path,
+      storagePath: 'chat/${widget.patientId}/${ts}_$filename',
+      contentType: 'image/jpeg',
+    );
+
+    if (!mounted) return;
+
+    if (url == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't send photo. Check your connection and try again."),
+          backgroundColor: HousepitalColors.error,
+        ),
+      );
+      return;
+    }
+
     await _sendMessage(
       text: '📷 Photo',
-      imageUrl: picked.path,
+      imageUrl: url,
     );
   }
 
@@ -116,11 +168,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   : null,
               child: widget.coordinatorPhotoUrl == null
                   ? Text(
-                      widget.coordinatorName
-                          .split(' ')
-                          .map((n) => n[0])
-                          .take(2)
-                          .join(),
+                      // audit M-20: brittle split/[0]/take(2) crashed on empty
+                      // tokens or single-name coordinators — see _initials().
+                      _initials(widget.coordinatorName),
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,

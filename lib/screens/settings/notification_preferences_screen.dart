@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 
@@ -123,8 +124,11 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Notification Preferences')),
+      // audit batch 4 (Agent L): Apple P5 — replace bare spinner with a
+      // Shimmer skeleton that mimics the SwitchListTile rows so the layout
+      // doesn't pop in when prefs arrive from the provider.
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildSkeleton()
           : ListView(
               children: [
                 // Toggleable preferences
@@ -177,11 +181,68 @@ class _NotificationPreferencesScreenState
     );
   }
 
+  // audit batch 4 (Agent L): Shimmer skeleton — 5 toggle rows + section
+  // header bar. Heights mirror SwitchListTile so the page settles without a
+  // jump when prefs hydrate.
+  Widget _buildSkeleton() {
+    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final highlight = Theme.of(context).colorScheme.surface;
+    Widget bar({double width = double.infinity, double height = 14}) => Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+
+    Widget row() => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    bar(width: 160, height: 15),
+                    const SizedBox(height: 6),
+                    bar(width: 240, height: 12),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 44,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ],
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: bar(width: 100, height: 13),
+          ),
+          for (int i = 0; i < 5; i++) row(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildToggleTile(_NotifPref pref) {
     return SwitchListTile(
       value: _prefs[pref.key] ?? pref.defaultValue,
       onChanged: (v) => _updatePref(pref.key, v),
-      activeColor: HousepitalColors.orange,
+      activeThumbColor: HousepitalColors.orange,
       title: Text(pref.title,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
       subtitle: Text(pref.subtitle,
@@ -226,7 +287,7 @@ class _NotificationPreferencesScreenState
       trailing: Switch(
         value: true,
         onChanged: null,
-        activeColor: HousepitalColors.orange,
+        activeThumbColor: HousepitalColors.orange,
       ),
     );
   }

@@ -34,7 +34,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   final List<String> _attachedFiles = [];
   int _selectedAddressIndex = 0;
   List<SavedAddress> _savedAddressObjects = [];
-  bool _addressesLoaded = false;
 
   List<Map<String, String>> get _savedAddresses =>
       _savedAddressObjects.map((a) => a.toMapCompat()).toList();
@@ -117,16 +116,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   /// Physio: pick a daytime slot + period (3/7/15/30 days)
   bool get _isPhysio => widget.service.id.startsWith('mp-physio');
 
-  /// Whether this is any manpower service
-  bool get _isManpower => widget.service.category == 'manpower';
-
   // Ongoing manpower state
   String _servicePeriod = '30'; // '7' or '30' days
   String _physioPeriod = '7'; // '3', '7', '15', '30' days
   static const _daytimeSlots = [9, 10, 11, 12, 13, 14, 15, 16, 17]; // 9AM-5PM only
 
   // Previous staff preference
-  String? _preferredStaffId;
   String? _preferredStaffName;
   bool _requestSameStaff = false;
 
@@ -217,7 +212,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     if (!mounted) return;
     setState(() {
       _savedAddressObjects = addresses;
-      _addressesLoaded = true;
       // Select default address
       final defaultIndex = addresses.indexWhere((a) => a.isDefault);
       if (defaultIndex >= 0) _selectedAddressIndex = defaultIndex;
@@ -274,6 +268,23 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final s = widget.service;
+
+    // audit M-1: manpower bookings MUST flow through assessment-request, not
+    // the buy-now booking screen — never quote upfront prices for caretaker,
+    // nursing, japa, nanny. Defensive redirect if a stale link/deep-link
+    // lands a manpower service here.
+    if (s.category == 'manpower') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          '/assessment-request',
+          arguments: s,
+        );
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -510,7 +521,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
             ],
-            if (s.basePriceMin != null) ...[
+            // audit M-1: never quote upfront price for manpower services
+            // even if a stale basePriceMin somehow reaches here — show
+            // "Price on assessment" instead. (Defensive: the redirect at the
+            // top of build() should keep us out of this branch entirely.)
+            if (s.category == 'manpower') ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Price on assessment',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HousepitalColors.orange,
+                ),
+              ),
+            ] else if (s.basePriceMin != null) ...[
               const SizedBox(height: 8),
               Text(
                 '${DateHelper.formatCurrency(s.basePriceMin!)} - ${DateHelper.formatCurrency(s.basePriceMax ?? s.basePriceMin!)}',
@@ -812,7 +837,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (₹${_ivPrice}/visit). Nurse level cannot be changed.',
+                        'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (${DateHelper.formatCurrency(_ivPrice ?? 0)}/visit). Nurse level cannot be changed.',
                         style: TextStyle(
                           fontSize: 13,
                           color: _nurseLevelColor[_ivNurseLevel],
@@ -1754,9 +1779,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${_servicePeriod} days × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}/day',
+              Text('$_servicePeriod days × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}/day',
                   style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
-              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)).toStringAsFixed(0)}',
+              Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
             ],
           ),
@@ -1787,7 +1812,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 style: const TextStyle(fontSize: 12),
               ),
               value: _requestSameStaff,
-              activeColor: HousepitalColors.orange,
+              activeThumbColor: HousepitalColors.orange,
               onChanged: (v) => setState(() => _requestSameStaff = v),
             ),
             if (_requestSameStaff) ...[
@@ -1832,7 +1857,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             style: TextStyle(fontSize: 12),
           ),
           value: _enableAutopay,
-          activeColor: HousepitalColors.info,
+          activeThumbColor: HousepitalColors.info,
           onChanged: (v) => setState(() => _enableAutopay = v),
         ),
       ),
@@ -1946,7 +1971,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('$days',
+                      Text(days,
                           style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w700,
                             color: isSelected ? Colors.white : HousepitalColors.black,
@@ -1975,9 +2000,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('$_physioPeriod sessions × ₹${widget.service.basePriceMin?.toStringAsFixed(0)}',
+              Text('$_physioPeriod sessions × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}',
                   style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
-              Text('₹${((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)).toStringAsFixed(0)}',
+              Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
             ],
           ),
@@ -2222,7 +2247,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 Switch(
                   value: _autoRenew,
                   onChanged: (v) => setState(() => _autoRenew = v),
-                  activeColor: HousepitalColors.orange,
+                  activeThumbColor: HousepitalColors.orange,
                 ),
               ],
             ),

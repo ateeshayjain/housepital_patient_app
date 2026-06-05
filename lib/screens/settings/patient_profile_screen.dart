@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
-import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+// audit batch 4 (Agent I): centralized validators for name/age/phone.
+import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
 
 class PatientProfileScreen extends StatefulWidget {
@@ -192,6 +193,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
+    if (!mounted) return;
     await context.read<AppProvider>().setProfilePhotoPath(image.path);
     if (mounted) {
       setState(() => _profilePhotoPath = image.path);
@@ -331,6 +333,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
+            // audit batch 4 (Agent I): onUserInteraction so errors surface
+            // inline as the user edits, matching the other patient forms.
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -412,9 +417,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Patient Name'),
-              validator: (v) => v == null || v.trim().isEmpty
-                  ? 'Name is required'
-                  : null,
+              // audit batch 4 (Agent I): centralized name validator.
+              validator: Validators.name,
             ),
             const SizedBox(height: 16),
             Row(
@@ -424,19 +428,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     controller: _ageController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Age'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return null;
-                      final age = int.tryParse(v.trim());
-                      if (age == null) return 'Must be a number';
-                      if (age < 0 || age > 150) return 'Invalid age';
-                      return null;
-                    },
+                    // audit batch 4 (Agent I): centralized age validator
+                    // — age is optional here, so required:false.
+                    validator: (v) => Validators.age(v, required: false),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _gender,
+                    initialValue: _gender,
                     decoration: const InputDecoration(labelText: 'Gender'),
                     items: const [
                       DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -452,7 +452,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _mobility,
+              initialValue: _mobility,
               decoration: const InputDecoration(labelText: 'Mobility Status'),
               items: const [
                 DropdownMenuItem(
@@ -482,7 +482,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _city,
+              initialValue: _city,
               decoration: const InputDecoration(labelText: 'City'),
               items: _cities
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -506,6 +506,10 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               controller: _doctorPhoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Doctor Phone'),
+              // audit batch 4 (Agent I): optional phone — only validates
+              // shape if user enters something. Catches typos like 8-digit
+              // numbers / landline 0-prefix.
+              validator: (v) => Validators.indianMobile(v, required: false),
             ),
 
             // ==================== Emergency Contacts ====================
@@ -566,6 +570,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         controller: ec.nameController,
                         decoration:
                             const InputDecoration(labelText: 'Name'),
+                        // audit batch 4 (Agent I): optional name shape check.
+                        validator: (v) => Validators.name(v, required: false),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -573,6 +579,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         keyboardType: TextInputType.phone,
                         decoration:
                             const InputDecoration(labelText: 'Phone'),
+                        // audit batch 4 (Agent I): optional emergency phone
+                        // shape check — empty is allowed (rows may be
+                        // half-filled by intent).
+                        validator: (v) =>
+                            Validators.indianMobile(v, required: false),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(

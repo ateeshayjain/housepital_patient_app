@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:io' show File;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'api_service.dart';
+import '../utils/logger.dart';
+import 'i_api_service.dart';
 
 class FirebaseService {
   FirebaseAuth? _auth;
   FirebaseMessaging? _messaging;
-  bool _initialized = false;
   StreamSubscription<String>? _tokenRefreshSub;
 
   String? _verificationId;
@@ -29,7 +31,7 @@ class FirebaseService {
     try {
       return auth.currentUser;
     } catch (e) {
-      debugPrint('FirebaseService: currentUser failed: $e');
+      Log.warn('currentUser failed', error: e, tag: 'FirebaseService');
       return null;
     }
   }
@@ -38,7 +40,7 @@ class FirebaseService {
     try {
       return currentUser != null;
     } catch (e) {
-      debugPrint('FirebaseService: isLoggedIn failed: $e');
+      Log.warn('isLoggedIn failed', error: e, tag: 'FirebaseService');
       return false;
     }
   }
@@ -72,7 +74,12 @@ class FirebaseService {
     );
   }
 
-  Future<UserCredential> verifyOtp(String otp) async {
+  // Returns Future<void> (was Future<UserCredential>) — the only caller,
+  // [AuthProvider.verifyOtp], discards the credential and calls
+  // [getIdToken] separately. Narrowing the return type lets unit tests
+  // substitute a fake without needing to construct a real [UserCredential]
+  // (which has a private constructor that requires real Firebase init).
+  Future<void> verifyOtp(String otp) async {
     if (_verificationId == null) {
       throw Exception('No verification ID. Send OTP first.');
     }
@@ -80,7 +87,7 @@ class FirebaseService {
       verificationId: _verificationId!,
       smsCode: otp,
     );
-    return await auth.signInWithCredential(credential);
+    await auth.signInWithCredential(credential);
   }
 
   Future<String?> getIdToken() async {
@@ -91,7 +98,47 @@ class FirebaseService {
     try {
       await auth.signOut();
     } catch (e) {
-      debugPrint('FirebaseService: signOut failed: $e');
+      Log.warn('signOut failed', error: e, tag: 'FirebaseService');
+    }
+  }
+
+  // ==================== STORAGE ====================
+
+  // audit M-9: upload local files to Firebase Storage and return public download URL.
+  // Previously chat/raise-concern wrote local device paths into Firestore, which
+  // coordinators couldn't open.
+  /// Uploads a local file to Firebase Storage and returns the public download URL.
+  /// Returns null on failure (caller should handle the null gracefully).
+  ///
+  /// On web (`kIsWeb`) this is a no-op returning null — file uploads from a web
+  /// blob need a different code path (use `putData` with bytes). The current
+  /// call sites (chat photo, concern evidence) are mobile-only flows.
+  Future<String?> uploadFile({
+    required String localPath,
+    required String storagePath, // e.g. "chat/{patientId}/{ts}_{filename}"
+    String? contentType,
+  }) async {
+    if (kIsWeb) {
+      Log.debug('uploadFile skipped on web (use putData for web blobs)',
+          tag: 'FirebaseService');
+      return null;
+    }
+    try {
+      final file = File(localPath);
+      if (!await file.exists()) {
+        Log.warn('uploadFile: local file does not exist: $localPath',
+            tag: 'FirebaseService');
+        return null;
+      }
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      final metadata = contentType != null
+          ? SettableMetadata(contentType: contentType)
+          : null;
+      await ref.putFile(file, metadata);
+      return await ref.getDownloadURL();
+    } catch (e, st) {
+      Log.error('uploadFile failed', error: e, stack: st, tag: 'FirebaseService');
+      return null;
     }
   }
 
@@ -101,7 +148,7 @@ class FirebaseService {
     try {
       return await messaging.getToken();
     } catch (e) {
-      debugPrint('FirebaseService: getFcmToken failed: $e');
+      Log.warn('getFcmToken failed', error: e, tag: 'FirebaseService');
       return null;
     }
   }
@@ -115,7 +162,8 @@ class FirebaseService {
         provisional: false,
       );
     } catch (e) {
-      debugPrint('FirebaseService: requestNotificationPermission failed: $e');
+      Log.warn('requestNotificationPermission failed',
+          error: e, tag: 'FirebaseService');
     }
   }
 
@@ -124,7 +172,7 @@ class FirebaseService {
       _tokenRefreshSub?.cancel();
       _tokenRefreshSub = messaging.onTokenRefresh.listen(callback);
     } catch (e) {
-      debugPrint('FirebaseService: onTokenRefresh failed: $e');
+      Log.warn('onTokenRefresh failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -133,7 +181,7 @@ class FirebaseService {
     try {
       FirebaseMessaging.onMessage.listen(onMessage);
     } catch (e) {
-      debugPrint('FirebaseService: setupForegroundHandler failed: $e');
+      Log.warn('setupForegroundHandler failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -141,7 +189,7 @@ class FirebaseService {
     try {
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
     } catch (e) {
-      debugPrint('FirebaseService: setupBackgroundHandler failed: $e');
+      Log.warn('setupBackgroundHandler failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -153,7 +201,7 @@ class FirebaseService {
     try {
       FirebaseMessaging.onMessageOpenedApp.listen(onMessageOpenedApp);
     } catch (e) {
-      debugPrint('FirebaseService: setupMessageOpenedApp failed: $e');
+      Log.warn('setupMessageOpenedApp failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -161,7 +209,7 @@ class FirebaseService {
     try {
       return await messaging.getInitialMessage();
     } catch (e) {
-      debugPrint('FirebaseService: getInitialMessage failed: $e');
+      Log.warn('getInitialMessage failed', error: e, tag: 'FirebaseService');
       return null;
     }
   }
@@ -170,7 +218,7 @@ class FirebaseService {
     try {
       await messaging.subscribeToTopic(topic);
     } catch (e) {
-      debugPrint('FirebaseService: subscribeToTopic failed: $e');
+      Log.warn('subscribeToTopic failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -178,7 +226,7 @@ class FirebaseService {
     try {
       await messaging.unsubscribeFromTopic(topic);
     } catch (e) {
-      debugPrint('FirebaseService: unsubscribeFromTopic failed: $e');
+      Log.warn('unsubscribeFromTopic failed', error: e, tag: 'FirebaseService');
     }
   }
 
@@ -196,7 +244,8 @@ class FirebaseService {
           .snapshots()
           .map((snapshot) => snapshot.data() ?? {});
     } catch (e) {
-      debugPrint('Firestore attendance listener skipped: $e');
+      Log.warn('Firestore attendance listener skipped',
+          error: e, tag: 'FirebaseService');
       return const Stream.empty();
     }
   }
@@ -217,7 +266,8 @@ class FirebaseService {
         return snapshot.docs.first.data();
       });
     } catch (e) {
-      debugPrint('Firestore vitals listener skipped: $e');
+      Log.warn('Firestore vitals listener skipped',
+          error: e, tag: 'FirebaseService');
       return const Stream.empty();
     }
   }
@@ -236,7 +286,8 @@ class FirebaseService {
           .map((snapshot) =>
               snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
     } catch (e) {
-      debugPrint('Firestore notifications listener skipped: $e');
+      Log.warn('Firestore notifications listener skipped',
+          error: e, tag: 'FirebaseService');
       return const Stream.empty();
     }
   }
@@ -251,10 +302,12 @@ class FirebaseService {
   /// Full FCM setup — request permission, get token, register handlers.
   /// Wrapped in try-catch so the app doesn't crash without Firebase.
   ///
-  /// [navigatorKey] – a GlobalKey<NavigatorState> so we can push routes from
+  /// [navigatorKey] – a `GlobalKey<NavigatorState>` so we can push routes from
   /// notification taps without a local BuildContext.
   Future<void> setupFCM({
-    ApiService? apiService,
+    // audit batch 4 (Agent J): accept the interface (DIP) — callers pass
+    // AuthProvider.apiService which now returns IApiService.
+    IApiService? apiService,
     Function(RemoteMessage message)? onForegroundMessage,
     Function(RemoteMessage message)? onMessageOpenedApp,
     GlobalKey<NavigatorState>? navigatorKey,
@@ -269,7 +322,8 @@ class FirebaseService {
         try {
           await apiService.updateFcmToken(token);
         } catch (e) {
-          debugPrint('FCM token registration failed: $e');
+          Log.warn('FCM token registration failed',
+              error: e, tag: 'FirebaseService');
         }
       }
 
@@ -279,7 +333,8 @@ class FirebaseService {
           try {
             await apiService.updateFcmToken(newToken);
           } catch (e) {
-            debugPrint('FCM token refresh registration failed: $e');
+            Log.warn('FCM token refresh registration failed',
+              error: e, tag: 'FirebaseService');
           }
         });
       }
@@ -305,9 +360,9 @@ class FirebaseService {
         }
       }
 
-      debugPrint('FCM setup completed successfully');
+      Log.info('FCM setup completed successfully', tag: 'FirebaseService');
     } catch (e) {
-      debugPrint('FCM setup skipped: $e');
+      Log.warn('FCM setup skipped', error: e, tag: 'FirebaseService');
     }
   }
 

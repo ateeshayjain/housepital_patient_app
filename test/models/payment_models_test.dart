@@ -40,7 +40,7 @@ Map<String, dynamic> _invoiceJson({
       'grand_total': 38350,
       'due_date': '2025-02-10T00:00:00Z',
       if (status != 'pending') 'status': status,
-      if (pdfUrl != null) 'pdf_url': pdfUrl,
+      'pdf_url': ?pdfUrl,
     };
 
 Map<String, dynamic> _paymentJson({
@@ -65,7 +65,7 @@ Map<String, dynamic> _paymentJson({
       'receipt_url': 'https://receipts.example.com/001',
       'description': 'Payment for January invoice',
       'created_at': '2025-02-01T10:00:00Z',
-      if (completedAt != null) 'completed_at': completedAt,
+      'completed_at': ?completedAt,
     };
 
 Map<String, dynamic> _couponJson({
@@ -84,13 +84,13 @@ Map<String, dynamic> _couponJson({
       'code': 'SAVE20',
       'type': type,
       'value': value,
-      if (maxDiscount != null) 'max_discount': maxDiscount,
-      if (minOrderValue != null) 'min_order_value': minOrderValue,
+      'max_discount': ?maxDiscount,
+      'min_order_value': ?minOrderValue,
       'description': 'Save 20% on first order',
       'applicable_categories': ['manpower', 'equipment'],
       'valid_from': validFrom,
       'valid_until': validUntil,
-      if (usageLimit != null) 'usage_limit': usageLimit,
+      'usage_limit': ?usageLimit,
       'used_count': usedCount,
       'is_active': isActive,
     };

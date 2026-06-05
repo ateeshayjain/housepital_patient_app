@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import '../data/demo_data.dart';
 import '../models/medication_models.dart';
+// audit batch 4 (Agent J): still need api_service for the ApiException type.
 import '../services/api_service.dart';
+import '../services/i_api_service.dart';
 import '../services/medication_reminder_service.dart';
+import '../utils/logger.dart';
 
 class MedicationProvider extends ChangeNotifier {
-  final ApiService _apiService;
+  // audit batch 4 (Agent J): depend on IApiService (DIP).
+  final IApiService _apiService;
 
   List<MedicationFull> _medications = [];
   List<MedicationLog> _todayLogs = [];
@@ -15,7 +18,7 @@ class MedicationProvider extends ChangeNotifier {
   bool _isSaving = false;
   String? _error;
 
-  MedicationProvider(this._apiService);
+  MedicationProvider(IApiService api) : _apiService = api;
 
   // Getters
   List<MedicationFull> get medications => _medications;
@@ -56,7 +59,8 @@ class MedicationProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
     } catch (e) {
-      debugPrint('Medications API unavailable, using demo data: $e');
+      Log.warn('Medications API unavailable, using demo data',
+          error: e, tag: 'MedicationProvider');
     }
   }
 

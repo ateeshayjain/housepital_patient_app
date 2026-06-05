@@ -16,6 +16,12 @@ class BookingConfirmationScreen extends StatefulWidget {
   final DateTime? scheduledDate;
   final String? scheduledSlot;
 
+  /// audit M-2: booking number must come from cart (propagated from
+  /// OrdersProvider.generateUniqueBookingNumber), not regenerated here.
+  /// Optional for backwards compat with legacy callers; falls back to a
+  /// deprecated random suffix only when null.
+  final String? bookingNumber;
+
   const BookingConfirmationScreen({
     super.key,
     this.cartItems,
@@ -23,6 +29,7 @@ class BookingConfirmationScreen extends StatefulWidget {
     this.serviceName,
     this.scheduledDate,
     this.scheduledSlot,
+    this.bookingNumber,
   });
 
   @override
@@ -68,9 +75,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
   void initState() {
     super.initState();
 
-    // Generate booking number
-    final rand = Random();
-    _bookingNumber = 'HPL-BOOK-${rand.nextInt(90000) + 10000}';
+    // audit M-2: booking number must come from cart, not regenerated. Fall
+    // back to the deprecated random suffix ONLY when no booking number was
+    // passed in (legacy callers / single-service confirmations).
+    _bookingNumber = widget.bookingNumber ?? _generateLegacyFallback();
 
     _checkController = AnimationController(
       vsync: this,
@@ -104,6 +112,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
     _checkController.dispose();
     _fadeController.dispose();
     super.dispose();
+  }
+
+  /// audit M-2: DEPRECATED — random 5-digit booking number, prone to
+  /// collisions. Retained ONLY as a fallback for legacy callers that did not
+  /// pass `bookingNumber` to this screen. New callers MUST propagate the
+  /// booking number from `OrdersProvider.generateUniqueBookingNumber()`.
+  @Deprecated('Pass bookingNumber from OrdersProvider.generateUniqueBookingNumber() instead.')
+  static String _generateLegacyFallback() {
+    final rand = Random();
+    return 'HPL-BOOK-${rand.nextInt(90000) + 10000}';
   }
 
   String _slotLabel(String? slot) {
@@ -419,36 +437,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
             fontWeight: FontWeight.w600,
             color: HousepitalColors.orangeText,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _detailRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: HousepitalColors.greyLight),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: HousepitalColors.greyLight,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: HousepitalColors.black,
-              ),
-            ),
-          ],
         ),
       ],
     );

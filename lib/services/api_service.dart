@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/constants.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
+import '../utils/logger.dart';
 import 'i_api_service.dart';
 
 class ApiService implements IApiService {
@@ -20,7 +20,24 @@ class ApiService implements IApiService {
   /// Base delay between retries (doubles on each attempt).
   static const Duration _retryDelay = Duration(seconds: 1);
 
-  ApiService({this.baseUrl = AppConstants.apiBaseUrl});
+  /// Underlying HTTP client. Defaults to a real [http.Client]; tests can
+  /// inject a [MockClient] from `package:http/testing.dart` to stub responses.
+  /// Added for BUG-10 test coverage — backward compatible (optional named arg).
+  final http.Client _client;
+
+  /// audit batch 4 (Agent J): callback invoked on a 401, allowing the
+  /// auth layer (typically [AuthProvider]) to refresh the Firebase ID token
+  /// and tell us whether to retry the original request once. Returns true
+  /// to retry, false to surface the 401 as an [ApiException]. Kept as an
+  /// injectable callback rather than a hard dependency on AuthProvider so
+  /// we don't create a circular dependency between providers and services.
+  Future<bool> Function()? onUnauthorized;
+
+  ApiService({
+    this.baseUrl = AppConstants.apiBaseUrl,
+    http.Client? client,
+    this.onUnauthorized,
+  }) : _client = client ?? http.Client();
 
   @override
   void setAuthToken(String token) {
@@ -43,10 +60,9 @@ class ApiService implements IApiService {
         // Retry on 5xx server errors
         if (response.statusCode >= 500 && attempt < _maxRetries) {
           attempt++;
-          if (kDebugMode) {
-            debugPrint(
-                'Retrying request (attempt $attempt/$_maxRetries) after ${response.statusCode}');
-          }
+          Log.debug(
+              'Retrying request (attempt $attempt/$_maxRetries) after ${response.statusCode}',
+              tag: 'ApiService');
           await Future.delayed(_retryDelay * attempt);
           continue;
         }
@@ -54,55 +70,67 @@ class ApiService implements IApiService {
       } on SocketException {
         if (attempt >= _maxRetries) rethrow;
         attempt++;
-        if (kDebugMode) {
-          debugPrint(
-              'Network error, retrying (attempt $attempt/$_maxRetries)');
-        }
+        Log.debug('Network error, retrying (attempt $attempt/$_maxRetries)',
+            tag: 'ApiService');
         await Future.delayed(_retryDelay * attempt);
       } on TimeoutException {
         if (attempt >= _maxRetries) rethrow;
         attempt++;
-        if (kDebugMode) {
-          debugPrint(
-              'Timeout, retrying (attempt $attempt/$_maxRetries)');
-        }
+        Log.debug('Timeout, retrying (attempt $attempt/$_maxRetries)',
+            tag: 'ApiService');
         await Future.delayed(_retryDelay * attempt);
       }
     }
   }
 
+  /// audit batch 4 (Agent J): wraps a request closure with one-shot 401
+  /// recovery — if the first response is 401 and we have an [onUnauthorized]
+  /// callback, ask the auth layer to refresh and retry the request ONCE.
+  /// This is intentionally separate from the 5xx/network [_withRetry] loop
+  /// so a permanent 401 doesn't fan out into N retries.
+  Future<http.Response> _withAuthRecovery(
+      Future<http.Response> Function() request) async {
+    final response = await _withRetry(request);
+    if (response.statusCode != 401 || onUnauthorized == null) return response;
+    final retry = await onUnauthorized!();
+    if (!retry) return response;
+    // Fresh request with the refreshed Authorization header.
+    return await _withRetry(request);
+  }
+
   Future<Map<String, dynamic>> _get(String path,
       {Map<String, String>? queryParams}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
-    final response = await _withRetry(() => http.get(uri, headers: _headers));
+    final response =
+        await _withAuthRecovery(() => _client.get(uri, headers: _headers));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _post(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => http.post(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    ));
+    final response = await _withAuthRecovery(() => _client.post(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _put(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => http.put(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    ));
+    final response = await _withAuthRecovery(() => _client.put(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _delete(String path) async {
-    final response = await _withRetry(() => http.delete(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-    ));
+    final response = await _withAuthRecovery(() => _client.delete(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+        ));
     return _handleResponse(response);
   }
 
@@ -121,16 +149,19 @@ class ApiService implements IApiService {
   }
 
   /// Public GET — used by services that build their own API paths.
+  @override
   Future<Map<String, dynamic>> get(String path,
       {Map<String, String>? queryParams}) =>
       _get(path, queryParams: queryParams);
 
   // ==================== AUTH ====================
 
+  @override
   Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {
     return _post('/auth/verify-otp', body: {'phone': phone, 'otp': otp});
   }
 
+  @override
   Future<Map<String, dynamic>> completeOnboarding({
     required String name,
     required String relationship,
@@ -145,12 +176,14 @@ class ApiService implements IApiService {
 
   // ==================== DASHBOARD ====================
 
+  @override
   Future<Map<String, dynamic>> getDashboard(String patientId) async {
     return _get('/patients/$patientId/dashboard');
   }
 
   // ==================== PATIENTS ====================
 
+  @override
   Future<List<Patient>> getPatients() async {
     final data = await _get('/patients');
     return (data['patients'] as List)
@@ -158,11 +191,13 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<Patient> getPatient(String patientId) async {
     final data = await _get('/patients/$patientId');
     return Patient.fromJson(data['patient']);
   }
 
+  @override
   Future<Patient> updatePatient(String patientId, Map<String, dynamic> updates) async {
     final data = await _put('/patients/$patientId', body: updates);
     return Patient.fromJson(data['patient']);
@@ -170,12 +205,14 @@ class ApiService implements IApiService {
 
   // ==================== ATTENDANCE ====================
 
+  @override
   Future<Attendance?> getTodayAttendance(String patientId) async {
     final data = await _get('/patients/$patientId/attendance/today');
     if (data['attendance'] == null) return null;
     return Attendance.fromJson(data['attendance']);
   }
 
+  @override
   Future<List<Attendance>> getAttendanceHistory(String patientId,
       {int page = 1}) async {
     final data = await _get('/patients/$patientId/attendance',
@@ -187,12 +224,14 @@ class ApiService implements IApiService {
 
   // ==================== VITALS ====================
 
+  @override
   Future<VitalReading?> getLatestVitals(String patientId) async {
     final data = await _get('/patients/$patientId/vitals/latest');
     if (data['vitals'] == null) return null;
     return VitalReading.fromJson(data['vitals']);
   }
 
+  @override
   Future<List<VitalReading>> getVitalsHistory(String patientId,
       {String period = '7d'}) async {
     final data = await _get('/patients/$patientId/vitals',
@@ -204,12 +243,14 @@ class ApiService implements IApiService {
 
   // ==================== DAILY REPORTS ====================
 
+  @override
   Future<DailyReport?> getTodayReport(String patientId) async {
     final data = await _get('/patients/$patientId/reports/today');
     if (data['report'] == null) return null;
     return DailyReport.fromJson(data['report']);
   }
 
+  @override
   Future<List<DailyReport>> getReportHistory(String patientId,
       {int page = 1}) async {
     final data = await _get('/patients/$patientId/reports',
@@ -220,6 +261,7 @@ class ApiService implements IApiService {
   }
 
   /// Paginated report history.
+  @override
   Future<List<DailyReport>> getReportHistoryPaginated(
     String patientId, {
     int page = 1,
@@ -232,6 +274,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<DailyReport> getReportDetail(String reportId) async {
     final data = await _get('/reports/$reportId');
     return DailyReport.fromJson(data['report']);
@@ -239,6 +282,7 @@ class ApiService implements IApiService {
 
   // ==================== DEPLOYMENTS ====================
 
+  @override
   Future<Deployment?> getActiveDeployment(String patientId) async {
     final data = await _get('/patients/$patientId/deployment');
     if (data['deployment'] == null) return null;
@@ -247,6 +291,7 @@ class ApiService implements IApiService {
 
   // ==================== STAFF ====================
 
+  @override
   Future<StaffProfile> getStaffProfile(String staffId) async {
     final data = await _get('/staff/$staffId/profile');
     return StaffProfile.fromJson(data['staff']);
@@ -254,6 +299,7 @@ class ApiService implements IApiService {
 
   // ==================== SERVICES ====================
 
+  @override
   Future<List<ServiceItem>> getServiceCatalog() async {
     final data = await _get('/services');
     return (data['services'] as List)
@@ -261,6 +307,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<ServiceItem> getServiceDetail(String serviceId) async {
     final data = await _get('/services/$serviceId');
     return ServiceItem.fromJson(data['service']);
@@ -270,6 +317,7 @@ class ApiService implements IApiService {
 
   /// Fetches available slot hours for a service on a given date.
   /// Returns a list of maps with 'hour' (int) and 'available' (bool).
+  @override
   Future<List<Map<String, dynamic>>> getAvailableSlots(
       String serviceId, DateTime date) async {
     final dateStr =
@@ -282,6 +330,7 @@ class ApiService implements IApiService {
 
   // ==================== BOOKINGS ====================
 
+  @override
   Future<Booking> createBooking({
     required String patientId,
     required String serviceId,
@@ -294,11 +343,12 @@ class ApiService implements IApiService {
       'service_id': serviceId,
       'scheduled_date': scheduledDate,
       'scheduled_slot': scheduledSlot,
-      if (promoCode != null) 'promo_code': promoCode,
+      'promo_code': ?promoCode,
     });
     return Booking.fromJson(data['booking']);
   }
 
+  @override
   Future<List<Booking>> getBookings(String patientId, {int page = 1}) async {
     final data = await _get('/patients/$patientId/bookings',
         queryParams: {'page': page.toString()});
@@ -307,10 +357,12 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<void> cancelBooking(String bookingId, String reason) async {
     await _post('/bookings/$bookingId/cancel', body: {'reason': reason});
   }
 
+  @override
   Future<void> submitRating({
     required String bookingId,
     required int rating,
@@ -318,12 +370,13 @@ class ApiService implements IApiService {
   }) async {
     await _post('/bookings/$bookingId/rate', body: {
       'rating': rating,
-      if (comment != null) 'comment': comment,
+      'comment': ?comment,
     });
   }
 
   // ==================== ASSESSMENTS ====================
 
+  @override
   Future<AssessmentRequest> createAssessmentRequest({
     required String patientId,
     required String serviceCategory,
@@ -337,6 +390,7 @@ class ApiService implements IApiService {
     return AssessmentRequest.fromJson(data['assessment']);
   }
 
+  @override
   Future<List<AssessmentRequest>> getAssessments(String patientId) async {
     final data = await _get('/patients/$patientId/assessments');
     return (data['assessments'] as List)
@@ -346,10 +400,12 @@ class ApiService implements IApiService {
 
   // ==================== BILLING ====================
 
+  @override
   Future<Map<String, dynamic>> getBillingSummary(String patientId) async {
     return _get('/patients/$patientId/billing');
   }
 
+  @override
   Future<List<Invoice>> getInvoices(String patientId) async {
     final data = await _get('/patients/$patientId/invoices');
     return (data['invoices'] as List)
@@ -357,6 +413,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<Invoice> getInvoiceDetail(String invoiceId) async {
     final data = await _get('/invoices/$invoiceId');
     return Invoice.fromJson(data['invoice']);
@@ -364,6 +421,7 @@ class ApiService implements IApiService {
 
   // ==================== PAYMENTS ====================
 
+  @override
   Future<Map<String, dynamic>> createPaymentOrder({
     required String patientId,
     required int amount,
@@ -375,11 +433,12 @@ class ApiService implements IApiService {
       'patient_id': patientId,
       'amount': amount,
       'payment_type': paymentType,
-      if (referenceType != null) 'reference_type': referenceType,
-      if (referenceId != null) 'reference_id': referenceId,
+      'reference_type': ?referenceType,
+      'reference_id': ?referenceId,
     });
   }
 
+  @override
   Future<Map<String, dynamic>> verifyPayment({
     required String razorpayPaymentId,
     required String razorpayOrderId,
@@ -394,6 +453,7 @@ class ApiService implements IApiService {
 
   // ==================== CONCERNS ====================
 
+  @override
   Future<FamilyConcern> raiseConcern({
     required String patientId,
     required String category,
@@ -407,13 +467,13 @@ class ApiService implements IApiService {
       'category': category,
       'description': description,
       'urgency': urgency,
-      if (preferredResolution != null)
-        'preferred_resolution': preferredResolution,
-      if (evidenceUrls != null) 'evidence_urls': evidenceUrls,
+      'preferred_resolution': ?preferredResolution,
+      'evidence_urls': ?evidenceUrls,
     });
     return FamilyConcern.fromJson(data['concern']);
   }
 
+  @override
   Future<List<FamilyConcern>> getConcerns(String patientId) async {
     final data = await _get('/patients/$patientId/concerns');
     return (data['concerns'] as List)
@@ -423,6 +483,7 @@ class ApiService implements IApiService {
 
   // ==================== RATINGS ====================
 
+  @override
   Future<void> submitDailyRating({
     required String patientId,
     required String deploymentId,
@@ -433,12 +494,13 @@ class ApiService implements IApiService {
       'patient_id': patientId,
       'deployment_id': deploymentId,
       'rating': rating,
-      if (comment != null) 'comment': comment,
+      'comment': ?comment,
     });
   }
 
   // ==================== NOTIFICATIONS ====================
 
+  @override
   Future<List<AppNotification>> getNotifications({int page = 1}) async {
     final data =
         await _get('/notifications', queryParams: {'page': page.toString()});
@@ -448,6 +510,7 @@ class ApiService implements IApiService {
   }
 
   /// Paginated notifications.
+  @override
   Future<List<AppNotification>> getNotificationsPaginated({
     int page = 1,
     int pageSize = 20,
@@ -459,16 +522,19 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<void> markNotificationRead(String notificationId) async {
     await _put('/notifications/$notificationId/read');
   }
 
+  @override
   Future<void> markAllNotificationsRead() async {
     await _put('/notifications/read-all');
   }
 
   // ==================== FAMILY MEMBERS ====================
 
+  @override
   Future<List<FamilyMember>> getFamilyMembers(String patientId) async {
     final data = await _get('/patients/$patientId/family');
     return (data['family_members'] as List)
@@ -476,22 +542,26 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<void> inviteFamilyMember(String patientId, String phone) async {
     await _post('/patients/$patientId/family/invite', body: {'phone': phone});
   }
 
+  @override
   Future<void> removeFamilyMemberLegacy(String memberId) async {
     await _put('/family/$memberId/remove');
   }
 
   // ==================== FCM TOKEN ====================
 
+  @override
   Future<void> updateFcmToken(String token) async {
     await _post('/auth/fcm-token', body: {'token': token});
   }
 
   // ==================== COUPONS ====================
 
+  @override
   Future<Coupon> validateCoupon(String code, String serviceCategory, int orderAmount) async {
     final data = await _post('/coupons/validate', body: {
       'code': code,
@@ -501,22 +571,29 @@ class ApiService implements IApiService {
     return Coupon.fromJson(data);
   }
 
+  @override
   Future<List<Coupon>> getAvailableCoupons(String? category) async {
-    final data = await _get('/coupons${category != null ? '?category=$category' : ''}');
+    final params = <String, String>{};
+    if (category != null) params['category'] = category;
+    final data =
+        await _get('/coupons', queryParams: params.isNotEmpty ? params : null);
     return (data as List).map((c) => Coupon.fromJson(c)).toList();
   }
 
   // ==================== TRANSACTIONS ====================
 
+  @override
   Future<List<PaymentTransaction>> getTransactions(String patientId, {String? status, int? limit}) async {
-    String url = '/patients/$patientId/transactions?';
-    if (status != null) url += 'status=$status&';
-    if (limit != null) url += 'limit=$limit';
-    final data = await _get(url);
+    final params = <String, String>{};
+    if (status != null) params['status'] = status;
+    if (limit != null) params['limit'] = '$limit';
+    final data = await _get('/patients/$patientId/transactions',
+        queryParams: params.isNotEmpty ? params : null);
     return (data as List).map((t) => PaymentTransaction.fromJson(t)).toList();
   }
 
   /// Paginated transaction list.
+  @override
   Future<List<PaymentTransaction>> getTransactionsPaginated(
     String patientId, {
     String? status,
@@ -535,6 +612,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<PaymentTransaction> getTransactionDetail(String transactionId) async {
     final data = await _get('/transactions/$transactionId');
     return PaymentTransaction.fromJson(data);
@@ -542,6 +620,7 @@ class ApiService implements IApiService {
 
   // ==================== ENHANCED BILLING ====================
 
+  @override
   Future<BillingSummary> getBillingSummaryFull(String patientId) async {
     final data = await _get('/patients/$patientId/billing/summary');
     return BillingSummary.fromJson(data);
@@ -549,6 +628,7 @@ class ApiService implements IApiService {
 
   // ==================== SYNC ====================
 
+  @override
   Future<Map<String, dynamic>> syncDashboardData(String patientId, DateTime? lastSyncAt) async {
     String url = '/patients/$patientId/sync';
     if (lastSyncAt != null) url += '?since=${lastSyncAt.toIso8601String()}';
@@ -558,26 +638,31 @@ class ApiService implements IApiService {
 
   // ==================== PROFILE ====================
 
+  @override
   Future<Patient> updatePatientProfile(String patientId, Map<String, dynamic> data) async {
     final result = await _put('/patients/$patientId', body: data);
     return Patient.fromJson(result);
   }
 
+  @override
   Future<FamilyMember> addFamilyMember(String patientId, Map<String, dynamic> data) async {
     final result = await _post('/patients/$patientId/family', body: data);
     return FamilyMember.fromJson(result);
   }
 
+  @override
   Future<void> removeFamilyMember(String patientId, String memberId) async {
     await _post('/patients/$patientId/family/$memberId/remove', body: {});
   }
 
+  @override
   Future<FamilyMember> updateFamilyMember(String patientId, String memberId, Map<String, dynamic> data) async {
     final result = await _put('/patients/$patientId/family/$memberId', body: data);
     return FamilyMember.fromJson(result);
   }
 
   // ── Equipment Catalog (backend-driven) ──────────────────────
+  @override
   Future<List<EquipmentItem>> getEquipmentCatalog({
     String? category,
     String? type,
@@ -595,6 +680,7 @@ class ApiService implements IApiService {
 
   // ==================== MY CARE ====================
 
+  @override
   Future<List<ActiveService>> getActiveServices(String patientId) async {
     final data = await _get('/patients/$patientId/active-services');
     return (data['services'] as List)
@@ -602,6 +688,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<HealthManager?> getHealthManager(String patientId) async {
     try {
       final data = await _get('/patients/$patientId/health-manager');
@@ -612,11 +699,13 @@ class ApiService implements IApiService {
     }
   }
 
+  @override
   Future<ServiceDetail> getDeploymentServiceDetail(String deploymentId) async {
     final data = await _get('/deployments/$deploymentId/service-detail');
     return ServiceDetail.fromJson(data);
   }
 
+  @override
   Future<List<Attendance>> getAttendanceHistoryPaginated(
     String deploymentId, {
     int page = 1,
@@ -633,6 +722,7 @@ class ApiService implements IApiService {
 
   // ==================== MEDICATIONS ====================
 
+  @override
   Future<List<MedicationFull>> getMedications(String patientId) async {
     final data = await _get('/patients/$patientId/medications');
     return (data['medications'] as List)
@@ -640,6 +730,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<MedicationFull> addMedication(
       String patientId, Map<String, dynamic> body) async {
     final data =
@@ -647,6 +738,7 @@ class ApiService implements IApiService {
     return MedicationFull.fromJson(data);
   }
 
+  @override
   Future<MedicationFull> updateMedication(
       String patientId, String medicationId, Map<String, dynamic> body) async {
     final data = await _put(
@@ -655,11 +747,13 @@ class ApiService implements IApiService {
     return MedicationFull.fromJson(data);
   }
 
+  @override
   Future<void> deleteMedication(
       String patientId, String medicationId) async {
     await _delete('/patients/$patientId/medications/$medicationId');
   }
 
+  @override
   Future<List<MedicationLog>> getMedicationLogs(
     String patientId, {
     String? date, // YYYY-MM-DD, defaults to today on backend
@@ -675,6 +769,7 @@ class ApiService implements IApiService {
 
   /// Note: Spec says /medication-logs/{id}/stock but stock belongs on the medication
   /// entity, not on a log entry. Using /medications/{id}/stock instead.
+  @override
   Future<void> updateMedicationStock(
       String patientId, String medicationId, int stockCount) async {
     await _put('/patients/$patientId/medications/$medicationId/stock',
@@ -683,6 +778,7 @@ class ApiService implements IApiService {
 
   // ── Equipment Orders ────────────────────────────────────────
 
+  @override
   Future<List<EquipmentOrder>> getEquipmentOrders(String patientId) async {
     final data = await _get('/patients/$patientId/equipment-orders');
     return (data['equipment_orders'] as List)
@@ -692,16 +788,19 @@ class ApiService implements IApiService {
 
   // ── Assessment Actions ──────────────────────────────────────
 
+  @override
   Future<void> acceptAssessment(String assessmentId) async {
     await _put('/assessments/$assessmentId/accept', body: {});
   }
 
+  @override
   Future<void> declineAssessment(String assessmentId) async {
     await _put('/assessments/$assessmentId/decline', body: {});
   }
 
   // ── Equipment Reviews ──────────────────────────────────────
 
+  @override
   Future<List<EquipmentReview>> getEquipmentReviews(String itemId) async {
     final data = await _get('/equipment/$itemId/reviews');
     return (data['reviews'] as List)
@@ -709,6 +808,7 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
   Future<void> submitEquipmentReview(String itemId, int rating, String text) async {
     await _post('/equipment/$itemId/reviews', body: {
       'rating': rating,
@@ -718,6 +818,7 @@ class ApiService implements IApiService {
 
   // ── Staff Replacement ─────────────────────────────────────
 
+  @override
   Future<Map<String, dynamic>> requestReplacement(
     String deploymentId,
     String reason,
@@ -731,6 +832,7 @@ class ApiService implements IApiService {
 
   // ── Equipment Returns ─────────────────────────────────────
 
+  @override
   Future<Map<String, dynamic>> scheduleReturn({
     required String orderId,
     required String reason,
@@ -744,7 +846,7 @@ class ApiService implements IApiService {
       'pickup_date': pickupDate,
       'time_slot': timeSlot,
       'condition': condition,
-      if (photoUrl != null) 'photo_url': photoUrl,
+      'photo_url': ?photoUrl,
     });
   }
 }

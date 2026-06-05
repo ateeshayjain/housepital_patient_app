@@ -65,7 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 // Relationship
                 DropdownButtonFormField<String>(
-                  value: _relationship,
+                  initialValue: _relationship,
                   decoration: InputDecoration(
                       labelText: l.t('relationship_label')),
                   items: AppConstants.relationships.map((r) {
@@ -82,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 // Language
                 DropdownButtonFormField<String>(
-                  value: _language,
+                  initialValue: _language,
                   decoration:
                       InputDecoration(labelText: l.t('language_label')),
                   items: const [
@@ -107,7 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                     value: _enableNotifications,
-                    activeColor: HousepitalColors.orange,
+                    activeThumbColor: HousepitalColors.orange,
                     onChanged: (value) {
                       setState(() => _enableNotifications = value);
                     },

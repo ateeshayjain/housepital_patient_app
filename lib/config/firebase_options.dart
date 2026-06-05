@@ -36,11 +36,16 @@ class DefaultFirebaseOptions {
     storageBucket: 'housepital-patient.firebasestorage.app',
   );
 
-  static FirebaseOptions get ios {
-    throw UnsupportedError(
-      'iOS Firebase not configured. Register the iOS app at '
-      'https://console.firebase.google.com/project/housepital-patient/settings/general '
-      'and update this file with the real config.',
-    );
-  }
+  // iOS app registered in Firebase Console 2026-06-02 (bundle id
+  // com.housepital.housepitalPatient). Values mirror
+  // ios/Runner/GoogleService-Info.plist — keep the two in sync if the app
+  // is re-registered or the API key is rotated.
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCMPK4nMVjcgRm5pJx5uNpjyuYO19cII_g',
+    appId: '1:536139461614:ios:c149e94748af207d2754ff',
+    messagingSenderId: '536139461614',
+    projectId: 'housepital-patient',
+    storageBucket: 'housepital-patient.firebasestorage.app',
+    iosBundleId: 'com.housepital.housepitalPatient',
+  );
 }

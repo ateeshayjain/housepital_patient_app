@@ -190,7 +190,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             itemCount: _orderFilters.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) {
               final filter = _orderFilters[i];
               final selected = _orderFilter == filter;
@@ -441,18 +441,25 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   ),
                 ),
                 const SizedBox(height: 10),
-                ...reasons.map((reason) => RadioListTile<String>(
-                      title:
-                          Text(reason, style: const TextStyle(fontSize: 14)),
-                      value: reason,
-                      groupValue: selectedReason,
-                      activeColor: HousepitalColors.orange,
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (v) {
-                        setModalState(() => selectedReason = v);
-                      },
-                    )),
+                RadioGroup<String>(
+                  groupValue: selectedReason,
+                  onChanged: (v) {
+                    setModalState(() => selectedReason = v);
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: reasons
+                        .map((reason) => RadioListTile<String>(
+                              title: Text(reason,
+                                  style: const TextStyle(fontSize: 14)),
+                              value: reason,
+                              activeColor: HousepitalColors.orange,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ))
+                        .toList(),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -560,8 +567,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   Widget _buildAssessmentCard(Map<String, dynamic> assessment) {
     final status = assessment['status'] as String? ?? 'submitted';
     final serviceName = assessment['serviceName'] as String? ?? 'Assessment';
+    final serviceId = assessment['serviceId'] as String? ?? '';
     final assessmentId = assessment['id'] as String? ?? '';
     final createdAt = assessment['createdAt'] as String?;
+    // audit M-11: only let users mutate requests still in early lifecycle.
+    final isPending = status == 'submitted' || status == 'in_review';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -636,8 +646,80 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 fontStyle: FontStyle.italic,
               ),
             ),
+
+            // audit M-11: edit / cancel actions while still actionable.
+            if (isPending) ...[
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _editAssessment(serviceId, serviceName),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit request',
+                        style: TextStyle(fontSize: 13)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: HousepitalColors.orange,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _cancelAssessment(assessmentId),
+                    icon: const Icon(Icons.cancel_outlined, size: 16),
+                    label: const Text('Cancel request',
+                        style: TextStyle(fontSize: 13)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: HousepitalColors.error,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  // audit M-11: rebuild a minimal ServiceItem from persisted id/name so the
+  // request screen has something to render. The screen only reads .id and
+  // .name from widget.service (id drives the subtype switch).
+  void _editAssessment(String serviceId, String serviceName) {
+    if (serviceId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Cannot edit this request — service no longer available.')),
+      );
+      return;
+    }
+    final stub = ServiceItem(
+      id: serviceId,
+      name: serviceName,
+      category: 'manpower',
+      bookingType: 'assessment',
+    );
+    Navigator.pushNamed(context, '/assessment-request', arguments: stub);
+  }
+
+  // audit M-11: destructive confirm before flipping the assessment to
+  // cancelled. Uses the shared confirmDestructiveAction helper for parity
+  // with cart/order cancellation flows.
+  Future<void> _cancelAssessment(String assessmentId) async {
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Cancel request?',
+      message:
+          'This will withdraw your assessment request. Our team will stop following up.',
+      confirmLabel: 'Cancel request',
+      cancelLabel: 'Keep it',
+    );
+    if (!confirmed || !mounted) return;
+    context.read<OrdersProvider>().cancelAssessment(assessmentId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Assessment request cancelled'),
+        backgroundColor: HousepitalColors.success,
       ),
     );
   }

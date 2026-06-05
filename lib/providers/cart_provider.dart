@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import '../utils/logger.dart';
 
 class CartProvider extends ChangeNotifier {
   static const _cartKey = 'housepital_cart_items';
@@ -29,7 +30,10 @@ class CartProvider extends ChangeNotifier {
   // ── Cart operations ─────────────────────────────────────────
 
   void addItem(EquipmentItem equipment, {bool isRental = false, int rentalMonths = 1}) {
-    debugPrint('CartProvider.addItem: ${equipment.name}, id=${equipment.id}, isRental=$isRental, price=${equipment.price}, rentalPrice=${equipment.rentalPrice}');
+    // audit M-17 (extension): removed verbose per-add debugPrint that leaks
+    // equipment names + prices to logcat in debug/profile builds. The two
+    // remaining debugPrints below (persist/load error paths) are kept —
+    // those are exception handlers, which is the legitimate use case.
     // Check if already in cart (same equipment + same mode)
     final existingIndex = _items.indexWhere(
       (i) => i.equipmentId == equipment.id && i.isRental == isRental,
@@ -211,7 +215,7 @@ class CartProvider extends ChangeNotifier {
         json.encode(_savedItems.map((i) => i.toJson()).toList()),
       );
     } catch (e) {
-      debugPrint('Cart persist error: $e');
+      Log.warn('Cart persist error', error: e, tag: 'CartProvider');
     }
   }
 
@@ -245,7 +249,7 @@ class CartProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Cart load error: $e');
+      Log.warn('Cart load error', error: e, tag: 'CartProvider');
       // Ignore corrupt data — start fresh
     }
   }

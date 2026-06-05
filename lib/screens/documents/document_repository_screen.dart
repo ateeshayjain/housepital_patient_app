@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -181,7 +182,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final cat = _categories[index];
                 final selected = cat == _selectedCategory;
@@ -244,7 +245,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: _filteredDocs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, index) =>
                         _buildDocCard(_filteredDocs[index]),
                   ),
@@ -393,12 +394,39 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                   style: const TextStyle(
                       fontSize: 14, color: HousepitalColors.grey)),
             const SizedBox(height: 16),
-            _detailRow('Category', _categoryLabels[doc.category] ?? doc.category),
-            _detailRow('Type', doc.fileType.toUpperCase()),
-            _detailRow('Size', _formatFileSize(doc.fileSizeBytes ?? 0)),
-            _detailRow('Uploaded', DateHelper.formatDate(doc.uploadedAt)),
+            // audit batch 4 (Agent I): _detailRow → shared DetailRow widget
+            // (labelWidth/fontSize tuned to match the document-detail look).
+            DetailRow(
+              label: 'Category',
+              value: _categoryLabels[doc.category] ?? doc.category,
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Type',
+              value: doc.fileType.toUpperCase(),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Size',
+              value: _formatFileSize(doc.fileSizeBytes ?? 0),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Uploaded',
+              value: DateHelper.formatDate(doc.uploadedAt),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
             if (doc.uploadedBy != null)
-              _detailRow('Uploaded by', doc.uploadedBy!),
+              DetailRow(
+                label: 'Uploaded by',
+                value: doc.uploadedBy!,
+                labelWidth: 100,
+                valueFontSize: 13,
+              ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -420,16 +448,12 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  // audit M-16: actually launch the document URL via
+                  // url_launcher instead of a "coming soon" stub. Falls back
+                  // to a SnackBar pointing the user at Share if the URL is
+                  // missing/invalid or the launch fails.
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Document viewer coming soon'),
-                          backgroundColor: HousepitalColors.info,
-                        ),
-                      );
-                    },
+                    onPressed: () => _openDocument(doc),
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Open'),
                   ),
@@ -454,51 +478,59 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: HousepitalColors.greyLight)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
+  // audit batch 4 (Agent I): private _detailRow removed — replaced by the
+  // shared DetailRow widget in widgets/common_widgets.dart.
+
+  // audit M-16: attempt to launch the stored document URL in an external
+  // viewer (browser, PDF reader, etc). Closes the detail sheet first so the
+  // SnackBar fallback is visible. If fileUrl is null/empty/invalid or the
+  // launch fails, the user is pointed at Share as a workaround.
+  Future<void> _openDocument(MedicalDocument doc) async {
+    Navigator.pop(context); // close detail sheet
+    final url = doc.fileUrl;
+    if (url == null || url.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Couldn't open this document. Tap Share to send it to yourself."),
+        ),
+      );
+      return;
+    }
+    final uri = Uri.tryParse(url);
+    bool launched = false;
+    if (uri != null) {
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        launched = false;
+      }
+    }
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Couldn't open this document. Tap Share to send it to yourself."),
+        ),
+      );
+    }
   }
 
-  void _confirmDelete(MedicalDocument doc) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Document'),
-        content: Text('Are you sure you want to delete "${doc.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() => _documents.removeWhere((d) => d.id == doc.id));
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Document deleted')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: HousepitalColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+  // audit M-13: migrated to shared confirmDestructiveAction helper for
+  // consistent red CTA, haptic, and copy across destructive flows.
+  Future<void> _confirmDelete(MedicalDocument doc) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Delete document?',
+      message: 'Are you sure you want to delete "${doc.name}"?',
+      confirmLabel: 'Delete',
+    );
+    if (!ok || !mounted) return;
+    setState(() => _documents.removeWhere((d) => d.id == doc.id));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Document deleted')),
     );
   }
 
@@ -548,6 +580,11 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               _uploadFromGallery();
             },
           ),
+          // audit M-16: file_picker is not in pubspec.yaml, so a real
+          // PDF-selection flow isn't available yet. The honest "email to
+          // wecare@" pointer works identically on web and mobile (it's just a
+          // SnackBar, no dart:io), so we show it on all platforms rather than
+          // hiding the control with no explanation on web.
           ListTile(
             leading: Container(
               width: 40,
@@ -559,12 +596,14 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               child: const Icon(Icons.picture_as_pdf, color: Colors.green),
             ),
             title: const Text('Upload PDF'),
-            subtitle: const Text('Select a PDF file'),
+            subtitle: const Text(
+                'Email PDFs to wecare@housepital.in for now'),
             onTap: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('PDF upload coming soon'),
+                  content: Text(
+                      'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'),
                   backgroundColor: HousepitalColors.info,
                 ),
               );
@@ -630,7 +669,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: _categories
                     .where((c) => c != 'all')

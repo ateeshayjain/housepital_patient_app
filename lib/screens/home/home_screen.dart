@@ -1,19 +1,14 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
 import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
-import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/medication_provider.dart';
-import '../../services/api_service.dart';
-import '../../services/payment_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
@@ -21,7 +16,6 @@ import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
-import '../support/raise_concern_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,18 +26,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _dutyTimer;
-  Duration _onDutySince = Duration.zero;
-  List<PaymentReminder> _paymentReminders = [];
 
   // Banner carousel
   final PageController _bannerController = PageController();
   Timer? _bannerTimer;
   int _currentBannerPage = 0;
+  // audit M-18: hoisted from `% 3` literal so adding/removing slides in
+  // `_buildHeroBanner` automatically updates auto-scroll wrap-around.
+  // Defaults to 1 (safe modulo) and is overwritten on the first build.
+  int _slideCount = 1;
+
+  // audit batch 4 (Agent L): tracks AnimatedScale press state for cards that
+  // implement Apple's 0.98 press feedback (P5 — feedback latency under 100ms).
+  final Map<String, double> _pressedScale = {};
+
+  // audit batch 4 (Agent L): guard so we only attempt to start the banner
+  // auto-scroll once. We defer the start to didChangeDependencies because that
+  // is the first lifecycle hook where MediaQuery is available — required for
+  // the reduced-motion (P8) check.
+  bool _bannerAutoScrollStarted = false;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final app = context.read<AppProvider>();
       app.loadPatients().then((_) {
         app.loadDashboard();
@@ -54,39 +61,54 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
     _startDutyTimer();
-    _loadPaymentReminders();
-    _startBannerAutoScroll();
+    // audit batch 4 (Agent L): banner auto-scroll start moved to
+    // didChangeDependencies so MediaQuery.disableAnimations is available.
   }
 
-  Future<void> _loadPaymentReminders() async {
-    final service = PaymentReminderService(apiService: ApiService());
-    final reminders = await service.getUpcomingReminders();
-    if (mounted) {
-      setState(() => _paymentReminders = reminders);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_bannerAutoScrollStarted) {
+      _bannerAutoScrollStarted = true;
+      // audit batch 4 (Agent L): WCAG 2.3.3 / Apple P8 — honor the user's
+      // "Reduce Motion" / "Reduce Animations" OS setting. When disabled,
+      // skip the timer entirely so the carousel stays on the slide the user
+      // last saw and the dot indicator stops shifting on its own.
+      if (!MediaQuery.of(context).disableAnimations) {
+        _startBannerAutoScroll();
+      }
     }
   }
 
   void _startDutyTimer() {
     _dutyTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      final attendance = context.read<AppProvider>().todayAttendance;
-      if (attendance?.checkInTime != null && mounted) {
-        setState(() {
-          _onDutySince = DateTime.now().difference(attendance!.checkInTime!);
-        });
-      }
+      // Tick to refresh widgets that depend on elapsed duty time.
+      if (mounted) setState(() {});
     });
   }
 
   void _startBannerAutoScroll() {
     _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || !_bannerController.hasClients) return;
-      final nextPage = (_currentBannerPage + 1) % 3;
+      // audit M-18: derive wrap-around from actual slide count (set by
+      // `_buildHeroBanner` on each build) instead of the hardcoded `% 3`.
+      final nextPage = (_currentBannerPage + 1) % _slideCount;
       _bannerController.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  // audit batch 4 (Agent L): Apple cards spec — 0.98 scale on tap, 100ms.
+  // Identified by a string key so multiple tappable cards can share the map.
+  void _onCardPressDown(String id) {
+    setState(() => _pressedScale[id] = 0.98);
+  }
+
+  void _onCardPressUpOrCancel(String id) {
+    setState(() => _pressedScale[id] = 1.0);
   }
 
   @override
@@ -117,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context, l, app),
-                _buildHeroBanner(context),
                 _buildGreeting(context, app),
                 if (app.isDashboardLoading)
                   const Padding(
@@ -174,6 +195,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (canUserPerform(role, UserAction.pay))
                     _buildPaymentCards(context, app),
 
+                  const SizedBox(height: 12),
+
+                  // Hero banner — DEMOTED to the bottom as a promo surface.
+                  _buildHeroBanner(context),
+
                   const SizedBox(height: 24),
                 ],
               ],
@@ -195,59 +221,76 @@ class _HomeScreenState extends State<HomeScreen> {
     final caregiverName = contact?.name ?? 'your family caregiver';
     final caregiverPhone = contact?.phone;
 
+    // audit batch 4 (Agent L): Apple cards spec P5 — primary tappable cards
+    // confirm touch with a 0.98 scale, 100ms duration. Tracks press state via
+    // _pressedScale map keyed by 'call_caregiver'.
+    const cardId = 'call_caregiver';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Material(
-        color: HousepitalColors.orange,
-        borderRadius: BorderRadius.circular(16),
-        elevation: 1,
-        shadowColor: Colors.black12,
-        child: InkWell(
+      child: AnimatedScale(
+        scale: _pressedScale[cardId] ?? 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Material(
+          color: HousepitalColors.orange,
           borderRadius: BorderRadius.circular(16),
-          onTap: caregiverPhone != null
-              ? () => launchUrl(Uri.parse('tel:$caregiverPhone'))
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
+          elevation: 1,
+          shadowColor: Colors.black12,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: caregiverPhone != null
+                ? () => launchUrl(Uri.parse('tel:$caregiverPhone'))
+                : null,
+            onTapDown: caregiverPhone != null
+                ? (_) => _onCardPressDown(cardId)
+                : null,
+            onTapUp: caregiverPhone != null
+                ? (_) => _onCardPressUpOrCancel(cardId)
+                : null,
+            onTapCancel: caregiverPhone != null
+                ? () => _onCardPressUpOrCancel(cardId)
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.phone_in_talk,
+                        color: Colors.white, size: 32),
                   ),
-                  child: const Icon(Icons.phone_in_talk,
-                      color: Colors.white, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Call my family caregiver',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Call my family caregiver',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        caregiverPhone != null
-                            ? 'Tap to call $caregiverName · $caregiverPhone'
-                            : 'No family contact saved yet',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.95),
+                        const SizedBox(height: 4),
+                        Text(
+                          caregiverPhone != null
+                              ? 'Tap to call $caregiverName · $caregiverPhone'
+                              : 'No family contact saved yet',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.95),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -279,6 +322,13 @@ class _HomeScreenState extends State<HomeScreen> {
         color = HousepitalColors.greyLight;
         tooltip =
             "You're viewing your own care. Tap the big call button to reach your family.";
+        break;
+      // audit M-5: caretaker badge — view-only with concern raising.
+      case UserRole.caretaker:
+        label = 'Caretaker view';
+        color = HousepitalColors.grey;
+        tooltip =
+            'Read-only view for hired caretaker. You can raise concerns; booking and payment are restricted to the family.';
         break;
       default:
         return const SizedBox.shrink();
@@ -336,26 +386,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   Semantics(
                     label: 'Switch patient. Current: ${app.currentPatient!.name}',
                     button: true,
-                    child: InkWell(
-                      onTap: () => _showPatientSwitcher(context, app),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              l.t('dashboard_care',
-                                  {'name': app.currentPatient!.name}),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: HousepitalColors.grey,
+                    // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — chip is
+                    // visually 14pt text + 20pt icon (~28pt total), short of
+                    // the 44pt minimum. ConstrainedBox lifts the hit region to
+                    // 44pt without growing the visible chip; align centers it.
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      child: InkWell(
+                        onTap: () => _showPatientSwitcher(context, app),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l.t('dashboard_care',
+                                    {'name': app.currentPatient!.name}),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: HousepitalColors.grey,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.arrow_drop_down,
-                                color: HousepitalColors.grey, size: 20),
-                          ],
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_drop_down,
+                                  color: HousepitalColors.grey, size: 20),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -372,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Consumer<CartProvider>(
-            builder: (_, cart, __) => Semantics(
+            builder: (_, cart, _) => Semantics(
               label: 'Cart${cart.itemCount > 0 ? ", ${cart.itemCount} items" : ""}',
               button: true,
               child: IconButton(
@@ -432,6 +489,9 @@ class _HomeScreenState extends State<HomeScreen> {
         imagePath: 'assets/images/branding/hero_family.jpg',
       ),
     ];
+    // audit M-18: stash the count so the auto-scroll timer wraps on the real
+    // slide count rather than a hardcoded `3`.
+    _slideCount = slides.length;
 
     return Column(
       children: [
@@ -572,37 +632,27 @@ class _HomeScreenState extends State<HomeScreen> {
   // Personal Greeting
   // ---------------------------------------------------------------------------
   Widget _buildGreeting(BuildContext context, AppProvider app) {
-    final patientName = app.currentPatient?.name ?? 'there';
-    final firstName = patientName.split(' ').first;
-    final hasActiveService = app.activeDeployment != null;
-
+    final firstName = (app.currentPatient?.name ?? 'there').split(' ').first;
+    // Layout B: collapse the greeting to a single line — name + role badge on
+    // one Row. The standalone "Here's your care summary" subtitle is dropped
+    // to reclaim vertical space at the top of the scroll.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
         children: [
-          Text(
-            'Hi $firstName!',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: HousepitalColors.orangeText,
+          Flexible(
+            child: Text(
+              'Hi $firstName!',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: HousepitalColors.orangeText,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          // Role pill — orange for primary contact, blue for family,
-          // grey for the patient themselves. Tooltip explains limitations.
+          const SizedBox(width: 8),
           _buildRoleBadge(app.currentUserRole),
-          const SizedBox(height: 4),
-          Text(
-            hasActiveService
-                ? "Here's your care summary"
-                : 'Welcome back',
-            style: const TextStyle(
-              fontSize: 14,
-              color: HousepitalColors.greyLight,
-            ),
-          ),
         ],
       ),
     );
@@ -715,9 +765,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final attendance = app.todayAttendance;
     final status = attendance?.status ?? 'waiting';
     final statusColor = AttendanceHelper.getStatusColor(status);
-    final daysRemaining = deployment.endDate != null
-        ? deployment.endDate!.difference(DateTime.now()).inDays
-        : null;
+    final daysRemaining = deployment.endDate?.difference(DateTime.now()).inDays;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -787,87 +835,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Vitals with color-coded status dots
-  // ---------------------------------------------------------------------------
-  Widget _buildVitalsHighlights(
-      BuildContext context, AppLocalizations l, AppProvider app) {
-    final vitals = app.latestVitals;
-
-    Color _vitalStatusColor(String type, double? value) {
-      if (value == null) return HousepitalColors.greyLight;
-      final zone = classifyVital(type, value);
-      switch (zone) {
-        case 'green':
-          return HousepitalColors.vitalNormal;
-        case 'yellow':
-          return HousepitalColors.vitalBorderline;
-        case 'red':
-          return HousepitalColors.vitalAlert;
-        default:
-          return HousepitalColors.greyLight;
-      }
-    }
-
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        SectionHeader(
-          title: l.t('todays_vitals'),
-          actionText: l.t('see_all'),
-          onAction: () => Navigator.pushNamed(context, '/vitals'),
-        ),
-        const SizedBox(height: 4),
-        SizedBox(
-          height: 72,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _VitalPill(
-                label: 'BP',
-                value: vitals?.systolic != null
-                    ? '${vitals!.systolic!.toInt()}/${vitals.diastolic?.toInt() ?? ""}'
-                    : '--',
-                unit: 'mmHg',
-                color: _vitalStatusColor('bp_systolic', vitals?.systolic),
-                onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'bp'),
-              ),
-              _VitalPill(
-                label: 'SpO2',
-                value: vitals?.spo2?.toInt().toString() ?? '--',
-                unit: '%',
-                color: _vitalStatusColor('spo2', vitals?.spo2),
-                onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'spo2'),
-              ),
-              _VitalPill(
-                label: 'Pulse',
-                value: vitals?.pulse?.toInt().toString() ?? '--',
-                unit: 'bpm',
-                color: _vitalStatusColor('pulse', vitals?.pulse),
-                onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'pulse'),
-              ),
-              _VitalPill(
-                label: 'Temp',
-                value: vitals?.temperature?.toStringAsFixed(1) ?? '--',
-                unit: '\u00B0F',
-                color: _vitalStatusColor('temperature', vitals?.temperature),
-                onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'temperature'),
-              ),
-              _VitalPill(
-                label: 'Sugar',
-                value: vitals?.sugar?.toInt().toString() ?? '--',
-                unit: 'mg/dl',
-                color: _vitalStatusColor('sugar', vitals?.sugar),
-                onTap: () => Navigator.pushNamed(context, '/vitals', arguments: 'sugar'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Quick Actions Grid (2x3)
   // ---------------------------------------------------------------------------
   Widget _buildQuickActionsGrid(BuildContext context, AppLocalizations l) {
@@ -933,45 +900,56 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: actions.map((action) {
+          // audit batch 4 (Agent L): Apple cards spec P5 — each quick-action
+          // tile gets a 0.98 scale press feedback (100ms). Keyed by label so
+          // each tile tracks its own pressed state independently.
+          final tileId = 'quick_${action.label}';
           return Expanded(
             child: Semantics(
               button: true,
               label: action.label,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: action.onTap,
-                  child: Container(
-                    // WCAG 2.5.5 — guarantee at least a 44pt tap target.
-                    constraints: const BoxConstraints(minHeight: 56),
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: action.color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+              child: AnimatedScale(
+                scale: _pressedScale[tileId] ?? 1.0,
+                duration: const Duration(milliseconds: 100),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: action.onTap,
+                    onTapDown: (_) => _onCardPressDown(tileId),
+                    onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+                    onTapCancel: () => _onCardPressUpOrCancel(tileId),
+                    child: Container(
+                      // WCAG 2.5.5 — guarantee at least a 44pt tap target.
+                      constraints: const BoxConstraints(minHeight: 56),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: action.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(action.icon,
+                                color: action.color, size: 20),
                           ),
-                          child: Icon(action.icon,
-                              color: action.color, size: 20),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          action.label,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HousepitalColors.grey,
+                          const SizedBox(height: 4),
+                          Text(
+                            action.label,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: HousepitalColors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -996,7 +974,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => Navigator.pushNamed(context, '/daimaa'),
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.all(18),
+            // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap from off-grid
+            // 18 to 16. Visual change is negligible (2pt) but aligns with the
+            // rest of the home cards.
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
@@ -1101,14 +1082,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 15, fontWeight: FontWeight.w700, color: HousepitalColors.black)),
           ),
           if (onSeeAll != null)
-            GestureDetector(
-              onTap: onSeeAll,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text('See All',
-                    style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
+            // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — guarantee a
+            // 44pt minimum tap target. Previous GestureDetector wrapped only
+            // 12pt text + 4pt vertical padding (~20pt total). TextButton gives
+            // us Material's 48dp default plus a hit region that comfortably
+            // clears 44pt without growing the visible "See All" label.
+            TextButton(
+              onPressed: onSeeAll,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                foregroundColor: HousepitalColors.orange,
+                tapTargetSize: MaterialTapTargetSize.padded,
+                visualDensity: VisualDensity.standard,
               ),
+              child: const Text('See All',
+                  style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
             ),
         ],
       ),
@@ -1295,7 +1285,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const Text('Overdue Payment',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HousepitalColors.error)),
-                        Text('₹${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate!)}',
+                        // audit batch 4 (Agent L): drop the duplicate ₹ —
+                        // DateHelper.formatCurrency already prepends the
+                        // symbol, so the previous string rendered as "₹₹3,000".
+                        Text('${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
                             style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
                       ],
                     ),
@@ -1470,440 +1463,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Daily Report Section (legacy — kept for reference)
-  // ---------------------------------------------------------------------------
-  Widget _buildDailyReportSection(
-      BuildContext context, AppLocalizations l, AppProvider app) {
-    final report = app.todayReport;
-
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        SectionHeader(
-          title: l.t('todays_report'),
-          actionText: l.t('details'),
-          onAction: () {
-            if (report != null) {
-              Navigator.pushNamed(context, '/report-detail',
-                  arguments: report.id);
-            }
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: HousepitalCard(
-            onTap: () {
-              if (report != null) {
-                Navigator.pushNamed(context, '/report-detail',
-                    arguments: report.id);
-              }
-            },
-            child: report != null
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Semantics(
-                            label:
-                                '${report.completedTasks} of ${report.totalTasks} tasks completed',
-                            child: SizedBox(
-                              width: 80,
-                              height: 80,
-                              child: CustomPaint(
-                                painter: _ProgressRingPainter(
-                                  progress: report.totalTasks > 0
-                                      ? report.completedTasks /
-                                          report.totalTasks
-                                      : 0,
-                                  color: HousepitalColors.orange,
-                                  backgroundColor: HousepitalColors.greyLighter,
-                                  strokeWidth: 8,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${report.completedTasks}/${report.totalTasks}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: HousepitalColors.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l.t('completion', {
-                                    'percent': report.completionPercent
-                                        .toInt()
-                                        .toString(),
-                                    'done':
-                                        report.completedTasks.toString(),
-                                    'total':
-                                        report.totalTasks.toString(),
-                                  }),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: HousepitalColors.black,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Tasks completed today',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: HousepitalColors.greyLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(height: 1),
-                      const SizedBox(height: 12),
-                      ...report.sections.map((section) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  section.status == 'done'
-                                      ? Icons.check_circle
-                                      : section.status == 'partial'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_unchecked,
-                                  size: 20,
-                                  color: section.status == 'done'
-                                      ? HousepitalColors.success
-                                      : section.status == 'partial'
-                                          ? HousepitalColors.warning
-                                          : HousepitalColors.greyLight,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    section.name,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: HousepitalColors.black,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  _sectionTaskCount(section),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: HousepitalColors.greyLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Semantics(
-                          label: 'View full daily report',
-                          button: true,
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pushNamed(
-                                context, '/report-detail',
-                                arguments: report.id),
-                            child: const Text('View Full Report'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        l.t('no_data'),
-                        style: const TextStyle(
-                            color: HousepitalColors.greyLight),
-                      ),
-                    ),
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _sectionTaskCount(dynamic section) {
-    final tasks = section.tasks;
-    final done = tasks.where((t) => t.completed).length;
-    return '$done/${tasks.length}';
-  }
-
-  // ---------------------------------------------------------------------------
-  // Payment Reminders
-  // ---------------------------------------------------------------------------
-  Widget _buildPaymentBanner(
-      BuildContext context, AppLocalizations l, AppProvider app) {
-    final reminders = _paymentReminders;
-    final urgentReminders =
-        reminders.where((r) => r.shouldShowReminder).toList();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (urgentReminders.isNotEmpty)
-            ...urgentReminders.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: r.urgencyColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: r.urgencyColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.notifications_active,
-                                color: r.urgencyColor, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                r.urgencyLabel,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: r.urgencyColor,
-                                ),
-                              ),
-                            ),
-                            if (!r.autoPayEnabled)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text('Auto-pay OFF',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: HousepitalColors.greyLight)),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          r.serviceName,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              DateHelper.formatCurrency(r.amount.toInt()),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: HousepitalColors.orangeText,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                TextButton(
-                                  onPressed: () => Navigator.pushNamed(
-                                      context, '/payment-methods'),
-                                  child: const Text('Set up Auto-pay',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: HousepitalColors.greyLight)),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pushNamed(
-                                      context, '/billing'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
-                                    backgroundColor: r.urgencyColor,
-                                  ),
-                                  child: const Text('Pay Now',
-                                      style: TextStyle(fontSize: 13)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                )),
-          if (reminders.length > urgentReminders.length) ...[
-            const SizedBox(height: 4),
-            GestureDetector(
-              onTap: () => _showAllReminders(context, reminders),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.schedule,
-                        color: HousepitalColors.orange, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${reminders.length - urgentReminders.length} more upcoming payment${reminders.length - urgentReminders.length > 1 ? "s" : ""}',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right,
-                        size: 18, color: HousepitalColors.greyLight),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showAllReminders(
-      BuildContext context, List<PaymentReminder> reminders) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (_, scrollController) => Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Row(
-                children: [
-                  Icon(Icons.schedule, color: HousepitalColors.orange),
-                  SizedBox(width: 10),
-                  Text('Upcoming Payments',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: reminders.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) {
-                  final r = reminders[i];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: r.urgencyColor,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(r.serviceName,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 2),
-                              Text(r.urgencyLabel,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: r.urgencyColor,
-                                      fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              DateHelper.formatCurrency(r.amount.toInt()),
-                              style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: HousepitalColors.orangeText),
-                            ),
-                            Text(r.billingCycle,
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    color: HousepitalColors.greyLight)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.pushNamed(context, '/payment-methods');
-                  },
-                  icon: const Icon(Icons.credit_card, size: 18),
-                  label: const Text('Set up Auto-pay for All'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HousepitalColors.orange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Patient Switcher
   // ---------------------------------------------------------------------------
   void _showPatientSwitcher(BuildContext context, AppProvider app) {
@@ -2066,244 +1625,3 @@ class _TeamMemberRow extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// Active Service Card
-// =============================================================================
-class _ActiveServiceCard extends StatelessWidget {
-  final String serviceName;
-  final String staffName;
-  final int? daysRemaining;
-  final bool isCheckedIn;
-  final VoidCallback onTap;
-
-  const _ActiveServiceCard({
-    required this.serviceName,
-    required this.staffName,
-    this.daysRemaining,
-    required this.isCheckedIn,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Material(
-        color: HousepitalColors.white,
-        borderRadius: BorderRadius.circular(14),
-        elevation: 1,
-        shadowColor: Colors.black12,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            width: 200,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        serviceName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: isCheckedIn
-                            ? HousepitalColors.success
-                            : HousepitalColors.greyLight,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  staffName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: HousepitalColors.greyLight,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                if (daysRemaining != null)
-                  Text(
-                    '$daysRemaining days remaining',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: HousepitalColors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Vital Pill
-// =============================================================================
-class _VitalPill extends StatelessWidget {
-  final String label;
-  final String value;
-  final String unit;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _VitalPill({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: '$label: $value $unit',
-      button: onTap != null,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: Material(
-          color: HousepitalColors.white,
-          borderRadius: BorderRadius.circular(16),
-          elevation: 0,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: HousepitalColors.divider),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: HousepitalColors.greyLight,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            value,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            unit,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: HousepitalColors.greyLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.chevron_right, size: 16, color: HousepitalColors.greyLight),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Progress Ring Painter
-// =============================================================================
-class _ProgressRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final Color backgroundColor;
-  final double strokeWidth;
-
-  _ProgressRingPainter({
-    required this.progress,
-    required this.color,
-    required this.backgroundColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
-
-    final bgPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, bgPaint);
-
-    final progressPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final sweepAngle = 2 * math.pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ProgressRingPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.color != color;
-  }
-}

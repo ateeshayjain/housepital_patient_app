@@ -116,6 +116,43 @@ void main() {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CARETAKER — view + raise concern only (audit M-5)
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('CARETAKER permissions', () {
+    test('can view', () {
+      expect(canUserPerform('CARETAKER', 'view'), isTrue);
+    });
+
+    test('can raise concern', () {
+      expect(canUserPerform('CARETAKER', 'raise_concern'), isTrue);
+    });
+
+    test('CANNOT book', () {
+      expect(canUserPerform('CARETAKER', 'book'), isFalse);
+    });
+
+    test('CANNOT request booking (narrower than FAMILY_MEMBER)', () {
+      expect(canUserPerform('CARETAKER', 'request_booking'), isFalse);
+    });
+
+    test('CANNOT pay', () {
+      expect(canUserPerform('CARETAKER', 'pay'), isFalse);
+    });
+
+    test('CANNOT edit patient', () {
+      expect(canUserPerform('CARETAKER', 'edit_patient'), isFalse);
+    });
+
+    test('CANNOT manage family', () {
+      expect(canUserPerform('CARETAKER', 'manage_family'), isFalse);
+    });
+
+    test('CANNOT rate', () {
+      expect(canUserPerform('CARETAKER', 'rate'), isFalse);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Edge cases
   // ═══════════════════════════════════════════════════════════════════════════
   group('Edge cases', () {
@@ -159,8 +196,93 @@ void main() {
       expect(actions, contains('view'));
     });
 
+    test('CARETAKER has 2 actions (view + raise_concern)', () {
+      final actions = getAllowedActions('CARETAKER');
+      expect(actions.length, 2);
+      expect(actions, containsAll(['view', 'raise_concern']));
+      expect(actions, isNot(contains('book')));
+      expect(actions, isNot(contains('request_booking')));
+      expect(actions, isNot(contains('pay')));
+      expect(actions, isNot(contains('rate')));
+    });
+
     test('unknown role returns empty set', () {
       expect(getAllowedActions('RANDOM'), isEmpty);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Scenario coverage — added in batch 3 to extend the CARETAKER tests above.
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('CARETAKER scenarios — UI gates', () {
+    // My Orders screen gates the cancel button on `canUserPerform(role, 'pay')`
+    // because cancelling triggers a refund — only the payer can authorise it.
+    // Confirm the gate reads false for a CARETAKER so the cancel button stays hidden.
+    test('cannot cancel an order — pay permission is the gate', () {
+      expect(canUserPerform('CARETAKER', 'pay'), isFalse,
+          reason:
+              'my_orders_screen.dart gates cancel on `pay` permission; CARETAKER must not be able to refund.');
+    });
+  });
+
+  group('Runtime role switch', () {
+    // When a user changes role (e.g. demoted from primary contact to caretaker
+    // because someone else took over billing), the action set must shrink.
+    test('PRIMARY_CONTACT → CARETAKER returns a smaller action set', () {
+      final primaryActions = getAllowedActions('PRIMARY_CONTACT');
+      final caretakerActions = getAllowedActions('CARETAKER');
+
+      expect(caretakerActions.length, lessThan(primaryActions.length));
+      // Every caretaker action must be a subset of the broader primary set —
+      // CARETAKER should not be granted any action a PRIMARY_CONTACT lacks.
+      expect(primaryActions.containsAll(caretakerActions), isTrue,
+          reason: 'CARETAKER actions must be a strict subset of PRIMARY_CONTACT.');
+    });
+
+    test('PRIMARY_CONTACT → FAMILY_MEMBER → CARETAKER narrows progressively',
+        () {
+      final p = getAllowedActions('PRIMARY_CONTACT').length;
+      final f = getAllowedActions('FAMILY_MEMBER').length;
+      final c = getAllowedActions('CARETAKER').length;
+      expect(p, greaterThan(f));
+      expect(f, greaterThan(c));
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Defensive default — unknown role strings must NEVER be granted any action.
+  // This is security-adjacent: a typo or upstream bug must fail closed.
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('Unknown role defensive default', () {
+    test('INTRUDER role returns false for every known action', () {
+      // Iterate every defined action — none should be permitted for an unknown role.
+      const allActions = [
+        'book',
+        'request_booking',
+        'pay',
+        'edit_patient',
+        'manage_family',
+        'view',
+        'rate',
+        'raise_concern',
+      ];
+      for (final action in allActions) {
+        expect(canUserPerform('INTRUDER', action), isFalse,
+            reason:
+                'Unknown role "INTRUDER" must NOT be allowed to perform "$action".');
+      }
+    });
+
+    test('null-ish & whitespace roles all return false', () {
+      const sketchyRoles = ['', ' ', 'primary_contact', 'Primary_Contact', '\n'];
+      for (final role in sketchyRoles) {
+        expect(canUserPerform(role, 'view'), isFalse,
+            reason: 'Role "$role" must be rejected (case-sensitive match).');
+      }
+    });
+
+    test('getAllowedActions("INTRUDER") is empty', () {
+      expect(getAllowedActions('INTRUDER'), isEmpty);
     });
   });
 }

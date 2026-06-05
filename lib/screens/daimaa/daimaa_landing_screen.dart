@@ -49,9 +49,16 @@ class DaiMaaLandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Plum on dark surface is too low-contrast for headings — use the
+    // brand-tinted helpers from daimaa_theme.dart.
+    final primaryText = daiMaaPrimaryText(context);
+    final accent = daiMaaAccent(context);
+    final cardColor = daiMaaCardSurface(context);
     return Scaffold(
-      backgroundColor: DaiMaaColors.cream,
+      backgroundColor: daiMaaScaffold(context),
       appBar: AppBar(
+        // Plum app bar in both modes — keeps brand colour up top.
         backgroundColor: DaiMaaColors.plum,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -73,12 +80,12 @@ class DaiMaaLandingScreen extends StatelessWidget {
                   'trimester through toddler years.',
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Choose the care you need',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: DaiMaaColors.plum,
+                color: primaryText,
               ),
             ),
             const SizedBox(height: 12),
@@ -106,34 +113,40 @@ class DaiMaaLandingScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: DaiMaaColors.pink, width: 1.5),
+                border: Border.all(
+                  color: isDark ? DaiMaaColors.lavender : DaiMaaColors.pink,
+                  width: 1.5,
+                ),
               ),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.support_agent,
                     size: 40,
-                    color: DaiMaaColors.plum,
+                    color: accent,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Not sure what you need?',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: DaiMaaColors.plum,
+                      color: primaryText,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Speak with a Dai Maa coordinator — '
                     'we\'ll guide you through the right fit for your family.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black54,
+                      color: isDark
+                          ? DaiMaaColorsDark.textPrimary
+                              .withValues(alpha: 0.75)
+                          : Colors.black54,
                       height: 1.35,
                     ),
                   ),
@@ -144,6 +157,8 @@ class DaiMaaLandingScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: _callCoordinator,
                       style: ElevatedButton.styleFrom(
+                        // Plum CTA reads on both surfaces — keep brand colour
+                        // (white text on plum = ~9:1, AA-compliant).
                         backgroundColor: DaiMaaColors.plum,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -164,13 +179,13 @@ class DaiMaaLandingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Text(
                 DaiMaaColors.lockup,
                 style: TextStyle(
                   fontSize: 11,
                   letterSpacing: 1.2,
-                  color: DaiMaaColors.plum,
+                  color: accent,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -199,8 +214,17 @@ class _DaiMaaServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = daiMaaCardSurface(context);
+    final titleColor = daiMaaPrimaryText(context);
+    final accent = daiMaaAccent(context);
+    // Lavender border reads better on dark surfaces than plum.
+    final borderColor = isDark ? DaiMaaColors.lavender : DaiMaaColors.plum;
+    final descriptionColor = isDark
+        ? DaiMaaColorsDark.textPrimary.withValues(alpha: 0.85)
+        : Colors.black87;
     return Material(
-      color: Colors.white,
+      color: cardColor,
       borderRadius: BorderRadius.circular(16),
       elevation: 1,
       shadowColor: DaiMaaColors.plum.withValues(alpha: 0.15),
@@ -214,7 +238,7 @@ class _DaiMaaServiceCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: DaiMaaColors.plum, width: 1.5),
+            border: Border.all(color: borderColor, width: 1.5),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -226,10 +250,12 @@ class _DaiMaaServiceCard extends StatelessWidget {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: DaiMaaColors.lavender.withValues(alpha: 0.25),
+                      color: isDark
+                          ? DaiMaaColors.lavender.withValues(alpha: 0.18)
+                          : DaiMaaColors.lavender.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(icon, size: 30, color: DaiMaaColors.plum),
+                    child: Icon(icon, size: 30, color: accent),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -238,10 +264,10 @@ class _DaiMaaServiceCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: DaiMaaColors.plum,
+                            color: titleColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -249,15 +275,22 @@ class _DaiMaaServiceCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: DaiMaaColors.pink.withValues(alpha: 0.5),
+                            // Pink @ 50% reads as light-pink on cream and
+                            // as muted-plum on dark — both have AA contrast
+                            // with their respective text colours below.
+                            color: isDark
+                                ? DaiMaaColors.pink.withValues(alpha: 0.25)
+                                : DaiMaaColors.pink.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             ageRange,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: DaiMaaColors.plum,
+                              color: isDark
+                                  ? DaiMaaColorsDark.pinkLight
+                                  : DaiMaaColors.plum,
                             ),
                           ),
                         ),
@@ -269,9 +302,9 @@ class _DaiMaaServiceCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Colors.black87,
+                  color: descriptionColor,
                   height: 1.4,
                 ),
               ),

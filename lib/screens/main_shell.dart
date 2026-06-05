@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../utils/app_localizations.dart';
+import '../widgets/assistant_fab.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -11,18 +12,18 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   /// Global key to allow switching tabs from anywhere.
-  static final GlobalKey<_MainShellState> shellKey =
-      GlobalKey<_MainShellState>();
+  static final GlobalKey<MainShellState> shellKey =
+      GlobalKey<MainShellState>();
 
   static void switchToTab(int index) {
     shellKey.currentState?.switchTab(index);
   }
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final _screens = [
@@ -47,6 +48,7 @@ class _MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
+      floatingActionButton: const AssistantFab(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),

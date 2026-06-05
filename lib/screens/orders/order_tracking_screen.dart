@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -126,16 +127,21 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Order Tracking')),
+      // audit batch 4 (Agent L): Apple P5 (perceived performance) — replace
+      // bare spinner with a Shimmer skeleton that mimics the final timeline
+      // layout so the page feels populated within the same frame.
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildSkeleton()
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Order ID
+                  // audit M-8: guard against substring crash for booking IDs
+                  // shorter than 8 chars (e.g. legacy ids, test fixtures).
                   Text(
-                    'Order #${widget.bookingId.substring(0, 8).toUpperCase()}',
+                    'Order #${(widget.bookingId.length >= 8 ? widget.bookingId.substring(0, 8) : widget.bookingId).toUpperCase()}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -171,6 +177,85 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                 ],
               ),
             ),
+    );
+  }
+
+  // audit batch 4 (Agent L): Shimmer skeleton — order header, ETA card,
+  // assigned-staff card, and 5 timeline rows with leading 28pt circles.
+  // Mirrors the post-load layout so there's no jarring shift when data arrives.
+  Widget _buildSkeleton() {
+    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final highlight = Theme.of(context).colorScheme.surface;
+    Widget bar({double width = double.infinity, double height = 14}) => Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            bar(width: 180, height: 18),
+            const SizedBox(height: 8),
+            bar(width: 120, height: 14),
+            const SizedBox(height: 24),
+            // ETA card
+            Container(
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Staff card
+            Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Timeline — 5 rows
+            ...List.generate(5, (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            bar(width: 140, height: 14),
+                            const SizedBox(height: 6),
+                            bar(width: 220, height: 12),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
+      ),
     );
   }
 
@@ -286,7 +371,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                   if (isCurrent)
                     AnimatedBuilder(
                       animation: _pulseAnimation,
-                      builder: (_, __) => Container(
+                      builder: (_, _) => Container(
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(

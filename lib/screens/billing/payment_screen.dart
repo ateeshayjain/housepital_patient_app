@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/cart_provider.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/pricing.dart';
 import '../../widgets/common_widgets.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -62,7 +65,31 @@ class _PaymentScreenState extends State<PaymentScreen>
   });
 
   int get _subtotal => widget.amount;
-  int get _gstAmount => ((_subtotal - _discountAmount) * 0.18).round();
+
+  /// audit M-14: GST is now computed per line item, not as a flat 18% on the
+  /// whole subtotal. Each [CartItem] exposes a [gstRate] getter that returns:
+  ///   - 0.00 for healthcare manpower (exempt under Notification 12/2017)
+  ///   - 0.05 for diagnostic lab tests
+  ///   - 0.18 for durable medical equipment
+  ///
+  /// When this screen is opened from the cart, the live cart drives the
+  /// computation. When it's opened from an invoice (no cart context), we fall
+  /// back to GST = 0 — the invoice's `grandTotal` already bakes GST in, so
+  /// applying it again would double-tax the patient.
+  ///
+  /// We prorate the discount across line items so a coupon doesn't change the
+  /// effective per-line rate.
+  List<CartItem> get _cartItems {
+    try {
+      return context.read<CartProvider>().items.toList();
+    } catch (_) {
+      return const <CartItem>[];
+    }
+  }
+
+  int get _gstAmount =>
+      computeCartGst(_cartItems, discount: _discountAmount);
+
   int get _totalAmount => _subtotal - _discountAmount + _gstAmount;
 
   @override
@@ -682,6 +709,11 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Widget _buildPriceBreakdown(AppLocalizations l) {
+    // audit M-14: hide the GST row entirely when total GST is 0 (e.g. cart
+    // contains only nursing/manpower line items which are GST-exempt).
+    // Rendering "GST: ₹0" was confusing patients into thinking we charge GST
+    // on services that are actually exempt.
+    final gst = _gstAmount;
     return HousepitalCard(
       child: Column(
         children: [
@@ -694,13 +726,102 @@ class _PaymentScreenState extends State<PaymentScreen>
               valueColor: HousepitalColors.success,
             ),
           ],
-          const SizedBox(height: 8),
-          _buildPriceRow('GST (18%)', _gstAmount),
+          if (gst > 0) ...[
+            const SizedBox(height: 8),
+            _buildGstRow(gst),
+          ],
           const SizedBox(height: 8),
           const Divider(),
           const SizedBox(height: 8),
           _buildPriceRow(l.t('total'), _totalAmount, isBold: true),
         ],
+      ),
+    );
+  }
+
+  // audit M-14: GST row with an info icon that opens a bottom sheet
+  // explaining the per-category breakdown. We label the row "GST" (no flat
+  // percentage) because the effective rate is a blend now.
+  Widget _buildGstRow(int gst) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'GST',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: HousepitalColors.grey,
+              ),
+            ),
+            const SizedBox(width: 4),
+            InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: _showGstExplainer,
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: HousepitalColors.greyLight,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Text(
+          DateHelper.formatCurrency(gst),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: HousepitalColors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showGstExplainer() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'How GST is calculated',
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Healthcare nursing is GST-exempt under Notification 12/2017. '
+                'Equipment carries 18% GST. Lab tests carry 5%. '
+                'Your total GST is the sum of each line item taxed at its own rate.',
+                style: TextStyle(
+                    fontSize: 14, height: 1.4, color: HousepitalColors.grey),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Got it'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
