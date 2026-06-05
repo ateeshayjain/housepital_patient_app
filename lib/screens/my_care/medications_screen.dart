@@ -18,6 +18,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final patientId = context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
       context.read<MedicationProvider>().loadMedications(patientId);
     });
@@ -43,6 +44,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         onPressed: () async {
           final result = await Navigator.pushNamed(context, '/medication-add');
           if (result == true) {
+            if (!context.mounted) return;
             final patientId = context.read<AppProvider>().currentPatient?.id;
             if (patientId != null) {
               medProv.loadMedications(patientId);
@@ -109,6 +111,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           final result = await Navigator.pushNamed(context, '/medication-add',
               arguments: med);
           if (result == true) {
+            if (!context.mounted) return;
             final patientId = context.read<AppProvider>().currentPatient?.id;
             if (patientId != null) medProv.loadMedications(patientId);
           }

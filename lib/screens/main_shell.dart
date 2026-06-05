@@ -11,18 +11,18 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   /// Global key to allow switching tabs from anywhere.
-  static final GlobalKey<_MainShellState> shellKey =
-      GlobalKey<_MainShellState>();
+  static final GlobalKey<MainShellState> shellKey =
+      GlobalKey<MainShellState>();
 
   static void switchToTab(int index) {
     shellKey.currentState?.switchTab(index);
   }
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final _screens = [

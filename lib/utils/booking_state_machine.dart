@@ -6,6 +6,7 @@
 ///   in_progress -> completed
 ///   completed -> (terminal — no transitions)
 ///   cancelled -> (terminal — no transitions)
+library;
 
 class BookingStatus {
   static const String pending = 'pending';

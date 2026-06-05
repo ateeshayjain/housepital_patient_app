@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/logger.dart';
 
 class CacheService {
   static const _prefix = 'housepital_cache_';
@@ -30,7 +30,7 @@ class CacheService {
       if (_isExpired(timestamp)) return null;
       return wrapper['data'] as T?;
     } catch (e) {
-      debugPrint('CacheService: failed to parse cache for $key: $e');
+      Log.warn('Failed to parse cache for $key', error: e, tag: 'CacheService');
       return null;
     }
   }
@@ -65,7 +65,8 @@ class CacheService {
       final cached = DateTime.fromMillisecondsSinceEpoch(timestamp);
       return DateTime.now().difference(cached).inMinutes;
     } catch (e) {
-      debugPrint('CacheService: failed to parse cache age for $key: $e');
+      Log.warn('Failed to parse cache age for $key',
+          error: e, tag: 'CacheService');
       return null;
     }
   }

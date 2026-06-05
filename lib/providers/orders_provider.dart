@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import '../utils/logger.dart';
 
 class OrdersProvider extends ChangeNotifier {
   static const _ordersKey = 'housepital_orders';
@@ -149,7 +150,8 @@ class OrdersProvider extends ChangeNotifier {
       await prefs.setString(_ordersKey, jsonEncode(_orders));
       await prefs.setString(_assessmentsKey, jsonEncode(_assessments));
     } catch (e) {
-      debugPrint('OrdersProvider: failed to persist: $e');
+      Log.warn('Failed to persist orders/assessments',
+          error: e, tag: 'OrdersProvider');
     }
   }
 
@@ -172,7 +174,8 @@ class OrdersProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('OrdersProvider: failed to load: $e');
+      Log.warn('Failed to load orders/assessments',
+          error: e, tag: 'OrdersProvider');
       notifyListeners();
     }
   }

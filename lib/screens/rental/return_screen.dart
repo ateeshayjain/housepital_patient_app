@@ -170,15 +170,21 @@ class _ReturnScreenState extends State<ReturnScreen> {
               fontSize: 15, fontWeight: FontWeight.w600,
             )),
             const SizedBox(height: 8),
-            ...(_conditions.map((c) => RadioListTile<String>(
-              value: c,
+            RadioGroup<String>(
               groupValue: _condition,
-              title: Text(c),
-              activeColor: HousepitalColors.orange,
               onChanged: (v) => setState(() => _condition = v!),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-            ))),
+              child: Column(
+                children: _conditions
+                    .map((c) => RadioListTile<String>(
+                          value: c,
+                          title: Text(c),
+                          activeColor: HousepitalColors.orange,
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                        ))
+                    .toList(),
+              ),
+            ),
             const SizedBox(height: 16),
 
             // Photo upload (optional)

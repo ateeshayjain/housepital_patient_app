@@ -54,15 +54,15 @@ class EquipmentItemCard extends StatelessWidget {
                                   item.imageUrl!,
                                   fit: BoxFit.contain,
                                   semanticLabel: '${item.name} product photo',
-                                  errorBuilder: (_, __, ___) => Icon(icon,
+                                  errorBuilder: (_, _, _) => Icon(icon,
                                       color: HousepitalColors.orange, size: 32),
                                 )
                               : CachedNetworkImage(
                                   imageUrl: item.imageUrl!,
                                   fit: BoxFit.contain,
-                                  placeholder: (_, __) => Icon(icon,
+                                  placeholder: (_, _) => Icon(icon,
                                       color: HousepitalColors.orange, size: 32),
-                                  errorWidget: (_, __, ___) => Icon(icon,
+                                  errorWidget: (_, _, _) => Icon(icon,
                                       color: HousepitalColors.orange, size: 32),
                                 ),
                         )

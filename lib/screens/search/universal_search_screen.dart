@@ -471,7 +471,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 child: CachedNetworkImage(
                   imageUrl: (r.data as EquipmentItem).imageUrl!,
                   fit: BoxFit.contain,
-                  errorWidget: (_, __, ___) =>
+                  errorWidget: (_, _, _) =>
                       Icon(r.icon, color: r.iconColor, size: 20),
                 ),
               )

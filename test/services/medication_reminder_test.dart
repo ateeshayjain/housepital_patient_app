@@ -66,7 +66,7 @@ void main() {
 
     // ---- getNextReminder ----
     group('getNextReminder', () {
-      MedicationFull _makeMed({
+      MedicationFull makeMed({
         String id = 'med_1',
         String name = 'Paracetamol',
         String dosage = '500mg',
@@ -93,26 +93,26 @@ void main() {
       });
 
       test('returns null for as_needed frequency', () {
-        final med = _makeMed(frequency: 'as_needed', timeSlots: []);
+        final med = makeMed(frequency: 'as_needed', timeSlots: []);
         final result = MedicationReminderService.getNextReminder([med]);
         expect(result, isNull);
       });
 
       test('skips medications with remindersEnabled=false', () {
-        final med = _makeMed(remindersEnabled: false);
+        final med = makeMed(remindersEnabled: false);
         final result = MedicationReminderService.getNextReminder([med]);
         expect(result, isNull);
       });
 
       test('skips inactive medications', () {
-        final med = _makeMed(isActive: false);
+        final med = makeMed(isActive: false);
         final result = MedicationReminderService.getNextReminder([med]);
         expect(result, isNull);
       });
 
       test('picks the closest upcoming slot', () {
         // Create a medication with a slot far in the future (23:59)
-        final med = _makeMed(timeSlots: ['23:59']);
+        final med = makeMed(timeSlots: ['23:59']);
         final result = MedicationReminderService.getNextReminder([med]);
 
         // It should find 23:59 as upcoming if we are before that time
@@ -125,12 +125,12 @@ void main() {
       });
 
       test('picks earlier slot over later slot when both upcoming', () {
-        final med1 = _makeMed(
+        final med1 = makeMed(
           id: 'a',
           name: 'DrugA',
           timeSlots: ['23:58'],
         );
-        final med2 = _makeMed(
+        final med2 = makeMed(
           id: 'b',
           name: 'DrugB',
           timeSlots: ['23:59'],

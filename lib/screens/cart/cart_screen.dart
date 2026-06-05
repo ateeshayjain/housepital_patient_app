@@ -96,13 +96,13 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Consumer<CartProvider>(
-          builder: (_, cart, __) => Text(
+          builder: (_, cart, _) => Text(
             cart.isEmpty ? 'My Cart' : 'My Cart (${cart.itemCount} items)',
           ),
         ),
         actions: [
           Consumer<CartProvider>(
-            builder: (_, cart, __) => cart.isEmpty
+            builder: (_, cart, _) => cart.isEmpty
                 ? const SizedBox.shrink()
                 : TextButton(
                     onPressed: () => _confirmClear(context, cart),
@@ -572,6 +572,7 @@ class _CartScreenState extends State<CartScreen> {
     }).then((result) {
       // If payment was successful, save order, clear cart, show confirmation
       if (result == true) {
+        if (!context.mounted) return;
         final items = cart.items.toList();
         // audit M-3: use the instance method `generateUniqueBookingNumber` so the
         // booking id is guaranteed not to collide with any existing order in the
@@ -678,7 +679,7 @@ class _CartItemCard extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: cartItem.imageUrl!,
                           fit: BoxFit.contain,
-                          errorWidget: (_, __, ___) => const Icon(
+                          errorWidget: (_, _, _) => const Icon(
                               Icons.medical_services_outlined,
                               color: HousepitalColors.orange),
                         ),
@@ -931,7 +932,7 @@ class _SavedItemCard extends StatelessWidget {
                     child: CachedNetworkImage(
                       imageUrl: cartItem.imageUrl!,
                       fit: BoxFit.contain,
-                      errorWidget: (_, __, ___) => const Icon(
+                      errorWidget: (_, _, _) => const Icon(
                           Icons.medical_services_outlined,
                           color: HousepitalColors.greyLight),
                     ),

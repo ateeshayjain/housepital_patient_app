@@ -31,8 +31,8 @@ class ServiceCatalogScreen extends StatefulWidget {
   const ServiceCatalogScreen({super.key});
 
   /// Global key to allow switching sub-tabs from anywhere (e.g. home screen).
-  static final GlobalKey<_ServiceCatalogScreenState> catalogKey =
-      GlobalKey<_ServiceCatalogScreenState>();
+  static final GlobalKey<ServiceCatalogScreenState> catalogKey =
+      GlobalKey<ServiceCatalogScreenState>();
 
   /// Switch to a specific sub-tab by index.
   /// 0=Manpower, 1=Equipment, 2=Consultations, 3=Visits, 4=Diagnostics, 5=Lab Tests, 6=Packages
@@ -41,10 +41,10 @@ class ServiceCatalogScreen extends StatefulWidget {
   }
 
   @override
-  State<ServiceCatalogScreen> createState() => _ServiceCatalogScreenState();
+  State<ServiceCatalogScreen> createState() => ServiceCatalogScreenState();
 }
 
-class _ServiceCatalogScreenState extends State<ServiceCatalogScreen>
+class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();

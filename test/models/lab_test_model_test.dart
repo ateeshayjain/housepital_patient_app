@@ -30,20 +30,19 @@ Map<String, dynamic> _labTestJson({
     {
       'id': id,
       'name': name,
-      if (price != null) 'price': price,
-      if (category != null) 'category': category,
-      if (sampleType != null) 'sample_type': sampleType,
-      if (tube != null) 'tube': tube,
-      if (fastingRequired != null) 'fasting_required': fastingRequired,
-      if (reportTat != null) 'report_tat': reportTat,
-      if (homeCollection != null) 'home_collection': homeCollection,
-      if (method != null) 'method': method,
-      if (description != null) 'description': description,
-      if (components != null) 'components': components,
-      if (alsoKnownAs != null) 'also_known_as': alsoKnownAs,
-      if (commonlyPrescribedFor != null)
-        'commonly_prescribed_for': commonlyPrescribedFor,
-      if (relatedTests != null) 'related_tests': relatedTests,
+      'price': ?price,
+      'category': ?category,
+      'sample_type': ?sampleType,
+      'tube': ?tube,
+      'fasting_required': ?fastingRequired,
+      'report_tat': ?reportTat,
+      'home_collection': ?homeCollection,
+      'method': ?method,
+      'description': ?description,
+      'components': ?components,
+      'also_known_as': ?alsoKnownAs,
+      'commonly_prescribed_for': ?commonlyPrescribedFor,
+      'related_tests': ?relatedTests,
     };
 
 // ---------------------------------------------------------------------------

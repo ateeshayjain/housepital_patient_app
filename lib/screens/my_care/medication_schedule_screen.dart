@@ -22,6 +22,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       final patientId = context.read<AppProvider>().currentPatient?.id;
       if (patientId != null) {
         context.read<MedicationProvider>().loadTodaySchedule(patientId);

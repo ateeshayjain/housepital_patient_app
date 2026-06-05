@@ -190,7 +190,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             itemCount: _orderFilters.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) {
               final filter = _orderFilters[i];
               final selected = _orderFilter == filter;
@@ -441,18 +441,25 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   ),
                 ),
                 const SizedBox(height: 10),
-                ...reasons.map((reason) => RadioListTile<String>(
-                      title:
-                          Text(reason, style: const TextStyle(fontSize: 14)),
-                      value: reason,
-                      groupValue: selectedReason,
-                      activeColor: HousepitalColors.orange,
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (v) {
-                        setModalState(() => selectedReason = v);
-                      },
-                    )),
+                RadioGroup<String>(
+                  groupValue: selectedReason,
+                  onChanged: (v) {
+                    setModalState(() => selectedReason = v);
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: reasons
+                        .map((reason) => RadioListTile<String>(
+                              title: Text(reason,
+                                  style: const TextStyle(fontSize: 14)),
+                              value: reason,
+                              activeColor: HousepitalColors.orange,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ))
+                        .toList(),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [

@@ -10,6 +10,7 @@
 ///   care plan. Can view and raise concerns (so they can flag medical issues
 ///   from the field) but cannot book, pay, rate, edit, or even request a
 ///   booking — that is the family's call, not the staff's.
+library;
 
 /// All known roles.
 class UserRole {

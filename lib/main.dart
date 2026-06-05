@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 // audit batch 4 (Agent J): Crashlytics + Performance Monitoring wiring.
@@ -88,27 +87,34 @@ void main() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
 
-    // ── audit batch 4 (Agent J): Crashlytics + Performance ────────────────
-    // Production-only: in debug we want errors loud in the console, not
-    // shipped to a remote sink that won't surface them for hours.
-    if (!kDebugMode) {
-      FlutterError.onError =
-          FirebaseCrashlytics.instance.recordFlutterFatalError;
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-      await FirebaseCrashlytics.instance
-          .setCrashlyticsCollectionEnabled(true);
-      await FirebasePerformance.instance
-          .setPerformanceCollectionEnabled(true);
-    } else {
-      // In debug builds, keep both surfaces off so test runs and hot reloads
-      // don't pollute the production project.
-      await FirebaseCrashlytics.instance
-          .setCrashlyticsCollectionEnabled(false);
-      await FirebasePerformance.instance
-          .setPerformanceCollectionEnabled(false);
+    // ── audit batch 4 (Agent J) / batch 5 web fix ────────────────────────
+    // Crashlytics + Performance are MOBILE-ONLY Firebase products — there is
+    // no web implementation, so touching FirebaseCrashlytics.instance /
+    // FirebasePerformance.instance on web throws an assertion that aborts
+    // main() before runApp() (symptom: blank white screen on Chrome).
+    // The real guard axis is platform (kIsWeb), not build mode (kDebugMode).
+    if (!kIsWeb) {
+      // Production-only: in debug we want errors loud in the console, not
+      // shipped to a remote sink that won't surface them for hours.
+      if (!kDebugMode) {
+        FlutterError.onError =
+            FirebaseCrashlytics.instance.recordFlutterFatalError;
+        PlatformDispatcher.instance.onError = (error, stack) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(true);
+        await FirebasePerformance.instance
+            .setPerformanceCollectionEnabled(true);
+      } else {
+        // In debug builds, keep both surfaces off so test runs and hot reloads
+        // don't pollute the production project.
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(false);
+        await FirebasePerformance.instance
+            .setPerformanceCollectionEnabled(false);
+      }
     }
 
     // audit batch 4 (Agent J): friendly fallback when a widget build throws.
@@ -198,8 +204,10 @@ void main() async {
       ),
     );
   }, (error, stack) {
-    // audit batch 4 (Agent J): uncaught async errors land here.
-    if (!kDebugMode) {
+    // audit batch 4 (Agent J) / batch 5 web fix: uncaught async errors land
+    // here. Crashlytics is mobile-only — guard on kIsWeb so the error handler
+    // itself doesn't throw on web (which would mask the original error).
+    if (!kDebugMode && !kIsWeb) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     } else {
       // ignore: avoid_print

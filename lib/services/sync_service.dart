@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import '../providers/app_provider.dart';
+import '../utils/logger.dart';
 import 'api_service.dart';
 
 class SyncService {
@@ -64,10 +64,10 @@ class SyncService {
         );
 
         lastSyncAt = DateTime.now();
-        debugPrint('SyncService: sync completed at $lastSyncAt');
+        Log.debug('Sync completed at $lastSyncAt', tag: 'SyncService');
         completer.complete();
       } catch (e, st) {
-        debugPrint('SyncService: sync failed - $e');
+        Log.warn('Sync failed', error: e, stack: st, tag: 'SyncService');
         completer.completeError(e, st);
       } finally {
         // Clear only if this completer is still the current in-flight sync.
@@ -90,18 +90,19 @@ class SyncService {
 
     // Run an immediate sync first
     syncAll(patientId).catchError((e) {
-      debugPrint('SyncService: initial periodic sync failed - $e');
+      Log.warn('Initial periodic sync failed', error: e, tag: 'SyncService');
     });
 
     _periodicTimer = Timer.periodic(interval, (_) {
       syncAll(patientId).catchError((e) {
-        debugPrint('SyncService: periodic sync failed - $e');
+        Log.warn('Periodic sync failed', error: e, tag: 'SyncService');
       });
     });
 
-    debugPrint(
-      'SyncService: periodic sync started for patient $patientId '
+    Log.debug(
+      'Periodic sync started for patient $patientId '
       'with interval ${interval.inSeconds}s',
+      tag: 'SyncService',
     );
   }
 
@@ -109,7 +110,7 @@ class SyncService {
   void stopPeriodicSync() {
     _periodicTimer?.cancel();
     _periodicTimer = null;
-    debugPrint('SyncService: periodic sync stopped');
+    Log.debug('Periodic sync stopped', tag: 'SyncService');
   }
 
   /// Disposes the service and cancels any active timers.

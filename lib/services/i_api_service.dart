@@ -84,11 +84,46 @@ abstract class IApiService {
   });
   Future<List<Booking>> getBookings(String patientId, {int page});
   Future<void> cancelBooking(String bookingId, String reason);
+  Future<void> submitRating({
+    required String bookingId,
+    required int rating,
+    String? comment,
+  });
+
+  // ── Assessments ───────────────────────────────────────────
+  Future<AssessmentRequest> createAssessmentRequest({
+    required String patientId,
+    required String serviceCategory,
+    required Map<String, dynamic> responses,
+  });
+  Future<List<AssessmentRequest>> getAssessments(String patientId);
+  Future<void> acceptAssessment(String assessmentId);
+  Future<void> declineAssessment(String assessmentId);
 
   // ── Billing ───────────────────────────────────────────────
   Future<Map<String, dynamic>> getBillingSummary(String patientId);
+  Future<BillingSummary> getBillingSummaryFull(String patientId);
   Future<List<Invoice>> getInvoices(String patientId);
   Future<Invoice> getInvoiceDetail(String invoiceId);
+
+  // ── Coupons ───────────────────────────────────────────────
+  Future<Coupon> validateCoupon(
+      String code, String serviceCategory, int orderAmount);
+  Future<List<Coupon>> getAvailableCoupons(String? category);
+
+  // ── Transactions ──────────────────────────────────────────
+  Future<List<PaymentTransaction>> getTransactions(
+    String patientId, {
+    String? status,
+    int? limit,
+  });
+  Future<List<PaymentTransaction>> getTransactionsPaginated(
+    String patientId, {
+    String? status,
+    int page,
+    int pageSize,
+  });
+  Future<PaymentTransaction> getTransactionDetail(String transactionId);
 
   // ── Payments ──────────────────────────────────────────────
   Future<Map<String, dynamic>> createPaymentOrder({
@@ -115,8 +150,20 @@ abstract class IApiService {
   });
   Future<List<FamilyConcern>> getConcerns(String patientId);
 
+  // ── Ratings ───────────────────────────────────────────────
+  Future<void> submitDailyRating({
+    required String patientId,
+    required String deploymentId,
+    required int rating,
+    String? comment,
+  });
+
   // ── Notifications ─────────────────────────────────────────
   Future<List<AppNotification>> getNotifications({int page});
+  Future<List<AppNotification>> getNotificationsPaginated({
+    int page,
+    int pageSize,
+  });
   Future<void> markNotificationRead(String notificationId);
   Future<void> markAllNotificationsRead();
 
@@ -124,6 +171,15 @@ abstract class IApiService {
   Future<List<FamilyMember>> getFamilyMembers(String patientId);
   Future<void> inviteFamilyMember(String patientId, String phone);
   Future<void> removeFamilyMember(String patientId, String memberId);
+  Future<void> removeFamilyMemberLegacy(String memberId);
+  Future<FamilyMember> addFamilyMember(
+      String patientId, Map<String, dynamic> data);
+  Future<FamilyMember> updateFamilyMember(
+      String patientId, String memberId, Map<String, dynamic> data);
+
+  // ── Profile ───────────────────────────────────────────────
+  Future<Patient> updatePatientProfile(
+      String patientId, Map<String, dynamic> data);
 
   // ── Medications ───────────────────────────────────────────
   Future<List<MedicationFull>> getMedications(String patientId);
@@ -153,4 +209,23 @@ abstract class IApiService {
     String? search,
   });
   Future<List<EquipmentOrder>> getEquipmentOrders(String patientId);
+  Future<List<EquipmentReview>> getEquipmentReviews(String itemId);
+  Future<void> submitEquipmentReview(String itemId, int rating, String text);
+
+  // ── Staff Replacement ─────────────────────────────────────
+  Future<Map<String, dynamic>> requestReplacement(
+    String deploymentId,
+    String reason,
+    Map<String, dynamic> preferences,
+  );
+
+  // ── Equipment Returns ─────────────────────────────────────
+  Future<Map<String, dynamic>> scheduleReturn({
+    required String orderId,
+    required String reason,
+    required String pickupDate,
+    required String timeSlot,
+    required String condition,
+    String? photoUrl,
+  });
 }

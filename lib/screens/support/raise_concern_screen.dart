@@ -206,7 +206,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _evidencePhotos.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       return Stack(
                         children: [
@@ -347,17 +347,22 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
       // couldn't open them.
       final evidenceUrls = await _uploadEvidence(patient.id);
       final failedCount = _evidencePhotos.length - evidenceUrls.length;
-      if (failedCount > 0 && mounted) {
+      if (failedCount > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: const Duration(seconds: 6),
             content: Text(
-              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded — they're saved locally for retry.",
+              "$failedCount photo${failedCount == 1 ? '' : 's'} couldn't be uploaded. "
+              'Your concern was submitted without them — reply to the '
+              "coordinator's message in chat to add photos.",
             ),
             backgroundColor: HousepitalColors.warning,
           ),
         );
       }
 
+      if (!context.mounted) return;
       await context.read<AppProvider>().apiService.raiseConcern(
         patientId: patient.id,
         category: _category!,
@@ -367,7 +372,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         evidenceUrls: evidenceUrls.isNotEmpty ? evidenceUrls : null,
       );
 
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       final slaText = _urgency == 'emergency'
           ? 'We will respond within 2 hours.'
@@ -395,7 +400,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         ),
       );
     } on ApiException catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit: ${e.message}'),
@@ -403,7 +408,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Something went wrong. Please try again.'),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import '../utils/logger.dart';
 
 class CartProvider extends ChangeNotifier {
   static const _cartKey = 'housepital_cart_items';
@@ -214,7 +215,7 @@ class CartProvider extends ChangeNotifier {
         json.encode(_savedItems.map((i) => i.toJson()).toList()),
       );
     } catch (e) {
-      debugPrint('Cart persist error: $e');
+      Log.warn('Cart persist error', error: e, tag: 'CartProvider');
     }
   }
 
@@ -248,7 +249,7 @@ class CartProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Cart load error: $e');
+      Log.warn('Cart load error', error: e, tag: 'CartProvider');
       // Ignore corrupt data — start fresh
     }
   }

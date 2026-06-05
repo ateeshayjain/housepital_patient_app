@@ -233,7 +233,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   String? get _priceText {
     if (_catalogItem?.price != null) {
-      return '\u20B9${_catalogItem!.price!.toStringAsFixed(0)}';
+      return DateHelper.formatCurrency(_catalogItem!.price!.round());
     }
     if (widget.service.basePriceMin != null) {
       return DateHelper.formatCurrency(widget.service.basePriceMin!);
@@ -243,7 +243,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   String? get _rentalPriceText {
     if (_catalogItem?.rentalPrice != null) {
-      return '\u20B9${_catalogItem!.rentalPrice!.toStringAsFixed(0)}/mo';
+      return '${DateHelper.formatCurrency(_catalogItem!.rentalPrice!.round())}/mo';
     }
     return null;
   }
@@ -286,11 +286,11 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       specs['Brand'] = cat.brand;
       specs['Category'] = cat.category;
       if (cat.price != null) {
-        specs['Sale Price'] = '\u20B9${cat.price!.toStringAsFixed(0)}';
+        specs['Sale Price'] = DateHelper.formatCurrency(cat.price!.round());
       }
       if (cat.rentalPrice != null) {
         specs['Rental Price'] =
-            '\u20B9${cat.rentalPrice!.toStringAsFixed(0)}/month';
+            '${DateHelper.formatCurrency(cat.rentalPrice!.round())}/month';
       }
       if (cat.breakevenDays != null) {
         specs['Rent vs Buy'] =
@@ -447,7 +447,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         images[index],
                         fit: BoxFit.contain,
                         semanticLabel: '$_name product photo',
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           _equipmentIcon,
                           size: 56,
                           color: HousepitalColors.orange,
@@ -456,13 +456,13 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                     : CachedNetworkImage(
                         imageUrl: images[index],
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => const Center(
+                        placeholder: (_, _) => const Center(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: HousepitalColors.orange,
                           ),
                         ),
-                        errorWidget: (_, __, ___) => Icon(
+                        errorWidget: (_, _, _) => Icon(
                           _equipmentIcon,
                           size: 56,
                           color: HousepitalColors.orange,
@@ -720,7 +720,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         if (hasBuyPrice) ...[
           if (hasMrp) ...[
             Text(
-              '\u20B9${_catalogItem!.mrp!.toStringAsFixed(0)}',
+              DateHelper.formatCurrency(_catalogItem!.mrp!.round()),
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -1903,7 +1903,7 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                       widget.images[index],
                       fit: BoxFit.contain,
                       semanticLabel: 'Product photo ${index + 1} of ${widget.images.length}',
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.broken_image,
                         size: 64,
                         color: Colors.white54,
@@ -1912,10 +1912,10 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                   : CachedNetworkImage(
                       imageUrl: widget.images[index],
                       fit: BoxFit.contain,
-                      placeholder: (_, __) => const CircularProgressIndicator(
+                      placeholder: (_, _) => const CircularProgressIndicator(
                         color: HousepitalColors.orange,
                       ),
-                      errorWidget: (_, __, ___) => const Icon(
+                      errorWidget: (_, _, _) => const Icon(
                         Icons.broken_image,
                         size: 64,
                         color: Colors.white54,
