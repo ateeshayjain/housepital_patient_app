@@ -65,6 +65,18 @@ class AssistantService {
   AssistantResponse _stubResponse(String text) {
     final t = text.toLowerCase();
 
+    // Staff-info queries: "staff ka naam kya hai", "nurse kaun hai",
+    // "mera doctor kaun hai", "staff ka naan" etc.
+    // Checked first because some phrases also contain other keywords.
+    if (RegExp(r'naam|naan|name|kaun|kon|staff.*kya|kya.*staff|nurse.*kaun|doctor.*kaun')
+        .hasMatch(t)) {
+      return const AssistantResponse(
+        action: AssistantAction.getStaffInfo,
+        params: {},
+        replyText: 'Aapke staff ki jaankari nikal raha hoon…',
+      );
+    }
+
     // Order matters: call/navigate before billing/duty so phrases like
     // "billing kholo" route to navigate only when no bill-amount intent.
     if (RegExp(r'call|phone|baat|dial').hasMatch(t)) {

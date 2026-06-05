@@ -110,10 +110,29 @@ class AssistantExecutor {
         return _placeCall(r.params);
       case AssistantAction.navigate:
         return _navigate(r.params, r.replyText);
+      case AssistantAction.getStaffInfo:
+        return _staffInfo();
       case AssistantAction.none:
         final msg = r.replyText.isNotEmpty ? r.replyText : _genericDegrade;
         return Degraded(msg);
     }
+  }
+
+  ExecutorResult _staffInfo() {
+    // Build a readable list of the assigned contacts (nurse, health manager).
+    final parts = <String>[];
+    final nurse = contacts['nurse'];
+    if (nurse != null && nurse.name.isNotEmpty) {
+      parts.add('Nurse: ${nurse.name}');
+    }
+    final hm = contacts['health_manager'];
+    if (hm != null && hm.name.isNotEmpty) {
+      parts.add('Health Manager: ${hm.name}');
+    }
+    if (parts.isEmpty) {
+      return const Degraded('Staff ki jaankari abhi available nahi hai.');
+    }
+    return Answer(parts.join('\n'));
   }
 
   Future<ExecutorResult> _billing() async {

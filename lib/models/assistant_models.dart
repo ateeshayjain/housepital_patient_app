@@ -14,6 +14,10 @@ enum AssistantAction {
   placeCall,
   navigate,
 
+  /// Returns the name and role of the currently-assigned staff member from
+  /// the active deployment. Read-only — no side effects, no confirmation.
+  getStaffInfo,
+
   /// Safe fallback — unknown or unparseable action. The executor must do
   /// nothing side-effectful for this.
   none;
@@ -30,6 +34,8 @@ enum AssistantAction {
         return AssistantAction.placeCall;
       case 'navigate':
         return AssistantAction.navigate;
+      case 'get_staff_info':
+        return AssistantAction.getStaffInfo;
       default:
         return AssistantAction.none;
     }
