@@ -25,6 +25,7 @@ import 'package:housepital_patient/providers/medication_provider.dart';
 import 'package:housepital_patient/screens/home/home_screen.dart';
 import 'package:housepital_patient/services/api_service.dart';
 import 'package:housepital_patient/utils/app_localizations.dart';
+import 'package:housepital_patient/utils/permissions.dart';
 
 // ── Test AppProvider ────────────────────────────────────────────────────────
 // Seeds a demo patient + active deployment synchronously and neutralises the
@@ -121,4 +122,61 @@ void main() {
     expect(find.text('Health Manager'), findsOneWidget); // role label
     expect(find.textContaining('Nurse'), findsWidgets); // on-duty staff role
   });
+
+  // ── Book Services grid ────────────────────────────────────────────────────
+
+  testWidgets('Book Services grid renders the core service tiles',
+      (tester) async {
+    await _pumpHome(tester);
+
+    // These tiles should always appear in the services grid.
+    expect(find.text('Book Nurse'), findsOneWidget);
+    expect(find.text('Book Equipment'), findsOneWidget);
+    expect(find.text('Lab Tests'), findsOneWidget);
+    expect(find.text('Doctor Visit'), findsOneWidget);
+    expect(find.text('SOS'), findsOneWidget);
+    expect(find.text('My Orders'), findsOneWidget);
+  });
+
+  testWidgets('Book Services section is hidden for view-only roles',
+      (tester) async {
+    // PATIENT_SELF role cannot book — Book Services should be hidden.
+    SharedPreferences.setMockInitialValues({});
+    final appPatientSelf = _TestAppProviderPatientSelf();
+    tester.view.physicalSize = const Size(1080, 4000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.runAsync(() async {
+      await tester.pumpWidget(_host(appPatientSelf));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pump();
+
+    // PATIENT_SELF sees the call-caregiver card, NOT the services grid.
+    expect(find.text('Book Nurse'), findsNothing);
+  });
+}
+
+// ── Additional test providers ───────────────────────────────────────────────
+
+/// Provider simulating a PATIENT_SELF role — cannot book services.
+class _TestAppProviderPatientSelf extends AppProvider {
+  _TestAppProviderPatientSelf() : super(ApiService());
+
+  @override
+  Patient? get currentPatient => DemoData.patient;
+  @override
+  List<Patient> get patients => [DemoData.patient];
+  @override
+  Deployment? get activeDeployment => DemoData.icuDeployment;
+  @override
+  bool get isDashboardLoading => false;
+  @override
+  String get currentUserRole => UserRole.patientSelf;
+  @override
+  Future<void> loadPatients() async {}
+  @override
+  Future<void> loadDashboard() async {}
 }

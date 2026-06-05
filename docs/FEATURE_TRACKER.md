@@ -1,6 +1,6 @@
 # Feature Tracker -- Housepital Patient App
 
-**Last updated:** 2026-03-25
+**Last updated:** 2026-06-05
 
 Legend: Done = feature is shipped and working | In Progress = partially built | Not Started = not yet coded
 
@@ -29,8 +29,39 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 4 | Daily Report Progress Card          | HomeScreen       | report_summary in dashboard | Done           | Completion percentage bar                |
 | 5 | Billing Due Card                    | HomeScreen       | billing_summary in dashboard| Done           | Pending amount with "Pay Now" CTA        |
 | 6 | Active Services Count               | HomeScreen       | active_services_count       | Done           |                                          |
-| 7 | Quick Actions (SOS, Search, etc.)   | HomeScreen       | --                          | Done           |                                          |
-| 8 | Pull-to-Refresh                     | HomeScreen       | --                          | Done           | Triggers full dashboard reload           |
+| 7 | Quick Actions (SOS, Search, etc.)   | HomeScreen       | --                          | Done           | Expanded Wrap grid; Care Guides tile added |
+| 8 | Pull-to-Refresh                     | HomeScreen       | --                          | Done           | Triggers full dashboard reload             |
+| 9 | Home Layout B (Team first)          | HomeScreen       | --                          | Done (2026-06) | Health Team first; hero demoted to bottom  |
+| 10| AI Assistant FAB                    | AssistantFab     | /assistant (stub)           | Done (2026-06) | ✨ floating button → voice/text Hinglish bot |
+| 11| Care Guides tile                    | HomeScreen       | /articles (stub)            | Done (2026-06) | Navigates to article list screen           |
+
+---
+
+## AI Assistant
+
+| # | Feature                            | Frontend                     | Backend               | Status         | Notes                                             |
+|---|-------------------------------------|------------------------------|-----------------------|----------------|---------------------------------------------------|
+| 1 | Text chat                           | AssistantScreen              | /assistant (stub)     | Done (2026-06) | Message bubbles, Hinglish stub works              |
+| 2 | Voice input (mic)                   | VoiceService (PluginVoice)   | --                    | Done (2026-06) | speech_to_text; no-op on web (kIsWeb guard)       |
+| 3 | Voice output (TTS)                  | VoiceService                 | --                    | Done (2026-06) | flutter_tts; no-op on web                         |
+| 4 | Billing query tool                  | AssistantExecutor            | getBillingSummary     | Done (2026-06) | "iss mahine ka bill kitna hai"                    |
+| 5 | Duty-days query tool                | AssistantExecutor            | getAttendanceHistory  | Done (2026-06) | "staff kitne din aaya"; period filtered client-side|
+| 6 | Place-call tool                     | AssistantExecutor            | url_launcher tel:     | Done (2026-06) | Confirm-before-act; name+number confirmation card |
+| 7 | Navigate tool                       | AssistantExecutor            | Navigator.pushNamed   | Done (2026-06) | Light inline confirm; benign, reversible           |
+| 8 | Permission gating                   | AssistantExecutor            | --                    | Done (2026-06) | Respects canUserPerform role matrix               |
+| 9 | Backend /assistant endpoint         | AssistantService.useStub     | housepital-backend    | Not Started    | Stub mode active; LLM + tool-routing on backend   |
+
+---
+
+## Care Guides (Education)
+
+| # | Feature                            | Frontend                     | Backend               | Status         | Notes                                             |
+|---|-------------------------------------|------------------------------|-----------------------|----------------|---------------------------------------------------|
+| 1 | Article list screen                 | ArticleListScreen            | /articles (stub)      | Done (2026-06) | Category chip, read-time, shimmer loading         |
+| 2 | Article detail screen               | ArticleDetailScreen          | /articles/:id (stub)  | Done (2026-06) | flutter_markdown body, share button               |
+| 3 | Demo articles (28 offline)          | demo_articles.dart           | --                    | Done (2026-06) | 7 categories, JSON-backed const, kDemoArticlesJson|
+| 4 | BlogProvider with fallback          | BlogProvider                 | /articles             | Done (2026-06) | Demo fallback when API unavailable                |
+| 5 | Backend /articles endpoint          | --                           | housepital-backend    | Not Started    | App builds against demo data until live           |
 
 ---
 

@@ -4,6 +4,117 @@
 
 ---
 
+## [2026-06-05] -- Unit Tests + Documentation Update
+
+1389 passing tests / 71 test files. Analyzer: No issues found.
+
+### Unit tests added
+- `home_layout_test.dart` — 4 new tests: core tiles render, view-only role hides grid
+- `assistant_fab_test.dart` (new, 4 tests) — renders, 44pt touch target, /assistant navigation, semantics label
+
+### Documentation
+- `docs/TEST_MAP.md` — updated to 1389 tests / 71 files
+- `docs/CHANGELOG.md` — this entry + batches 4–5 backfill
+- `docs/FEATURE_TRACKER.md` — updated with new features (Home B, Blogs, Assistant)
+
+---
+
+## [2026-06-05] -- New Features: Home Layout B, AI Assistant, Care Guides
+
+### Home Layout B
+- Health Team card (Health Manager + on-duty staff) moved to the top
+- One-line greeting + role badge
+- Hero banner demoted to the bottom
+- Book Services grid: expanded Wrap layout (was cramped Row), Care Guides tile added
+
+### AI Assistant (voice + text, Hinglish)
+- Floating ✨ button on every screen → full-screen voice/text chat
+- 4 v1 tools: billing answers, staff duty-days, place-call (with confirm), navigate
+- Backend-stubbed until /assistant endpoint ships; stub handles common Hinglish phrases
+- Confirm-before-act safety: calls require explicit tap; voice-mishear protection
+- Respects canUserPerform role matrix
+- 45 tests covering models, service, executor, provider, screen
+
+### Care Guides (Blogs/Education)
+- "📚 Care Guides" tile on Home → article list/detail screens
+- 28 real articles across 7 categories: Pulmo, Neuro, Ortho, Elderly Care,
+  Mother and Baby Care, Post-hospitalisation Care
+- Backend-stubbed; all 28 articles bundled in demo_articles.dart for offline use
+- flutter_markdown rendering of article bodies
+- 10 tests covering Article model, BlogProvider, list screen
+
+### iOS Firebase
+- iOS app registered in Firebase Console (com.housepital.housepitalPatient)
+- firebase_options.dart wired with real iOS config (was throwing UnsupportedError)
+- GoogleService-Info.plist registered in Xcode Runner target
+
+### Other
+- CLAUDE.md added with Dynamic Workflows guidance
+- Dai Maa lockup label removed from home entry card
+
+---
+
+## [2026-05-28 (Audit Batch 5)] -- Lint to Zero + Honest-List Fixes
+
+Analyzer: **No issues found** (was 209 → 39 → 0). 1389 tests (includes
+batch 4 additions). Clean web release build.
+
+### Lint sweep (Phase A): 209 → 39 issues
+- dart fix across 32 files: unnecessary_import, use_null_aware_elements,
+  unnecessary_string_interpolations, unnecessary braces, prefer_const
+
+### Judgment lints (Phase A2): 39 → 0
+- 17 use_build_context_synchronously → real mounted/context.mounted guards
+- 6 Radio groupValue/onChanged → RadioGroup ancestor migration
+- Share → SharePlus API migration; private types made public; dep declarations
+
+### Honest-list (Agents N + O)
+- Query-string injection fix: getTransactions/getAvailableCoupons → queryParams map
+- IApiService completed: 21 missing methods added
+- Structured logger (lib/utils/logger.dart): 45 debugPrint calls migrated to Log.*
+- DRY currency: 10 inline ₹${x} → DateHelper.formatCurrency()
+- Honest UX: removed false "saved locally for retry" copy; web upload shows correct message
+- Firebase Crashlytics / Performance guarded on kIsWeb (was guarded on kDebugMode → blank screen on web)
+
+---
+
+## [2026-05-28 (Audit Batch 4)] -- Production-Ready: DI, Crashlytics, Catalog Split
+
+### Dependency Inversion
+- All providers depend on IApiService (interface) not concrete ApiService
+- IApiService completed: 7 missing methods added (via Agent J)
+- ApiService.onUnauthorized callback → 401 one-shot retry without circular dep
+- Token refresh: Timer.periodic(50min) + refresh on 401
+
+### Observability
+- Firebase Crashlytics + Performance initialized (kIsWeb guard, release-only)
+- runZonedGuarded wraps main(); ErrorWidget.builder with friendly fallback screen
+- BillingProvider wired into MultiProvider (was orphaned)
+
+### Service catalog split
+- service_catalog_screen.dart: 4402 lines → 232-line orchestrator + 22 files
+- New: tabs/, cards/, sheets/, widgets/, data/ under lib/screens/services/
+
+### Apple Design Framework fixes
+- See All tap targets: GestureDetector → TextButton (was ~20pt, now 44pt)
+- Banner reduced-motion: honors MediaQuery.disableAnimations
+- AnimatedScale 0.98 on Call Caregiver + Quick Action tiles
+- Shimmer skeletons on 4 screens (was bare CircularProgressIndicator)
+- Off-grid padding snapped to 16pt
+
+### Infrastructure (Agent H)
+- CI: flutter test --coverage + lcov coverage gate (50% threshold)
+- firestore.rules: hardened with default-deny + per-collection auth-scoped rules
+- ARCHITECTURE.md deduplicated; CHANGELOG caught up; TEST_MAP reconciled
+
+### Validators + DRY (Agent I)
+- NEW lib/utils/validators.dart: indianMobile, email, pincode, name, age, description
+- 6 forms wired: login, family_members (bug: was missing Form ancestor!), add_patient,
+  address_selection, raise_concern (maxLength 1000), patient_profile
+- DetailRow consolidated from 2 duplicates to shared common_widgets
+
+---
+
 ## [2026-05-28 (Audit Batch 3)] -- 4bcaadb -- +199 Tests, Dead Code Sweep, 3 Audits, Prod Fixes
 
 Builds on batches 1 and 2. 1336 passing tests, 17 skipped, 0 failing
