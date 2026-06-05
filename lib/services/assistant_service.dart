@@ -85,6 +85,50 @@ class AssistantService {
       );
     }
 
+    // ── State-changing actions (checked before call/billing) ──────────────
+    // Replace staff: "nurse badlo", "doosra caretaker", "change staff".
+    if (RegExp(r'badl|replace|change.*(staff|nurse|caretaker)|doosr|different (nurse|caretaker|staff)')
+        .hasMatch(t)) {
+      return const AssistantResponse(
+        action: AssistantAction.replaceStaff,
+        params: {'reason': 'Requested via assistant'},
+        replyText: 'Staff replacement request bhej dun? Confirm karein.',
+      );
+    }
+
+    // Raise a concern / complaint.
+    if (RegExp(r'concern|complaint|shikayat|problem|issue|kharab|galat')
+        .hasMatch(t)) {
+      return AssistantResponse(
+        action: AssistantAction.raiseConcern,
+        params: {'description': text.trim()},
+        replyText: 'Yeh concern care team ko bhej dun? Confirm karein.',
+      );
+    }
+
+    // Renew / extend the current service.
+    if (RegExp(r'renew|extend|badha|aage badha|continue').hasMatch(t)) {
+      final cat = _serviceCategory(t);
+      return AssistantResponse(
+        action: AssistantAction.renewService,
+        params: cat == null ? const {} : {'service_category': cat},
+        replyText: 'Service renew karne ki request bhej dun? Confirm karein.',
+      );
+    }
+
+    // Book / request a new service.
+    if (RegExp(r'book|chahiye|naya|new (nurse|caretaker|physio)|service')
+        .hasMatch(t)) {
+      final cat = _serviceCategory(t);
+      if (cat != null) {
+        return AssistantResponse(
+          action: AssistantAction.bookService,
+          params: {'service_category': cat},
+          replyText: '$cat ke liye request bhej dun? Confirm karein.',
+        );
+      }
+    }
+
     // Order matters: call/navigate before billing/duty so phrases like
     // "billing kholo" route to navigate only when no bill-amount intent.
     if (RegExp(r'call|phone|baat|dial').hasMatch(t)) {
@@ -135,5 +179,14 @@ class AssistantService {
     }
 
     return AssistantResponse.degraded(_unmatchedMessage);
+  }
+
+  /// Extracts a service category from Hinglish text, or null if none found.
+  String? _serviceCategory(String t) {
+    if (RegExp(r'nurse|nars|nursing').hasMatch(t)) return 'nursing';
+    if (RegExp(r'caretaker|attendant|caregiver').hasMatch(t)) return 'caretaker';
+    if (RegExp(r'physio|physiotherap').hasMatch(t)) return 'physiotherapy';
+    if (RegExp(r'doctor|consult').hasMatch(t)) return 'doctor';
+    return null;
   }
 }

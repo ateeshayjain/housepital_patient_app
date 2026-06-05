@@ -234,6 +234,7 @@ void main() async {
                   role: role,
                   patientId: patientId,
                   contacts: contacts,
+                  deploymentId: DemoData.icuDeployment.id,
                 ),
                 voice: kIsWeb ? NoopVoiceService() : PluginVoiceService(),
                 patientId: patientId,

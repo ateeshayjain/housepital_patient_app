@@ -44,8 +44,8 @@ class AssistantProvider extends ChangeNotifier {
   final List<AssistantMessage> _messages = [];
   List<AssistantMessage> get messages => List.unmodifiable(_messages);
 
-  ConfirmableCall? _pendingConfirmation;
-  ConfirmableCall? get pendingConfirmation => _pendingConfirmation;
+  PendingAction? _pendingConfirmation;
+  PendingAction? get pendingConfirmation => _pendingConfirmation;
 
   bool _isThinking = false;
   bool get isThinking => _isThinking;
@@ -96,13 +96,33 @@ class AssistantProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// User confirmed a pending side-effectful action (e.g. place call).
-  void confirmPending() {
+  /// User confirmed a pending side-effectful action. Dispatches by type:
+  /// a [CallAction] dials via the UI callback; a [SubmitAction] is performed
+  /// against the API by the executor and its result is shown in the chat.
+  Future<void> confirmPending() async {
     final pending = _pendingConfirmation;
     if (pending == null) return;
     _pendingConfirmation = null;
-    onPlaceCall?.call(pending.phone);
-    notifyListeners();
+
+    switch (pending) {
+      case CallAction(:final phone):
+        onPlaceCall?.call(phone);
+        notifyListeners();
+      case SubmitAction():
+        _isThinking = true;
+        notifyListeners();
+        final result = await _executor.performConfirmed(pending);
+        _isThinking = false;
+        final text = switch (result) {
+          Answer(:final text) => text,
+          Degraded(:final text) => text,
+          Blocked(:final text) => text,
+          _ => 'Done.',
+        };
+        _messages.add(AssistantMessage.assistant(text));
+        await _voice.speak(text);
+        notifyListeners();
+    }
   }
 
   void cancelPending() {

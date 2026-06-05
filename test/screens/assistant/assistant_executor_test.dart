@@ -56,12 +56,16 @@ void main() {
     // sos intentionally has no phone on file → tests safe degradation
   };
 
-  AssistantExecutor makeExecutor({String role = UserRole.primaryContact}) =>
+  AssistantExecutor makeExecutor({
+    String role = UserRole.primaryContact,
+    String? deploymentId = 'dep1',
+  }) =>
       AssistantExecutor(
         api: api,
         role: role,
         patientId: patientId,
         contacts: contacts,
+        deploymentId: deploymentId,
       );
 
   setUp(() {
@@ -124,7 +128,8 @@ void main() {
       expect(r, isA<RequiresConfirmation>());
       final rc = r as RequiresConfirmation;
       expect(rc.text, contains('Sunita Devi'));
-      expect(rc.action.phone, '9876500000');
+      expect(rc.action, isA<CallAction>());
+      expect((rc.action as CallAction).phone, '9876500000');
       // confirm-before-act: nothing dialed yet — the result merely DESCRIBES
       // the action; the caller dials only after the user confirms.
     });
@@ -194,6 +199,88 @@ void main() {
       ));
       expect(r, isA<Degraded>());
       expect((r as Degraded).text, isNotEmpty);
+    });
+  });
+
+  group('state-changing actions — confirm-first + permission gating', () {
+    test('raise_concern with description → RequiresConfirmation(SubmitAction)',
+        () async {
+      final r = await makeExecutor().execute(const AssistantResponse(
+        action: AssistantAction.raiseConcern,
+        params: {'description': 'Nurse late aayi do din se'},
+        replyText: 'Bhej dun?',
+      ));
+      expect(r, isA<RequiresConfirmation>());
+      final action = (r as RequiresConfirmation).action;
+      expect(action, isA<SubmitAction>());
+      expect((action as SubmitAction).kind, ConfirmedKind.raiseConcern);
+      expect(action.data['description'], 'Nurse late aayi do din se');
+    });
+
+    test('raise_concern with empty description → Degraded (asks for detail)',
+        () async {
+      final r = await makeExecutor().execute(const AssistantResponse(
+        action: AssistantAction.raiseConcern,
+        params: {'description': ''},
+        replyText: '',
+      ));
+      expect(r, isA<Degraded>());
+    });
+
+    test('book_service with category → RequiresConfirmation(SubmitAction)',
+        () async {
+      final r = await makeExecutor().execute(const AssistantResponse(
+        action: AssistantAction.bookService,
+        params: {'service_category': 'nursing'},
+        replyText: '',
+      ));
+      expect(r, isA<RequiresConfirmation>());
+      expect((r as RequiresConfirmation).action, isA<SubmitAction>());
+    });
+
+    test('book_service without category → Degraded', () async {
+      final r = await makeExecutor().execute(const AssistantResponse(
+        action: AssistantAction.bookService,
+        params: {},
+        replyText: '',
+      ));
+      expect(r, isA<Degraded>());
+    });
+
+    test('replace_staff with no active deployment → Degraded (nothing to do)',
+        () async {
+      final r = await makeExecutor(deploymentId: null).execute(
+        const AssistantResponse(
+          action: AssistantAction.replaceStaff,
+          params: {'reason': 'Behaviour'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Degraded>());
+    });
+
+    test('replace_staff with deployment → RequiresConfirmation(SubmitAction)',
+        () async {
+      final r = await makeExecutor().execute(const AssistantResponse(
+        action: AssistantAction.replaceStaff,
+        params: {'reason': 'Behaviour'},
+        replyText: '',
+      ));
+      expect(r, isA<RequiresConfirmation>());
+      expect((r as RequiresConfirmation).action, isA<SubmitAction>());
+    });
+
+    test('view-only role is Blocked from raising a concern via assistant',
+        () async {
+      // PATIENT_SELF cannot raise concerns (per permission matrix).
+      final r = await makeExecutor(role: UserRole.patientSelf).execute(
+        const AssistantResponse(
+          action: AssistantAction.raiseConcern,
+          params: {'description': 'something'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Blocked>());
     });
   });
 }

@@ -18,6 +18,22 @@ enum AssistantAction {
   /// the active deployment. Read-only — no side effects, no confirmation.
   getStaffInfo,
 
+  // ── State-changing actions (each hard-confirmed before it runs) ──────────
+  /// File a concern / complaint with the care team. params: {description}.
+  raiseConcern,
+
+  /// Request a new service (assessment request — care team calls back).
+  /// params: {service_category}.
+  bookService,
+
+  /// Request renewal / extension of the current service.
+  /// params: {service_category?}.
+  renewService,
+
+  /// Request a replacement for the currently-assigned staff member.
+  /// params: {reason?}.
+  replaceStaff,
+
   /// Safe fallback — unknown or unparseable action. The executor must do
   /// nothing side-effectful for this.
   none;
@@ -36,6 +52,14 @@ enum AssistantAction {
         return AssistantAction.navigate;
       case 'get_staff_info':
         return AssistantAction.getStaffInfo;
+      case 'raise_concern':
+        return AssistantAction.raiseConcern;
+      case 'book_service':
+        return AssistantAction.bookService;
+      case 'renew_service':
+        return AssistantAction.renewService;
+      case 'replace_staff':
+        return AssistantAction.replaceStaff;
       default:
         return AssistantAction.none;
     }

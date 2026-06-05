@@ -12,14 +12,47 @@ class AssistantContact {
   const AssistantContact({required this.name, required this.phone});
 }
 
-/// A side-effectful call the executor has prepared but NOT yet performed.
-/// The caller dials only after the user confirms (confirm-before-act).
+/// Kinds of state-changing submission the assistant can perform on confirm.
+enum ConfirmedKind { raiseConcern, bookService, renewService, replaceStaff }
+
+/// A side-effectful action the executor has prepared but NOT yet performed.
+/// The provider executes it only after the user confirms (confirm-before-act).
 @immutable
-class ConfirmableCall {
+sealed class PendingAction {
+  const PendingAction();
+
+  /// One-line summary rendered on the confirm card.
+  String get label;
+}
+
+/// A phone call to place on confirm.
+@immutable
+class CallAction extends PendingAction {
   final String name;
   final String phone;
-  const ConfirmableCall({required this.name, required this.phone});
+  const CallAction({required this.name, required this.phone});
+
+  @override
+  String get label => 'Call $name · $phone';
 }
+
+/// An API submission to perform on confirm (concern, booking, renewal,
+/// replacement). [data] carries the params the handler needs.
+@immutable
+class SubmitAction extends PendingAction {
+  final ConfirmedKind kind;
+  @override
+  final String label;
+  final Map<String, String> data;
+  const SubmitAction({
+    required this.kind,
+    required this.label,
+    this.data = const {},
+  });
+}
+
+/// Backward-compatible alias for the call variant.
+typedef ConfirmableCall = CallAction;
 
 /// The outcome of executing an assistant response.
 ///
@@ -42,7 +75,7 @@ class Answer extends ExecutorResult {
 @immutable
 class RequiresConfirmation extends ExecutorResult {
   final String text;
-  final ConfirmableCall action;
+  final PendingAction action;
   const RequiresConfirmation(this.text, this.action);
 }
 
@@ -83,11 +116,15 @@ class AssistantExecutor {
   final String patientId;
   final Map<String, AssistantContact> contacts;
 
+  /// Active deployment id — needed to request a staff replacement.
+  final String? deploymentId;
+
   const AssistantExecutor({
     required this.api,
     required this.role,
     required this.patientId,
     required this.contacts,
+    this.deploymentId,
   });
 
   /// Attendance statuses that count as the staff member being present.
@@ -112,9 +149,152 @@ class AssistantExecutor {
         return _navigate(r.params, r.replyText);
       case AssistantAction.getStaffInfo:
         return _staffInfo();
+      case AssistantAction.raiseConcern:
+        return _prepareRaiseConcern(r.params, r.replyText);
+      case AssistantAction.bookService:
+        return _prepareBookService(r.params, r.replyText);
+      case AssistantAction.renewService:
+        return _prepareRenewService(r.params, r.replyText);
+      case AssistantAction.replaceStaff:
+        return _prepareReplaceStaff(r.params, r.replyText);
       case AssistantAction.none:
         final msg = r.replyText.isNotEmpty ? r.replyText : _genericDegrade;
         return Degraded(msg);
+    }
+  }
+
+  // ── State-changing actions: prepare (confirm-first), then perform ─────────
+  // Each "prepare" returns RequiresConfirmation(SubmitAction). Nothing hits the
+  // API until the provider calls [performConfirmed] after the user taps Confirm.
+
+  static const String _permDenied =
+      'Is action ki permission sirf primary contact ke paas hai.';
+
+  ExecutorResult _prepareRaiseConcern(
+      Map<String, dynamic> params, String reply) {
+    if (!canUserPerform(role, UserAction.raiseConcern)) {
+      return const Blocked(_permDenied);
+    }
+    final desc = (params['description'] as String?)?.trim() ?? '';
+    if (desc.isEmpty) {
+      return const Degraded(
+          'Concern kis baare mein hai, thoda bata dijiye?');
+    }
+    return RequiresConfirmation(
+      reply.isNotEmpty ? reply : 'Care team ko yeh concern bhej dun?',
+      SubmitAction(
+        kind: ConfirmedKind.raiseConcern,
+        label: '📝 Concern bhejein: "$desc"',
+        data: {'description': desc},
+      ),
+    );
+  }
+
+  ExecutorResult _prepareBookService(
+      Map<String, dynamic> params, String reply) {
+    if (!canUserPerform(role, UserAction.book) &&
+        !canUserPerform(role, UserAction.requestBooking)) {
+      return const Blocked(_permDenied);
+    }
+    final category = (params['service_category'] as String?)?.trim() ?? '';
+    if (category.isEmpty) {
+      return const Degraded('Kaunsi service chahiye — nurse, caretaker, physio?');
+    }
+    return RequiresConfirmation(
+      reply.isNotEmpty
+          ? reply
+          : 'Care team ko $category ke liye request bhej dun?',
+      SubmitAction(
+        kind: ConfirmedKind.bookService,
+        label: '🩺 $category ke liye service request bhejein',
+        data: {'service_category': category},
+      ),
+    );
+  }
+
+  ExecutorResult _prepareRenewService(
+      Map<String, dynamic> params, String reply) {
+    if (!canUserPerform(role, UserAction.book) &&
+        !canUserPerform(role, UserAction.requestBooking)) {
+      return const Blocked(_permDenied);
+    }
+    final category = (params['service_category'] as String?)?.trim() ??
+        'current service';
+    return RequiresConfirmation(
+      reply.isNotEmpty
+          ? reply
+          : 'Service renew/extend karne ki request bhej dun?',
+      SubmitAction(
+        kind: ConfirmedKind.renewService,
+        label: '🔁 $category renew/extend karne ki request bhejein',
+        data: {'service_category': category},
+      ),
+    );
+  }
+
+  ExecutorResult _prepareReplaceStaff(
+      Map<String, dynamic> params, String reply) {
+    if (!canUserPerform(role, UserAction.raiseConcern)) {
+      return const Blocked(_permDenied);
+    }
+    if (deploymentId == null || deploymentId!.isEmpty) {
+      return const Degraded(
+          'Abhi koi active staff nahi hai jiske liye replacement maang sakein.');
+    }
+    final reason = (params['reason'] as String?)?.trim() ?? 'Not specified';
+    return RequiresConfirmation(
+      reply.isNotEmpty ? reply : 'Staff replacement ki request bhej dun?',
+      SubmitAction(
+        kind: ConfirmedKind.replaceStaff,
+        label: '🔄 Staff replacement request bhejein',
+        data: {'reason': reason},
+      ),
+    );
+  }
+
+  /// Performs a previously-confirmed [SubmitAction]. Called by the provider
+  /// only after the user taps Confirm. Never throws — degrades to a message.
+  Future<ExecutorResult> performConfirmed(SubmitAction action) async {
+    try {
+      switch (action.kind) {
+        case ConfirmedKind.raiseConcern:
+          await api.raiseConcern(
+            patientId: patientId,
+            category: 'general',
+            description: action.data['description'] ?? '',
+            urgency: 'medium',
+          );
+          return const Answer(
+              'Aapka concern care team ko bhej diya gaya hai — woh jaldi sampark karenge.');
+        case ConfirmedKind.bookService:
+          await api.createAssessmentRequest(
+            patientId: patientId,
+            serviceCategory: action.data['service_category'] ?? '',
+            responses: const {'source': 'assistant'},
+          );
+          return const Answer(
+              'Service request bhej di gayi hai — care team aapko call karegi.');
+        case ConfirmedKind.renewService:
+          await api.createAssessmentRequest(
+            patientId: patientId,
+            serviceCategory: action.data['service_category'] ?? '',
+            responses: const {'source': 'assistant', 'type': 'renewal'},
+          );
+          return const Answer(
+              'Renewal request bhej di gayi hai — care team confirm karegi.');
+        case ConfirmedKind.replaceStaff:
+          await api.requestReplacement(
+            deploymentId!,
+            action.data['reason'] ?? 'Not specified',
+            const {'source': 'assistant'},
+          );
+          return const Answer(
+              'Replacement request bhej di gayi hai — care team jaldi arrange karegi.');
+      }
+    } catch (e) {
+      debugPrint('AssistantExecutor: performConfirmed failed: $e');
+      return const Degraded(
+          'Request abhi bhej nahi paya — thodi der baad try karein.');
     }
   }
 

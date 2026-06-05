@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../models/assistant_models.dart';
 import '../../providers/assistant_provider.dart';
+import 'assistant_executor.dart' show CallAction;
 
 /// Full-screen Hinglish assistant: chat bubbles, a hard-confirm card for
 /// side-effectful actions (call), a text field + mic input bar, and a
@@ -186,6 +187,9 @@ class _ConfirmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pending = provider.pendingConfirmation!;
+    final icon = pending is CallAction
+        ? Icons.phone
+        : Icons.check_circle_outline;
     return Card(
       margin: const EdgeInsets.all(12),
       color: HousepitalColors.orangeLight,
@@ -196,11 +200,11 @@ class _ConfirmCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.phone, color: HousepitalColors.orangeDark),
+                Icon(icon, color: HousepitalColors.orangeDark),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Calling ${pending.name} · ${pending.phone}',
+                    pending.label,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
