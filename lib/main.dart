@@ -74,6 +74,9 @@ import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
 import 'providers/medication_provider.dart';
+import 'providers/blog_provider.dart';
+import 'screens/articles/article_list_screen.dart';
+import 'screens/articles/article_detail_screen.dart';
 import 'services/medication_reminder_service.dart';
 import 'utils/notification_router.dart';
 
@@ -195,6 +198,10 @@ void main() async {
           ),
           ChangeNotifierProvider(
             create: (_) => MedicationProvider(apiService),
+          ),
+          // Blogs/Education feature.
+          ChangeNotifierProvider(
+            create: (_) => BlogProvider(apiService),
           ),
           ChangeNotifierProvider(
             create: (_) => ThemeProvider(),
@@ -647,6 +654,16 @@ class _HousepitalAppState extends State<HousepitalApp> {
           case '/daimaa':
             return MaterialPageRoute(
                 builder: (_) => const DaiMaaLandingScreen());
+          case '/articles':
+            return MaterialPageRoute(
+                builder: (_) => const ArticleListScreen());
+          case '/article':
+            final id = settings.arguments;
+            if (id is! String) {
+              throw ArgumentError('Route /article requires a String id');
+            }
+            return MaterialPageRoute(
+                builder: (_) => ArticleDetailScreen(articleId: id));
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));

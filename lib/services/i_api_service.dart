@@ -2,6 +2,7 @@ import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
+import '../models/article.dart';
 
 /// Abstract interface for the API service layer.
 /// All consumers should depend on this interface rather than the
@@ -228,4 +229,8 @@ abstract class IApiService {
     required String condition,
     String? photoUrl,
   });
+
+  // ── Articles ──────────────────────────────────────────────
+  Future<List<Article>> getArticles({String? category});
+  Future<Article> getArticle(String id);
 }
