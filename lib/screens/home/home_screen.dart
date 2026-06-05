@@ -948,8 +948,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     final allActions = [...browseActions, ...utilityActions];
-    // 4 tiles per row gives comfortable thumb-reach on standard phone widths.
-    final tileWidth = (MediaQuery.of(context).size.width - 48) / 4;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -959,59 +957,65 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HousepitalColors.divider),
       ),
-      child: Wrap(
-        spacing: 0,
-        runSpacing: 8,
+      // GridView.count derives each cell width from the ACTUAL constraints it
+      // is given (not MediaQuery), so the 3 columns always fill the row edge
+      // to edge regardless of screen size — no manual width math, no trailing
+      // gap. 9 actions tile into a clean 3×3. shrinkWrap + NeverScrollable so
+      // it lays out naturally inside the home SingleChildScrollView.
+      child: GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        primary: false,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        // width:height per cell — tuned so icon + 2-line label fits without
+        // clipping or excess vertical whitespace.
+        childAspectRatio: 0.92,
         children: allActions.map((action) {
           final tileId = 'quick_${action.label}';
-          return SizedBox(
-            width: tileWidth,
-            child: Semantics(
-              button: true,
-              label: action.label,
-              child: AnimatedScale(
-                scale: _pressedScale[tileId] ?? 1.0,
-                duration: const Duration(milliseconds: 100),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: action.onTap,
-                    onTapDown: (_) => _onCardPressDown(tileId),
-                    onTapUp: (_) => _onCardPressUpOrCancel(tileId),
-                    onTapCancel: () => _onCardPressUpOrCancel(tileId),
-                    child: Container(
-                      // WCAG 2.5.5 — ≥44pt tap target.
-                      constraints: const BoxConstraints(minHeight: 56),
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(
-                              color: action.color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(action.icon,
-                                color: action.color, size: 22),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            action.label,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: HousepitalColors.grey,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+          return Semantics(
+            button: true,
+            label: action.label,
+            child: AnimatedScale(
+              scale: _pressedScale[tileId] ?? 1.0,
+              duration: const Duration(milliseconds: 100),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: action.onTap,
+                  onTapDown: (_) => _onCardPressDown(tileId),
+                  onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+                  onTapCancel: () => _onCardPressUpOrCancel(tileId),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: action.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(action.icon, color: action.color, size: 24),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Text(
+                          action.label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HousepitalColors.grey,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
