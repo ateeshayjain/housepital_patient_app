@@ -25,9 +25,18 @@ class ApiService implements IApiService {
   /// Added for BUG-10 test coverage — backward compatible (optional named arg).
   final http.Client _client;
 
+  /// audit batch 4 (Agent J): callback invoked on a 401, allowing the
+  /// auth layer (typically [AuthProvider]) to refresh the Firebase ID token
+  /// and tell us whether to retry the original request once. Returns true
+  /// to retry, false to surface the 401 as an [ApiException]. Kept as an
+  /// injectable callback rather than a hard dependency on AuthProvider so
+  /// we don't create a circular dependency between providers and services.
+  Future<bool> Function()? onUnauthorized;
+
   ApiService({
     this.baseUrl = AppConstants.apiBaseUrl,
     http.Client? client,
+    this.onUnauthorized,
   }) : _client = client ?? http.Client();
 
   @override
@@ -79,38 +88,54 @@ class ApiService implements IApiService {
     }
   }
 
+  /// audit batch 4 (Agent J): wraps a request closure with one-shot 401
+  /// recovery — if the first response is 401 and we have an [onUnauthorized]
+  /// callback, ask the auth layer to refresh and retry the request ONCE.
+  /// This is intentionally separate from the 5xx/network [_withRetry] loop
+  /// so a permanent 401 doesn't fan out into N retries.
+  Future<http.Response> _withAuthRecovery(
+      Future<http.Response> Function() request) async {
+    final response = await _withRetry(request);
+    if (response.statusCode != 401 || onUnauthorized == null) return response;
+    final retry = await onUnauthorized!();
+    if (!retry) return response;
+    // Fresh request with the refreshed Authorization header.
+    return await _withRetry(request);
+  }
+
   Future<Map<String, dynamic>> _get(String path,
       {Map<String, String>? queryParams}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
-    final response = await _withRetry(() => _client.get(uri, headers: _headers));
+    final response =
+        await _withAuthRecovery(() => _client.get(uri, headers: _headers));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _post(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => _client.post(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    ));
+    final response = await _withAuthRecovery(() => _client.post(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _put(String path,
       {Map<String, dynamic>? body}) async {
-    final response = await _withRetry(() => _client.put(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    ));
+    final response = await _withAuthRecovery(() => _client.put(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        ));
     return _handleResponse(response);
   }
 
   Future<Map<String, dynamic>> _delete(String path) async {
-    final response = await _withRetry(() => _client.delete(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers,
-    ));
+    final response = await _withAuthRecovery(() => _client.delete(
+          Uri.parse('$baseUrl$path'),
+          headers: _headers,
+        ));
     return _handleResponse(response);
   }
 

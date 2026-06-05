@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
@@ -72,8 +73,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(pkg.name)),
+      // audit batch 4 (Agent L): Apple P5 (perceived performance) — replace
+      // bare spinner with a Shimmer skeleton matching the post-load layout
+      // (hero card + highlights list + equipment rows).
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildSkeleton()
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,6 +138,106 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
               ),
             ),
       bottomNavigationBar: _loading ? null : _buildBottomBar(context, pkg),
+    );
+  }
+
+  // audit batch 4 (Agent L): Shimmer skeleton — hero banner footprint plus
+  // 3 detail rows (highlights/equipment). Matches the real layout's vertical
+  // rhythm so the page settles instead of jumping when the catalog loads.
+  Widget _buildSkeleton() {
+    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final highlight = Theme.of(context).colorScheme.surface;
+    Widget bar({double width = double.infinity, double height = 14}) => Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero banner footprint
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        bar(width: 160, height: 18),
+                        const SizedBox(height: 8),
+                        bar(width: 220, height: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  bar(width: 140, height: 16),
+                  const SizedBox(height: 12),
+                  // Three detail rows
+                  for (int i = 0; i < 3; i++) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                bar(width: 180, height: 14),
+                                const SizedBox(height: 4),
+                                bar(width: 100, height: 12),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

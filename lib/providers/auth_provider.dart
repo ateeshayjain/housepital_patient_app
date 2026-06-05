@@ -1,20 +1,35 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
-import '../services/api_service.dart';
 import '../services/firebase_service.dart';
+import '../services/i_api_service.dart';
 
 enum AuthState { initial, loading, otpSent, authenticated, onboarding, error }
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseService _firebaseService;
-  final ApiService _apiService;
+  // audit batch 4 (Agent J): depend on IApiService (DIP), not the concrete
+  // ApiService — keeps the auth flow trivially fakeable in tests.
+  final IApiService _apiService;
 
   AuthState _state = AuthState.initial;
   String? _errorMessage;
   FamilyMember? _currentUser;
   String? _phone;
+
+  // audit batch 4 (Agent J): proactive token refresh.
+  // Firebase ID tokens are valid for 60 minutes. We refresh at 50 min so we
+  // have a 10-min buffer before Firebase's 60-min hard expiry — users on flaky
+  // networks then get a token-not-yet-expired in their request cache rather
+  // than discovering expiry mid-request. The 401-recovery path in ApiService
+  // is the safety net for the (rare) case where a request still races expiry.
+  static const Duration _tokenRefreshInterval = Duration(minutes: 50);
+  Timer? _tokenRefreshTimer;
+
   AuthProvider(this._firebaseService, this._apiService) {
     _checkAuthState();
   }
@@ -26,7 +41,7 @@ class AuthProvider extends ChangeNotifier {
 
   /// Expose services for FCM setup in main.dart.
   FirebaseService get firebaseService => _firebaseService;
-  ApiService get apiService => _apiService;
+  IApiService get apiService => _apiService;
   bool get isLoggedIn => _state == AuthState.authenticated;
   bool get isPrimaryContact => _currentUser?.isPrimaryContact ?? false;
 
@@ -40,11 +55,64 @@ class AuthProvider extends ChangeNotifier {
           _apiService.setAuthToken(token);
         }
         _state = AuthState.authenticated;
+        // audit batch 4 (Agent J): kick off periodic token refresh once we
+        // know we have an authenticated session restored from cold start.
+        _startTokenRefreshTimer();
       } else {
         _state = AuthState.onboarding;
       }
     }
     notifyListeners();
+  }
+
+  // ── audit batch 4 (Agent J): Token refresh ─────────────────────────────
+  // Firebase ID tokens are valid for 60 minutes; without proactive refresh,
+  // users on long-running sessions get 401s and (pre-fix) had to restart the
+  // app. Two layers:
+  //   1) Periodic refresh every 50 min (this timer).
+  //   2) One-shot refresh + single retry on 401 (in [authorizedCall]).
+  // If refresh itself fails (refresh token revoked / expired), we logout —
+  // the user must re-authenticate via OTP.
+  void _startTokenRefreshTimer() {
+    _tokenRefreshTimer?.cancel();
+    _tokenRefreshTimer = Timer.periodic(_tokenRefreshInterval, (_) async {
+      await _refreshToken();
+    });
+  }
+
+  void _stopTokenRefreshTimer() {
+    _tokenRefreshTimer?.cancel();
+    _tokenRefreshTimer = null;
+  }
+
+  /// Forces a Firebase ID token refresh and pushes the new token into the API
+  /// client. Returns true on success, false if Firebase rejected the refresh
+  /// (in which case the caller will typically logout).
+  Future<bool> _refreshToken() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      final fresh = await user.getIdToken(true);
+      if (fresh == null) return false;
+      _apiService.setAuthToken(fresh);
+      return true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('Token refresh failed: $e');
+      return false;
+    }
+  }
+
+  /// Public hook for API call sites that hit a 401: refresh the token once,
+  /// then let the caller retry the original request. If refresh fails the
+  /// user is logged out (refresh token expired/revoked). Returns true if
+  /// the caller should retry, false if it should surface the 401.
+  Future<bool> handleUnauthorized() async {
+    final ok = await _refreshToken();
+    if (!ok) {
+      await logout();
+      return false;
+    }
+    return true;
   }
 
   Future<void> sendOtp(String phoneNumber) async {
@@ -97,6 +165,8 @@ class AuthProvider extends ChangeNotifier {
 
       if (hasOnboarded) {
         _state = AuthState.authenticated;
+        // audit batch 4 (Agent J): start periodic refresh on fresh login.
+        _startTokenRefreshTimer();
       } else {
         _state = AuthState.onboarding;
       }
@@ -133,6 +203,10 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _state = AuthState.authenticated;
+      // audit batch 4 (Agent J): start periodic refresh once onboarding
+      // completes — this is the other "fresh login" path besides
+      // _handleCredential (for users who land directly in onboarding).
+      _startTokenRefreshTimer();
     } catch (e) {
       _state = AuthState.error;
       _errorMessage = 'Setup failed. Please try again.';
@@ -141,11 +215,23 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // audit batch 4 (Agent J): stop the refresh timer first so a tick
+    // in flight can't race the sign-out and set a stale token.
+    _stopTokenRefreshTimer();
     await _firebaseService.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     _currentUser = null;
     _state = AuthState.initial;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    // audit batch 4 (Agent J): defensive — providers attached to MultiProvider
+    // are typically long-lived, but if disposed (e.g. hot restart in dev) we
+    // must not leak the Timer.
+    _stopTokenRefreshTimer();
+    super.dispose();
   }
 }

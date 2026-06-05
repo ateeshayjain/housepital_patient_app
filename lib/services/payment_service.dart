@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../config/constants.dart';
 import 'api_service.dart';
+import 'i_api_service.dart';
 
 /// Razorpay payment gateway integration with backend order creation and verification.
 ///
@@ -24,7 +25,11 @@ import 'api_service.dart';
 ///   // Call dispose() when done.
 class PaymentService {
   late final Razorpay _razorpay;
-  final ApiService _apiService;
+  // audit batch 4 (Agent J): depend on the IApiService interface (DIP).
+  // Default falls back to a concrete ApiService — keeps the existing
+  // `PaymentService()` call sites working without forcing callers to wire
+  // up DI plumbing, while letting tests inject a fake.
+  final IApiService _apiService;
 
   // Key sourced from constants — move to env config before production.
   static const _testKey = AppConstants.razorpayKey;
@@ -32,7 +37,7 @@ class PaymentService {
   VoidCallback? _onSuccessCallback;
   void Function(String)? _onFailureCallback;
 
-  PaymentService({ApiService? apiService})
+  PaymentService({IApiService? apiService})
       : _apiService = apiService ?? ApiService() {
     assert(
       AppConstants.razorpayKey != 'rzp_test_XXXXXXXXXX',

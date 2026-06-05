@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+// audit batch 4 (Agent I): centralized validators for pincode + phone.
+import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
 
 class SavedAddress {
@@ -198,6 +201,61 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     }
   }
 
+  // audit batch 4 (Agent L): Shimmer skeleton — 3 address cards approximating
+  // the post-load layout so the screen settles rather than popping in.
+  Widget _buildSkeleton() {
+    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final highlight = Theme.of(context).colorScheme.surface;
+    Widget bar({double width = double.infinity, double height = 14}) => Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, __) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  bar(width: 100, height: 14),
+                ],
+              ),
+              const SizedBox(height: 12),
+              bar(width: double.infinity, height: 12),
+              const SizedBox(height: 6),
+              bar(width: 220, height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -211,8 +269,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           ),
         ],
       ),
+      // audit batch 4 (Agent L): Apple P5 — replace bare spinner with a
+      // Shimmer skeleton matching the saved-address card layout.
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: HousepitalColors.orange))
+          ? _buildSkeleton()
           : _addresses.isEmpty
               ? Center(
                   child: Column(
@@ -403,6 +463,9 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          // audit batch 4 (Agent I): onUserInteraction so the user sees
+          // pincode/phone errors as soon as they type, not only on submit.
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -474,24 +537,18 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
                 decoration: const InputDecoration(labelText: 'Pincode'),
                 keyboardType: TextInputType.number,
                 maxLength: 6,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
-                  final pin = v.trim();
-                  if (pin.length != 6) return 'Pincode must be 6 digits';
-                  if (!RegExp(r'^[1-9]\d{5}$').hasMatch(pin)) return 'Invalid pincode';
-                  return null;
-                },
+                // audit batch 4 (Agent I): centralized pincode validator.
+                validator: Validators.pincode,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _phoneController,
                 decoration: const InputDecoration(labelText: 'Phone Number'),
                 keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
-                  if (v.trim().length < 10) return 'Enter a valid phone number';
-                  return null;
-                },
+                // audit batch 4 (Agent I): was length < 10 (accepted 5-digit
+                // garbage, landlines). Now enforces TRAI 6-9 prefix via
+                // Validators.indianMobile.
+                validator: Validators.indianMobile,
               ),
               const SizedBox(height: 24),
               SizedBox(

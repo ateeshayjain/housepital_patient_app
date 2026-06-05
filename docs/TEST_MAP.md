@@ -1,8 +1,30 @@
 # Test Map -- Housepital Patient App
 
-**Last updated:** 2026-03-25
-**Total test count:** 1090
-**Pass rate:** 1090/1090 (all passing)
+**Last updated:** 2026-05-28
+**Total test count:** 1336 (+ 17 skipped — Firebase-init-dependent scenarios)
+**Pass rate:** 1336/1336 (all passing)
+**Test file count:** 64 (`find test -name "*_test.dart" | wc -l`)
+
+### How to update this count
+
+When you add or remove tests:
+
+```bash
+# Total passing tests (the "+N" lines in expanded reporter output):
+flutter test --reporter=expanded 2>&1 | grep -cE " \+[0-9]+: "
+
+# Total test files (excludes mocks/fakes/helpers):
+find test -name "*_test.dart" | wc -l
+```
+
+Then update the three numbers in the header above and the corresponding line
+in `README.md` ("Quick Stats" block) so the two docs don't drift.
+
+History:
+- 2026-03-25: 1090 tests / 47 files
+- 2026-05-28 (batch 1): 1138 tests
+- 2026-05-28 (batch 2): 1147 tests
+- 2026-05-28 (batch 3): 1336 tests / 64 files (+199 from agents A+B+C)
 
 ---
 
@@ -181,7 +203,7 @@
 
 ## Pre-existing Failures
 
-All previously failing tests (3 in `my_care_widgets_test.dart`) have been fixed. All 973 tests now pass.
+All previously failing tests (3 in `my_care_widgets_test.dart`) have been fixed. All 1336 tests now pass; 17 are skipped (Firebase-init-dependent scenarios that need an emulator harness — tracked but not blocking).
 
 ---
 

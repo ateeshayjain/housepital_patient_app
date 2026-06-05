@@ -4,6 +4,222 @@
 
 ---
 
+## [2026-05-28 (Audit Batch 3)] -- 4bcaadb -- +199 Tests, Dead Code Sweep, 3 Audits, Prod Fixes
+
+Builds on batches 1 and 2. 1336 passing tests, 17 skipped, 0 failing
+(+199 over batch 2). Analyzer 0 errors, 198 issues (-86 from dead code sweep).
+Clean web release build with tree-shake-icons.
+
+### Test coverage (+199 tests)
+- `payment_service_test.dart` (18) — init, openCheckout, verification outcomes, demo mode
+- `api_service_test.dart` (50) — Bearer token, status codes, all 13 endpoint groups
+- `auth_provider_test.dart` (18) — cold-start restore, OTP send/verify, logout
+- `theme_provider_test.dart` (15) — empty prefs, garbage values, last-write-wins
+- `otp_screen_test.dart` (8) — countdown, 5-min expiry lock, resend cooldown
+- `login_screen_test.dart` (19) — 11-case Indian-mobile validator, T&C consent
+- `gst_test.dart` — per-line GST 0%/5%/18%
+- `orders_provider_refund_test.dart` — cancelOrder refund computation
+- `daimaa_landing_screen_test.dart` — cards + Dai Maa colors
+- `assessment_request_daimaa_test.dart` — Japa/Nanny branded form
+- `add_patient_screen_test.dart` — form validation + chip multi-select
+- `sos_screen_test.dart` — address card, copy clipboard, tel: launches
+- Extended `permission_test.dart` with CARETAKER role + unknown-role default
+
+### Minimal lib changes for testability
+- `ApiService` constructor now accepts optional `http.Client` (DI)
+- `FirebaseService.verifyOtp` return type Future<UserCredential> → Future<void>
+  (caller discarded credential — enables faking)
+
+### Dead code sweep (~1,199 lines removed)
+- Methods/getters: `_buildVitalsHighlights`, `_buildDailyReportSection`,
+  `_buildPaymentBanner`, `_showAllReminders`, `_loadPaymentReminders`,
+  `_isManpower`, `_navigateToEquipmentDetail`, `_sectionTaskCount`, `_detailRow`
+- Fields: `_autoPayEnabled`, `_onDutySince`, `_paymentReminders`, `_loaded`,
+  `_addressesLoaded`, `_preferredStaffId`, `_initialized`
+- Classes: `_ActiveServiceCard`, `_VitalPill`, `_ProgressRingPainter`,
+  `_TherapyTab`, `_TherapyCard`
+- Static lists: `_equipmentServices` (~280 lines)
+- 11 unused imports across 6 files
+- 12 `activeColor` → `activeThumbColor` (Material API churn)
+- 39 `DropdownButtonFormField value:` → `initialValue:` (Material API churn)
+
+### Audits (read-only)
+- **Apple Design Framework**: 12 pass / 9 partial / 0 fail
+- **Testing & Code Quality**: 3 CRITICAL findings (firestore.rules expired,
+  raw exceptions leaked, Firebase keys unrestricted)
+- **Documentation**: 3 missing meta files
+
+### Critical audit fixes in batch
+- `otp_screen.dart` — timer leak: dispose() called controller dispose first,
+  which threw on pin_code_fields v8 autoDispose, preventing timer.cancel().
+  Result: 2 periodic timers leaked on every back-nav. Fixed by cancelling
+  timers before controller dispose, wrapped in try/catch.
+- `return_screen.dart:357` — replaced raw exception text leak with friendly
+  message; raw error via debugPrint internally.
+- `staff_replacement_screen.dart:222` — same fix + coordinator phone fallback.
+
+### New meta documentation
+- NEW `PROJECT.md` (root) — project meta, secrets map, doc map, roadmap
+- NEW `CONTRIBUTING.md` — branching, commit style, PR requirements, agent file-ownership
+- NEW `LICENSE` — proprietary with full Housepital Pvt Ltd legal name + CIN
+- `README.md` — Quick Links block, CI badge, full `--dart-define=RAZORPAY_KEY=` setup
+- `.gitignore` — added `.env*`, `google-services.json`, `GoogleService-Info.plist`
+- `docs/KNOWN_ISSUES.md` — updated BUG-01 status, added CI-01/02/03
+
+### GitHub repo state
+- Added topics: flutter, healthcare, india, home-healthcare, firebase, dart, provider
+
+---
+
+## [2026-05-28 (Audit Batch 2)] -- 946df8d -- Dark Theme, 20 Medium Fixes, CI Hardening
+
+Builds on batch 1. Adds full dark theme, fixes 20 medium-priority issues from
+the post-batch-1 re-audit, plus CI hardening and tree-shake-icons re-enabled
+(1.6MB bundle reduction). 1147/1147 tests pass; release web build clean.
+
+### Dark theme
+- NEW `lib/providers/theme_provider.dart` — ChangeNotifier persisting ThemeMode
+  to SharedPreferences (system/light/dark)
+- `lib/config/theme.dart` — NEW `HousepitalColorsDark` with WCAG-AA tokens
+  (surface #1A1A1A textPrimary #F2F2F2 → 14.9:1 AAA; onOrange → 6.32:1) +
+  new `HousepitalTheme.darkTheme` factory mirroring lightTheme
+- `lib/config/daimaa_theme.dart` — NEW `DaiMaaColorsDark` + 4 theme-aware
+  helpers; cream backgrounds adapt to dark plum-tinted surface #2A1F2A
+- `main.dart` — ThemeProvider registered; MaterialApp reads provider.mode
+- `settings_screen.dart` — Appearance tile opens 3-option RadioListTile sheet
+
+### Critical regressions batch 1 missed
+- M-1 manpower prices: catalog (3 card types) + booking screen hide price for
+  category == 'manpower'; `basePriceMin` REMOVED from all 14 manpower seeds
+  (nurse, caretaker, japa, nanny — per persistent memory rule, never show
+  manpower prices)
+- M-2 booking number regen: `BookingConfirmationScreen` accepts bookingNumber
+  param; main.dart was silently dropping it before
+- M-3 cart static call: replaced with `context.read<OrdersProvider>()`
+  `.generateUniqueBookingNumber()`
+- M-8 `OrderTrackingScreen`: `substring(0,8)` guarded for IDs <8 chars
+- M-20 chat initials: split now filters empty tokens, returns 'HP' fallback
+
+### Scenario + journey fixes
+- M-4 SOS: 4th tile "Book Housepital Ambulance" + visible patient address card
+  with Copy button
+- M-5 CARETAKER persona: new permissions matrix `{view, raise_concern}` + 9
+  new permission tests
+- M-6 OTP expiry: parallel 5-min countdown, disables PIN field on expiry
+- M-7 login: Indian mobile regex `^[6-9]\d{9}$` + required T&C consent checkbox
+- M-10 rental return: refund estimate card with pro-rata + security deposit −
+  damage fee
+- M-11 assessment cancel/edit: new TextButtons on submitted/in_review cards
+- M-12 refund tracking: `cancelOrder` records refundAmount + refundStatus +
+  refundEta (₹100 fee within 24h, 50% after)
+
+### Billing + UX consistency
+- M-13 destructive consistency: 4 hand-rolled AlertDialogs → `confirmDestructiveAction`
+- M-14 per-item GST: replaced hardcoded 18% with computed `CartItem.gstRate`
+  getter (0% service/manpower, 5% lab, 18% equipment)
+- M-15 stop faking cards: 'Add Card' dialog → 'Set up auto-pay' bottom sheet
+  pointing to coordinator (tel:9050200183); no fake HDFC •••• 4521
+- M-16 documents: 'Open' launches via url_launcher externalApplication; 'Upload
+  PDF' hidden on web, mobile points users to wecare@ email
+- M-17 cart debug noise removed
+
+### File handling
+- M-9 Firebase Storage uploads: new `firebase_service.uploadFile()`; chat +
+  raise_concern now upload to FBS and write download URLs (not local
+  /storage/emulated paths). Concurrency cap 3. Web guard via kIsWeb.
+- M-18 banner slides.length: replaced hardcoded `% 3` with stored `_slideCount`
+- M-19 `withOpacity` → `withValues`: 5 holdouts migrated
+
+### Build tooling + CI hardening
+- `.github/workflows/ci.yml` — Flutter pinned to 3.41.2 (was 3.24.0); added
+  Analyze step (`--no-fatal-warnings --no-fatal-infos`); Test step uses
+  `--reporter=expanded`; on failure uploads build/web + coverage (7d retention)
+- Tree-shake-icons re-enabled — earlier failure was transient build cache from
+  concurrent agent writes, not an SDK bug (documented as CI-01)
+
+### Dependencies added
+- `firebase_storage: ^12.4.0`
+- `path: ^1.9.0` (explicit declaration)
+
+---
+
+## [2026-05-28 (Audit Batch 1)] -- b7129af -- Blockers, Brand, Permissions, Dai Maa, A11y
+
+Resolves 14 of 31 issues from the multi-dimensional audit (functionality, HIG,
+accessibility, usability, use cases, scenarios, journeys, brand). 1138/1138
+tests pass; web release build clean.
+
+### Critical functionality
+- `payment_service`: `_handleSuccess` now awaits verification and branches via
+  `_VerificationOutcome` enum; failed verification calls `onFailure` (was
+  silently calling `onSuccess`); demo mode keeps its own explicit branch
+- `app_provider`: `results[4]` cast nullable with safe fallback; defensive
+  num/DateTime parsing in `_seedDemoDataIfEmpty` and `updateFromSync`
+- `main.dart`: 15 unsafe `as` casts on `settings.arguments` → `is!` guards that
+  route to friendly error screen (was crashing My Care / Home tabs)
+- `billing → order-tracking` nav: pass `{bookingId, orderType}` not raw map
+- `service_booking`: promo Apply button wired to `_applyPromo` (WELCOME10);
+  Remove button + disabled state after apply
+- `sos_screen`: `_makeCall` wraps launch in try/catch; on failure shows dialog
+  with Copy Number + Close
+- `orders_provider`: booking number uses last 7 digits of epoch ms +
+  `generateUniqueBookingNumber()` collision check
+- `sync_service`: bool guard → `Completer<void>?` — concurrent callers share
+  the in-flight future
+
+### Brand compliance
+- `constants`: API domain housepital.com → housepital.in (BLOCKER)
+- `about_screen`: legal name → "Housepital Pvt Ltd"; full Mohan Cooperative
+  address; CIN U85100DL2019PTC357830; tagline to period-separated form
+- `help_faq`: both support@housepital.in → wecare@housepital.in
+- `splash_screen`: hardcoded 0xFFF39314 → `HousepitalColors.orange` token
+- `theme`: `GoogleFonts.notoSansDevanagari` added as fontFamilyFallback for
+  Hindi glyphs when Archivo lacks coverage
+- `home_screen`: banner title to sentence case with periods
+- 4 docs + ARCHITECTURE.md: housepital.com → housepital.in
+- `payment_service`: debug assert catches placeholder Razorpay key
+
+### Permissions + Add Patient
+- `permissions`: added `request_booking` action; FAMILY_MEMBER can view,
+  request_booking, rate, raise_concern (NOT book); PRIMARY_CONTACT has all 8
+- `app_provider`: `currentUserRole`, `setUserRole()`, `addPatient()`
+- 17 `canUserPerform()` call sites across 9 screens
+- NEW `add_patient_screen` — full form with addPatient() integration
+- `main.dart`: registered `/add-patient`; `/booking-history` alias → `/my-orders`
+- `home_screen`: role badge below greeting; "Call my family caregiver" card
+  for PATIENT_SELF; hides Book Services / Dai Maa for view-only roles
+- `settings`: Add Patient tile + Family Members tile, both gated
+- `patient_profile`: AbsorbPointer wraps form for non-editors; read-only banner
+
+### Dai Maa sub-brand
+- NEW `config/daimaa_theme.dart` — DaiMaaColors (plum #5C3C5C, lavender
+  #B48EAD, pink #E3AFBE, cream #F5F0EB), DaiMaaBrandHeader, DaiMaaBadge widgets
+- NEW `screens/daimaa/daimaa_landing_screen.dart` — cream bg, plum AppBar,
+  Japa Maid (0-7m) + Nanny (7m-5y), Call Coordinator CTA
+- `home_screen`: plum Dai Maa entry tile after Quick Actions
+- `service_catalog`: Japa/Nanny role cards get plum border + lavender icon
+  tint + DAI MAA badge
+- `assessment_request`: japa/nanny → cream bg, plum AppBar, DaiMaaBrandHeader
+
+### Accessibility
+- 44pt+ touch targets: Quick Actions grid, miniVitalChip, cart close/delete
+- `main.dart`: `MaterialApp` builder clamps `textScaler` 0.85–1.4
+- `miniVitalChip`: zone icon + color (WCAG 1.4.1); semantic label
+- NEW `confirmDestructiveAction()` helper, wired to cart remove, address delete,
+  medication remove
+- 5 Image widgets get `semanticLabel`
+- Hero banner: Semantics(container, image, label)
+- Form field labelText added on promo + coupon inputs
+
+### Cleanup
+- `home_screen`: live `_buildMedicationsSnippet` using `MedicationProvider`
+- NEW `_DailyCareRatingCard` in my_care_screen — 5-star rating persisted to
+  SharedPreferences; ratings 1-3 open feedback modal → /raise-concern
+- `service_booking._buildReviewStep`: price null/0 → disabled Add-to-Cart +
+  Request Assessment button
+
+---
+
 ## [2026-03-25 (Session 6)] -- OrdersProvider, Billing Rewrite, i18n Fixes, Payment Web Sim
 
 ### OrdersProvider

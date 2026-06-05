@@ -2,7 +2,7 @@
 
 Step-by-step guide to deploy the full Housepital Patient App stack.
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-05-28 (audit batch 4 — added Firebase Console hardening checklist)
 
 ---
 
@@ -323,12 +323,127 @@ Alternative: Use Cloud Functions custom domain directly via Google Cloud Console
 
 ---
 
+## 7a. Firebase Console hardening checklist (pre-launch)
+
+The Flutter app embeds Firebase API keys in `lib/config/firebase_options.dart`
+and `android/app/google-services.json`. These keys are **safe by design only
+if the corresponding console-side restrictions are configured.** Without
+restrictions, anyone who decompiles the app can use the keys to abuse your
+Firebase quota or hit your Cloud Functions from arbitrary origins.
+
+Run through this list before flipping the app to production:
+
+### 1. Restrict each Firebase / Google Cloud API key
+
+Open https://console.cloud.google.com/apis/credentials?project=housepital-patient
+and for each key listed below, set restrictions:
+
+| Key value (truncated)               | Platform | Restriction type | Restriction details |
+|-------------------------------------|----------|------------------|---------------------|
+| `AIzaSyCmH3bfQCN4q6rjjJROf6LQzBG-8i_nTJg` | (web)    | HTTP referrer    | `*.housepital.in/*`, `housepital.in/*`, `localhost/*` (dev only) |
+| `AIzaSyBKK2NxRuvZsIGrBdpugnePy9zA7g13TLc` | (Android)| Android app      | Package `in.housepital.patient` + release signing SHA1 (`keytool -list -v -keystore housepital.jks`) |
+| (iOS key in GoogleService-Info.plist) | (iOS)    | iOS app          | Bundle ID `in.housepital.patient` |
+
+For each key, also restrict the API surface:
+
+- Firebase Cloud Messaging API
+- Firebase Installations API
+- Cloud Firestore API
+- Identity Toolkit API (Auth)
+- Firebase Realtime Database (only if used)
+
+Do NOT leave keys with "No restrictions" or "All APIs".
+
+### 2. Enable Firebase App Check
+
+App Check verifies that requests to Firestore / Cloud Functions / Storage come
+from your real apps, not from a script. Without App Check, a determined
+attacker who decompiles the app can call backend services directly using the
+embedded API keys, bypassing your firestore.rules.
+
+```bash
+# Enable in console:
+# https://console.firebase.google.com/project/housepital-patient/appcheck
+
+# Providers per platform:
+#   Android — Play Integrity (debug: SafetyNet)
+#   iOS     — App Attest (debug: DeviceCheck)
+#   Web     — reCAPTCHA Enterprise
+
+# In the Flutter app, add firebase_app_check and call:
+#   await FirebaseAppCheck.instance.activate(
+#     androidProvider: AndroidProvider.playIntegrity,
+#     appleProvider: AppleProvider.appAttest,
+#     webProvider: ReCaptchaEnterpriseProvider('SITE_KEY'),
+#   );
+# (See Agent J's wiring task — infra agent only documents the requirement.)
+```
+
+After enabling, run for at least 7 days in "Monitor" mode to confirm no
+legitimate clients are being blocked, THEN switch to "Enforce".
+
+### 3. Deploy the hardened firestore.rules
+
+The repo's `firestore.rules` file is the source of truth. After every change:
+
+```bash
+# From this repo (or from housepital-backend if firebase.json lives there):
+firebase deploy --only firestore:rules --project housepital-patient
+
+# Verify the deployed rules match the file:
+firebase firestore:rules get --project housepital-patient
+```
+
+**Audit trail:** every deploy is logged at
+https://console.firebase.google.com/project/housepital-patient/firestore/rules
+(history tab). Check the timestamp matches the git commit SHA.
+
+The current rules use default-deny + per-collection authorisation. See the
+extensive comment block at the top of `firestore.rules` for the audit trail
+and the list of collections covered.
+
+### 4. Verify deploys are logged in audit
+
+Cloud Audit Logs should capture every `firebase deploy` against Firestore,
+Cloud Functions, and Hosting. Confirm at:
+
+https://console.cloud.google.com/logs/query?project=housepital-patient
+
+Filter: `resource.type="firestore.googleapis.com/Database"` and
+`protoPayload.methodName=~"UpdateRuleset"`. If logs are missing, enable
+Data Access audit logs for the Firebase project.
+
+### 5. Configure Crashlytics + Performance dashboard alerts
+
+`firebase_crashlytics: 4.3.10` and `firebase_performance: 0.10.1+10` are added
+to `pubspec.yaml` (initialization is wired in `lib/main.dart` by Agent J in
+this same batch). Once builds are flowing crashes:
+
+1. https://console.firebase.google.com/project/housepital-patient/crashlytics
+2. Velocity alerts: trigger when a fatal issue affects > 0.1% of users in 1h
+3. New issue alerts: email + Slack webhook (wire via Firebase → Integrations)
+4. Performance: alert on app start > 5s p95, HTTP > 3s p95
+
+Verify Crashlytics dSYM upload is working on iOS (Run Script phase in Xcode).
+Without dSYMs, all iOS crash reports are obfuscated and useless.
+
+### 6. Razorpay key rotation post-launch
+
+If a production Razorpay key is ever committed by mistake (CI lint should
+catch this), rotate immediately at https://dashboard.razorpay.com and
+re-deploy with `--dart-define=RAZORPAY_KEY=rzp_live_...`.
+
+---
+
 ## 8. Post-Deployment Checklist
 
 - [ ] Health check endpoint returns 200
 - [ ] Firebase Auth phone OTP works (test with a real phone number)
 - [ ] Cloud SQL connection succeeds (check Cloud Functions logs)
-- [ ] Firestore security rules deployed (test with Firebase Emulator)
+- [ ] **Firestore security rules deployed AND verified in console** (Section 7a step 3)
+- [ ] **Firebase API key restrictions configured for all platforms** (Section 7a step 1)
+- [ ] **App Check enabled in Monitor mode (7 days), then Enforce** (Section 7a step 2)
+- [ ] **Crashlytics + Performance dashboard alerts configured** (Section 7a step 5)
 - [ ] Razorpay test payment completes successfully
 - [ ] Push notification received on a test device
 - [ ] All seed data loaded (services, equipment, coupons)

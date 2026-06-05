@@ -324,6 +324,60 @@ Future<bool> confirmDestructiveAction(
   return result ?? false;
 }
 
+/// A simple two-column label/value row used in detail sheets (staff profile,
+/// document repository, etc).
+///
+/// audit batch 4 (Agent I): consolidated from two near-identical private
+/// `_detailRow` widgets in `staff_profile_screen.dart` and
+/// `document_repository_screen.dart`. Defaults match the staff-profile
+/// styling (labelWidth 110, value 14sp); pass `labelWidth: 100` and
+/// `valueFontSize: 13` to match the document-detail look.
+class DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final double labelWidth;
+  final double valueFontSize;
+
+  const DetailRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.labelWidth = 110,
+    this.valueFontSize = 14,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: labelWidth,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: HousepitalColors.greyLight,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: valueFontSize,
+                fontWeight: FontWeight.w500,
+                color: HousepitalColors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class SOSButton extends StatelessWidget {
   final VoidCallback onTap;
 

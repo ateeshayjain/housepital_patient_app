@@ -395,12 +395,39 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                   style: const TextStyle(
                       fontSize: 14, color: HousepitalColors.grey)),
             const SizedBox(height: 16),
-            _detailRow('Category', _categoryLabels[doc.category] ?? doc.category),
-            _detailRow('Type', doc.fileType.toUpperCase()),
-            _detailRow('Size', _formatFileSize(doc.fileSizeBytes ?? 0)),
-            _detailRow('Uploaded', DateHelper.formatDate(doc.uploadedAt)),
+            // audit batch 4 (Agent I): _detailRow → shared DetailRow widget
+            // (labelWidth/fontSize tuned to match the document-detail look).
+            DetailRow(
+              label: 'Category',
+              value: _categoryLabels[doc.category] ?? doc.category,
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Type',
+              value: doc.fileType.toUpperCase(),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Size',
+              value: _formatFileSize(doc.fileSizeBytes ?? 0),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
+            DetailRow(
+              label: 'Uploaded',
+              value: DateHelper.formatDate(doc.uploadedAt),
+              labelWidth: 100,
+              valueFontSize: 13,
+            ),
             if (doc.uploadedBy != null)
-              _detailRow('Uploaded by', doc.uploadedBy!),
+              DetailRow(
+                label: 'Uploaded by',
+                value: doc.uploadedBy!,
+                labelWidth: 100,
+                valueFontSize: 13,
+              ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -452,26 +479,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: HousepitalColors.greyLight)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
-  }
+  // audit batch 4 (Agent I): private _detailRow removed — replaced by the
+  // shared DetailRow widget in widgets/common_widgets.dart.
 
   // audit M-16: attempt to launch the stored document URL in an external
   // viewer (browser, PDF reader, etc). Closes the detail sheet first so the

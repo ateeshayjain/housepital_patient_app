@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import '../data/demo_data.dart';
 import '../models/my_care_models.dart';
+// audit batch 4 (Agent J): still need api_service for the ApiException type
+// (thrown by the implementation, caught in loadServiceDetail).
 import '../services/api_service.dart';
+import '../services/i_api_service.dart';
 
 class MyCareProvider extends ChangeNotifier {
-  final ApiService _apiService;
+  // audit batch 4 (Agent J): depend on IApiService (DIP).
+  final IApiService _apiService;
 
   // State
   List<ActiveService> _activeServices = [];
@@ -16,7 +20,7 @@ class MyCareProvider extends ChangeNotifier {
   String? _detailError;
   DateTime? _lastFetchedAt;
 
-  MyCareProvider(this._apiService);
+  MyCareProvider(IApiService api) : _apiService = api;
 
   // Getters
   List<ActiveService> get activeServices => _activeServices;

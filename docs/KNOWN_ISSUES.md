@@ -2,7 +2,7 @@
 
 Running list of bugs, workarounds, technical debt, and things that work but are not right.
 
-**Last updated:** 2026-05-28
+**Last updated:** 2026-05-28 (audit batch 4)
 
 ---
 
@@ -22,6 +22,9 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 |--------|--------------------------------------------------------------------------|------------|----------|
 | BUG-01 | ~~Razorpay key is hardcoded as test key~~ — `constants.dart:18` reads `RAZORPAY_KEY` from `String.fromEnvironment` with test fallback. **Production builds MUST pass `--dart-define=RAZORPAY_KEY=rzp_live_xxx`.** Add to release pipeline docs. | 2026-03-21 | Resolved 2026-05-28 (env wiring exists; ship-time config pending) |
 | BUG-02 | Payment webhook has no idempotency check -- duplicate webhook events could cause double status updates. **Backend repo (separate from this Flutter app); add `INSERT IGNORE` or upsert keyed on Razorpay event ID + payment_id on the receiving Cloud Function / API server.** | 2026-03-21 | Open (backend repo, not this Flutter app) |
+| BUG-33 | `firestore.rules` had an open allow-all rule that expired 2026-04-21 (~5 weeks before discovery on 2026-05-28). **Hardened in audit batch 4** with default-deny + per-collection auth-scoped rules (chat_messages, patients/{attendance,vitals}, users/notifications, active_sessions, fcm_tokens). File is in this repo at `firestore.rules` but **must be deployed via `firebase deploy --only firestore:rules`** from the backend repo. Verify live state at https://console.firebase.google.com/project/housepital-patient/firestore/rules. | 2026-05-28 | Resolved 2026-05-28 (file hardened — deployment to console pending) |
+| BUG-34 | Firebase API keys hardcoded in `lib/config/firebase_options.dart` and `android/app/google-services.json` — safe by design ONLY IF Firebase Console restrictions are configured. Keys requiring restriction: `AIzaSyCmH3bfQCN4q6rjjJROf6LQzBG-8i_nTJg` (one platform) and `AIzaSyBKK2NxRuvZsIGrBdpugnePy9zA7g13TLc` (other). Required restrictions: **HTTP referrer** (for web — limit to `*.housepital.in`), **package + SHA1** (for Android — `in.housepital.patient` + release signing SHA1), **bundle ID** (for iOS). See `docs/DEPLOYMENT_GUIDE.md` "Firebase Console hardening checklist" section. | 2026-05-28 | Open (console action required) |
+| BUG-35 | Razorpay webhook idempotency missing in backend repo (`housepital-backend`). Duplicate `payment.captured` events could mark an invoice paid twice or send two confirmation messages. **Not actionable in this Flutter repo** — implementation belongs in `functions/src/routes/payments.ts` (insert with unique constraint on Razorpay event_id, or check-then-act with row lock). Cross-referenced from BUG-02. | 2026-05-28 | Open (backend repo) |
 
 ---
 

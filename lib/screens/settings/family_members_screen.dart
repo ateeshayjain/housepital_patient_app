@@ -5,6 +5,8 @@ import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+// audit batch 4 (Agent I): centralized validators replace inline length/contains checks.
+import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
 
 class FamilyMembersScreen extends StatefulWidget {
@@ -70,6 +72,9 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final emailController = TextEditingController();
+    // audit batch 4 (Agent I): added Form + key so the centralized validators
+    // actually run on submit (previously fields had validators but no Form).
+    final formKey = GlobalKey<FormState>();
     String relationship = 'Son';
     bool notifyVitals = true;
     bool notifyAttendance = true;
@@ -92,7 +97,13 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(
-            child: Column(
+            // audit batch 4 (Agent I): Form wrapper + onUserInteraction so
+            // validation feedback appears as the user types/leaves a field,
+            // not just on submit.
+            child: Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -118,7 +129,8 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Name'),
                   textCapitalization: TextCapitalization.words,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                  // audit batch 4 (Agent I): centralized name validator.
+                  validator: Validators.name,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -128,23 +140,20 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     prefixText: '+91 ',
                   ),
                   keyboardType: TextInputType.phone,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Phone is required';
-                    if (v.trim().length != 10) return 'Enter a valid 10-digit number';
-                    return null;
-                  },
+                  // audit batch 4 (Agent I): was length-only check that
+                  // accepted landlines / 0-prefixed numbers. Now enforces
+                  // TRAI 6-9 leading digit via Validators.indianMobile.
+                  validator: Validators.indianMobile,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: emailController,
                   decoration: const InputDecoration(labelText: 'Email (optional)'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v != null && v.isNotEmpty && !v.contains('@')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
+                  // audit batch 4 (Agent I): was `contains('@')` — accepted
+                  // `@foo`, `foo@`. Now uses Validators.email with required:false
+                  // since this field is optional.
+                  validator: (v) => Validators.email(v, required: false),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -206,15 +215,10 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    if (nameController.text.trim().isEmpty ||
-                        phoneController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Name and phone are required'),
-                        ),
-                      );
-                      return;
-                    }
+                    // audit batch 4 (Agent I): now driven by the Form's
+                    // centralized validators — covers name shape, TRAI
+                    // mobile prefix, and optional email format together.
+                    if (!(formKey.currentState?.validate() ?? false)) return;
                     final newMember = FamilyMember.fromJson({
                       'id': 'fm${DateTime.now().millisecondsSinceEpoch}',
                       'user_id': 'u${DateTime.now().millisecondsSinceEpoch}',
@@ -246,6 +250,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 ),
               ],
             ),
+            ), // audit batch 4 (Agent I): close Form
           ),
         ),
       ),
