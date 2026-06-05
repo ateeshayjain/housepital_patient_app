@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
-import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -436,7 +435,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _gender,
+                    initialValue: _gender,
                     decoration: const InputDecoration(labelText: 'Gender'),
                     items: const [
                       DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -452,7 +451,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _mobility,
+              initialValue: _mobility,
               decoration: const InputDecoration(labelText: 'Mobility Status'),
               items: const [
                 DropdownMenuItem(
@@ -482,7 +481,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _city,
+              initialValue: _city,
               decoration: const InputDecoration(labelText: 'City'),
               items: _cities
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))

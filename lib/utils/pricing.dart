@@ -1,13 +1,15 @@
-/// Pricing utilities for Housepital commission, GST, and refund calculations.
-///
-/// Business rules:
-/// - Manpower services (caretaker, nursing_deployment, japa, nanny) have NO commission.
-/// - Visit/instant services charge a commission to Housepital.
-/// - Monthly plan: flat ₹12,000/month commission.
-/// - 3-month plan (one-time): flat ₹30,000 commission.
-/// - 3-month plan with EMI: ₹10,000 × 3 months.
-/// - Equipment discount: 30% off for 3-month customers.
-/// - GST: 18% on service price.
+// Pricing utilities for Housepital commission, GST, and refund calculations.
+//
+// Business rules:
+// - Manpower services (caretaker, nursing_deployment, japa, nanny) have NO commission.
+// - Visit/instant services charge a commission to Housepital.
+// - Monthly plan: flat ₹12,000/month commission.
+// - 3-month plan (one-time): flat ₹30,000 commission.
+// - 3-month plan with EMI: ₹10,000 × 3 months.
+// - Equipment discount: 30% off for 3-month customers.
+// - GST: 18% on service price.
+
+import '../models/models.dart';
 
 class PricingResult {
   final double commission;
@@ -115,4 +117,25 @@ double calculateRefund({
     (proportionalRefund > maxRefund ? maxRefund : proportionalRefund)
         .toStringAsFixed(2),
   );
+}
+
+/// audit M-14: GST is computed per line item, not as a flat 18% on the whole
+/// subtotal. Each [CartItem] exposes a [CartItem.gstRate] getter that returns:
+///   - 0.00 for healthcare manpower (exempt under Notification 12/2017)
+///   - 0.05 for diagnostic lab tests
+///   - 0.18 for durable medical equipment
+///
+/// The cart-level [discount] is prorated across line items by share of
+/// subtotal, so a coupon doesn't change any line's effective per-line rate.
+/// Returns 0 for empty carts (invoice flow already bakes GST into the grand total).
+int computeCartGst(List<CartItem> items, {int discount = 0}) {
+  if (items.isEmpty) return 0;
+  final subtotal = items.fold<int>(0, (s, i) => s + i.lineTotal);
+  if (subtotal <= 0) return 0;
+  return items.fold<int>(0, (sum, item) {
+    final share = item.lineTotal / subtotal;
+    final discountedLine = item.lineTotal - (discount * share);
+    if (discountedLine <= 0) return sum;
+    return sum + (discountedLine * item.gstRate).round();
+  });
 }

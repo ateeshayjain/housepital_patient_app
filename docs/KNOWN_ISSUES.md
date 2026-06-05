@@ -20,8 +20,8 @@ Running list of bugs, workarounds, technical debt, and things that work but are 
 
 | ID     | Description                                                              | Found      | Status   |
 |--------|--------------------------------------------------------------------------|------------|----------|
-| BUG-01 | Razorpay key is hardcoded as test key in `constants.dart` -- must switch to production key loaded from environment before release | 2026-03-21 | Open |
-| BUG-02 | Payment webhook has no idempotency check -- duplicate webhook events could cause double status updates | 2026-03-21 | Open |
+| BUG-01 | ~~Razorpay key is hardcoded as test key~~ — `constants.dart:18` reads `RAZORPAY_KEY` from `String.fromEnvironment` with test fallback. **Production builds MUST pass `--dart-define=RAZORPAY_KEY=rzp_live_xxx`.** Add to release pipeline docs. | 2026-03-21 | Resolved 2026-05-28 (env wiring exists; ship-time config pending) |
+| BUG-02 | Payment webhook has no idempotency check -- duplicate webhook events could cause double status updates. **Backend repo (separate from this Flutter app); add `INSERT IGNORE` or upsert keyed on Razorpay event ID + payment_id on the receiving Cloud Function / API server.** | 2026-03-21 | Open (backend repo, not this Flutter app) |
 
 ---
 

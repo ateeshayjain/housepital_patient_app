@@ -15,7 +15,6 @@ class PaymentMethodsScreen extends StatefulWidget {
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   List<SavedPaymentMethod> _methods = [];
   List<PaymentReminder> _reminders = [];
-  bool _autoPayEnabled = false;
   late final PaymentReminderService _reminderService;
 
   @override
@@ -442,7 +441,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   isDefault: _methods.isEmpty,
                   autoPayEnabled: true,
                 ));
-                _autoPayEnabled = true;
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

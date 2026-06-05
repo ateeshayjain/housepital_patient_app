@@ -8,6 +8,7 @@ import '../../providers/cart_provider.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/pricing.dart';
 import '../../widgets/common_widgets.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -86,18 +87,8 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
   }
 
-  int get _gstAmount {
-    final items = _cartItems;
-    if (items.isEmpty) return 0; // invoice flow: GST already in the amount.
-    if (_subtotal <= 0) return 0;
-    return items.fold<int>(0, (sum, item) {
-      // Prorate the cart-level discount across line items by share of subtotal.
-      final share = _subtotal == 0 ? 0.0 : item.lineTotal / _subtotal;
-      final discountedLine = item.lineTotal - (_discountAmount * share);
-      if (discountedLine <= 0) return sum;
-      return sum + (discountedLine * item.gstRate).round();
-    });
-  }
+  int get _gstAmount =>
+      computeCartGst(_cartItems, discount: _discountAmount);
 
   int get _totalAmount => _subtotal - _discountAmount + _gstAmount;
 

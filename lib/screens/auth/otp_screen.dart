@@ -65,9 +65,20 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   void dispose() {
-    _otpController.dispose();
+    // audit batch 3 (Agent B finding): cancel timers BEFORE disposing the
+    // controller. pin_code_fields v8.0.1 defaults autoDisposeControllers=true
+    // and disposes _otpController for us; calling .dispose() here throws
+    // 'TextEditingController used after being disposed', which interrupted
+    // the next two lines and leaked both periodic Timers on every
+    // back-navigation. Order fixed; try/catch on the controller dispose
+    // remains a defence against future pin_code_fields version changes.
     _timer?.cancel();
     _expiryTimer?.cancel();
+    try {
+      _otpController.dispose();
+    } catch (_) {
+      // already disposed by PinCodeTextField — harmless
+    }
     super.dispose();
   }
 

@@ -1671,14 +1671,12 @@ class _CollapsibleSection extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
-  final bool initiallyExpanded;
   final List<Widget> children;
 
   const _CollapsibleSection({
     required this.icon,
     required this.iconColor,
     required this.title,
-    this.initiallyExpanded = false,
     required this.children,
   });
 
@@ -1695,7 +1693,7 @@ class _CollapsibleSectionState extends State<_CollapsibleSection>
   @override
   void initState() {
     super.initState();
-    _expanded = widget.initiallyExpanded;
+    _expanded = false;
     _controller = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,

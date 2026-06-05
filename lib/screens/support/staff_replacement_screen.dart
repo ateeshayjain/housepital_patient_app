@@ -110,7 +110,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
             )),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _reason,
+              initialValue: _reason,
               decoration: InputDecoration(
                 hintText: 'Select reason',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -217,9 +217,16 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
         );
       }
     } catch (e) {
+      // audit F: don't leak raw exception text (could contain SQL stack
+      // traces or internal error details). Log internally; show generic UI.
+      debugPrint('StaffReplacement submit failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit request: $e')),
+          const SnackBar(
+            content: Text(
+              'Couldn\'t submit your request right now. Please try again or call our coordinator at +91-90502-00183.',
+            ),
+          ),
         );
       }
     } finally {

@@ -102,7 +102,7 @@ class OnlineAssessmentToggle extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: HousepitalColors.info,
+            activeThumbColor: HousepitalColors.info,
           ),
         ],
       ),

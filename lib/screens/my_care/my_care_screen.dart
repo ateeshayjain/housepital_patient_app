@@ -12,7 +12,6 @@ import 'widgets/health_manager_banner.dart';
 import 'widgets/active_service_card.dart';
 import 'widgets/staff_attendance_section.dart';
 import 'widgets/billing_summary_section.dart';
-import 'widgets/quick_actions_row.dart';
 
 class MyCareScreen extends StatefulWidget {
   const MyCareScreen({super.key});

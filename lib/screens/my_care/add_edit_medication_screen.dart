@@ -114,7 +114,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _form,
+              initialValue: _form,
               decoration: const InputDecoration(labelText: 'Form'),
               items: _forms
                   .map((f) => DropdownMenuItem(
@@ -125,7 +125,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _frequency,
+              initialValue: _frequency,
               decoration: const InputDecoration(labelText: 'Frequency'),
               items: _frequencies
                   .map((f) => DropdownMenuItem(
@@ -177,7 +177,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _stockUnit,
+                    initialValue: _stockUnit,
                     decoration: const InputDecoration(labelText: 'Unit'),
                     items: _stockUnits
                         .map((u) => DropdownMenuItem(value: u, child: Text(u)))

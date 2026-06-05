@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# audit batch 3 (Agent F finding): secrets must never land in version control.
+# google-services.json and GoogleService-Info.plist contain Firebase API keys
+# that are safe-by-design ONLY when the project's Firebase Console restricts
+# them by HTTP referrer / Android package + SHA1. Treat them as secrets here
+# and distribute via secure channel. Note: google-services.json is currently
+# COMMITTED — Agent F flagged this; remove with `git rm --cached` if needed.
+.env
+.env.local
+.env.*.local
+**/google-services.json
+**/GoogleService-Info.plist
+# Keep the .env.example template:
+!.env.example
