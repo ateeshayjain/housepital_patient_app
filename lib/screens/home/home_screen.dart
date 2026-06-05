@@ -838,19 +838,75 @@ class _HomeScreenState extends State<HomeScreen> {
   // Quick Actions Grid (2x3)
   // ---------------------------------------------------------------------------
   Widget _buildQuickActionsGrid(BuildContext context, AppLocalizations l) {
-    final actions = [
-      _QuickAction(
-        icon: Icons.medical_services,
-        label: 'Book Nurse',
-        color: HousepitalColors.serviceNursing,
-        onTap: () {
-          MainShell.switchToTab(2);
-          ServiceCatalogScreen.switchToSubTab(0);
-        },
-      ),
+    // ── Dynamic actions based on what the patient is currently availing ──
+    // Logic: start with a full "browse" set, then swap any category the
+    // patient ALREADY has into a "manage / renew" action so they're not
+    // prompted to re-book a service they're already receiving.
+    // staffRole drives the dynamic tile logic — e.g. "Critical Care Nurse",
+    // "Caretaker", "Physiotherapist". Lowercased for case-insensitive matching.
+    final deployment = context.read<AppProvider>().activeDeployment;
+    final activeCategory = deployment?.staffRole?.toLowerCase() ?? '';
+
+    // All possible contextual service tiles (shown/hidden based on availing).
+    final browseActions = <_QuickAction>[
+      if (!activeCategory.contains('nursing') &&
+          !activeCategory.contains('icu') &&
+          !activeCategory.contains('care_package'))
+        _QuickAction(
+          icon: Icons.medical_services,
+          label: 'Book Nurse',
+          color: HousepitalColors.serviceNursing,
+          onTap: () {
+            MainShell.switchToTab(2);
+            ServiceCatalogScreen.switchToSubTab(0);
+          },
+        )
+      else
+        _QuickAction(
+          icon: Icons.medical_services,
+          label: 'My Nurse',
+          color: HousepitalColors.serviceNursing,
+          onTap: () => MainShell.switchToTab(1),
+        ),
+      if (!activeCategory.contains('caretaker') &&
+          !activeCategory.contains('attendant'))
+        _QuickAction(
+          icon: Icons.person_pin,
+          label: 'Book Caretaker',
+          color: HousepitalColors.serviceCaretaker,
+          onTap: () {
+            MainShell.switchToTab(2);
+            ServiceCatalogScreen.switchToSubTab(0);
+          },
+        )
+      else
+        _QuickAction(
+          icon: Icons.person_pin,
+          label: 'My Caretaker',
+          color: HousepitalColors.serviceCaretaker,
+          onTap: () => MainShell.switchToTab(1),
+        ),
+      if (!activeCategory.contains('physiotherapy') &&
+          !activeCategory.contains('physio'))
+        _QuickAction(
+          icon: Icons.self_improvement,
+          label: 'Physiotherapy',
+          color: HousepitalColors.servicePhysio,
+          onTap: () {
+            MainShell.switchToTab(2);
+            ServiceCatalogScreen.switchToSubTab(0);
+          },
+        )
+      else
+        _QuickAction(
+          icon: Icons.self_improvement,
+          label: 'My Physio',
+          color: HousepitalColors.servicePhysio,
+          onTap: () => MainShell.switchToTab(1),
+        ),
       _QuickAction(
         icon: Icons.local_shipping,
-        label: 'Book Equipment',
+        label: 'Equipment',
         color: HousepitalColors.serviceEquipment,
         onTap: () {
           MainShell.switchToTab(2);
@@ -875,6 +931,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ServiceCatalogScreen.switchToSubTab(2);
         },
       ),
+    ];
+
+    // ── Fixed utility tiles always visible ──────────────────────────────
+    final utilityActions = <_QuickAction>[
       _QuickAction(
         icon: Icons.receipt_long,
         label: 'My Orders',
@@ -884,7 +944,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _QuickAction(
         icon: Icons.menu_book,
         label: 'Care Guides',
-        color: HousepitalColors.serviceCaretaker,
+        color: HousepitalColors.serviceCarePackage,
         onTap: () => Navigator.pushNamed(context, '/articles'),
       ),
       _QuickAction(
@@ -895,22 +955,26 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
+    final allActions = [...browseActions, ...utilityActions];
+
+    // Tile width: 4 tiles per row on standard phone width.
+    final tileWidth = (MediaQuery.of(context).size.width - 48) / 4;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: HousepitalColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HousepitalColors.divider),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: actions.map((action) {
-          // audit batch 4 (Agent L): Apple cards spec P5 — each quick-action
-          // tile gets a 0.98 scale press feedback (100ms). Keyed by label so
-          // each tile tracks its own pressed state independently.
+      child: Wrap(
+        spacing: 0,
+        runSpacing: 8,
+        children: allActions.map((action) {
           final tileId = 'quick_${action.label}';
-          return Expanded(
+          return SizedBox(
+            width: tileWidth,
             child: Semantics(
               button: true,
               label: action.label,
@@ -926,7 +990,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTapUp: (_) => _onCardPressUpOrCancel(tileId),
                     onTapCancel: () => _onCardPressUpOrCancel(tileId),
                     child: Container(
-                      // WCAG 2.5.5 — guarantee at least a 44pt tap target.
+                      // WCAG 2.5.5 — ≥44pt tap target.
                       constraints: const BoxConstraints(minHeight: 56),
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Column(
@@ -934,15 +998,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(9),
                             decoration: BoxDecoration(
                               color: action.color.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(action.icon,
-                                color: action.color, size: 20),
+                                color: action.color, size: 22),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 5),
                           Text(
                             action.label,
                             style: const TextStyle(
@@ -951,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: HousepitalColors.grey,
                             ),
                             textAlign: TextAlign.center,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
