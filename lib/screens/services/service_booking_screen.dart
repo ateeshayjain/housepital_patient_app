@@ -23,6 +23,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   DateTime? _selectedDate;
   String? _selectedSlot;
   final _promoController = TextEditingController();
+  String? _appliedPromoCode;
+  String? _promoMessage;
+  bool _promoMessageIsError = false;
   final _notesController = TextEditingController();
   int _step = 0; // 0: detail, 1: slot, 2: review
   bool _autoRenew = true; // default ON for manpower services
@@ -218,6 +221,41 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Select default address
       final defaultIndex = addresses.indexWhere((a) => a.isDefault);
       if (defaultIndex >= 0) _selectedAddressIndex = defaultIndex;
+    });
+  }
+
+  /// Validate and apply the promo code from `_promoController`.
+  /// Currently only the demo `WELCOME10` code is recognised offline;
+  /// any other code is treated as invalid. (Mirrors cart_screen behaviour.)
+  void _applyPromo() {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() {
+        _promoMessage = 'Please enter a promo code';
+        _promoMessageIsError = true;
+      });
+      return;
+    }
+    if (code == 'WELCOME10') {
+      setState(() {
+        _appliedPromoCode = code;
+        _promoMessage = '10% off applied at checkout (max ₹500)';
+        _promoMessageIsError = false;
+      });
+      return;
+    }
+    setState(() {
+      _promoMessage = 'Invalid or expired promo code';
+      _promoMessageIsError = true;
+    });
+  }
+
+  void _clearPromo() {
+    setState(() {
+      _appliedPromoCode = null;
+      _promoMessage = null;
+      _promoMessageIsError = false;
+      _promoController.clear();
     });
   }
 
@@ -2241,75 +2279,136 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       const SizedBox(height: 16),
       TextField(
         controller: _promoController,
+        enabled: _appliedPromoCode == null,
         decoration: InputDecoration(
-          hintText: 'Promo code (optional)',
+          labelText: 'Promo code',
+          hintText: _appliedPromoCode != null
+              ? '$_appliedPromoCode applied'
+              : 'Promo code (optional)',
           suffixIcon: TextButton(
-            onPressed: () {},
-            child: const Text('Apply',
-                style: TextStyle(color: HousepitalColors.orange)),
+            onPressed:
+                _appliedPromoCode != null ? _clearPromo : _applyPromo,
+            child: Text(
+              _appliedPromoCode != null ? 'Remove' : 'Apply',
+              style: const TextStyle(color: HousepitalColors.orange),
+            ),
           ),
         ),
       ),
-      const SizedBox(height: 24),
-      SizedBox(
-        height: 52,
-        child: ElevatedButton(
-          onPressed: () {
-            // For IV visits, use the dynamically determined price
-            final price = _isIvVisit ? _ivPrice : widget.service.basePriceMin;
-            final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
-            final subtotal = price != null ? price * sessionMultiplier : 0;
-            final gst = (subtotal * 0.18).toInt();
-            final total = subtotal + gst;
-
-            // Build address string from selected address
-            String? addressStr;
-            if (_savedAddresses.isNotEmpty && _selectedAddressIndex < _savedAddresses.length) {
-              final addr = _savedAddresses[_selectedAddressIndex];
-              addressStr = addr['address'] ?? addr['label'] ?? '';
-            }
-
-            // Add service to cart
-            final cart = Provider.of<CartProvider>(context, listen: false);
-            cart.addService(
-              serviceId: widget.service.id,
-              serviceName: widget.service.name,
-              category: widget.service.category,
-              price: total,
-              scheduledDate: _selectedDate ?? DateTime.now(),
-              scheduledSlot: _selectedSlot ?? 'morning',
-              address: addressStr,
-              notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-              doctorType: _isDoctorVisit ? _recommendedDoctor : null,
-              concern: _isDoctorVisit ? _concernController.text : null,
-            );
-
-            // Capture navigator before popping
-            final nav = Navigator.of(context);
-            final messenger = ScaffoldMessenger.of(context);
-
-            // Pop first, then show SnackBar on the parent screen
-            nav.pop();
-
-            messenger
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(
-                  content: const Text('Service added to cart'),
-                  backgroundColor: HousepitalColors.success,
-                  duration: const Duration(seconds: 2),
-                  dismissDirection: DismissDirection.horizontal,
-                  action: SnackBarAction(
-                    label: 'View Cart',
-                    textColor: Colors.white,
-                    onPressed: () => nav.pushNamed('/cart'),
-                  ),
-                ),
-              );
-          },
-          child: const Text('Confirm & Add to Cart'),
+      if (_promoMessage != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          _promoMessage!,
+          style: TextStyle(
+            fontSize: 12,
+            color: _promoMessageIsError
+                ? HousepitalColors.error
+                : HousepitalColors.success,
+          ),
         ),
-      ),
+      ],
+      const SizedBox(height: 24),
+      // Guard: if no usable price, block "Add to Cart" and route to assessment
+      if (price == null || price == 0) ...[
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: HousepitalColors.warningLight,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline, color: HousepitalColors.warning),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Price will be confirmed by our coordinator. Tap "Request Assessment" instead.',
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 52,
+          child: ElevatedButton(
+            onPressed: null, // Disabled — user must request assessment instead
+            child: const Text('Confirm & Add to Cart'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/assessment-request',
+              arguments: widget.service,
+            ),
+            icon: const Icon(Icons.assignment_outlined),
+            label: const Text('Request Assessment'),
+          ),
+        ),
+      ] else ...[
+        SizedBox(
+          height: 52,
+          child: ElevatedButton(
+            onPressed: () {
+              // Price guaranteed non-null and non-zero here
+              final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
+              final subtotal = price * sessionMultiplier;
+              final gst = (subtotal * 0.18).toInt();
+              final total = subtotal + gst;
+
+              // Build address string from selected address
+              String? addressStr;
+              if (_savedAddresses.isNotEmpty && _selectedAddressIndex < _savedAddresses.length) {
+                final addr = _savedAddresses[_selectedAddressIndex];
+                addressStr = addr['address'] ?? addr['label'] ?? '';
+              }
+
+              // Add service to cart
+              final cart = Provider.of<CartProvider>(context, listen: false);
+              cart.addService(
+                serviceId: widget.service.id,
+                serviceName: widget.service.name,
+                category: widget.service.category,
+                price: total,
+                scheduledDate: _selectedDate ?? DateTime.now(),
+                scheduledSlot: _selectedSlot ?? 'morning',
+                address: addressStr,
+                notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+                doctorType: _isDoctorVisit ? _recommendedDoctor : null,
+                concern: _isDoctorVisit ? _concernController.text : null,
+              );
+
+              // Capture navigator before popping
+              final nav = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              // Pop first, then show SnackBar on the parent screen
+              nav.pop();
+
+              messenger
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: const Text('Service added to cart'),
+                    backgroundColor: HousepitalColors.success,
+                    duration: const Duration(seconds: 2),
+                    dismissDirection: DismissDirection.horizontal,
+                    action: SnackBarAction(
+                      label: 'View Cart',
+                      textColor: Colors.white,
+                      onPressed: () => nav.pushNamed('/cart'),
+                    ),
+                  ),
+                );
+            },
+            child: const Text('Confirm & Add to Cart'),
+          ),
+        ),
+      ],
     ];
   }
 

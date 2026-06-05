@@ -2,8 +2,9 @@
 ///
 /// Roles:
 /// - PRIMARY_CONTACT: Full access — can book, pay, edit patient, manage family.
-/// - FAMILY_MEMBER: View + limited actions — can view, book, rate, raise concern.
-///   CANNOT pay, edit patient, or manage family.
+/// - FAMILY_MEMBER: View + limited actions — can view, rate, raise concern,
+///   and request bookings (which the primary contact must approve and pay).
+///   CANNOT directly book, pay, edit patient, or manage family.
 /// - PATIENT_SELF: View-only access.
 
 /// All known roles.
@@ -16,6 +17,7 @@ class UserRole {
 /// All known actions.
 class UserAction {
   static const String book = 'book';
+  static const String requestBooking = 'request_booking';
   static const String pay = 'pay';
   static const String editPatient = 'edit_patient';
   static const String manageFamily = 'manage_family';
@@ -28,6 +30,7 @@ class UserAction {
 const Map<String, Set<String>> _permissions = {
   'PRIMARY_CONTACT': {
     'book',
+    'request_booking',
     'pay',
     'edit_patient',
     'manage_family',
@@ -37,7 +40,7 @@ const Map<String, Set<String>> _permissions = {
   },
   'FAMILY_MEMBER': {
     'view',
-    'book',
+    'request_booking',
     'rate',
     'raise_concern',
   },

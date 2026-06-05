@@ -295,10 +295,10 @@ flutter build apk --dart-define=RAZORPAY_KEY=rzp_live_XXXXXXXXXX
 
 ### API Domain
 
-Current API base URL in `constants.dart`: `https://api.housepital.com/v1`
+Current API base URL in `constants.dart`: `https://api.housepital.in/v1`
 
 To set up custom domain:
-1. In Firebase Console > Hosting > Custom Domain, add `api.housepital.com`
+1. In Firebase Console > Hosting > Custom Domain, add `api.housepital.in`
 2. Add the required DNS records (A record or CNAME) at your registrar
 3. Firebase will provision SSL automatically
 4. Update `firebase.json` to rewrite `/v1/*` to the Cloud Function

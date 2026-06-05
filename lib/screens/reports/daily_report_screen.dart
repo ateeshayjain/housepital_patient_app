@@ -164,6 +164,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
+                                  semanticLabel:
+                                      'Daily report photo ${index + 1} of ${_report!.photoUrls!.length}',
                                   errorBuilder: (_, __, ___) => Container(
                                     width: 100,
                                     height: 100,

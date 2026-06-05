@@ -8,7 +8,7 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Framework | **Flutter 3.16+** (Dart) | Cross-platform, shared codebase with staff app |
-| Backend API | **REST API** (https://api.housepital.com/v1) | Staff app writes to Supabase; patient app reads via REST |
+| Backend API | **REST API** (https://api.housepital.in/v1) | Staff app writes to Supabase; patient app reads via REST |
 | State | **Provider** (ChangeNotifier) | Simple, sufficient, matches staff app patterns |
 | Auth | **Firebase Auth** (Phone OTP) | Firebase ecosystem for patient-facing app |
 | Push | **Firebase Cloud Messaging** | Real-time alerts for attendance, vitals, reports |

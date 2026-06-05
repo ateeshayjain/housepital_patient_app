@@ -84,7 +84,10 @@ void main() {
     expect((order['items'] as List).length, 3);
 
     // 7. Verify booking number format
-    expect(bookingNumber, matches(RegExp(r'^HPL-BOOK-\d{5}$')));
+    // Updated to 7-digit timestamp suffix (was 5-digit random); see
+    // orders_provider.dart::generateBookingNumber which now uses the last 7
+    // digits of millisecondsSinceEpoch to reduce collision probability.
+    expect(bookingNumber, matches(RegExp(r'^HPL-BOOK-\d{7}$')));
     expect(order['id'], bookingNumber);
 
     // 8. Clear cart after checkout

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:housepital_patient/config/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF39314),
+      backgroundColor: HousepitalColors.orange,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

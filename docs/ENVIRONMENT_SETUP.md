@@ -154,7 +154,7 @@ For local development, update the API base URL in `lib/config/constants.dart`:
 static const String apiBaseUrl = 'http://localhost:5001/housepital-patient/asia-south1/api';
 
 // Production
-// static const String apiBaseUrl = 'https://api.housepital.com/v1';
+// static const String apiBaseUrl = 'https://api.housepital.in/v1';
 ```
 
 For Firebase Auth emulator, add to your Flutter app initialization (before `runApp`):

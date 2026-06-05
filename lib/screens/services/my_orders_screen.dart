@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
 import '../../utils/helpers.dart';
+import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -343,8 +345,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
               ],
             ),
 
-            // Cancel button for active orders
-            if (_isActiveStatus(status)) ...[
+            // Cancel button for active orders — only available to roles
+            // that can pay (i.e., PRIMARY_CONTACT). Other roles see no action.
+            if (_isActiveStatus(status) &&
+                canUserPerform(
+                    context.watch<AppProvider>().currentUserRole,
+                    UserAction.pay)) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,

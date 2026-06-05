@@ -1,6 +1,6 @@
 class AppConstants {
   // API Configuration - Update with your backend URL
-  static const String apiBaseUrl = 'https://api.housepital.com/v1';
+  static const String apiBaseUrl = 'https://api.housepital.in/v1';
 
   // Firebase
   static const String fcmTopic = 'housepital_patient';

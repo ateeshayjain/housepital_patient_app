@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
 import '../../config/theme.dart';
@@ -42,7 +43,7 @@ class SOSScreen extends StatelessWidget {
                 icon: Icons.local_hospital,
                 title: l.t('sos_medical'),
                 subtitle: 'Call ${AppConstants.emergencyPhone}',
-                onTap: () => _makeCall(AppConstants.emergencyPhone),
+                onTap: () => _makeCall(context, AppConstants.emergencyPhone),
               ),
               const SizedBox(height: 16),
 
@@ -52,7 +53,7 @@ class SOSScreen extends StatelessWidget {
                 icon: Icons.person_off,
                 title: l.t('sos_staff'),
                 subtitle: 'Alert Housepital Ops',
-                onTap: () => _makeCall(AppConstants.supportPhone),
+                onTap: () => _makeCall(context, AppConstants.supportPhone),
               ),
               const SizedBox(height: 16),
 
@@ -62,7 +63,8 @@ class SOSScreen extends StatelessWidget {
                 icon: Icons.call,
                 title: l.t('sos_112'),
                 subtitle: 'National Emergency Number',
-                onTap: () => _makeCall(AppConstants.emergencyNumber112),
+                onTap: () =>
+                    _makeCall(context, AppConstants.emergencyNumber112),
               ),
             ],
           ),
@@ -122,10 +124,47 @@ class SOSScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _makeCall(String number) async {
+  Future<void> _makeCall(BuildContext context, String number) async {
     final uri = Uri.parse('tel:$number');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    bool dialerOpened = false;
+    try {
+      if (await canLaunchUrl(uri)) {
+        dialerOpened = await launchUrl(uri);
+      }
+    } catch (_) {
+      dialerOpened = false;
     }
+
+    if (dialerOpened) return;
+    if (!context.mounted) return;
+
+    // Dialer unavailable — emergency screen must NOT silently fail.
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Could not auto-dial'),
+        content: Text(
+          'Your device could not open the phone dialer.\n\n'
+          'Please dial $number manually.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: number));
+              if (!ctx.mounted) return;
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text('$number copied to clipboard')),
+              );
+            },
+            child: const Text('Copy Number'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 }

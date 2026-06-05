@@ -7,6 +7,7 @@ import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -162,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             icon: Icons.receipt_long,
             title: 'My Orders',
-            onTap: () => Navigator.pushNamed(context, '/booking-history'),
+            onTap: () => Navigator.pushNamed(context, '/my-orders'),
           ),
           _settingsTile(
             context,
@@ -170,12 +171,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: l.t('patient_profile'),
             onTap: () => Navigator.pushNamed(context, '/patient-profile'),
           ),
-          _settingsTile(
-            context,
-            icon: Icons.people_outline,
-            title: l.t('family_members'),
-            onTap: () => Navigator.pushNamed(context, '/family-members'),
-          ),
+          // Add Patient — primary contacts only (they own the patient record).
+          if (canUserPerform(app.currentUserRole, UserAction.editPatient))
+            _settingsTile(
+              context,
+              icon: Icons.person_add,
+              title: 'Add Patient',
+              subtitle: 'Care for another family member',
+              onTap: () => Navigator.pushNamed(context, '/add-patient'),
+            ),
+          // Family Members — only primary contacts can manage who can see what.
+          if (canUserPerform(app.currentUserRole, UserAction.manageFamily))
+            _settingsTile(
+              context,
+              icon: Icons.people_outline,
+              title: l.t('family_members'),
+              onTap: () => Navigator.pushNamed(context, '/family-members'),
+            ),
           _settingsTile(
             context,
             icon: Icons.folder_outlined,

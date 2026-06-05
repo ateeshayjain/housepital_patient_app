@@ -8,7 +8,15 @@ class SyncService {
   final AppProvider _appProvider;
 
   DateTime? lastSyncAt;
-  bool isSyncing = false;
+
+  /// In-flight sync, if any. Concurrent callers share this future
+  /// so we never run two `syncAll` operations against the same patient
+  /// in parallel (which used to race because `isSyncing` was a plain bool
+  /// flipped between `await` boundaries).
+  Completer<void>? _inFlightSync;
+
+  /// Backwards-compatible accessor — true while a sync is running.
+  bool get isSyncing => _inFlightSync != null && !_inFlightSync!.isCompleted;
 
   Timer? _periodicTimer;
 
@@ -21,40 +29,55 @@ class SyncService {
   /// Performs a full sync of all patient-related data from the staff app.
   /// Fetches dashboard data (attendance, vitals, reports, deployment, billing)
   /// and updates the AppProvider state.
-  Future<void> syncAll(String patientId) async {
-    if (isSyncing) return;
-
-    isSyncing = true;
-
-    try {
-      // Fetch all data in parallel
-      final results = await Future.wait([
-        _apiService.getActiveDeployment(patientId),
-        _apiService.getTodayAttendance(patientId),
-        _apiService.getLatestVitals(patientId),
-        _apiService.getTodayReport(patientId),
-        _apiService.getPatient(patientId),
-        _apiService.getBillingSummary(patientId),
-      ]);
-
-      // Update the provider with fresh data
-      _appProvider.updateFromSync(
-        deployment: results[0] as dynamic,
-        attendance: results[1] as dynamic,
-        vitals: results[2] as dynamic,
-        report: results[3] as dynamic,
-        patient: results[4] as dynamic,
-        billingSummary: results[5] as Map<String, dynamic>,
-      );
-
-      lastSyncAt = DateTime.now();
-      debugPrint('SyncService: sync completed at $lastSyncAt');
-    } catch (e) {
-      debugPrint('SyncService: sync failed - $e');
-      rethrow;
-    } finally {
-      isSyncing = false;
+  ///
+  /// If a sync is already in flight, returns the existing future so all
+  /// callers wait for the same result instead of triggering a duplicate fetch.
+  Future<void> syncAll(String patientId) {
+    final existing = _inFlightSync;
+    if (existing != null && !existing.isCompleted) {
+      return existing.future;
     }
+
+    final completer = Completer<void>();
+    _inFlightSync = completer;
+
+    () async {
+      try {
+        // Fetch all data in parallel
+        final results = await Future.wait([
+          _apiService.getActiveDeployment(patientId),
+          _apiService.getTodayAttendance(patientId),
+          _apiService.getLatestVitals(patientId),
+          _apiService.getTodayReport(patientId),
+          _apiService.getPatient(patientId),
+          _apiService.getBillingSummary(patientId),
+        ]);
+
+        // Update the provider with fresh data
+        _appProvider.updateFromSync(
+          deployment: results[0] as dynamic,
+          attendance: results[1] as dynamic,
+          vitals: results[2] as dynamic,
+          report: results[3] as dynamic,
+          patient: results[4] as dynamic,
+          billingSummary: results[5] as Map<String, dynamic>,
+        );
+
+        lastSyncAt = DateTime.now();
+        debugPrint('SyncService: sync completed at $lastSyncAt');
+        completer.complete();
+      } catch (e, st) {
+        debugPrint('SyncService: sync failed - $e');
+        completer.completeError(e, st);
+      } finally {
+        // Clear only if this completer is still the current in-flight sync.
+        if (identical(_inFlightSync, completer)) {
+          _inFlightSync = null;
+        }
+      }
+    }();
+
+    return completer.future;
   }
 
   /// Starts a periodic sync that runs at the given interval.

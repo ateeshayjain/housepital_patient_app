@@ -79,12 +79,20 @@ class HousepitalColors {
 }
 
 class HousepitalTheme {
+  // Devanagari fallback so Hindi (and other Indic) glyphs render
+  // when Archivo has no coverage. Applied via fontFamilyFallback on
+  // every text style below so it works regardless of active locale.
+  static final List<String> _devanagariFallback = [
+    GoogleFonts.notoSansDevanagari().fontFamily ?? 'NotoSansDevanagari',
+  ];
+
   static ThemeData get lightTheme {
     final archivoFamily = GoogleFonts.archivo().fontFamily;
 
     return ThemeData(
       useMaterial3: true,
       fontFamily: archivoFamily,
+      fontFamilyFallback: _devanagariFallback,
       colorScheme: ColorScheme.light(
         primary: HousepitalColors.orange,
         onPrimary: HousepitalColors.white,

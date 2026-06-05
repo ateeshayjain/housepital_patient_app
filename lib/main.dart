@@ -34,6 +34,7 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/settings/patient_profile_screen.dart';
 import 'screens/settings/family_members_screen.dart';
+import 'screens/settings/add_patient_screen.dart';
 import 'screens/settings/notification_preferences_screen.dart';
 import 'screens/settings/help_faq_screen.dart';
 import 'screens/settings/about_screen.dart';
@@ -60,6 +61,7 @@ import 'screens/rental/return_screen.dart';
 import 'screens/billing/emi_screen.dart';
 import 'screens/support/staff_replacement_screen.dart';
 import 'screens/settings/referral_screen.dart';
+import 'screens/daimaa/daimaa_landing_screen.dart';
 import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
@@ -122,6 +124,25 @@ class HousepitalApp extends StatefulWidget {
 }
 
 class _HousepitalAppState extends State<HousepitalApp> {
+  /// Friendly fallback when a route is invoked with missing or wrong-shaped
+  /// arguments. Better than crashing with a TypeError on `as X`.
+  MaterialPageRoute _argErrorRoute() {
+    return MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Navigation Error')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Missing or invalid navigation data. Please go back and try again.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -213,6 +234,20 @@ class _HousepitalAppState extends State<HousepitalApp> {
       // NOTE: Auth gate disabled for demo mode. Enable before production release.
       // home: Consumer<AuthProvider>(...),
       home: const SplashScreen(),
+      // Clamp system text scaling so layouts don't break at extreme accessibility
+      // settings, but still honour user preference up to 1.4x (WCAG 1.4.4).
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: mq.textScaler.clamp(
+              minScaleFactor: 0.85,
+              maxScaleFactor: 1.4,
+            ),
+          ),
+          child: child!,
+        );
+      },
       onGenerateRoute: (settings) {
         try {
         switch (settings.name) {
@@ -257,25 +292,25 @@ class _HousepitalAppState extends State<HousepitalApp> {
                 builder: (_) =>
                     DailyReportScreen(reportId: reportId));
           case '/staff-profile':
-            final staffId = settings.arguments as String;
+            final raw = settings.arguments;
+            if (raw is! String) return _argErrorRoute();
             return MaterialPageRoute(
-                builder: (_) =>
-                    StaffProfileScreen(staffId: staffId));
+                builder: (_) => StaffProfileScreen(staffId: raw));
           case '/service-booking':
-            final service = settings.arguments as ServiceItem;
+            final raw = settings.arguments;
+            if (raw is! ServiceItem) return _argErrorRoute();
             return MaterialPageRoute(
-                builder: (_) =>
-                    ServiceBookingScreen(service: service));
+                builder: (_) => ServiceBookingScreen(service: raw));
           case '/equipment-detail':
-            final service = settings.arguments as ServiceItem;
+            final raw = settings.arguments;
+            if (raw is! ServiceItem) return _argErrorRoute();
             return MaterialPageRoute(
-                builder: (_) =>
-                    EquipmentDetailScreen(service: service));
+                builder: (_) => EquipmentDetailScreen(service: raw));
           case '/assessment-request':
-            final service = settings.arguments as ServiceItem;
+            final raw = settings.arguments;
+            if (raw is! ServiceItem) return _argErrorRoute();
             return MaterialPageRoute(
-                builder: (_) =>
-                    AssessmentRequestScreen(service: service));
+                builder: (_) => AssessmentRequestScreen(service: raw));
           case '/invoice-detail':
             final args = settings.arguments;
             final invoiceId = args is Invoice ? args.id : (args as String?) ?? '';
@@ -285,16 +320,25 @@ class _HousepitalAppState extends State<HousepitalApp> {
             return MaterialPageRoute(
                 builder: (_) => const TransactionLogScreen());
           case '/payment':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final amount = raw['amount'];
+            final description = raw['description'];
+            if (amount is! int || description is! String) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => PaymentScreen(
-                      amount: args['amount'] as int,
-                      description: args['description'] as String,
-                      invoiceId: args['invoice_id'] as String?,
+                      amount: amount,
+                      description: description,
+                      invoiceId: raw['invoice_id'] as String?,
                     ));
           case '/family-members':
             return MaterialPageRoute(
                 builder: (_) => const FamilyMembersScreen());
+          case '/add-patient':
+            return MaterialPageRoute(
+                builder: (_) => const AddPatientScreen());
           case '/notification-preferences':
             return MaterialPageRoute(
                 builder: (_) => const NotificationPreferencesScreen());
@@ -311,10 +355,10 @@ class _HousepitalAppState extends State<HousepitalApp> {
             return MaterialPageRoute(
                 builder: (_) => const PaymentMethodsScreen());
           case '/package-detail':
-            final package = settings.arguments as CarePackage;
+            final raw = settings.arguments;
+            if (raw is! CarePackage) return _argErrorRoute();
             return MaterialPageRoute(
-                builder: (_) =>
-                    PackageDetailScreen(package: package));
+                builder: (_) => PackageDetailScreen(package: raw));
           case '/search':
             return MaterialPageRoute(
                 builder: (_) => const UniversalSearchScreen());
@@ -351,90 +395,150 @@ class _HousepitalAppState extends State<HousepitalApp> {
                 builder: (_) =>
                     AttendanceHistoryScreen(deploymentId: deploymentId));
           case '/booking-confirmation':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final totalAmount = raw['totalAmount'];
+            if (totalAmount is! int) return _argErrorRoute();
             return MaterialPageRoute(
                 builder: (_) => BookingConfirmationScreen(
-                      cartItems: args['cartItems'] as List<CartItem>?,
-                      totalAmount: args['totalAmount'] as int,
-                      serviceName: args['serviceName'] as String?,
-                      scheduledDate: args['scheduledDate'] as DateTime?,
-                      scheduledSlot: args['scheduledSlot'] as String?,
+                      cartItems: raw['cartItems'] as List<CartItem>?,
+                      totalAmount: totalAmount,
+                      serviceName: raw['serviceName'] as String?,
+                      scheduledDate: raw['scheduledDate'] as DateTime?,
+                      scheduledSlot: raw['scheduledSlot'] as String?,
                     ));
           case '/booking-history':
+          case '/my-orders':
+            // /booking-history kept as an alias for legacy in-app links.
             final tab = settings.arguments as int? ?? 0;
             return MaterialPageRoute(
                 builder: (_) => MyOrdersScreen(initialTab: tab));
           case '/video-consultation':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final doctorName = raw['doctorName'];
+            if (doctorName is! String) return _argErrorRoute();
             return MaterialPageRoute(
                 builder: (_) => VideoConsultationScreen(
-                      doctorName: args['doctorName'] as String,
-                      doctorPhotoUrl: args['doctorPhotoUrl'] as String?,
-                      roomId: args['roomId'] as String?,
-                      token: args['token'] as String?,
+                      doctorName: doctorName,
+                      doctorPhotoUrl: raw['doctorPhotoUrl'] as String?,
+                      roomId: raw['roomId'] as String?,
+                      token: raw['token'] as String?,
                     ));
           case '/chat':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final patientId = raw['patientId'];
+            final coordinatorName = raw['coordinatorName'];
+            if (patientId is! String || coordinatorName is! String) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => ChatScreen(
-                      patientId: args['patientId'] as String,
-                      coordinatorName: args['coordinatorName'] as String,
-                      coordinatorPhotoUrl:
-                          args['coordinatorPhotoUrl'] as String?,
+                      patientId: patientId,
+                      coordinatorName: coordinatorName,
+                      coordinatorPhotoUrl: raw['coordinatorPhotoUrl'] as String?,
                     ));
           case '/staff-otp':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final deploymentId = raw['deploymentId'];
+            final staffName = raw['staffName'];
+            final staffRole = raw['staffRole'];
+            if (deploymentId is! String ||
+                staffName is! String ||
+                staffRole is! String) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => StaffOtpVerificationScreen(
-                      deploymentId: args['deploymentId'] as String,
-                      staffName: args['staffName'] as String,
-                      staffRole: args['staffRole'] as String,
-                      staffPhotoUrl: args['staffPhotoUrl'] as String?,
+                      deploymentId: deploymentId,
+                      staffName: staffName,
+                      staffRole: staffRole,
+                      staffPhotoUrl: raw['staffPhotoUrl'] as String?,
                     ));
           case '/order-tracking':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final bookingId = raw['bookingId'];
+            if (bookingId is! String) return _argErrorRoute();
             return MaterialPageRoute(
                 builder: (_) => OrderTrackingScreen(
-                      bookingId: args['bookingId'] as String,
-                      orderType: (args['orderType'] as String?) ?? 'booking',
+                      bookingId: bookingId,
+                      orderType: (raw['orderType'] as String?) ?? 'booking',
                     ));
           case '/rental-agreement':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final itemName = raw['itemName'];
+            final monthlyRate = raw['monthlyRate'];
+            if (itemName is! String || monthlyRate is! int) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => RentalAgreementScreen(
-                      itemName: args['itemName'] as String,
-                      monthlyRate: args['monthlyRate'] as int,
-                      durationMonths: (args['durationMonths'] as int?) ?? 1,
+                      itemName: itemName,
+                      monthlyRate: monthlyRate,
+                      durationMonths: (raw['durationMonths'] as int?) ?? 1,
                     ));
           case '/return-equipment':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final orderId = raw['orderId'];
+            final itemName = raw['itemName'];
+            final rentalStartDate = raw['rentalStartDate'];
+            final monthlyRate = raw['monthlyRate'];
+            if (orderId is! String ||
+                itemName is! String ||
+                rentalStartDate is! DateTime ||
+                monthlyRate is! int) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => ReturnScreen(
-                      orderId: args['orderId'] as String,
-                      itemName: args['itemName'] as String,
-                      rentalStartDate: args['rentalStartDate'] as DateTime,
-                      monthlyRate: args['monthlyRate'] as int,
+                      orderId: orderId,
+                      itemName: itemName,
+                      rentalStartDate: rentalStartDate,
+                      monthlyRate: monthlyRate,
                     ));
           case '/emi-options':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final totalAmount = raw['totalAmount'];
+            final itemName = raw['itemName'];
+            if (totalAmount is! int || itemName is! String) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => EmiScreen(
-                      totalAmount: args['totalAmount'] as int,
-                      itemName: args['itemName'] as String,
+                      totalAmount: totalAmount,
+                      itemName: itemName,
                     ));
           case '/staff-replacement':
-            final args = settings.arguments as Map<String, dynamic>;
+            final raw = settings.arguments;
+            if (raw is! Map<String, dynamic>) return _argErrorRoute();
+            final deploymentId = raw['deploymentId'];
+            final staffName = raw['staffName'];
+            final staffRole = raw['staffRole'];
+            if (deploymentId is! String ||
+                staffName is! String ||
+                staffRole is! String) {
+              return _argErrorRoute();
+            }
             return MaterialPageRoute(
                 builder: (_) => StaffReplacementScreen(
-                      deploymentId: args['deploymentId'] as String,
-                      staffName: args['staffName'] as String,
-                      staffRole: args['staffRole'] as String,
-                      staffPhoto: args['staffPhoto'] as String?,
-                      assignedSince: args['assignedSince'] as DateTime?,
+                      deploymentId: deploymentId,
+                      staffName: staffName,
+                      staffRole: staffRole,
+                      staffPhoto: raw['staffPhoto'] as String?,
+                      assignedSince: raw['assignedSince'] as DateTime?,
                     ));
           case '/referrals':
             return MaterialPageRoute(
                 builder: (_) => const ReferralScreen());
+          case '/daimaa':
+            return MaterialPageRoute(
+                builder: (_) => const DaiMaaLandingScreen());
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));

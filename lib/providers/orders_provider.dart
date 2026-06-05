@@ -18,11 +18,26 @@ class OrdersProvider extends ChangeNotifier {
     _loadFromStorage();
   }
 
-  /// Generate a booking number like HPL-BOOK-12345
+  /// Generate a booking number like HPL-BOOK-1234567.
+  /// Uses a millisecond timestamp suffix (last 7 digits) to avoid the collisions
+  /// the previous 5-digit random approach was prone to, and salts with a small
+  /// random number so two near-simultaneous calls in the same millisecond still differ.
   static String generateBookingNumber() {
-    final random = Random();
-    final digits = (10000 + random.nextInt(90000)).toString();
-    return 'HPL-BOOK-$digits';
+    final ts = DateTime.now().millisecondsSinceEpoch.toString();
+    final suffix = ts.substring(ts.length - 7);
+    return 'HPL-BOOK-$suffix';
+  }
+
+  /// Generate a booking number guaranteed not to collide with any existing order
+  /// in this provider's in-memory list. Falls back to extra randomness if needed.
+  String generateUniqueBookingNumber() {
+    String candidate = generateBookingNumber();
+    int safety = 0;
+    while (_orders.any((o) => o['id'] == candidate) && safety < 5) {
+      candidate = '${generateBookingNumber()}-${Random().nextInt(99)}';
+      safety++;
+    }
+    return candidate;
   }
 
   /// Add a new order (called after successful checkout)

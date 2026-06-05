@@ -6,8 +6,10 @@ class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   static const _appVersion = '1.0.0';
-  static const _companyName = 'Housepital Healthcare Pvt Ltd';
-  static const _address = 'Delhi, India';
+  static const _companyName = 'Housepital Pvt Ltd';
+  static const _address =
+      'First Floor, B1/A32, Mohan Cooperative Industrial Estate, Badarpur, New Delhi – 110044';
+  static const _cin = 'CIN: U85100DL2019PTC357830';
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Hospital-like expertise, Home-like care',
+              'Hospital-like expertise. Home-like care.',
               style: TextStyle(
                 fontSize: 14,
                 color: HousepitalColors.greyLight,
@@ -78,6 +80,8 @@ class AboutScreen extends StatelessWidget {
             _infoRow(Icons.business, _companyName),
             const SizedBox(height: 12),
             _infoRow(Icons.location_on, _address),
+            const SizedBox(height: 12),
+            _infoRow(Icons.badge_outlined, _cin),
 
             const SizedBox(height: 24),
             const Divider(),
@@ -123,14 +127,18 @@ class AboutScreen extends StatelessWidget {
   Widget _infoRow(IconData icon, String text) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: HousepitalColors.grey),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 14,
-            color: HousepitalColors.grey,
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              color: HousepitalColors.grey,
+            ),
           ),
         ),
       ],

@@ -8,6 +8,8 @@ import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
+import '../../widgets/common_widgets.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
@@ -206,7 +208,18 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     });
   }
 
-  void _removeMedication(int index) {
+  Future<void> _removeMedication(int index) async {
+    final entry = _medications[index];
+    final medName = entry.nameController.text.trim().isEmpty
+        ? 'this medication'
+        : '"${entry.nameController.text.trim()}"';
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Remove medication?',
+      message: 'Remove $medName from the list?',
+      confirmLabel: 'Remove',
+    );
+    if (!confirmed || !mounted) return;
     setState(() {
       _medications[index].dispose();
       _medications.removeAt(index);
@@ -287,34 +300,64 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final role = context.watch<AppProvider>().currentUserRole;
+    final canEdit = canUserPerform(role, UserAction.editPatient);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l.t('patient_profile')),
         actions: [
-          _isSaving
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+          if (canEdit)
+            _isSaving
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : TextButton(
+                    onPressed: _saveProfile,
+                    child: Text(l.t('save'),
+                        style: const TextStyle(color: HousepitalColors.orange)),
                   ),
-                )
-              : TextButton(
-                  onPressed: _saveProfile,
-                  child: Text(l.t('save'),
-                      style: const TextStyle(color: HousepitalColors.orange)),
-                ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: AbsorbPointer(
+        // Lock all fields and inline buttons for view-only roles.
+        absorbing: !canEdit,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!canEdit) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: HousepitalColors.infoLight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lock_outline,
+                          size: 18, color: HousepitalColors.info),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'View only — only the primary contact can edit this profile.',
+                          style: TextStyle(
+                              fontSize: 13, color: HousepitalColors.info),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             // ==================== Profile Photo ====================
             Center(
               child: Padding(
@@ -691,6 +734,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             // Bottom spacing for scroll comfort
             const SizedBox(height: 40),
           ],
+        ),
         ),
         ),
       ),

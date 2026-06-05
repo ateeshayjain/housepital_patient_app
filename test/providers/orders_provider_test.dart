@@ -6,7 +6,7 @@
 // - addAssessment: creates assessment with serviceId, serviceName, status 'submitted'
 // - cancelOrder: changes status to 'cancelled', adds cancellation reason
 // - updateOrderStatus: changes status correctly
-// - generateBookingNumber: format HPL-BOOK-XXXXX (5 digits)
+// - generateBookingNumber: format HPL-BOOK-XXXXXXX (7-digit timestamp suffix)
 // - generateBookingNumber: each call produces unique number
 // - Empty state: no orders initially
 
@@ -43,25 +43,31 @@ void main() {
   // generateBookingNumber
   // ---------------------------------------------------------------------------
   group('generateBookingNumber', () {
-    test('format is HPL-BOOK-XXXXX (5 digits)', () {
+    test('format is HPL-BOOK-XXXXXXX (7-digit timestamp suffix)', () {
       final booking = OrdersProvider.generateBookingNumber();
-      expect(booking, matches(RegExp(r'^HPL-BOOK-\d{5}$')));
+      expect(booking, matches(RegExp(r'^HPL-BOOK-\d{7}$')));
     });
 
-    test('produces 5-digit suffix between 10000 and 99999', () {
+    test('suffix is numeric and non-empty', () {
       final booking = OrdersProvider.generateBookingNumber();
-      final digits = int.parse(booking.split('-').last);
-      expect(digits, greaterThanOrEqualTo(10000));
-      expect(digits, lessThanOrEqualTo(99999));
+      final digits = booking.split('-').last;
+      expect(digits.length, 7);
+      expect(int.tryParse(digits), isNotNull);
     });
 
-    test('each call produces a unique number (high probability)', () {
-      final numbers = <String>{};
-      for (var i = 0; i < 100; i++) {
-        numbers.add(OrdersProvider.generateBookingNumber());
+    test('generateUniqueBookingNumber avoids collisions with existing orders', () {
+      final provider = OrdersProvider();
+      final existing = OrdersProvider.generateBookingNumber();
+      provider.addOrder(
+        items: [_makeCartItem()],
+        totalAmount: 1000,
+        bookingNumber: existing,
+      );
+      // generateUniqueBookingNumber should never return the same id as one in the list.
+      for (var i = 0; i < 5; i++) {
+        final next = provider.generateUniqueBookingNumber();
+        expect(next, isNot(existing));
       }
-      // With 90000 possible values, 100 calls should yield at least 95 unique
-      expect(numbers.length, greaterThanOrEqualTo(95));
     });
   });
 

@@ -45,7 +45,7 @@ The current bottom tab bar is: `Home | Reports | Services | Billing | More` (5 t
 
 ### Backend Integration
 
-The patient app uses a REST API (`ApiService` → `https://api.housepital.com/v1`), NOT direct Supabase access. The staff app writes to Supabase directly. Data flows:
+The patient app uses a REST API (`ApiService` → `https://api.housepital.in/v1`), NOT direct Supabase access. The staff app writes to Supabase directly. Data flows:
 
 ```
 Staff App → Supabase → Backend API → Patient App

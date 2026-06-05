@@ -137,7 +137,7 @@ const List<FaqItem> _faqs = [
     category: 'Account',
     question: 'How do I delete my account?',
     answer:
-        'Please contact support via email at support@housepital.in. Account deletion is processed within 7 working days as per our data retention policy.',
+        'Please contact support via email at wecare@housepital.in. Account deletion is processed within 7 working days as per our data retention policy.',
   ),
 ];
 
