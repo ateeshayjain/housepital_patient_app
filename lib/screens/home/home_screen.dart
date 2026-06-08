@@ -683,35 +683,16 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: HousepitalColors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HousepitalColors.divider),
         ),
         child: Padding(
+          // Header removed — the "Your Health Team" section label above the
+          // card already names it (other sections follow the same pattern).
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.groups, color: HousepitalColors.orange, size: 18),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Your Health Team',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: HousepitalColors.black,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
               if (deployment != null) ...[
                 _TeamMemberRow(
                   role: 'Health Manager',
@@ -884,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.menu_book,
-                          color: HousepitalColors.serviceCarePackage, size: 20),
+                          color: HousepitalColors.serviceCarePackage, size: 22),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -1454,8 +1435,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.medication,
-                  color: HousepitalColors.orange, size: 22),
+              // Standard home icon tile (matches all other Home sections).
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.medication,
+                    color: HousepitalColors.orange, size: 22),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1595,10 +1584,16 @@ class _TeamMemberRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: color.withValues(alpha: 0.12),
-          child: Icon(icon, color: color, size: 20),
+        // Standard home icon tile — rounded square, tinted bg, 22pt icon.
+        // (Matches Current Services / Medications / Care Guides for a single
+        // consistent icon system across the Home screen.)
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 12),
         Expanded(
