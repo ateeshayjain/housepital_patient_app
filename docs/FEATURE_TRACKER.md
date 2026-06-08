@@ -49,7 +49,13 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Place-call tool                     | AssistantExecutor            | url_launcher tel:     | Done (2026-06) | Confirm-before-act; name+number confirmation card |
 | 7 | Navigate tool                       | AssistantExecutor            | Navigator.pushNamed   | Done (2026-06) | Light inline confirm; benign, reversible           |
 | 8 | Permission gating                   | AssistantExecutor            | --                    | Done (2026-06) | Respects canUserPerform role matrix               |
-| 9 | Backend /assistant endpoint         | AssistantService.useStub     | housepital-backend    | Not Started    | Stub mode active; LLM + tool-routing on backend   |
+| 9 | Backend /assistant endpoint         | AssistantService             | functions/index.js    | Done (2026-06) | Claude + json_schema structured output; ANTHROPIC_API_KEY secret; build with --dart-define=ASSISTANT_API_URL |
+| 10| Staff-info query tool               | AssistantExecutor            | contacts/deployment   | Done (2026-06) | "meri nurse kaun hai" |
+| 11| Raise-concern action                | AssistantExecutor            | raiseConcern          | Done (2026-06) | Confirm-before-act; summarized description |
+| 12| Book-service action                 | AssistantExecutor            | createAssessmentRequest| Done (2026-06) | nursing/caretaker/physiotherapy/doctor |
+| 13| Renew-service action                | AssistantExecutor            | createAssessmentRequest| Done (2026-06) | "service aage badhao" (type: renewal) |
+| 14| Replace-staff action                | AssistantExecutor            | requestReplacement    | Done (2026-06) | Captures reason; confirm-before-act |
+| 15| Pay-bill → /billing                 | AssistantExecutor            | navigate              | Done (2026-06) | "bill bharna hai" → payment screen; assistant never charges |
 
 ---
 

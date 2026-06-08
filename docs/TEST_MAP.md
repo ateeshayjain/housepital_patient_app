@@ -1,9 +1,9 @@
 # Test Map -- Housepital Patient App
 
 **Last updated:** 2026-06-05
-**Total test count:** 1389 (+ 17 skipped — Firebase-init-dependent scenarios)
-**Pass rate:** 1389/1389 (all passing)
-**Test file count:** 71 (`find test -name "*_test.dart" | wc -l`)
+**Total test count:** 1407 (+ 17 skipped — Firebase-init-dependent scenarios)
+**Pass rate:** 1407/1407 (all passing)
+**Test file count:** 72 (`find test -name "*_test.dart" | wc -l`)
 
 ### How to update this count
 
@@ -27,6 +27,7 @@ History:
 - 2026-05-28 (batch 3): 1336 tests / 64 files (+199 from agents A+B+C)
 - 2026-06-05 (batch 4+5 + features): 1383 tests (Blogs+Assistant+iOS firebase)
 - 2026-06-05 (unit tests session): 1389 tests / 71 files (+6 home grid, FAB)
+- 2026-06-08 (assistant actions + tri-audit): 1407 tests / 72 files (+18 actions, Care Guides restore, SOS-call)
 
 ---
 

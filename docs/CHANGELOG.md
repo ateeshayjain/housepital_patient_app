@@ -4,6 +4,46 @@
 
 ---
 
+## [2026-06-08] -- Assistant Action-Taking, AI Backend, Tri-Audit Fixes
+
+1407 passing tests, analyzer clean.
+
+### AI Assistant — now takes actions (was read/navigate only)
+- New `get_staff_info` intent: "meri nurse kaun hai", health-manager/staff lookup
+- 4 state-changing actions, all confirm-before-act:
+  - `raise_concern` — files a complaint with a summarized description
+  - `book_service` — new service request (nursing/caretaker/physiotherapy/doctor)
+  - `renew_service` — extend/renew the active service
+  - `replace_staff` — request a different staff member (captures reason)
+- `navigate` extended with `/billing` for "bill bharna hai" → routes to payment
+  screen (the assistant never charges money itself)
+- Action set is now 10 (get_billing, get_duty_days, get_staff_info, place_call,
+  navigate, raise_concern, book_service, renew_service, replace_staff, none)
+- Placing a call is no longer gated on edit_patient; SOS is never permission-blocked
+
+### Cloud Function backend (functions/)
+- NEW `functions/index.js` — `assistant` HTTPS function (region asia-south1)
+- Calls Claude (claude-opus-4-8 default, overridable via ANTHROPIC_MODEL) with
+  json_schema structured output + prompt caching; input capped at 1000 chars,
+  role validated against an allow-list
+- ANTHROPIC_API_KEY held as a Firebase secret (never ships in the app binary)
+- Degrades gracefully to {action:"none"} + Hinglish message on any error
+- App wiring: AssistantService calls it when built with
+  `--dart-define=ASSISTANT_API_URL=<function-url>`; offline Hinglish stub otherwise
+- `functions/README.md` — deploy + secret + build-flag instructions
+
+### Tri-audit (Apple Design + Code Quality + Documentation)
+- **BLOCKER fixed:** Care Guides feature (28 articles, 7 categories, article
+  screens, BlogProvider, /articles routes, getArticles API) was lost during the
+  earlier PR-merge saga and never reached main — fully restored.
+- Apple Design: assistant dial failure now shows a SnackBar (was silent); chat
+  bubbles get Semantics sender labels; bubble/card radii snapped to 12; thinking
+  spinner recoloured to brand orange.
+- Docs: this changelog + FEATURE_TRACKER updated; ASSISTANT_API_URL and the
+  ANTHROPIC_API_KEY secret documented; README stack reconciled to Firebase/MySQL.
+
+---
+
 ## [2026-06-05] -- Unit Tests + Documentation Update
 
 1389 passing tests / 71 test files. Analyzer: No issues found.

@@ -1,4 +1,4 @@
-# Housepital Patient App — Flutter + REST API
+# Housepital Patient App — Flutter + Firebase
 
 [![CI](https://github.com/ateeshayjain/housepital_patient_app/actions/workflows/ci.yml/badge.svg)](https://github.com/ateeshayjain/housepital_patient_app/actions/workflows/ci.yml)
 
@@ -14,6 +14,7 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 | Open PRs | <https://github.com/ateeshayjain/housepital_patient_app/pulls> |
 | Architecture | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | API reference | [docs/API_REFERENCE.md](./docs/API_REFERENCE.md) |
+| AI Assistant backend | [functions/README.md](./functions/README.md) |
 | Known issues | [docs/KNOWN_ISSUES.md](./docs/KNOWN_ISSUES.md) |
 | Troubleshooting | [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) |
 | Deployment | [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) |
@@ -23,10 +24,11 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Framework | **Flutter 3.16+** (Dart) | Cross-platform, shared codebase with staff app |
-| Backend API | **REST API** (https://api.housepital.in/v1) | Staff app writes to Supabase; patient app reads via REST |
+| Backend | **Firebase** (Cloud Functions + Cloud SQL MySQL + Firestore) | Functions serve the API; MySQL is the system of record; Firestore for realtime/auth mapping |
 | State | **Provider** (ChangeNotifier) | Simple, sufficient, matches staff app patterns |
 | Auth | **Firebase Auth** (Phone OTP) | Firebase ecosystem for patient-facing app |
 | Push | **Firebase Cloud Messaging** | Real-time alerts for attendance, vitals, reports |
+| AI Assistant | **Claude** via Firebase Cloud Function (`functions/`) | Sahayak — Hinglish voice/text bot; key held as a Firebase secret |
 | Charts | **fl_chart** | Vitals sparklines in My Care tab |
 | Payments | **Razorpay** | Indian payment gateway (cards, UPI, netbanking) |
 | Fonts | **Archivo** (Google Fonts) | Per Housepital Brand Guidelines V1 |
@@ -37,7 +39,7 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 ## Quick Stats
 
 - **45+ Dart source files** | **15,000+ lines of code**
-- **6 test files** | **220 unit tests** | **2,900+ test LOC**
+- **72 test files** | **1407 unit tests** | **2,900+ test LOC**
 - **5 bottom tabs** (Home, My Care, Services, Billing, Settings)
 - **25+ screens** with full EN/HI localization
 - **30+ named routes** in onGenerateRoute
@@ -66,6 +68,13 @@ flutter pub get
 
 # Run with the Razorpay test key passed via --dart-define:
 flutter run --dart-define=RAZORPAY_KEY=rzp_test_XXXXXXXXXX
+
+# AI-powered assistant (optional): also pass the deployed Cloud Function URL.
+# Without this flag the assistant uses the offline Hinglish stub.
+# See functions/README.md to deploy the function + set ANTHROPIC_API_KEY.
+flutter run \
+  --dart-define=RAZORPAY_KEY=rzp_test_XXXXXXXXXX \
+  --dart-define=ASSISTANT_API_URL=https://asia-south1-housepital-patient.cloudfunctions.net/assistant
 
 # Or run tests:
 flutter test
@@ -156,7 +165,7 @@ housepital_patient_app/
 │   ├── my-care-tab.md                # My Care tab developer guide
 │   └── superpowers/                  # Design specs + implementation plans
 │
-└── test/                             # 220 unit tests
+└── test/                             # 1407 unit tests
     ├── models/                       # 129 model tests
     ├── providers/                    # 62 provider tests
     └── screens/my_care/              # 29 widget tests
@@ -221,6 +230,20 @@ housepital_patient_app/
 - Help & FAQ
 - Logout
 
+### AI Assistant — "Sahayak" (✨ FAB on every tab)
+- Voice + text, Hinglish — speak or type ("mere iss mahine ka bill kitna hai")
+- Answers: billing, staff duty-days, staff/health-manager info
+- Takes actions (all confirm-before-act): raise a concern, book/renew a service,
+  request a staff replacement, place a call (SOS never blocked)
+- Pay a bill → routes to the payment screen (never charges money itself)
+- Powered by Claude via a Firebase Cloud Function (`functions/`); offline
+  Hinglish keyword stub when `ASSISTANT_API_URL` is not set
+
+### Care Guides (Education)
+- 28 articles across 7 categories (Pulmo, Neuro, Ortho, Elderly, Mother & Baby,
+  Post-hospitalisation) — markdown bodies, category chips, read-time
+- BlogProvider with offline demo fallback
+
 ### Cross-Cutting Features
 - SOS emergency screen (Housepital, Police, Medical emergency)
 - Push notifications (FCM)
@@ -237,7 +260,8 @@ housepital_patient_app/
 |---------|---------------|
 | Auth | Firebase Phone OTP (SMS-based). No passwords. |
 | API Auth | Bearer token from Firebase ID token |
-| Data Access | Patient app reads via REST API; staff app writes via Supabase |
+| Data Access | Patient app calls Firebase Cloud Functions (backed by Cloud SQL MySQL + Firestore) |
+| AI key | ANTHROPIC_API_KEY is a server-side Firebase secret on the assistant function — never in the app binary |
 | Payments | Razorpay handles card/UPI/netbanking — no PCI scope in app |
 | Localization | EN/HI with JSON asset files |
 | Error UX | Custom error screens, never raw exceptions |
@@ -247,7 +271,7 @@ housepital_patient_app/
 ## Testing
 
 ```bash
-flutter test                    # All 220 tests
+flutter test                    # All 1407 tests
 flutter test test/models/       # 129 model tests
 flutter test test/providers/    # 62 provider tests
 flutter test test/screens/      # 29 widget tests
@@ -255,14 +279,20 @@ flutter test test/screens/      # 29 widget tests
 
 ### Test Coverage
 
-| Module | Tests | What's Covered |
+Authoritative, always-current counts live in [docs/TEST_MAP.md](./docs/TEST_MAP.md).
+As of 2026-06-08: **1407 tests across 72 files** (analyzer clean). The table
+below is an illustrative sample of the earliest coverage; later batches added
+auth, payments, API, assistant, blogs, and home-layout suites.
+
+| Module (sample) | Tests | What's Covered |
 |--------|-------|----------------|
 | my_care_models | 72 | fromJson, computed properties, visibility flags, edge cases |
 | medication_models | 57 | fromJson, toJson, daysOfSupplyLeft, isLowStock, frequency labels |
 | my_care_provider | 22 | loadMyCareData, loadServiceDetail, staleness, error handling |
 | medication_provider | 40 | CRUD operations, schedule builder, computed getters, error handling |
-| widget_tests | 29 | HealthManagerBanner, ActiveServiceCard rendering + interactions |
-| **Total** | **220** | |
+| assistant (executor/service/provider/screen) | 52 | actions, confirm-first, permission gating, stub patterns |
+| blogs/articles | 10 | Article model, BlogProvider fallback, list screen |
+| **Total** | **1407** | see TEST_MAP.md for the full per-file breakdown |
 
 ---
 

@@ -1,9 +1,9 @@
 # Housepital Patient App
 
 **Status:** Active development — pre-launch
-**Stage:** Audit batches 1–3 in flight (May 2026); Firebase + MySQL backend live in dev
+**Stage:** Post-feature build (Jun 2026) — Home Layout B, Care Guides, AI Assistant (action-taking) + Cloud Function shipped; all audit batches + tri-audit fixes complete
 **Owner:** Ateeshay Jain ([Ateeshay.jain@gmail.com](mailto:Ateeshay.jain@gmail.com))
-**Last reviewed:** 2026-05-28
+**Last reviewed:** 2026-06-08
 
 > Created in audit batch 3 per the project Documentation Audit Report template — this is the "meta layer" doc that maps you to everything else. Skim it once; bookmark the Quick Links.
 
@@ -63,6 +63,8 @@ Troubleshooting: [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
 | Razorpay **live** key | passed via `--dart-define=RAZORPAY_KEY=…` at build time | Razorpay dashboard → new key → update CI build secret |
 | Firebase config (API key, app ID) | `google-services.json` / `GoogleService-Info.plist` — gitignored as of 2026-05-28 | Firebase Console → re-download → distribute via secure channel |
 | Razorpay **server secret**, FCM admin SDK, MySQL creds | **Backend repo** (separate), not here | (see backend repo) |
+| **ANTHROPIC_API_KEY** (AI assistant) | Firebase **secret** on the `assistant` Cloud Function (`firebase functions:secrets:set ANTHROPIC_API_KEY`) — never in the app binary | Anthropic console → new key → re-set secret → `firebase deploy --only functions`. See `functions/README.md` |
+| `ASSISTANT_API_URL` (assistant endpoint) | build flag `--dart-define=ASSISTANT_API_URL=…` (the deployed function URL); optional — omit for offline stub | n/a (URL, not a secret) |
 | Where credentials are vaulted | _TODO: confirm + link (1Password? Doppler?)_ | |
 
 **Production build checklist:** Razorpay key must be live (see KNOWN_ISSUES BUG-01). Verify Firebase API key restrictions are enabled in the console (HTTP referrer for web, package + SHA1 for Android).
