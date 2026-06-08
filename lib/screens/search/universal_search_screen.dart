@@ -7,6 +7,7 @@ import '../../data/care_packages.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 
 /// Unified search result types.
 enum SearchResultType { equipment, manpower, consultation, diagnostic, package }
@@ -212,7 +213,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
               ? DateHelper.formatCurrency(svc.basePriceMin!)
               : null,
           icon: Icons.medical_information,
-          iconColor: Colors.teal,
+          iconColor: HousepitalColors.serviceCaretaker,
           data: svc,
         ));
       }
@@ -229,7 +230,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
               ? DateHelper.formatCurrency(svc.basePriceMin!)
               : null,
           icon: Icons.science,
-          iconColor: Colors.purple,
+          iconColor: HousepitalColors.serviceJapaNanny,
           data: svc,
         ));
       }
@@ -328,7 +329,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: HousepitalColors.black)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -378,15 +379,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
       IconData icon, String title, String subtitle, VoidCallback onTap) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: HousepitalColors.orangeLight,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: HousepitalColors.orange, size: 20),
-      ),
+      leading: AppIconTile(icon: icon, color: HousepitalColors.orange, size: 22),
       title: Text(title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle,
@@ -403,12 +396,12 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 56, color: Colors.grey.shade300),
-          const SizedBox(height: 14),
+          Icon(Icons.search_off, size: 56, color: HousepitalColors.greyLight),
+          const SizedBox(height: 16),
           Text('No results for "$_query"',
               style: const TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           const Text('Try a different search term',
               style: TextStyle(
                   fontSize: 13, color: HousepitalColors.greyLight)),
@@ -437,7 +430,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 fontWeight: FontWeight.w700,
                 color: HousepitalColors.grey),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
@@ -457,16 +450,16 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
 
   Widget _buildResultTile(SearchResult r) {
     return ListTile(
-      leading: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: r.iconColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: r.type == SearchResultType.equipment &&
-                (r.data as EquipmentItem).imageUrl != null
-            ? ClipRRect(
+      leading: r.type == SearchResultType.equipment &&
+              (r.data as EquipmentItem).imageUrl != null
+          ? Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: r.iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(
                   imageUrl: (r.data as EquipmentItem).imageUrl!,
@@ -474,9 +467,9 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   errorWidget: (_, _, _) =>
                       Icon(r.icon, color: r.iconColor, size: 20),
                 ),
-              )
-            : Icon(r.icon, color: r.iconColor, size: 20),
-      ),
+              ),
+            )
+          : AppIconTile(icon: r.icon, color: r.iconColor, size: 22),
       title: Text(r.name,
           style:
               const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),

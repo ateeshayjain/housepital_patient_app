@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../data/care_packages.dart';
+import '../../../widgets/common_widgets.dart';
 
 /// Packages tab — surfaces the curated care packages (post-op, mother &
 /// baby, etc.) from `lib/data/care_packages.dart`.
@@ -33,12 +34,12 @@ class PackagesTab extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: Material(
             color: HousepitalColors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             elevation: 1,
             shadowColor: Colors.black12,
             child: InkWell(
               onTap: () => Navigator.pushNamed(context, '/package-detail', arguments: pkg),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -46,16 +47,8 @@ class PackagesTab extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: HousepitalColors.orangeLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(icon, color: HousepitalColors.orange, size: 26),
-                        ),
-                        const SizedBox(width: 14),
+                        AppIconTile(icon: icon, color: HousepitalColors.orange),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +76,7 @@ class PackagesTab extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: HousepitalColors.success,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             '${pkg.discountPercent.toInt()}% OFF',
@@ -137,7 +130,7 @@ class PackagesTab extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: HousepitalColors.greyLighter,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           h,

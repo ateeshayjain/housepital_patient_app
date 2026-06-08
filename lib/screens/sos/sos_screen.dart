@@ -107,7 +107,7 @@ class SOSScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: hasAddress
           ? Row(
@@ -115,7 +115,7 @@ class SOSScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.location_on,
                     color: HousepitalColors.sos, size: 22),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +159,7 @@ class SOSScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.location_off,
                     color: HousepitalColors.warning, size: 22),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Add your address in Profile so we can dispatch faster',
@@ -215,7 +215,7 @@ class SOSScreen extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, size: 28),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

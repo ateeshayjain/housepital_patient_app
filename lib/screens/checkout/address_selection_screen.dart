@@ -237,8 +237,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(6),
+                      color: HousepitalColors.greyLighter,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -278,7 +278,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.location_off_outlined, size: 64, color: Colors.grey.shade300),
+                      const Icon(Icons.location_off_outlined, size: 64, color: HousepitalColors.greyLight),
                       const SizedBox(height: 16),
                       const Text('No saved addresses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 16),
@@ -286,10 +286,6 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                         onPressed: () => _openAddEditForm(),
                         icon: const Icon(Icons.add),
                         label: const Text('Add Address'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HousepitalColors.orange,
-                          foregroundColor: Colors.white,
-                        ),
                       ),
                     ],
                   ),
@@ -333,7 +329,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: HousepitalColors.orangeLight,
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text('Default',
                                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: HousepitalColors.orange)),
@@ -552,16 +548,10 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
               ),
               const SizedBox(height: 24),
               SizedBox(
-                height: 50,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HousepitalColors.orange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(isEdit ? 'Update Address' : 'Save Address',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: Text(isEdit ? 'Update Address' : 'Save Address'),
                 ),
               ),
               const SizedBox(height: 40),

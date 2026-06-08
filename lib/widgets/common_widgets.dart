@@ -21,13 +21,42 @@ class HousepitalCard extends StatelessWidget {
       child: child,
     );
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: onTap != null
           ? InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               child: content,
             )
           : content,
+    );
+  }
+}
+
+/// Canonical leading icon tile used across the app: a rounded-square tinted
+/// container holding a category/status icon. Use this for the small coloured
+/// icon next to a list-row or card title — NOT CircleAvatar, NOT a bare Icon.
+class AppIconTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const AppIconTile({
+    super.key,
+    required this.icon,
+    required this.color,
+    this.size = 22,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, color: color, size: size),
     );
   }
 }

@@ -73,7 +73,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
                         ? const Icon(Icons.person, size: 28, color: HousepitalColors.orange)
                         : null,
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,9 +111,8 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _reason,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Select reason',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
               items: _reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
               onChanged: (v) => setState(() => _reason = v),
@@ -147,9 +146,8 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
             TextField(
               controller: _additionalController,
               maxLines: 4,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Any specific requirements for the replacement...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
             const SizedBox(height: 24),

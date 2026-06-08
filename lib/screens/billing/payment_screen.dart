@@ -307,7 +307,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(
-                  height: 48,
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: _processPayment,
                     child: Text(
@@ -481,7 +481,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 ] else ...[
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 52,
                     child: ElevatedButton(
                       onPressed: _retryPayment,
                       child: const Text('Retry Payment'),
@@ -587,7 +587,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ? HousepitalColors.orange
                         : HousepitalColors.grey,
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       label,

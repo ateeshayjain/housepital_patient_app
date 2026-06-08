@@ -6,6 +6,7 @@ import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_provider.dart';
 import '../../../utils/permissions.dart';
+import '../../../widgets/common_widgets.dart';
 import '../data/staff_roles_seed.dart';
 import '../widgets/permission_dialogs.dart';
 
@@ -48,26 +49,23 @@ class StaffRoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _roleColor;
-    final iconBgColor = _isDaiMaa
-        ? DaiMaaColors.lavender.withValues(alpha: 0.25)
-        : color.withValues(alpha: 0.12);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
         color: HousepitalColors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         elevation: 1,
         shadowColor: _isDaiMaa
             ? DaiMaaColors.plum.withValues(alpha: 0.18)
             : Colors.black12,
         child: InkWell(
           onTap: () => _showRoleDetail(context),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: _isDaiMaa
                 ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border:
                         Border.all(color: DaiMaaColors.plum, width: 1.5),
                   )
@@ -77,16 +75,8 @@ class StaffRoleCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: iconBgColor,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(role.icon, color: color, size: 28),
-                    ),
-                    const SizedBox(width: 14),
+                    AppIconTile(icon: role.icon, color: color),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +96,7 @@ class StaffRoleCard extends StatelessWidget {
                                 ),
                               ),
                               if (_isDaiMaa) ...[
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 8),
                                 const DaiMaaBadge(),
                               ],
                             ],
@@ -152,7 +142,7 @@ class StaffRoleCard extends StatelessWidget {
                         color: HousepitalColors.greyLight, size: 22),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 // Shift chips
                 Row(
                   children: role.availableShifts.map((shift) {
@@ -209,17 +199,9 @@ class StaffRoleCard extends StatelessWidget {
               // Header
               Row(
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: HousepitalColors.orangeLight,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(role.icon,
-                        color: HousepitalColors.orange, size: 28),
-                  ),
-                  const SizedBox(width: 14),
+                  AppIconTile(
+                      icon: role.icon, color: HousepitalColors.orange),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +297,7 @@ class StaffRoleCard extends StatelessWidget {
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: HousepitalColors.orangeLight,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             level.name,

@@ -38,9 +38,18 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l.t('medication_schedule'))),
       body: medProv.isLoading
-          ? const Center(child: LoadingWidget())
+          ? const LoadingWidget()
           : medProv.error != null
-              ? Center(child: Text(l.t('error_load_data')))
+              ? ErrorRetryWidget(
+                  message: l.t('error_load_data'),
+                  onRetry: () {
+                    final patientId =
+                        context.read<AppProvider>().currentPatient?.id;
+                    if (patientId != null) {
+                      medProv.loadTodaySchedule(patientId);
+                    }
+                  },
+                )
               : medProv.schedule.isEmpty
                   ? const Center(child: Text('No medications scheduled today'))
                   : RefreshIndicator(
@@ -76,20 +85,20 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFBBF7D0)),
+            color: HousepitalColors.successLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: HousepitalColors.successLight),
           ),
           child: Row(
             children: [
-              const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 20),
-              const SizedBox(width: 10),
-              Text(
+              const Icon(Icons.check_circle, color: HousepitalColors.success, size: 20),
+              const SizedBox(width: 8),
+              const Text(
                 'All medications taken for today!',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green[800],
+                  color: HousepitalColors.success,
                 ),
               ),
             ],
@@ -104,22 +113,22 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        color: HousepitalColors.orangeLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.orangeLight),
       ),
       child: Row(
         children: [
           const Icon(Icons.notifications_active,
-              color: Color(0xFFF97316), size: 20),
-          const SizedBox(width: 10),
+              color: HousepitalColors.orange, size: 20),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Next reminder: ${nextReminder.medicationName} ${nextReminder.dosage} at ${_formatSlotTime(nextReminder.time)}',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF9A3412),
+                color: HousepitalColors.orangeText,
               ),
             ),
           ),
@@ -168,14 +177,14 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     Color bgColor;
     Color borderColor;
     if (isGiven) {
-      bgColor = const Color(0xFFF0FDF4);
-      borderColor = const Color(0xFFBBF7D0);
+      bgColor = HousepitalColors.successLight;
+      borderColor = HousepitalColors.successLight;
     } else if (isMissed) {
-      bgColor = const Color(0xFFFEF2F2);
-      borderColor = const Color(0xFFFECACA);
+      bgColor = HousepitalColors.errorLight;
+      borderColor = HousepitalColors.errorLight;
     } else {
-      bgColor = const Color(0xFFF9FAFB);
-      borderColor = const Color(0xFFE5E7EB);
+      bgColor = HousepitalColors.greyLighter;
+      borderColor = HousepitalColors.divider;
     }
 
     return Container(
@@ -199,7 +208,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                 ? HousepitalColors.success
                 : isMissed
                     ? HousepitalColors.error
-                    : Colors.grey[400],
+                    : HousepitalColors.greyLight,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -211,11 +220,11 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: sm.isPast && !isGiven
-                          ? Colors.grey[400]
-                          : Colors.grey[900],
+                          ? HousepitalColors.greyLight
+                          : HousepitalColors.black,
                     )),
                 Text('${sm.medication.form} · ${sm.medication.instructions ?? ""}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
               ],
             ),
           ),
@@ -226,16 +235,16 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                 Text(
                     'Given ${DateHelper.formatTime(sm.log!.actualTime ?? sm.log!.scheduledTime)}',
                     style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF16A34A))),
+                        fontSize: 11, color: HousepitalColors.success)),
                 if (sm.log!.staffName != null)
                   Text('by ${sm.log!.staffName}',
-                      style:
-                          TextStyle(fontSize: 11, color: Colors.grey[400])),
+                      style: const TextStyle(
+                          fontSize: 11, color: HousepitalColors.greyLight)),
               ],
             )
           else if (!isGiven && !isMissed)
             Text(l.t('scheduled'),
-                style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
         ],
       ),
     );

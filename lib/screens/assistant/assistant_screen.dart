@@ -210,6 +210,9 @@ class _ConfirmCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.all(12),
       color: HousepitalColors.orangeLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -282,7 +285,9 @@ class _InputBar extends StatelessWidget {
                   hintText: listening
                       ? 'Sun raha hoon…'
                       : 'Type karein ya mic dabayein…',
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
                 ),

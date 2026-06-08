@@ -52,8 +52,8 @@ class ActiveServiceCard extends StatelessWidget {
                             ),
                           ),
                           Text(progressLabel,
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[500])),
+                              style: const TextStyle(
+                                  fontSize: 11, color: HousepitalColors.greyLight)),
                           const SizedBox(width: 4),
                           const Icon(Icons.chevron_right,
                               size: 18, color: HousepitalColors.greyLight),
@@ -81,12 +81,12 @@ class ActiveServiceCard extends StatelessWidget {
                           ],
                           if (service.renewalDate != null) ...[
                             const Spacer(),
-                            Icon(Icons.event_repeat,
-                                size: 13, color: Colors.grey[500]),
+                            const Icon(Icons.event_repeat,
+                                size: 13, color: HousepitalColors.greyLight),
                             const SizedBox(width: 4),
                             Text('Renews in ${service.daysRemaining}d',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600])),
+                                style: const TextStyle(
+                                    fontSize: 12, color: HousepitalColors.grey)),
                           ],
                         ],
                       ),
@@ -96,7 +96,7 @@ class ActiveServiceCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: service.progressFraction,
                           minHeight: 4,
-                          backgroundColor: Colors.grey[200],
+                          backgroundColor: HousepitalColors.greyLighter,
                           valueColor: AlwaysStoppedAnimation(color),
                         ),
                       ),

@@ -242,15 +242,9 @@ class InvoiceDetailScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.orangeLight,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(typeIcon,
-                      size: 18, color: HousepitalColors.orange),
+                AppIconTile(
+                  icon: typeIcon,
+                  color: HousepitalColors.orange,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

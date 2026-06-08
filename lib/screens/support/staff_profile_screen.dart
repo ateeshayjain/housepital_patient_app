@@ -241,7 +241,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 ),
               ),
               if (_staff!.totalReviews != null) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
                   '(${_staff!.totalReviews} reviews)',
                   style: const TextStyle(
@@ -367,8 +367,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          Icon(icon, color: HousepitalColors.orange, size: 22),
-          const SizedBox(width: 14),
+          AppIconTile(icon: icon, color: HousepitalColors.orange, size: 22),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               label,
@@ -383,7 +383,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             color: verified ? HousepitalColors.success : HousepitalColors.warning,
             size: 20,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             verified ? 'Verified' : 'Pending',
             style: TextStyle(
@@ -477,7 +477,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               child: Text(
                 'Attendance',
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: HousepitalColors.black,
                 ),
@@ -506,18 +506,18 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             children: [
               _attendanceStat('Present', '$presentCount', HousepitalColors.success),
               _attendanceStat('Absent', '$absentCount', HousepitalColors.error),
-              _attendanceStat('Half Day', '$halfDayCount', Colors.orange),
+              _attendanceStat('Half Day', '$halfDayCount', HousepitalColors.warning),
               _attendanceStat('Leave', '$leaveCount', HousepitalColors.greyLight),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         // Day headers
         Container(
           decoration: BoxDecoration(
             color: HousepitalColors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: HousepitalColors.divider),
           ),
           padding: const EdgeInsets.all(8),
           child: Column(
@@ -542,7 +542,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                         ))
                     .toList(),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               // Calendar grid
               ...List.generate(
                 ((leadingBlanks + daysInMonth) / 7).ceil(),
@@ -576,7 +576,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                               dotColor = HousepitalColors.error;
                               break;
                             case 'half_day':
-                              dotColor = Colors.orange;
+                              dotColor = HousepitalColors.warning;
                               break;
                             case 'leave':
                               dotColor = HousepitalColors.greyLight;
@@ -641,17 +641,17 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         // Legend
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _legendDot(HousepitalColors.success, 'Present'),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             _legendDot(HousepitalColors.error, 'Absent'),
-            const SizedBox(width: 14),
-            _legendDot(Colors.orange, 'Half Day'),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
+            _legendDot(HousepitalColors.warning, 'Half Day'),
+            const SizedBox(width: 16),
             _legendDot(HousepitalColors.greyLight, 'Leave'),
           ],
         ),
@@ -731,7 +731,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         statusIcon = Icons.cancel;
         break;
       case 'half_day':
-        statusColor = Colors.orange;
+        statusColor = HousepitalColors.warning;
         statusLabel = 'Half Day';
         statusIcon = Icons.timelapse;
         break;
@@ -828,14 +828,14 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: HousepitalColors.greyLighter,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Column(
         children: [
           Icon(icon, size: 20, color: HousepitalColors.orange),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             time,
             style: const TextStyle(
@@ -881,21 +881,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 onTap: () => _showDocumentDetail(doc),
                 child: Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
-                        color: _docIconColor(doc.type).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _docIcon(doc.type),
-                        color: _docIconColor(doc.type),
-                        size: 22,
-                      ),
+                    AppIconTile(
+                      icon: _docIcon(doc.type),
+                      color: _docIconColor(doc.type),
+                      size: 22,
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -978,22 +969,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         color = HousepitalColors.warning;
         label = 'Pending';
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
+    return StatusBadge(text: label, color: color);
   }
 
   void _showDocumentDetail(StaffDocument doc) {
@@ -1137,7 +1113,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1180,7 +1156,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                     ),
                     if (review.comment != null &&
                         review.comment!.isNotEmpty) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         review.comment!,
                         style: const TextStyle(
@@ -1217,8 +1193,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
       child: HousepitalCard(
         child: Row(
           children: [
-            Icon(icon, color: HousepitalColors.orange, size: 22),
-            const SizedBox(width: 14),
+            AppIconTile(icon: icon, color: HousepitalColors.orange, size: 22),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

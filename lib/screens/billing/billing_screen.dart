@@ -81,7 +81,7 @@ class _BillingScreenState extends State<BillingScreen> {
         'category': 'Services',
         'amount': serviceSpend,
         'icon': Icons.medical_services,
-        'color': const Color(0xFF1565C0),
+        'color': HousepitalColors.info,
       });
     }
     if (equipmentSpend > 0) {
@@ -89,7 +89,7 @@ class _BillingScreenState extends State<BillingScreen> {
         'category': 'Equipment',
         'amount': equipmentSpend,
         'icon': Icons.inventory_2,
-        'color': const Color(0xFFE65100),
+        'color': HousepitalColors.warning,
       });
     }
     return result;
@@ -320,7 +320,7 @@ class _BillingScreenState extends State<BillingScreen> {
                 Icons.check_circle, HousepitalColors.success),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Semantics(
             label: 'Total orders: $totalOrders',
@@ -328,7 +328,7 @@ class _BillingScreenState extends State<BillingScreen> {
                 Icons.receipt, HousepitalColors.grey),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Semantics(
             label: 'Overdue orders: $overdueCount',
@@ -346,7 +346,7 @@ class _BillingScreenState extends State<BillingScreen> {
       child: Column(
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(value,
               style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w700, color: color)),
@@ -375,7 +375,7 @@ class _BillingScreenState extends State<BillingScreen> {
         Semantics(
           label: 'Spend breakdown bar chart',
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
             child: SizedBox(
               height: 12,
               child: Row(
@@ -414,7 +414,7 @@ class _BillingScreenState extends State<BillingScreen> {
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       item['category'] as String,
@@ -500,14 +500,9 @@ class _BillingScreenState extends State<BillingScreen> {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: HousepitalColors.orangeLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.receipt_long, color: HousepitalColors.orange),
+                  const AppIconTile(
+                    icon: Icons.receipt_long,
+                    color: HousepitalColors.orange,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

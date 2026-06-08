@@ -20,31 +20,31 @@ class QuickActionsRow extends StatelessWidget {
             label: l.t('raise_concern'),
             subtitle: l.t('staff_service_billing'),
             color: HousepitalColors.error,
-            bgColor: const Color(0xFFFEF2F2),
-            borderColor: const Color(0xFFFECACA),
+            bgColor: HousepitalColors.errorLight,
+            borderColor: HousepitalColors.errorLight,
             onTap: () => Navigator.pushNamed(context, '/raise-concern'),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           _tile(
             context,
             icon: Icons.assignment_outlined,
             label: l.t('daily_reports'),
             subtitle: l.t('view_all_reports'),
-            color: const Color(0xFF2563EB),
-            bgColor: const Color(0xFFEFF6FF),
-            borderColor: const Color(0xFFBFDBFE),
+            color: HousepitalColors.info,
+            bgColor: HousepitalColors.infoLight,
+            borderColor: HousepitalColors.infoLight,
             onTap: () => Navigator.pushNamed(context, '/report-history',
                 arguments: ''), // FUTURE: pass primary deploymentId from active deployment
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           _tile(
             context,
             icon: Icons.description_outlined,
             label: l.t('documents'),
             subtitle: l.t('prescriptions_reports'),
             color: HousepitalColors.success,
-            bgColor: const Color(0xFFF0FDF4),
-            borderColor: const Color(0xFFBBF7D0),
+            bgColor: HousepitalColors.successLight,
+            borderColor: HousepitalColors.successLight,
             onTap: () => Navigator.pushNamed(context, '/documents'),
           ),
         ],
@@ -65,13 +65,13 @@ class QuickActionsRow extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: bgColor,
             border: Border.all(color: borderColor),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
@@ -81,7 +81,7 @@ class QuickActionsRow extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: color)),
               Text(subtitle,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                  style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
             ],
           ),
         ),

@@ -107,7 +107,7 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: HousepitalColors.error,
                           shape: BoxShape.circle,
                         ),
                         child: Text(

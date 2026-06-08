@@ -5,7 +5,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../../../services/api_service.dart';
+import '../../../widgets/common_widgets.dart';
 import '../cards/equipment_item_card.dart';
+import '../widgets/catalog_search_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
@@ -26,6 +28,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
   String _searchQuery = '';
   String _sortBy = 'Relevance';
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
 
   static const _categories = ['All', 'Sale', 'Rental'];
   static const _sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Name A-Z'];
@@ -39,6 +42,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -112,8 +116,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: HousepitalColors.orange));
+      return const LoadingWidget();
     }
 
     final filtered = _filtered;
@@ -131,7 +134,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF059669), Color(0xFF34D399)],
+                colors: [HousepitalColors.serviceEquipment, Color(0xFF34D399)],
               ),
             ),
             child: Column(
@@ -158,37 +161,11 @@ class _EquipmentTabState extends State<EquipmentTab> {
           ),
         ),
         // Search
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Search equipment, consumables...',
-              prefixIcon:
-                  const Icon(Icons.search, color: HousepitalColors.greyLight),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: HousepitalColors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+        CatalogSearchBar(
+          searchQuery: _searchQuery,
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onChanged: (v) => setState(() => _searchQuery = v),
         ),
         // Trust badges
         const Padding(
@@ -237,7 +214,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
                     border: Border.all(
                       color: isSelected
                           ? HousepitalColors.orange
-                          : Colors.grey.shade300,
+                          : HousepitalColors.divider,
                     ),
                   ),
                   child: Text(
@@ -286,7 +263,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
                   decoration: BoxDecoration(
                     color: HousepitalColors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: HousepitalColors.divider),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -304,7 +281,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         // Results count
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

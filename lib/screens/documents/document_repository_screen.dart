@@ -270,20 +270,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
       onTap: () => _showDocDetail(doc),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isImage
-                  ? HousepitalColors.orangeLight
-                  : const Color(0xFFE3F2FD),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              icon,
-              color: isImage ? HousepitalColors.orange : Colors.blue,
-              size: 22,
-            ),
+          AppIconTile(
+            icon: icon,
+            color: isImage ? HousepitalColors.orange : HousepitalColors.info,
+            size: 22,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -345,19 +335,9 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: HousepitalColors.greyLighter,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              doc.fileType.toUpperCase(),
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: HousepitalColors.grey),
-            ),
+          StatusBadge(
+            text: doc.fileType.toUpperCase(),
+            color: HousepitalColors.grey,
           ),
         ],
       ),
@@ -547,14 +527,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           ),
           ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: HousepitalColors.orangeLight,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.camera_alt, color: HousepitalColors.orange),
+            leading: const AppIconTile(
+              icon: Icons.camera_alt,
+              color: HousepitalColors.orange,
+              size: 22,
             ),
             title: const Text('Scan Document'),
             subtitle: const Text('Use camera to scan a document'),
@@ -564,14 +540,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             },
           ),
           ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.photo_library, color: Colors.blue),
+            leading: const AppIconTile(
+              icon: Icons.photo_library,
+              color: HousepitalColors.info,
+              size: 22,
             ),
             title: const Text('Upload from Gallery'),
             subtitle: const Text('Choose from photos or files'),
@@ -586,14 +558,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
           // SnackBar, no dart:io), so we show it on all platforms rather than
           // hiding the control with no explanation on web.
           ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.picture_as_pdf, color: Colors.green),
+            leading: const AppIconTile(
+              icon: Icons.picture_as_pdf,
+              color: HousepitalColors.success,
+              size: 22,
             ),
             title: const Text('Upload PDF'),
             subtitle: const Text(

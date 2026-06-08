@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../widgets/common_widgets.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -152,7 +153,7 @@ class AboutScreen extends StatelessWidget {
     required String url,
   }) {
     return ListTile(
-      leading: Icon(icon, color: HousepitalColors.orange),
+      leading: AppIconTile(icon: icon, color: HousepitalColors.orange, size: 22),
       title: Text(title, style: const TextStyle(fontSize: 15)),
       trailing: const Icon(Icons.open_in_new,
           size: 18, color: HousepitalColors.greyLight),

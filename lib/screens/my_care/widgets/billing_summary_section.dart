@@ -51,8 +51,8 @@ class BillingSummarySection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Package Paid',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[400])),
+                              style: const TextStyle(
+                                  fontSize: 11, color: HousepitalColors.greyLight)),
                           Text(DateHelper.formatCurrency(totalPaid),
                               style: const TextStyle(
                                   fontSize: 20, fontWeight: FontWeight.w800)),
@@ -62,8 +62,8 @@ class BillingSummarySection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text('Consumed',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[400])),
+                              style: const TextStyle(
+                                  fontSize: 11, color: HousepitalColors.greyLight)),
                           Text(DateHelper.formatCurrency(totalConsumed),
                               style: TextStyle(
                                   fontSize: 20,
@@ -79,7 +79,7 @@ class BillingSummarySection extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: HousepitalColors.greyLighter,
                       valueColor: const AlwaysStoppedAnimation(
                           HousepitalColors.orange),
                     ),
@@ -90,8 +90,8 @@ class BillingSummarySection extends StatelessWidget {
                     children: [
                       Text(
                           '${DateHelper.formatCurrency(totalConsumed)} consumed',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600])),
+                          style: const TextStyle(
+                              fontSize: 12, color: HousepitalColors.grey)),
                       Text(
                           '${DateHelper.formatCurrency(remaining)} remaining',
                           style: const TextStyle(
@@ -106,8 +106,8 @@ class BillingSummarySection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Next renewal',
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600])),
+                            style: const TextStyle(
+                                fontSize: 12, color: HousepitalColors.grey)),
                         Text(DateHelper.formatDate(renewalDates.first),
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w600)),

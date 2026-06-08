@@ -38,15 +38,15 @@ class _EmiScreenState extends State<EmiScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFF39314), Color(0xFFCC6E00)],
+                  colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
                 ),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
                   const Text('Total Amount',
                       style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     DateHelper.formatCurrency(widget.totalAmount),
                     style: const TextStyle(
@@ -209,13 +209,7 @@ class _EmiScreenState extends State<EmiScreen> {
                     'emiAmount': _emiAmount,
                   });
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Select EMI Plan',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                child: const Text('Select EMI Plan'),
               ),
             ),
           ],

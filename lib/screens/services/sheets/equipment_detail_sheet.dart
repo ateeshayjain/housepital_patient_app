@@ -49,22 +49,6 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Close button
-          Align(
-            alignment: Alignment.topRight,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: HousepitalColors.greyLighter,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.close, size: 18, color: HousepitalColors.grey),
-              ),
-            ),
-          ),
           const SizedBox(height: 8),
           // Header
           Row(
@@ -74,11 +58,11 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                 height: 56,
                 decoration: BoxDecoration(
                   color: HousepitalColors.orangeLight,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: item.imageUrl != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                         child: CachedNetworkImage(
                           imageUrl: item.imageUrl!,
                           fit: BoxFit.contain,
@@ -119,7 +103,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   color: item.category == 'Equipment'
                       ? HousepitalColors.infoLight
                       : HousepitalColors.successLight,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   item.category,
@@ -257,8 +241,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(6),
+                color: HousepitalColors.greyLighter,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -283,7 +267,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
           if (hasRental) ...[
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: HousepitalColors.greyLighter,
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(4),
@@ -575,7 +559,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   foregroundColor: HousepitalColors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
@@ -592,11 +576,11 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   icon: const Icon(Icons.phone_outlined, size: 20),
                   label: const Text('Price on request — contact us'),
                   style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: Colors.grey.shade200,
-                    disabledForegroundColor: Colors.grey.shade600,
+                    disabledBackgroundColor: HousepitalColors.divider,
+                    disabledForegroundColor: HousepitalColors.greyLight,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -636,7 +620,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                     foregroundColor: HousepitalColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),

@@ -233,13 +233,6 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: HousepitalColors.orange.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -633,7 +626,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                                 : HousepitalColors
                                                     .orangeLight,
                                             borderRadius:
-                                                BorderRadius.circular(4),
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             med.takenBy == 'staff'

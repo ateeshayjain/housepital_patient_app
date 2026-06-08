@@ -60,7 +60,7 @@ class CareReportSection extends StatelessWidget {
                                   ? HousepitalColors.success
                                   : task.status == 'in_progress'
                                       ? HousepitalColors.orange
-                                      : Colors.grey[400],
+                                      : HousepitalColors.greyLight,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -69,8 +69,8 @@ class CareReportSection extends StatelessWidget {
                             ),
                             if (task.completedAt != null)
                               Text(task.completedAt!,
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey[500])),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: HousepitalColors.greyLight)),
                           ],
                         ),
                       )),
@@ -79,7 +79,7 @@ class CareReportSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
+                        color: HousepitalColors.orangeLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

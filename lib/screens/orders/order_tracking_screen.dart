@@ -404,7 +404,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       child: Icon(
                         isDone ? Icons.check : step.icon,
                         size: 14,
-                        color: isDone ? Colors.white : Colors.grey,
+                        color: isDone ? Colors.white : HousepitalColors.greyLight,
                       ),
                     ),
                   // Connector line
@@ -434,18 +434,16 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                         fontWeight:
                             isCurrent ? FontWeight.w700 : FontWeight.w500,
                         color: isPending
-                            ? Colors.grey
+                            ? HousepitalColors.greyLight
                             : HousepitalColors.black,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       step.subtitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: isPending
-                            ? Colors.grey.shade400
-                            : HousepitalColors.greyLight,
+                        color: HousepitalColors.greyLight,
                       ),
                     ),
                     if (timestamp != null) ...[

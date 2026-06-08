@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
+import '../../widgets/common_widgets.dart';
 
 class _NotifPref {
   final String key;
@@ -160,7 +161,7 @@ class _NotificationPreferencesScreenState
                           color: HousepitalColors.greyLight,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Icon(Icons.lock, size: 14, color: HousepitalColors.greyLight),
                     ],
                   ),
@@ -205,7 +206,7 @@ class _NotificationPreferencesScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     bar(width: 160, height: 15),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     bar(width: 240, height: 12),
                   ],
                 ),
@@ -260,24 +261,10 @@ class _NotificationPreferencesScreenState
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w500)),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: HousepitalColors.greyLighter,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock, size: 12, color: HousepitalColors.grey),
-                const SizedBox(width: 4),
-                Text('Required',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: HousepitalColors.grey,
-                        fontWeight: FontWeight.w500)),
-              ],
-            ),
+          const StatusBadge(
+            text: 'Required',
+            color: HousepitalColors.grey,
+            icon: Icons.lock,
           ),
         ],
       ),

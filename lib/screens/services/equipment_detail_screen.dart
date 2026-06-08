@@ -528,7 +528,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFFFF3E0),
+            HousepitalColors.orangeLight,
             Color(0xFFFFE0B2),
             HousepitalColors.white,
           ],
@@ -745,7 +745,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: HousepitalColors.successLight,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$discountPct% off',
@@ -1461,7 +1461,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                             color: isSelected ? HousepitalColors.orange : HousepitalColors.grey,
                           ),
                           side: BorderSide(
-                            color: isSelected ? HousepitalColors.orange : Colors.grey.shade300,
+                            color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
                           ),
                           onSelected: (_) => setState(() => _selectedRentalMonths = months),
                         ),
@@ -1515,8 +1515,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   icon: const Icon(Icons.phone_outlined, size: 18),
                   label: const Text('Price on request \u2014 contact us'),
                   style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: Colors.grey.shade200,
-                    disabledForegroundColor: Colors.grey.shade600,
+                    disabledBackgroundColor: HousepitalColors.divider,
+                    disabledForegroundColor: HousepitalColors.greyLight,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1788,10 +1788,10 @@ class _AvailabilityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,

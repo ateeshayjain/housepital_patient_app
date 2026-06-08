@@ -184,8 +184,8 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined,
-              size: 80, color: Colors.grey.shade300),
+          const Icon(Icons.shopping_cart_outlined,
+              size: 80, color: HousepitalColors.greyLight),
           const SizedBox(height: 16),
           const Text('Your cart is empty',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
@@ -195,12 +195,6 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HousepitalColors.orange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
             child: const Text('Browse Products'),
           ),
         ],
@@ -297,12 +291,12 @@ class _CartScreenState extends State<CartScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide:
-                            BorderSide(color: Colors.grey.shade300),
+                            const BorderSide(color: HousepitalColors.divider),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide:
-                            BorderSide(color: Colors.grey.shade300),
+                            const BorderSide(color: HousepitalColors.divider),
                       ),
                       filled: true,
                       fillColor: Colors.white,
@@ -431,7 +425,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             // Checkout button — gated by the `pay` permission. Family members
             // and patients see a "Request Booking" button that sends the cart
             // to the primary contact for approval.
@@ -654,8 +648,8 @@ class _CartItemCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,7 +743,7 @@ class _CartItemCard extends StatelessWidget {
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: HousepitalColors.infoLight,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
                       'Service',
@@ -769,7 +763,7 @@ class _CartItemCard extends StatelessWidget {
                       color: cartItem.isRental
                           ? HousepitalColors.infoLight
                           : HousepitalColors.successLight,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       cartItem.isRental
@@ -829,7 +823,7 @@ class _CartItemCard extends StatelessWidget {
                     if (!cartItem.isService)
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: HousepitalColors.divider),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -912,8 +906,8 @@ class _SavedItemCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

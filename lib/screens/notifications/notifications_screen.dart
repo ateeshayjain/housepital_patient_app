@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/notification_router.dart';
+import '../../widgets/common_widgets.dart';
 import '../../widgets/paginated_list.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.notifications_none,
-                  size: 64, color: HousepitalColors.greyLighter),
+                  size: 64, color: HousepitalColors.greyLight),
               const SizedBox(height: 16),
               Text(l.t('no_data'),
                   style: const TextStyle(
@@ -104,15 +105,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
+      leading: AppIconTile(icon: icon, color: iconColor, size: 22),
       title: Text(
         n.title,
         style: TextStyle(

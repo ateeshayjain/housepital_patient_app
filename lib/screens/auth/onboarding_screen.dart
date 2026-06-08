@@ -4,6 +4,7 @@ import '../../config/constants.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/validators.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -47,6 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -54,12 +56,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(labelText: l.t('name_label')),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
+                  validator: Validators.name,
                 ),
                 const SizedBox(height: 20),
 

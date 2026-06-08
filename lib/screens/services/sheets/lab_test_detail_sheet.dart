@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
+import '../../../widgets/common_widgets.dart';
 
 /// Bottom sheet shown when a [LabTestItem] row is tapped on the Lab Tests
 /// tab. Surfaces description, components, method, related tests, and a
@@ -39,7 +40,7 @@ class LabTestDetailSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: HousepitalColors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -53,17 +54,10 @@ class LabTestDetailSheet extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: HousepitalColors.infoLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.science,
-                              color: HousepitalColors.info, size: 28),
-                        ),
-                        const SizedBox(width: 14),
+                        const AppIconTile(
+                            icon: Icons.science,
+                            color: HousepitalColors.info),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

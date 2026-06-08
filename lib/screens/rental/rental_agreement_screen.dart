@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 
 class RentalAgreementScreen extends StatefulWidget {
   final String itemName;
@@ -110,11 +111,7 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
                 label: const Text('Confirm & Add to Cart',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
                   disabledBackgroundColor: HousepitalColors.greyLighter,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -148,18 +145,13 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
 
   Widget _termItem(IconData icon, String title, String desc) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: HousepitalColors.orange),
+          AppIconTile(
+            icon: icon,
+            color: HousepitalColors.orange,
           ),
           const SizedBox(width: 12),
           Expanded(

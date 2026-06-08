@@ -205,10 +205,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
               child: ElevatedButton(
                 onPressed: _canSubmit ? _submitReturn : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
                   disabledBackgroundColor: HousepitalColors.greyLighter,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSubmitting
                     ? const SizedBox(
@@ -351,7 +348,6 @@ class _ReturnScreenState extends State<ReturnScreen> {
                   Navigator.pop(context); // dialog
                   Navigator.pop(context); // return screen
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: HousepitalColors.orange),
                 child: const Text('OK'),
               ),
             ],

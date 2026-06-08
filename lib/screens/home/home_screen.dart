@@ -774,14 +774,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: HousepitalColors.successLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.medical_services, color: HousepitalColors.success, size: 22),
-              ),
+              const AppIconTile(
+                  icon: Icons.medical_services, color: HousepitalColors.success),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -857,16 +851,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: HousepitalColors.serviceCarePackage
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.menu_book,
-                          color: HousepitalColors.serviceCarePackage, size: 22),
-                    ),
+                    const AppIconTile(
+                        icon: Icons.menu_book,
+                        color: HousepitalColors.serviceCarePackage),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Column(
@@ -1031,15 +1018,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: action.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(action.icon, color: action.color, size: 24),
-                      ),
-                      const SizedBox(height: 6),
+                      AppIconTile(
+                          icon: action.icon, color: action.color, size: 24),
+                      const SizedBox(height: 8),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Text(
@@ -1166,36 +1147,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Section Label with "See All"
   // ---------------------------------------------------------------------------
   Widget _sectionLabel(String title, {VoidCallback? onSeeAll}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(title,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700, color: HousepitalColors.black)),
-          ),
-          if (onSeeAll != null)
-            // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — guarantee a
-            // 44pt minimum tap target. Previous GestureDetector wrapped only
-            // 12pt text + 4pt vertical padding (~20pt total). TextButton gives
-            // us Material's 48dp default plus a hit region that comfortably
-            // clears 44pt without growing the visible "See All" label.
-            TextButton(
-              onPressed: onSeeAll,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                foregroundColor: HousepitalColors.orange,
-                tapTargetSize: MaterialTapTargetSize.padded,
-                visualDensity: VisualDensity.standard,
-              ),
-              child: const Text('See All',
-                  style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
-            ),
-        ],
-      ),
+    return SectionHeader(
+      title: title,
+      actionText: onSeeAll != null ? 'See All' : null,
+      onAction: onSeeAll,
     );
   }
 
@@ -1436,15 +1391,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               // Standard home icon tile (matches all other Home sections).
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: HousepitalColors.orange.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.medication,
-                    color: HousepitalColors.orange, size: 22),
-              ),
+              const AppIconTile(
+                  icon: Icons.medication, color: HousepitalColors.orange),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1587,14 +1535,7 @@ class _TeamMemberRow extends StatelessWidget {
         // Standard home icon tile — rounded square, tinted bg, 22pt icon.
         // (Matches Current Services / Medications / Care Guides for a single
         // consistent icon system across the Home screen.)
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
+        AppIconTile(icon: icon, color: color),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

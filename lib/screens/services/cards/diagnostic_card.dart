@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
+import '../../../widgets/common_widgets.dart';
 
 /// Card shown in the Diagnostics tab (and reused at the top of the Lab Tests
 /// tab as a "Popular Packages" row) for a single diagnostic [ServiceItem].
@@ -29,31 +30,22 @@ class DiagnosticCard extends StatelessWidget {
         button: true,
         child: Material(
           color: HousepitalColors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           elevation: 1,
           shadowColor: Colors.black12,
           child: InkWell(
             onTap: () => onNavigate(context, service),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: HousepitalColors.infoLight,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      iconMap[service.iconName] ??
-                          Icons.miscellaneous_services,
-                      color: HousepitalColors.info,
-                      size: 24,
-                    ),
+                  AppIconTile(
+                    icon: iconMap[service.iconName] ??
+                        Icons.miscellaneous_services,
+                    color: HousepitalColors.info,
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,10 +61,10 @@ class DiagnosticCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: HousepitalColors.successLight,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
                             'Home Collection',
@@ -83,7 +75,7 @@ class DiagnosticCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         // audit M-1: manpower → "Price on assessment".
                         if (service.category == 'manpower')
                           const Text(
@@ -118,7 +110,7 @@ class DiagnosticCard extends StatelessWidget {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         textStyle: const TextStyle(
                           fontSize: 13,

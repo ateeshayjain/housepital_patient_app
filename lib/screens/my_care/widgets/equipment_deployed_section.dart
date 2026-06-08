@@ -28,7 +28,8 @@ class EquipmentDeployedSection extends StatelessWidget {
           const SizedBox(height: 8),
           ...equipment.map((eq) => Card(
                 child: ListTile(
-                  leading: const Icon(Icons.medical_services_outlined,
+                  leading: const AppIconTile(
+                      icon: Icons.medical_services_outlined,
                       color: HousepitalColors.serviceEquipment),
                   title: Text(eq.name,
                       style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -38,7 +39,7 @@ class EquipmentDeployedSection extends StatelessWidget {
                     text: eq.status == 'active' ? 'Active' : 'Returned',
                     color: eq.status == 'active'
                         ? HousepitalColors.success
-                        : Colors.grey,
+                        : HousepitalColors.greyLight,
                   ),
                 ),
               )),

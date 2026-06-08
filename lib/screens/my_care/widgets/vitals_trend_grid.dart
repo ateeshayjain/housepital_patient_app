@@ -55,9 +55,9 @@ class VitalsTrendGrid extends StatelessWidget {
           border: Border.all(
             color: card.status == 'critical'
                 ? HousepitalColors.error
-                : const Color(0xFFE5E7EB),
+                : HousepitalColors.divider,
           ),
-          color: Colors.white,
+          color: HousepitalColors.white,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,13 +66,13 @@ class VitalsTrendGrid extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     card.status[0].toUpperCase() + card.status.substring(1),

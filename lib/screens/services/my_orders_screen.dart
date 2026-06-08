@@ -277,10 +277,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 ),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: HousepitalColors.greyLighter,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     orderType.toUpperCase(),
@@ -515,7 +515,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           Icon(
             Icons.receipt_long_outlined,
             size: 64,
-            color: HousepitalColors.divider,
+            color: HousepitalColors.greyLight,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -751,7 +751,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           Icon(
             Icons.assignment_outlined,
             size: 64,
-            color: HousepitalColors.divider,
+            color: HousepitalColors.greyLight,
           ),
           const SizedBox(height: 16),
           const Text(

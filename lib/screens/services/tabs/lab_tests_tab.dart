@@ -5,8 +5,10 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
+import '../../../widgets/common_widgets.dart';
 import '../cards/diagnostic_card.dart';
 import '../sheets/lab_test_detail_sheet.dart';
+import '../widgets/catalog_search_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
@@ -39,6 +41,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
   String _searchQuery = '';
   String _sortBy = 'Name A-Z';
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
 
   List<String> _categories = ['All'];
 
@@ -57,6 +60,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -140,8 +144,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: HousepitalColors.orange));
+      return const LoadingWidget();
     }
 
     final filtered = _filtered;
@@ -150,37 +153,11 @@ class _LabTestsTabState extends State<LabTestsTab> {
     return Column(
       children: [
         // Search
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Search lab tests, symptoms...',
-              prefixIcon:
-                  const Icon(Icons.search, color: HousepitalColors.greyLight),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: HousepitalColors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+        CatalogSearchBar(
+          searchQuery: _searchQuery,
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onChanged: (v) => setState(() => _searchQuery = v),
         ),
         // Trust badges
         const Padding(
@@ -224,7 +201,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
                             border: Border.all(
                               color: isSelected
                                   ? HousepitalColors.orange
-                                  : Colors.grey.shade300,
+                                  : HousepitalColors.divider,
                             ),
                           ),
                           child: Text(
@@ -366,27 +343,19 @@ class _LabTestCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
         color: HousepitalColors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         elevation: 1,
         shadowColor: Colors.black12,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 // Icon
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: HousepitalColors.infoLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.science,
-                      color: HousepitalColors.info, size: 22),
-                ),
+                const AppIconTile(
+                    icon: Icons.science, color: HousepitalColors.info),
                 const SizedBox(width: 12),
                 // Name + badges
                 Expanded(
@@ -466,7 +435,7 @@ class _MiniChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

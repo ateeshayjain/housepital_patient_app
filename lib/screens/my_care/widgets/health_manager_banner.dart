@@ -16,12 +16,12 @@ class HealthManagerBanner extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF5EB), Color(0xFFFFF0E0)],
+          colors: [HousepitalColors.orangeLight, HousepitalColors.orangeLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE0C0)),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         children: [
@@ -47,16 +47,16 @@ class HealthManagerBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Your Health Manager',
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[500],
+                        color: HousepitalColors.greyLight,
                         letterSpacing: 0.5)),
                 Text(manager.name,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w700)),
                 Text(
                     'Available ${manager.availableFrom} – ${manager.availableTo}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
               ],
             ),
           ),
@@ -83,7 +83,7 @@ class HealthManagerBanner extends StatelessWidget {
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
+                side: const BorderSide(color: HousepitalColors.divider),
               ),
             ),
             icon: const Icon(Icons.chat_bubble_outline, size: 20),

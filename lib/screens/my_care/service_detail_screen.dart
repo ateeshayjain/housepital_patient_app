@@ -44,24 +44,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         title: Text(widget.service.name),
       ),
       body: myCare.isDetailLoading
-          ? const Center(child: LoadingWidget())
+          ? const LoadingWidget()
           : myCare.detailError != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(l.t('error_load_data')),
-                      TextButton(
-                        onPressed: () {
-                          if (widget.service.deploymentIds.isNotEmpty) {
-                            myCare.loadServiceDetail(
-                                widget.service.deploymentIds.first);
-                          }
-                        },
-                        child: Text(l.t('tap_to_retry')),
-                      ),
-                    ],
-                  ),
+              ? ErrorRetryWidget(
+                  message: l.t('error_load_data'),
+                  onRetry: () {
+                    if (widget.service.deploymentIds.isNotEmpty) {
+                      myCare.loadServiceDetail(
+                          widget.service.deploymentIds.first);
+                    }
+                  },
                 )
               : RefreshIndicator(
                   onRefresh: () async {
@@ -208,8 +200,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           const SizedBox(height: 8),
           ...detail.staffOnDuty.map((staff) => Card(
                 color: staff.isReplacement
-                    ? const Color(0xFFFEFCE8)
-                    : const Color(0xFFF0FDF4),
+                    ? HousepitalColors.warningLight
+                    : HousepitalColors.successLight,
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: staff.isReplacement
@@ -248,9 +240,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                       ? HousepitalColors.warning
                                       : HousepitalColors.success),
                             ),
-                            Text('on shift',
+                            const Text('on shift',
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[400])),
+                                    fontSize: 11, color: HousepitalColors.greyLight)),
                           ],
                         )
                       : null,
@@ -302,20 +294,20 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   dotColor = HousepitalColors.error;
                   break;
                 default:
-                  dotColor = Colors.grey[300]!;
+                  dotColor = HousepitalColors.divider;
               }
               final isToday = _isToday(day.date);
               return Column(
                 children: [
                   Text(DateHelper.formatDateShort(day.date),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                      style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
                   const SizedBox(height: 4),
                   Container(
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isToday ? Colors.grey[400] : dotColor,
+                      color: isToday ? HousepitalColors.greyLight : dotColor,
                       border: isToday
                           ? Border.all(color: HousepitalColors.orange, width: 2)
                           : null,
@@ -408,7 +400,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+          Text(label, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey)),
           Text(value,
               style:
                   const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),

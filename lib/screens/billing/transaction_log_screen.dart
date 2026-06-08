@@ -112,18 +112,9 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
         onTap: () => _showTransactionDetail(txn, l),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _getMethodColor(txn.method).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                _getMethodIcon(txn.method),
-                color: _getMethodColor(txn.method),
-                size: 22,
-              ),
+            AppIconTile(
+              icon: _getMethodIcon(txn.method),
+              color: _getMethodColor(txn.method),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -275,7 +266,7 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(l.t('close')),

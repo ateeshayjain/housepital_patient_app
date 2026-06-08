@@ -1,5 +1,6 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
+import '../../../config/theme.dart';
 import '../../../models/models.dart';
 import '../cards/consultation_card.dart';
 import '../widgets/catalog_search_bar.dart';
@@ -63,7 +64,7 @@ class ConsultationsTab extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                colors: [HousepitalColors.info, Color(0xFF42A5F5)],
               ),
             ),
             child: Column(

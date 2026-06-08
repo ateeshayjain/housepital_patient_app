@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
+import '../../widgets/common_widgets.dart';
 
 /// Renders a single care guide: cover image, title, category and a
 /// markdown-rendered body.
@@ -57,7 +58,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
           final article = provider.selected;
 
           if (provider.isLoading && article == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingWidget();
           }
 
           if (article == null || article.id != widget.articleId) {

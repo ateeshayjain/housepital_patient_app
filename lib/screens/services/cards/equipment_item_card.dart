@@ -26,12 +26,12 @@ class EquipmentItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: HousepitalColors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       elevation: 1,
       shadowColor: Colors.black12,
       child: InkWell(
         onTap: () => _showItemDetail(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -44,11 +44,11 @@ class EquipmentItemCard extends StatelessWidget {
                   height: 64,
                   decoration: BoxDecoration(
                     color: HousepitalColors.orangeLight,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: item.imageUrl != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(10),
                           child: item.imageUrl!.startsWith('assets/')
                               ? Image.asset(
                                   item.imageUrl!,
@@ -111,10 +111,10 @@ class EquipmentItemCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: HousepitalColors.successLight,
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
@@ -172,7 +172,7 @@ class EquipmentItemCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         text,

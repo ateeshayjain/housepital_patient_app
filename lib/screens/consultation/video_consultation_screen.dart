@@ -90,7 +90,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: HousepitalColorsDark.surface,
       body: SafeArea(
         child: switch (_state) {
           _CallState.preCall => _buildPreCall(),
@@ -166,7 +166,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: Colors.redAccent, fontSize: 16),
+              style: TextStyle(color: HousepitalColors.error, fontSize: 16),
             ),
           ),
         ],
@@ -182,7 +182,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
       children: [
         // Remote video placeholder (full screen)
         Container(
-          color: const Color(0xFF16213E),
+          color: HousepitalColorsDark.surfaceElevated,
           child: const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -207,7 +207,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
             height: 140,
             decoration: BoxDecoration(
               color: _isCameraOn
-                  ? const Color(0xFF0F3460)
+                  ? HousepitalColorsDark.surfaceHigh
                   : Colors.black87,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: HousepitalColors.orange, width: 2),
@@ -335,7 +335,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                   width: 64,
                   height: 64,
                   decoration: const BoxDecoration(
-                    color: Colors.redAccent,
+                    color: HousepitalColors.error,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.call_end,
@@ -451,9 +451,9 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Duration: $_formattedDuration',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[600],
+                              color: HousepitalColors.greyLight,
                             ),
                           ),
                         ],

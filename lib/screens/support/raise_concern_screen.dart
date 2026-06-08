@@ -76,7 +76,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.photo_library, color: Colors.blue),
+            leading: const Icon(Icons.photo_library, color: HousepitalColors.orange),
             title: const Text('Choose from Gallery'),
             onTap: () {
               Navigator.pop(context);

@@ -8,6 +8,7 @@ import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 import '../../widgets/document_attach_widgets.dart';
 import '../checkout/address_selection_screen.dart';
 
@@ -282,7 +283,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         );
       });
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: LoadingWidget(),
       );
     }
 
@@ -1065,9 +1066,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.amber.shade50,
+            color: HousepitalColors.warningLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.amber.shade200),
+            border: Border.all(color: HousepitalColors.warning),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1075,7 +1076,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Row(
                 children: [
                   Icon(Icons.info_outline,
-                      size: 20, color: Colors.amber.shade800),
+                      size: 20, color: HousepitalColors.warning),
                   const SizedBox(width: 8),
                   const Text('Preparation Instructions',
                       style: TextStyle(
@@ -1084,8 +1085,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 10),
               Text(_getDiagnosticPreparation(s.id)!,
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.amber.shade900)),
+                  style: const TextStyle(
+                      fontSize: 14, color: HousepitalColors.warning)),
             ],
           ),
         ),
@@ -1177,9 +1178,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.amber.shade50,
+            color: HousepitalColors.warningLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.amber.shade200),
+            border: Border.all(color: HousepitalColors.warning),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1187,7 +1188,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Row(
                 children: [
                   Icon(Icons.info_outline,
-                      size: 20, color: Colors.amber.shade800),
+                      size: 20, color: HousepitalColors.warning),
                   const SizedBox(width: 8),
                   const Text('Before the Visit',
                       style: TextStyle(
@@ -1196,8 +1197,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 10),
               Text(_getVisitPreparation(s.id)!,
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.amber.shade900)),
+                  style: const TextStyle(
+                      fontSize: 14, color: HousepitalColors.warning)),
             ],
           ),
         ),
@@ -1337,7 +1338,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   foregroundColor: HousepitalColors.orange,
                   side: const BorderSide(color: HousepitalColors.orange),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                 ),
@@ -1517,8 +1518,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Shimmer loading state
       if (_slotsLoading)
         Shimmer.fromColors(
-          baseColor: Colors.grey.shade300,
-          highlightColor: Colors.grey.shade100,
+          baseColor: HousepitalColors.divider,
+          highlightColor: HousepitalColors.greyLighter,
           child: GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
@@ -1599,7 +1600,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         ? HousepitalColors.orange
                         : isAvailable
                             ? HousepitalColors.divider
-                            : Colors.grey.shade300,
+                            : HousepitalColors.divider,
                   ),
                 ),
                 child: Text(
@@ -1612,7 +1613,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         ? Colors.white
                         : isAvailable
                             ? HousepitalColors.black
-                            : Colors.grey,
+                            : HousepitalColors.greyLight,
                     decoration: isAvailable
                         ? TextDecoration.none
                         : TextDecoration.lineThrough,

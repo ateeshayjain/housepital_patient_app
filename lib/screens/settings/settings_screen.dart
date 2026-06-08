@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+import '../../widgets/common_widgets.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -267,14 +268,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     // Theme-aware fallback colours so the tile reads in both light and dark.
     final theme = Theme.of(context);
-    final defaultIconColor = theme.iconTheme.color ??
-        theme.colorScheme.onSurface.withValues(alpha: 0.8);
     final defaultTitleColor = theme.colorScheme.onSurface;
     final defaultSubtitleColor =
         theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
     return ListTile(
-      leading: Icon(icon, color: textColor ?? defaultIconColor),
+      leading: AppIconTile(
+        icon: icon,
+        color: textColor ?? HousepitalColors.orange,
+        size: 22,
+      ),
       title: Text(
         title,
         style: TextStyle(

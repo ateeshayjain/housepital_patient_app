@@ -237,11 +237,14 @@ class HousepitalTheme {
           ),
         ),
       ),
+      // Canonical card: radius 12, 1px divider border, no shadow — every
+      // Card()/HousepitalCard inherits this so cards match app-wide.
       cardTheme: CardThemeData(
         color: HousepitalColors.white,
-        elevation: 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: HousepitalColors.divider),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
       ),
@@ -412,9 +415,10 @@ class HousepitalTheme {
       ),
       cardTheme: CardThemeData(
         color: HousepitalColorsDark.surfaceElevated,
-        elevation: 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: HousepitalColorsDark.divider),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
       ),

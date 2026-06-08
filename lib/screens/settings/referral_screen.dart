@@ -28,7 +28,7 @@ class ReferralScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                  colors: [HousepitalColors.orangeLight, Color(0xFFFFE0B2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -56,7 +56,7 @@ class ReferralScreen extends StatelessWidget {
                     'Refer a friend & earn',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   const Text(
                     'Share your code and earn \u20B9500 when they complete their first booking!',
                     textAlign: TextAlign.center,
@@ -73,7 +73,7 @@ class ReferralScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: HousepitalColors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: HousepitalColors.orange, width: 2),
               ),
               child: Column(

@@ -7,6 +7,7 @@ import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 
 class PackageDetailScreen extends StatefulWidget {
   final CarePackage package;
@@ -213,7 +214,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: HousepitalColors.greyLighter,
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
@@ -352,20 +353,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.medical_services_outlined,
-                color: HousepitalColors.orange, size: 20),
+          const AppIconTile(
+            icon: Icons.medical_services_outlined,
+            color: HousepitalColors.orange,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -408,19 +403,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: HousepitalColors.infoLight,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.person, color: HousepitalColors.info, size: 20),
+          const AppIconTile(
+            icon: Icons.person,
+            color: HousepitalColors.info,
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
+import '../../config/theme.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -54,9 +55,17 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         child: const Icon(Icons.add),
       ),
       body: medProv.isLoading
-          ? const Center(child: LoadingWidget())
+          ? const LoadingWidget()
           : medProv.error != null
-              ? Center(child: Text(l.t('error_load_data')))
+              ? ErrorRetryWidget(
+                  message: l.t('error_load_data'),
+                  onRetry: () {
+                    final patientId =
+                        context.read<AppProvider>().currentPatient?.id ??
+                            'pat_demo_rajesh';
+                    medProv.loadMedications(patientId);
+                  },
+                )
               : medProv.activeMedications.isEmpty
                   ? Center(
                       child: Padding(
@@ -65,11 +74,11 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Icon(Icons.medication_outlined,
-                                size: 64, color: Colors.grey),
+                                size: 64, color: HousepitalColors.greyLight),
                             const SizedBox(height: 16),
-                            Text('No medications added yet',
+                            const Text('No medications added yet',
                                 style: TextStyle(
-                                    fontSize: 16, color: Colors.grey[600])),
+                                    fontSize: 16, color: HousepitalColors.grey)),
                           ],
                         ),
                       ),
@@ -99,11 +108,11 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: med.isLowStock
-              ? const Color(0xFFFDE68A)
-              : const Color(0xFFE5E7EB),
+              ? HousepitalColors.warning
+              : HousepitalColors.divider,
         ),
       ),
       child: InkWell(
@@ -116,7 +125,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             if (patientId != null) medProv.loadMedications(patientId);
           }
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -134,16 +143,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         const SizedBox(height: 2),
                         Text(
                             '${med.form} · ${med.frequencyLabel} · ${med.instructions ?? ""}',
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600])),
+                            style: const TextStyle(
+                                fontSize: 12, color: HousepitalColors.grey)),
                         if (med.prescribedBy != null)
                           Text('Prescribed by ${med.prescribedBy}',
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[500])),
+                              style: const TextStyle(
+                                  fontSize: 11, color: HousepitalColors.greyLight)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.edit, size: 16, color: Colors.grey),
+                  const Icon(Icons.edit, size: 16, color: HousepitalColors.greyLight),
                 ],
               ),
               if (med.stockCount != null) ...[
@@ -156,14 +165,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEFCE8),
-                          borderRadius: BorderRadius.circular(6),
+                          color: HousepitalColors.warningLight,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${med.stockCount} ${med.stockUnit ?? "units"} left — refill soon',
                           style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFFCA8A04),
+                              color: HousepitalColors.warning,
                               fontWeight: FontWeight.w600),
                         ),
                       )
@@ -172,14 +181,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(6),
+                          color: HousepitalColors.successLight,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${med.stockCount} ${med.stockUnit ?? "units"} left',
                           style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF16A34A),
+                              color: HousepitalColors.success,
                               fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -188,13 +197,13 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(6),
+                          color: HousepitalColors.greyLighter,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           'Refill in ${med.daysOfSupplyLeft} days',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600]),
+                          style: const TextStyle(
+                              fontSize: 12, color: HousepitalColors.grey),
                         ),
                       ),
                   ],

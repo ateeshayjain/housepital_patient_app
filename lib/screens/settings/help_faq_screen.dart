@@ -352,7 +352,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
               _contactButton(
                 icon: Icons.email,
                 label: 'Email',
-                color: Colors.blue,
+                color: HousepitalColors.info,
                 onTap: () => _launchUrl('mailto:wecare@housepital.in'),
               ),
               _contactButton(
@@ -389,7 +389,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
         child: Column(
           children: [
             Icon(icon, color: color, size: 28),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(label,
                 style: TextStyle(
                     fontSize: 12,

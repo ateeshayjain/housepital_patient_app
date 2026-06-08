@@ -313,7 +313,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               // Save button (mirrors the AppBar action — easier reach on small screens)
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton.icon(
                   onPressed: _isSaving ? null : _submit,
                   icon: const Icon(Icons.person_add_alt_1),

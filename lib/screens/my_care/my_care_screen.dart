@@ -77,7 +77,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
 
   Widget _buildBody(MyCareProvider myCare, AppProvider app, AppLocalizations l) {
     if (myCare.isLoading && myCare.activeServices.isEmpty) {
-      return const Center(child: LoadingWidget());
+      return const LoadingWidget();
     }
 
     if (myCare.error != null && myCare.activeServices.isEmpty) {
@@ -99,12 +99,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             HealthManagerBanner(manager: myCare.healthManager!),
 
           // 2. Active Services
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(l.t('active_services'),
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
-          ),
+          SectionHeader(title: l.t('active_services')),
           ...myCare.activeServices.map((service) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: ActiveServiceCard(
@@ -119,23 +114,10 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
 
           // 3. Today's Vitals
           if (app.latestVitals != null) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(l.t('today_vitals'),
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w700)),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/vitals'),
-                    child: Text(l.t('see_all'),
-                        style: const TextStyle(
-                            color: HousepitalColors.orange, fontSize: 13)),
-                  ),
-                ],
-              ),
+            SectionHeader(
+              title: l.t('today_vitals'),
+              actionText: l.t('see_all'),
+              onAction: () => Navigator.pushNamed(context, '/vitals'),
             ),
             SizedBox(
               height: 72,
@@ -155,23 +137,11 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
 
           // 4. Today's Report
           if (app.todayReport != null) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(l.t('today_report'),
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w700)),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport),
-                    child: Text(l.t('details'),
-                        style: const TextStyle(
-                            color: HousepitalColors.orange, fontSize: 13)),
-                  ),
-                ],
-              ),
+            SectionHeader(
+              title: l.t('today_report'),
+              actionText: l.t('details'),
+              onAction: () => Navigator.pushNamed(context, '/report-detail',
+                  arguments: app.todayReport),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -199,7 +169,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                         ],
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,22 +205,10 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             StaffAttendanceSection(services: myCare.activeServices),
 
           // 6. Medications Summary
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text('Medications',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/medications'),
-                  child: Text(l.t('see_all'),
-                      style: const TextStyle(
-                          color: HousepitalColors.orange, fontSize: 13)),
-                ),
-              ],
-            ),
+          SectionHeader(
+            title: 'Medications',
+            actionText: l.t('see_all'),
+            onAction: () => Navigator.pushNamed(context, '/medications'),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -265,7 +223,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.medication, color: HousepitalColors.orange, size: 22),
+                    AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -296,19 +254,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
 
   Widget _buildError(
       MyCareProvider myCare, AppProvider app, AppLocalizations l) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(l.t('error_load_data'),
-              style: const TextStyle(color: HousepitalColors.greyLight)),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: _loadData,
-            child: Text(l.t('tap_to_retry')),
-          ),
-        ],
-      ),
+    return ErrorRetryWidget(
+      message: l.t('error_load_data'),
+      onRetry: _loadData,
     );
   }
 
@@ -357,7 +305,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
     }
 
     return Padding(
-      padding: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.only(right: 12),
       child: GestureDetector(
         onTap: () => Navigator.pushNamed(context, '/vitals'),
         child: Container(

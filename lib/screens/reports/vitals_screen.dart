@@ -126,13 +126,17 @@ class _VitalsScreenState extends State<VitalsScreen>
         setState(() => _period = value);
         _generateMockData();
       },
-      selectedColor: HousepitalColors.orange,
-      backgroundColor: HousepitalColors.greyLighter,
+      selectedColor: HousepitalColors.orangeLight,
+      checkmarkColor: HousepitalColors.orangeText,
       labelStyle: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: isSelected ? Colors.white : HousepitalColors.grey,
+        color: isSelected ? HousepitalColors.orangeText : HousepitalColors.grey,
       ),
+      side: BorderSide(
+        color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
     );
   }
@@ -390,11 +394,11 @@ class _VitalsScreenState extends State<VitalsScreen>
 
   Color _chartColor(String key) {
     switch (key) {
-      case 'systolic': return const Color(0xFFE53935);
-      case 'temperature': return const Color(0xFFEF6C00);
-      case 'spo2': return const Color(0xFF1565C0);
+      case 'systolic': return HousepitalColors.error;
+      case 'temperature': return HousepitalColors.warning;
+      case 'spo2': return HousepitalColors.info;
       case 'sugar': return const Color(0xFF7B1FA2);
-      case 'pulse': return const Color(0xFFE53935);
+      case 'pulse': return HousepitalColors.error;
       default: return HousepitalColors.orange;
     }
   }

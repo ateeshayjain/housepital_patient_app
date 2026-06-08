@@ -180,7 +180,7 @@ class _StaffOtpVerificationScreenState
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: HousepitalColors.orangeLight,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       widget.staffRole,
@@ -214,9 +214,9 @@ class _StaffOtpVerificationScreenState
         Text(
           'Share this OTP with the staff member.\nThey will enter it on their app to confirm arrival.',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
-            color: Colors.grey[600],
+            color: HousepitalColors.grey,
             height: 1.5,
           ),
         ),
@@ -274,9 +274,9 @@ class _StaffOtpVerificationScreenState
               ),
             ),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               'Waiting for staff to enter OTP...',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
             ),
           ],
         ),
@@ -316,9 +316,9 @@ class _StaffOtpVerificationScreenState
         Text(
           '${widget.staffName} has been verified.\nThis screen will close automatically.',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
-            color: Colors.grey[600],
+            color: HousepitalColors.grey,
             height: 1.5,
           ),
         ),
@@ -330,9 +330,9 @@ class _StaffOtpVerificationScreenState
     return Column(
       children: [
         const Divider(height: 40),
-        Text(
+        const Text(
           "Can't verify?",
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 14, color: HousepitalColors.grey),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(

@@ -55,7 +55,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     HousepitalColors.orange.withValues(alpha: 0.04),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,16 +103,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: HousepitalColors.greyLighter,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: Colors.grey.shade200,
+                      color: HousepitalColors.divider,
                       style: BorderStyle.solid),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.credit_card_off,
-                        size: 40, color: Colors.grey.shade300),
+                    const Icon(Icons.credit_card_off,
+                        size: 40, color: HousepitalColors.greyLight),
                     const SizedBox(height: 12),
                     const Text('No saved payment methods',
                         style: TextStyle(
@@ -139,15 +139,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 onPressed: () => _showAddCardDialog(context),
                 icon: const Icon(Icons.add_card, size: 20),
                 label: const Text('Add Debit / Credit Card'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: HousepitalColors.orange,
-                  side: const BorderSide(color: HousepitalColors.orange),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -155,12 +149,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 onPressed: () => _showAddUpiDialog(context),
                 icon: const Icon(Icons.account_balance, size: 20),
                 label: const Text('Add UPI ID'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: HousepitalColors.orange,
-                  side: const BorderSide(color: HousepitalColors.orange),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
               ),
             ),
 
@@ -180,7 +168,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: HousepitalColors.infoLight,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +200,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -244,7 +232,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         border: Border.all(
           color: method.isDefault
               ? HousepitalColors.orange
-              : Colors.grey.shade200,
+              : HousepitalColors.divider,
         ),
       ),
       child: Row(
@@ -272,7 +260,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: HousepitalColors.successLight,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Text('Auto-pay ON',
                   style: TextStyle(
@@ -291,8 +279,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
       ),
       child: Row(
         children: [
