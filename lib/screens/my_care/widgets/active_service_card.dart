@@ -69,14 +69,18 @@ class ActiveServiceCard extends StatelessWidget {
                                     ? HousepitalColors.success
                                     : HousepitalColors.warning),
                             const SizedBox(width: 4),
-                            Text(
-                              '${service.checkedInStaff}/${service.totalStaff} on duty',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: allPresent
-                                      ? HousepitalColors.success
-                                      : HousepitalColors.warning),
+                            Flexible(
+                              child: Text(
+                                '${service.checkedInStaff}/${service.totalStaff} on duty',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: allPresent
+                                        ? HousepitalColors.success
+                                        : HousepitalColors.warning),
+                              ),
                             ),
                           ],
                           if (service.renewalDate != null) ...[
@@ -84,9 +88,14 @@ class ActiveServiceCard extends StatelessWidget {
                             const Icon(Icons.event_repeat,
                                 size: 13, color: HousepitalColors.greyLight),
                             const SizedBox(width: 4),
-                            Text('Renews in ${service.daysRemaining}d',
-                                style: const TextStyle(
-                                    fontSize: 12, color: HousepitalColors.grey)),
+                            Flexible(
+                              child: Text('Renews in ${service.daysRemaining}d',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: HousepitalColors.grey)),
+                            ),
                           ],
                         ],
                       ),

@@ -197,7 +197,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           shape: BoxShape.circle,
                           color: _isOnline
                               ? HousepitalColors.success
-                              : Colors.grey,
+                              : HousepitalColors.greyLight,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -207,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           fontSize: 12,
                           color: _isOnline
                               ? HousepitalColors.success
-                              : Colors.grey[500],
+                              : HousepitalColors.greyLight,
                         ),
                       ),
                     ],
@@ -249,18 +249,18 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.chat_bubble_outline,
-                    size: 64, color: Colors.grey[300]),
+                    size: 64, color: HousepitalColors.divider),
                 const SizedBox(height: 12),
                 Text(
                   'No messages yet',
                   style: TextStyle(
-                      fontSize: 16, color: Colors.grey[500]),
+                      fontSize: 16, color: HousepitalColors.greyLight),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Send a message to start the conversation',
                   style: TextStyle(
-                      fontSize: 13, color: Colors.grey[400]),
+                      fontSize: 13, color: HousepitalColors.greyLight),
                 ),
               ],
             ),
@@ -331,7 +331,7 @@ class _ChatScreenState extends State<ChatScreen> {
               minLines: 1,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
-                hintStyle: TextStyle(color: Colors.grey[400]),
+                hintStyle: TextStyle(color: HousepitalColors.greyLight),
                 filled: true,
                 fillColor: HousepitalColors.greyLighter,
                 border: OutlineInputBorder(
@@ -392,7 +392,7 @@ class _MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSent
               ? HousepitalColors.orange
-              : const Color(0xFFF0F0F0),
+              : HousepitalColors.greyLighter,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -410,11 +410,11 @@ class _MessageBubble extends StatelessWidget {
                 height: 140,
                 margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: HousepitalColors.divider,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Center(
-                  child: Icon(Icons.image, color: Colors.grey, size: 40),
+                  child: Icon(Icons.image, color: HousepitalColors.greyLight, size: 40),
                 ),
               ),
 
@@ -441,7 +441,7 @@ class _MessageBubble extends StatelessWidget {
                       fontSize: 11,
                       color: isSent
                           ? Colors.white.withValues(alpha: 0.7)
-                          : Colors.grey[500],
+                          : HousepitalColors.greyLight,
                     ),
                   ),
                 if (isSent) ...[

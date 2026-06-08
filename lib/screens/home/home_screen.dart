@@ -484,14 +484,14 @@ class _HomeScreenState extends State<HomeScreen> {
       _BannerSlide(
         title: '24/7 ICU Setup\nat Home',
         subtitle: 'Critical care nursing & medical equipment',
-        gradientColors: [const Color(0xFF1565C0), const Color(0xFF42A5F5)],
+        gradientColors: [HousepitalColors.info, const Color(0xFF42A5F5)],
         icon: Icons.monitor_heart,
         imagePath: 'assets/images/branding/hero_nurse.jpg',
       ),
       _BannerSlide(
         title: 'Free Health\nAssessment',
         subtitle: 'Book now — no obligations',
-        gradientColors: [const Color(0xFF2E7D32), const Color(0xFF66BB6A)],
+        gradientColors: [HousepitalColors.success, const Color(0xFF66BB6A)],
         icon: Icons.health_and_safety,
         ctaText: 'Book Now',
         onCtaTap: () {
@@ -563,6 +563,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Text(
                                 slide.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -573,6 +575,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 6),
                               Text(
                                 slide.subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.white.withValues(alpha: 0.9),
@@ -985,20 +989,25 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HousepitalColors.divider),
       ),
-      // GridView.count derives each cell width from the ACTUAL constraints it
-      // is given, so the 3 columns always fill the row edge to edge. 6 service
-      // tiles tile into a clean, compact 2×3. childAspectRatio raised so cells
-      // hug their content (icon + label) instead of leaving large vertical gaps.
-      child: GridView.count(
-        crossAxisCount: 3,
+      // 3 columns filling the row edge-to-edge; 6 service tiles → compact 2×3.
+      // mainAxisExtent fixes each cell's HEIGHT in absolute px (instead of a
+      // width-derived aspect ratio). A fixed aspect ratio made cells too short
+      // on narrow phones (the Column overflowed ~12px on a 320px screen) while
+      // leaving gaps on wide ones; a fixed 88px height fits the icon + 2-line
+      // label on every width with no overflow and no gap.
+      child: GridView.builder(
         shrinkWrap: true,
         primary: false,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 4,
-        crossAxisSpacing: 8,
-        // width:height per cell — compact: icon + 1-2 line label, minimal slack.
-        childAspectRatio: 1.25,
-        children: allActions.map((action) {
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 4,
+          crossAxisSpacing: 8,
+          mainAxisExtent: 88,
+        ),
+        itemCount: allActions.length,
+        itemBuilder: (context, index) {
+          final action = allActions[index];
           final tileId = 'quick_${action.label}';
           return Semantics(
             button: true,
@@ -1041,7 +1050,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -1110,19 +1119,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Explore Dai Maa',
-                              style: TextStyle(
-                                color: DaiMaaColors.plum,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                            // Flexible so an extreme text size / locale
+                            // ellipsizes instead of overflowing the banner at
+                            // 320px; on real fonts it hugs the text unchanged.
+                            const Flexible(
+                              child: Text(
+                                'Explore Dai Maa',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: DaiMaaColors.plum,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(Icons.arrow_forward,
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward,
                                 color: DaiMaaColors.plum, size: 14),
                           ],
                         ),

@@ -28,10 +28,14 @@ class StaffAttendanceSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(l.t('todays_staff'),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700)),
-              const Spacer(),
+              Expanded(
+                child: Text(l.t('todays_staff'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(width: 8),
               Text(
                 '$checkedIn/$totalStaff checked in',
                 style: TextStyle(

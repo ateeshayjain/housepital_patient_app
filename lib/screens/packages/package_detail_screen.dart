@@ -175,7 +175,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                     height: 52,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -277,7 +277,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 height: 52,
                 decoration: BoxDecoration(
                   color: HousepitalColors.orange.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   iconMap[pkg.icon] ?? Icons.local_hospital,

@@ -120,7 +120,10 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               onAction: () => Navigator.pushNamed(context, '/vitals'),
             ),
             SizedBox(
-              height: 72,
+              // Pill content (8+8 padding + label row + 4 gap + value + unit)
+              // is ~77px; 88 gives headroom so it never overflows the strip
+              // (was 72 → "BOTTOM OVERFLOWED" stripe).
+              height: 88,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -316,34 +319,43 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: HousepitalColors.divider),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
+          // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1, so
+          // there's zero visual change on-device. Only when text would exceed
+          // the box (very large Dynamic Type / the Ahem test font) does it
+          // shrink to fit instead of painting an overflow stripe.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(label,
-                      style: const TextStyle(
-                          fontSize: 11, color: HousepitalColors.greyLight)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700)),
-              Text(unit,
-                  style: const TextStyle(
-                      fontSize: 11, color: HousepitalColors.greyLight)),
-            ],
+                    const SizedBox(width: 4),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 11, color: HousepitalColors.greyLight)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(unit,
+                    style: const TextStyle(
+                        fontSize: 11, color: HousepitalColors.greyLight)),
+              ],
+            ),
           ),
         ),
       ),

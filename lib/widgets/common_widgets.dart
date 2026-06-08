@@ -234,12 +234,18 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: HousepitalColors.black,
+          // Flexible + ellipsis so a long title never overflows the row when
+          // an action ("See All"/"Details") is also present at narrow widths.
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: HousepitalColors.black,
+              ),
             ),
           ),
           if (actionText != null)

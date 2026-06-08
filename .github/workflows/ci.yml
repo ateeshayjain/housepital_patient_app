@@ -33,6 +33,13 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
+      # Static design-consistency gate. Fails if banned patterns (off-spec
+      # circular(14), Material grey shades, raw Colors.red/blue/green,
+      # hardcoded hex, CircleAvatar-with-Icon) reappear in lib/screens after
+      # the app-wide consistency pass. No external input — safe static run.
+      - name: Design consistency
+        run: bash scripts/check_design_consistency.sh
+
       # `flutter test` exits 1 on test failure (verified 2026-05-28). The
       # expanded reporter gives full failure context (expected/actual + stack)
       # directly in CI logs — the default compact reporter buries failures

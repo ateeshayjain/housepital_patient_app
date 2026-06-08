@@ -58,8 +58,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
   Widget _buildSkeleton() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: HousepitalColors.divider,
+      highlightColor: HousepitalColors.greyLighter,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 5,
@@ -68,7 +68,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           height: 96,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -89,9 +89,9 @@ class _ArticleCard extends StatelessWidget {
           '${article.readMinutes} minute read.',
       child: Material(
         color: HousepitalColors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           onTap: () => Navigator.pushNamed(
             context,
             '/article',
@@ -99,7 +99,7 @@ class _ArticleCard extends StatelessWidget {
           ),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: HousepitalColors.divider),
             ),
             child: Column(
@@ -108,7 +108,7 @@ class _ArticleCard extends StatelessWidget {
                 if (article.coverImageUrl != null)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(14)),
+                        top: Radius.circular(12)),
                     child: Image.network(
                       article.coverImageUrl!,
                       height: 140,
