@@ -80,6 +80,9 @@ import 'services/assistant_service.dart';
 import 'services/voice_service.dart';
 import 'screens/assistant/assistant_executor.dart';
 import 'screens/assistant/assistant_screen.dart';
+import 'providers/blog_provider.dart';
+import 'screens/articles/article_list_screen.dart';
+import 'screens/articles/article_detail_screen.dart';
 import 'config/constants.dart';
 import 'data/demo_data.dart';
 import 'utils/permissions.dart';
@@ -203,6 +206,10 @@ void main() async {
           ),
           ChangeNotifierProvider(
             create: (_) => MedicationProvider(apiService),
+          ),
+          // Care Guides — articles/blogs with demo fallback.
+          ChangeNotifierProvider(
+            create: (_) => BlogProvider(apiService),
           ),
           // AI Assistant — voice+text Hinglish bot. Stub-backed until the
           // backend /assistant endpoint ships; voice no-ops on web.
@@ -697,6 +704,16 @@ class _HousepitalAppState extends State<HousepitalApp> {
           case '/daimaa':
             return MaterialPageRoute(
                 builder: (_) => const DaiMaaLandingScreen());
+          case '/articles':
+            return MaterialPageRoute(
+                builder: (_) => const ArticleListScreen());
+          case '/article':
+            final id = settings.arguments;
+            if (id is! String) {
+              throw ArgumentError('Route /article requires a String id');
+            }
+            return MaterialPageRoute(
+                builder: (_) => ArticleDetailScreen(articleId: id));
           default:
             return MaterialPageRoute(
                 builder: (_) => MainShell(key: MainShell.shellKey));

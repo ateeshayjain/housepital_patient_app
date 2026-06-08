@@ -66,6 +66,8 @@ dependencies:
   # AI Assistant — voice input/output
   speech_to_text: ^7.4.0
   flutter_tts: ^4.2.5
+  # Care Guides — markdown article bodies
+  flutter_markdown: ^0.7.0
 
 dev_dependencies:
   flutter_test:

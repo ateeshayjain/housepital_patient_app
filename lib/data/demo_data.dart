@@ -3,9 +3,13 @@
 // Realistic seed data for demo / offline mode.
 // Patient: Rajesh Kumar — ICU at Home + Caretaker + Physiotherapy
 
+import 'dart:convert';
+
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
+import '../models/article.dart';
+import 'demo_articles.dart';
 
 class DemoData {
   DemoData._();
@@ -605,4 +609,12 @@ class DemoData {
         'due_date':
             _daysAgo(15).add(const Duration(days: 30)).toIso8601String(),
       };
+
+  // ── Care Guides / Articles ───────────────────────────────────────────
+  // Parsed from the embedded JSON in demo_articles.dart so generated content
+  // drops in verbatim. Synchronous (jsonDecode) to match BlogProvider's
+  // offline-fallback usage.
+  static List<Article> get articles => (jsonDecode(kDemoArticlesJson) as List)
+      .map((e) => Article.fromJson(e as Map<String, dynamic>))
+      .toList();
 }

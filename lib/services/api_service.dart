@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
 import '../models/equipment_order.dart';
+import '../models/article.dart';
 import '../utils/logger.dart';
 import 'i_api_service.dart';
 
@@ -848,6 +849,23 @@ class ApiService implements IApiService {
       'condition': condition,
       'photo_url': ?photoUrl,
     });
+  }
+
+  // ── Articles (Care Guides) ────────────────────────────────
+  @override
+  Future<List<Article>> getArticles({String? category}) async {
+    final qp = <String, String>{};
+    if (category != null) qp['category'] = category;
+    final data = await _get('/articles', queryParams: qp.isEmpty ? null : qp);
+    return (data['articles'] as List)
+        .map((a) => Article.fromJson(a))
+        .toList();
+  }
+
+  @override
+  Future<Article> getArticle(String id) async {
+    final data = await _get('/articles/$id');
+    return Article.fromJson(data['article'] ?? data);
   }
 }
 
