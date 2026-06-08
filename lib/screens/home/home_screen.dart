@@ -184,6 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                   ],
 
+                  // 4c. Care Guides entry — available to ALL roles (reading
+                  // health education isn't a "booking" action).
+                  _buildCareGuidesEntry(context),
+                  const SizedBox(height: 8),
+
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
                     _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
@@ -450,6 +455,17 @@ class _HomeScreenState extends State<HomeScreen> {
             child: IconButton(
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => Navigator.pushNamed(context, '/notifications'),
+            ),
+          ),
+          // SOS — emergency action lives in the persistent header so it's
+          // always one tap away (never buried in a scrollable grid).
+          Semantics(
+            label: 'SOS emergency',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.emergency, color: HousepitalColors.error),
+              tooltip: 'SOS',
+              onPressed: () => Navigator.pushNamed(context, '/sos'),
             ),
           ),
         ],
@@ -835,6 +851,72 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
+  // Care Guides entry — slim full-width row (kept out of Book Services)
+  // ---------------------------------------------------------------------------
+  Widget _buildCareGuidesEntry(BuildContext context) {
+    const tileId = 'care_guides_entry';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      child: Semantics(
+        button: true,
+        label: 'Care Guides — health tips and education',
+        child: AnimatedScale(
+          scale: _pressedScale[tileId] ?? 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.pushNamed(context, '/articles'),
+              onTapDown: (_) => _onCardPressDown(tileId),
+              onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+              onTapCancel: () => _onCardPressUpOrCancel(tileId),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HousepitalColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HousepitalColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: HousepitalColors.serviceCarePackage
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.menu_book,
+                          color: HousepitalColors.serviceCarePackage, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Care Guides',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text('Health tips & education for your family',
+                              style: TextStyle(
+                                  fontSize: 12, color: HousepitalColors.grey)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: HousepitalColors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Quick Actions Grid (2x3)
   // ---------------------------------------------------------------------------
   Widget _buildQuickActionsGrid(BuildContext context, AppLocalizations l) {
@@ -926,52 +1008,32 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
-    final utilityActions = <_QuickAction>[
-      _QuickAction(
-        icon: Icons.receipt_long,
-        label: 'My Orders',
-        color: HousepitalColors.serviceJapaNanny,
-        onTap: () => Navigator.pushNamed(context, '/my-orders'),
-      ),
-      _QuickAction(
-        icon: Icons.menu_book,
-        label: 'Care Guides',
-        color: HousepitalColors.serviceCarePackage,
-        onTap: () => Navigator.pushNamed(context, '/articles'),
-      ),
-      _QuickAction(
-        icon: Icons.emergency,
-        label: 'SOS',
-        color: HousepitalColors.error,
-        onTap: () => Navigator.pushNamed(context, '/sos'),
-      ),
-    ];
-
-    final allActions = [...browseActions, ...utilityActions];
+    // Book Services contains ONLY bookable services. Utility/navigation items
+    // live elsewhere: SOS in the header, My Orders in Settings + booking flows,
+    // Care Guides in its own entry card below.
+    final allActions = browseActions;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
         color: HousepitalColors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HousepitalColors.divider),
       ),
       // GridView.count derives each cell width from the ACTUAL constraints it
-      // is given (not MediaQuery), so the 3 columns always fill the row edge
-      // to edge regardless of screen size — no manual width math, no trailing
-      // gap. 9 actions tile into a clean 3×3. shrinkWrap + NeverScrollable so
-      // it lays out naturally inside the home SingleChildScrollView.
+      // is given, so the 3 columns always fill the row edge to edge. 6 service
+      // tiles tile into a clean, compact 2×3. childAspectRatio raised so cells
+      // hug their content (icon + label) instead of leaving large vertical gaps.
       child: GridView.count(
         crossAxisCount: 3,
         shrinkWrap: true,
         primary: false,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 8,
+        mainAxisSpacing: 4,
         crossAxisSpacing: 8,
-        // width:height per cell — tuned so icon + 2-line label fits without
-        // clipping or excess vertical whitespace.
-        childAspectRatio: 0.92,
+        // width:height per cell — compact: icon + 1-2 line label, minimal slack.
+        childAspectRatio: 1.25,
         children: allActions.map((action) {
           final tileId = 'quick_${action.label}';
           return Semantics(

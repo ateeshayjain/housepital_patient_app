@@ -125,12 +125,11 @@ void main() {
 
   // ── Book Services grid ────────────────────────────────────────────────────
 
-  testWidgets('Book Services grid renders contextual + utility tiles',
+  testWidgets('Book Services grid holds only bookable services',
       (tester) async {
     // _TestAppProvider seeds icuDeployment (staffRole: 'Critical Care Nurse'),
-    // so the dynamic grid shows "My Nurse" (not "Book Nurse"), and adds
-    // Care Guides. Static tiles (Equipment, Lab Tests, Doctor Visit, My Orders,
-    // SOS) are always visible.
+    // so the dynamic grid shows "My Nurse" (not "Book Nurse"). The grid is
+    // services only — utility items (My Orders, SOS, Care Guides) moved out.
     await _pumpHome(tester);
 
     expect(find.text('My Nurse'), findsOneWidget); // contextual: nurse active
@@ -138,9 +137,17 @@ void main() {
     expect(find.text('Equipment'), findsOneWidget);
     expect(find.text('Lab Tests'), findsOneWidget);
     expect(find.text('Doctor Visit'), findsOneWidget);
-    expect(find.text('SOS'), findsOneWidget);
-    expect(find.text('My Orders'), findsOneWidget);
-    expect(find.text('Care Guides'), findsOneWidget); // added in dynamic grid
+    // Utility items are NO LONGER in the Book Services grid:
+    expect(find.text('My Orders'), findsNothing); // → Settings + booking flows
+  });
+
+  testWidgets('SOS lives in the header; Care Guides has its own entry',
+      (tester) async {
+    await _pumpHome(tester);
+    // SOS moved to the persistent header (always one tap away).
+    expect(find.bySemanticsLabel('SOS emergency'), findsOneWidget);
+    // Care Guides moved to a dedicated entry card below Book Services.
+    expect(find.text('Care Guides'), findsOneWidget);
   });
 
   testWidgets('Book Services section is hidden for view-only roles',
