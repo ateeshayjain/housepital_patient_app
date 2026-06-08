@@ -11,7 +11,6 @@ import '../../screens/main_shell.dart';
 import 'widgets/health_manager_banner.dart';
 import 'widgets/active_service_card.dart';
 import 'widgets/staff_attendance_section.dart';
-import 'widgets/billing_summary_section.dart';
 
 class MyCareScreen extends StatefulWidget {
   const MyCareScreen({super.key});
@@ -288,9 +287,8 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ),
           ),
 
-          // 7. Billing Summary
-          if (myCare.activeServices.any((s) => s.totalPaid != null))
-            BillingSummarySection(services: myCare.activeServices),
+          // Billing intentionally NOT shown here — it lives in the Billing tab
+          // (single source of truth for invoices, dues, and payment history).
         ],
       ),
     );

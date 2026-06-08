@@ -159,6 +159,8 @@
   "service_detail": "सेवा विवरण",
   "staff_on_duty": "ड्यूटी पर स्टाफ",
   "vitals_trend": "वाइटल्स ट्रेंड",
+  "today_vitals": "आज के वाइटल्स",
+  "today_report": "आज की रिपोर्ट",
   "todays_care_report": "आज की केयर रिपोर्ट",
   "equipment_deployed": "तैनात उपकरण",
   "tasks_completed": "{done}/{total} कार्य, {percent}% पूर्ण",

@@ -241,7 +241,7 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Day 12 of 30'), findsOneWidget);
+      expect(find.text('Day 12/30'), findsOneWidget);
     });
 
     testWidgets('renders "Session X of Y" label for a session-based service',
@@ -258,7 +258,7 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Session 3 of 10'), findsOneWidget);
+      expect(find.text('Session 3/10'), findsOneWidget);
     });
 
     testWidgets('renders a LinearProgressIndicator', (tester) async {
@@ -311,9 +311,9 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Staff Today'), findsOneWidget);
+      expect(find.text('1/2 on duty'), findsOneWidget);
       // Widget renders "1/2 " (trailing space, no checkmark when partial)
-      expect(find.text('1/2 '), findsOneWidget);
+      expect(find.text('Staff Today'), findsNothing);
     });
 
     testWidgets('appends checkmark when all staff are checked in',
@@ -327,8 +327,8 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      // Widget uses '\u2713' as checkmark: "2/2 ✓"
-      expect(find.text('2/2 \u2713'), findsOneWidget);
+      // Compact card: '2/2 on duty' (no checkmark glyph).
+      expect(find.text('2/2 on duty'), findsOneWidget);
     });
 
     testWidgets('does not show Staff Today when service has no staff',
@@ -342,7 +342,7 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Staff Today'), findsNothing);
+      expect(find.textContaining('on duty'), findsNothing);
     });
 
     testWidgets('shows Latest vital label for care_package service',
@@ -357,8 +357,8 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Latest'), findsOneWidget);
-      expect(find.text('128/82'), findsOneWidget);
+      expect(find.text('Latest'), findsNothing);
+      expect(find.text('128/82'), findsNothing);
     });
 
     testWidgets('does not show Latest stat for non-care_package service',
@@ -388,9 +388,9 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Renewal'), findsOneWidget);
+      expect(find.text('Renews in 18d'), findsOneWidget);
       // daysRemaining = 30 - 12 = 18
-      expect(find.text('18 days'), findsOneWidget);
+      // (renewal countdown asserted above)
     });
 
     testWidgets('does not show Renewal stat when renewalDate is null',
@@ -401,7 +401,7 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Renewal'), findsNothing);
+      expect(find.textContaining('Renews in'), findsNothing);
     });
 
     testWidgets('card is tappable via InkWell', (tester) async {
@@ -459,7 +459,7 @@ void main() {
       );
 
       expect(find.text('Oxygen Concentrator Rental'), findsOneWidget);
-      expect(find.text('Day 5 of 30'), findsOneWidget);
+      expect(find.text('Day 5/30'), findsOneWidget);
     });
 
     testWidgets('renders japa service with correct header text', (tester) async {
@@ -475,7 +475,7 @@ void main() {
       );
 
       expect(find.text('Japa Care'), findsOneWidget);
-      expect(find.text('Day 10 of 45'), findsOneWidget);
+      expect(find.text('Day 10/45'), findsOneWidget);
     });
   });
 }

@@ -159,6 +159,8 @@
   "service_detail": "Service Detail",
   "staff_on_duty": "Staff on Duty",
   "vitals_trend": "Vitals Trend",
+  "today_vitals": "Today's Vitals",
+  "today_report": "Today's Report",
   "todays_care_report": "Today's Care Report",
   "equipment_deployed": "Equipment Deployed",
   "tasks_completed": "{done}/{total} tasks, {percent}% complete",

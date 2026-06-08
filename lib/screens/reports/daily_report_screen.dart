@@ -107,30 +107,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Staff info
-                      Row(
-                        children: [
-                          Text(
-                            'Staff: ${_report!.staffName ?? ""}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: HousepitalColors.grey,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (_report!.submittedAt != null)
-                            Text(
-                              'Submitted at ${DateHelper.formatTime(_report!.submittedAt!)}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: HousepitalColors.greyLight,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const Divider(height: 24),
+                      // Summary header card — completion ring + staff + time
+                      _buildSummaryHeader(),
+                      const SizedBox(height: 16),
 
-                      // Sections
+                      // Sections (each in its own card)
                       ..._report!.sections.map((section) => _buildSection(section, l)),
 
                       // Medication Adherence
@@ -230,6 +211,121 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     );
   }
 
+  // Summary header — the visual anchor: completion ring, staff, submit time.
+  Widget _buildSummaryHeader() {
+    final r = _report!;
+    final frac = r.totalTasks > 0 ? r.completedTasks / r.totalTasks : 0.0;
+    final allDone = r.completedTasks == r.totalTasks && r.totalTasks > 0;
+    final ringColor = allDone
+        ? HousepitalColors.success
+        : frac >= 0.5
+            ? HousepitalColors.warning
+            : HousepitalColors.error;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            HousepitalColors.orange,
+            HousepitalColors.orange.withValues(alpha: 0.82),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: HousepitalColors.orange.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    value: frac,
+                    strokeWidth: 5,
+                    backgroundColor: Colors.white.withValues(alpha: 0.3),
+                    valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  ),
+                ),
+                Text('${r.completedTasks}/${r.totalTasks}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  allDone
+                      ? 'All tasks completed'
+                      : '${r.completedTasks} of ${r.totalTasks} tasks done',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.person, size: 14, color: Colors.white70),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        r.staffName ?? 'Care staff',
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                if (r.submittedAt != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule,
+                          size: 13, color: Colors.white70),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Submitted ${DateHelper.formatTime(r.submittedAt!)}',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // a tiny accent reflecting overall health of the day
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(left: 8),
+            decoration:
+                BoxDecoration(color: ringColor, shape: BoxShape.circle),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSection(ReportSection section, AppLocalizations l) {
     Color sectionColor;
     String sectionStatus;
@@ -247,28 +343,43 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         sectionStatus = l.t('pending');
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  section.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
-                  ),
-                ),
-              ),
-              StatusBadge(text: sectionStatus, color: sectionColor),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...section.tasks.map((task) => Padding(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status-coloured accent stripe down the left edge.
+            Container(width: 4, color: sectionColor),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            section.name,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: HousepitalColors.black,
+                            ),
+                          ),
+                        ),
+                        StatusBadge(text: sectionStatus, color: sectionColor),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...section.tasks.map((task) => Padding(
                 padding: const EdgeInsets.only(left: 8, bottom: 6),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,8 +445,13 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                     ),
                   ],
                 ),
-              )),
-        ],
+                        )),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -386,10 +502,17 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       }
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: HousepitalColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HousepitalColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
           children: [
             const Icon(Icons.medication,
                 size: 20, color: HousepitalColors.orange),
@@ -550,7 +673,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 const SizedBox(height: 4),
               ],
             )),
-      ],
+        ],
+      ),
     );
   }
 

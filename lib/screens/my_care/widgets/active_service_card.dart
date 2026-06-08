@@ -16,115 +16,98 @@ class ActiveServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = HousepitalColors.serviceColor(service.serviceCategory);
+    final allPresent =
+        service.hasStaff && service.checkedInStaff == service.totalStaff;
+    final progressLabel = service.isSessionBased
+        ? 'Session ${service.consumedDays}/${service.totalDays}'
+        : 'Day ${service.consumedDays}/${service.totalDays}';
 
+    // Compact single-block card: slim color accent + one info row + thin
+    // progress bar. ~45% shorter than the old gradient-header version, and the
+    // "Latest vital" stat is intentionally dropped (vitals live in the
+    // dedicated Today's Vitals section \u2014 no cross-card duplication).
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          children: [
-            // Color-coded header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.8)],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      service.name,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      service.isSessionBased
-                          ? 'Session ${service.consumedDays} of ${service.totalDays}'
-                          : 'Day ${service.consumedDays} of ${service.totalDays}',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 11),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Stats row
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Slim color accent stripe (category identity, no tall header).
+              Container(width: 4, color: color),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (service.hasStaff)
-                        _stat('Staff Today',
-                            '${service.checkedInStaff}/${service.totalStaff} ${service.checkedInStaff == service.totalStaff ? "\u2713" : ""}',
-                            service.checkedInStaff == service.totalStaff
-                                ? HousepitalColors.success
-                                : HousepitalColors.warning),
-                      if (service.showVitals && service.latestVitalLabel != null)
-                        _stat('Latest', service.latestVitalLabel!,
-                            _vitalColor(service.latestVitalStatus)),
-                      if (service.renewalDate != null)
-                        _stat('Renewal', '${service.daysRemaining} days',
-                            HousepitalColors.grey),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              service.name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 14),
+                            ),
+                          ),
+                          Text(progressLabel,
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey[500])),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right,
+                              size: 18, color: HousepitalColors.greyLight),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (service.hasStaff) ...[
+                            Icon(allPresent ? Icons.check_circle : Icons.schedule,
+                                size: 14,
+                                color: allPresent
+                                    ? HousepitalColors.success
+                                    : HousepitalColors.warning),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${service.checkedInStaff}/${service.totalStaff} on duty',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: allPresent
+                                      ? HousepitalColors.success
+                                      : HousepitalColors.warning),
+                            ),
+                          ],
+                          if (service.renewalDate != null) ...[
+                            const Spacer(),
+                            Icon(Icons.event_repeat,
+                                size: 13, color: Colors.grey[500]),
+                            const SizedBox(width: 4),
+                            Text('Renews in ${service.daysRemaining}d',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600])),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: service.progressFraction,
+                          minHeight: 4,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation(color),
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  // Progress bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: service.progressFraction,
-                      minHeight: 4,
-                      backgroundColor: Colors.grey[200],
-                      valueColor: AlwaysStoppedAnimation(color),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _stat(String label, String value, Color valueColor) {
-    return Column(
-      children: [
-        Text(label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[400])),
-        const SizedBox(height: 2),
-        Text(value,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: valueColor)),
-      ],
-    );
-  }
-
-  Color _vitalColor(String? status) {
-    switch (status) {
-      case 'critical':
-        return HousepitalColors.error;
-      case 'warning':
-        return HousepitalColors.warning;
-      default:
-        return HousepitalColors.success;
-    }
   }
 }

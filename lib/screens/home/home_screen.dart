@@ -12,7 +12,6 @@ import '../../providers/medication_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
-import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
@@ -162,12 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                   ],
 
-                  // 3. Today's Vitals
-                  if (app.latestVitals != null) ...[
-                    _sectionLabel("Today's Vitals", onSeeAll: () => Navigator.pushNamed(context, '/vitals')),
-                    _buildVitalsStrip(app),
-                    const SizedBox(height: 8),
-                  ],
+                  // Vitals intentionally NOT shown on Home — they live on the
+                  // My Care tab (single source of truth). Home stays a lean
+                  // glance: team, services, meds, actions.
 
                   // 3a. Medications snippet (only renders if active meds exist)
                   _buildMedicationsSnippet(context),
@@ -1218,91 +1214,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 12, fontWeight: FontWeight.w500, color: HousepitalColors.orange)),
             ),
         ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Vitals Strip (compact)
-  // ---------------------------------------------------------------------------
-  Widget _buildVitalsStrip(AppProvider app) {
-    final v = app.latestVitals!;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _miniVitalChip('BP', '${v.systolic?.toInt() ?? "--"}/${v.diastolic?.toInt() ?? "--"}', v.systolic, 'bp_systolic'),
-          _miniVitalChip('SpO2', '${v.spo2?.toInt() ?? "--"}%', v.spo2, 'spo2'),
-          _miniVitalChip('Pulse', '${v.pulse?.toInt() ?? "--"}', v.pulse, 'pulse'),
-          _miniVitalChip('Temp', '${v.temperature ?? "--"}°F', v.temperature, 'temperature'),
-          _miniVitalChip('Sugar', '${v.sugar?.toInt() ?? "--"}', v.sugar, 'sugar'),
-        ],
-      ),
-    );
-  }
-
-  Widget _miniVitalChip(String label, String value, double? raw, String type) {
-    Color statusColor = HousepitalColors.greyLight;
-    IconData statusIcon = Icons.remove_circle_outline;
-    String statusLabel = 'No reading';
-    if (raw != null) {
-      final s = classifyVital(type, raw);
-      if (s == 'green') {
-        statusColor = HousepitalColors.success;
-        statusIcon = Icons.check_circle;
-        statusLabel = 'Normal';
-      } else if (s == 'yellow') {
-        statusColor = HousepitalColors.warning;
-        statusIcon = Icons.info_outline;
-        statusLabel = 'Borderline';
-      } else {
-        statusColor = HousepitalColors.error;
-        statusIcon = Icons.warning_amber;
-        statusLabel = 'Alert';
-      }
-    }
-    return Expanded(
-      child: Semantics(
-        button: true,
-        label: '$label $value, $statusLabel',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => Navigator.pushNamed(context, '/vitals'),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              // WCAG 2.5.5 — bump vertical padding so the chip clears 44pt.
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-              decoration: BoxDecoration(
-                color: HousepitalColors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: HousepitalColors.divider),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    // WCAG 1.4.1 — convey zone with icon + color, not color
-                    // alone. The icon is decorative (status is in the
-                    // Semantics label above).
-                    Icon(statusIcon, size: 12, color: statusColor),
-                    const SizedBox(width: 4),
-                    Text(label,
-                        style: const TextStyle(
-                            fontSize: 11,
-                            color: HousepitalColors.greyLight)),
-                  ]),
-                  const SizedBox(height: 2),
-                  Text(value,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
