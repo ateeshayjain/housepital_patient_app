@@ -84,7 +84,8 @@ class _VitalsScreenState extends State<VitalsScreen>
       body: Column(
         children: [
           // Period filter chips
-          Padding(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
@@ -203,37 +204,59 @@ class _VitalsScreenState extends State<VitalsScreen>
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  primaryKey == 'systolic'
-                      ? '${_vitals.last.systolic?.toInt()}/${_vitals.last.diastolic?.toInt()}'
-                      : latest.toStringAsFixed(primaryKey == 'temperature' ? 1 : 0),
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w700,
-                    color: chartColor,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          primaryKey == 'systolic'
+                              ? '${_vitals.last.systolic?.toInt()}/${_vitals.last.diastolic?.toInt()}'
+                              : latest.toStringAsFixed(
+                                  primaryKey == 'temperature' ? 1 : 0),
+                          style: TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w700,
+                            color: chartColor,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          unit,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: HousepitalColors.greyLight,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  unit,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: HousepitalColors.greyLight,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Latest reading',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, color: HousepitalColors.greyLight),
+                      ),
+                      Text(
+                        DateHelper.formatDate(_vitals.last.recordedAt),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, color: HousepitalColors.greyLight),
+                      ),
+                    ],
                   ),
-                ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Latest reading',
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
-                    ),
-                    Text(
-                      DateHelper.formatDate(_vitals.last.recordedAt),
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
-                    ),
-                  ],
                 ),
               ],
             ),

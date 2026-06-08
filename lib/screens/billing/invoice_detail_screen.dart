@@ -169,14 +169,19 @@ class InvoiceDetailScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                invoice.invoiceNumber,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: HousepitalColors.black,
+              Expanded(
+                child: Text(
+                  invoice.invoiceNumber,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: HousepitalColors.black,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               StatusBadge(
                 text: invoice.status.toUpperCase(),
                 color: statusColor,
@@ -189,11 +194,15 @@ class InvoiceDetailScreen extends StatelessWidget {
               const Icon(Icons.calendar_today,
                   size: 16, color: HousepitalColors.greyLight),
               const SizedBox(width: 6),
-              Text(
-                '${l.t('billing_period')}: ${DateHelper.formatDateShort(invoice.billingPeriodStart)} - ${DateHelper.formatDateShort(invoice.billingPeriodEnd)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: HousepitalColors.grey,
+              Expanded(
+                child: Text(
+                  '${l.t('billing_period')}: ${DateHelper.formatDateShort(invoice.billingPeriodStart)} - ${DateHelper.formatDateShort(invoice.billingPeriodEnd)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: HousepitalColors.grey,
+                  ),
                 ),
               ),
             ],
@@ -204,11 +213,15 @@ class InvoiceDetailScreen extends StatelessWidget {
               const Icon(Icons.event,
                   size: 16, color: HousepitalColors.greyLight),
               const SizedBox(width: 6),
-              Text(
-                '${l.t('due_date')}: ${DateHelper.formatDate(invoice.dueDate)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: HousepitalColors.grey,
+              Expanded(
+                child: Text(
+                  '${l.t('due_date')}: ${DateHelper.formatDate(invoice.dueDate)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: HousepitalColors.grey,
+                  ),
                 ),
               ),
             ],
@@ -265,12 +278,18 @@ class InvoiceDetailScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildItemDetail('Amount', DateHelper.formatCurrency(item.amount)),
-                _buildItemDetail('GST', DateHelper.formatCurrency(item.gst)),
-                _buildItemDetail(
-                  'Total',
-                  DateHelper.formatCurrency(item.total),
-                  isBold: true,
+                Expanded(
+                    child: _buildItemDetail(
+                        'Amount', DateHelper.formatCurrency(item.amount))),
+                Expanded(
+                    child: _buildItemDetail(
+                        'GST', DateHelper.formatCurrency(item.gst))),
+                Expanded(
+                  child: _buildItemDetail(
+                    'Total',
+                    DateHelper.formatCurrency(item.total),
+                    isBold: true,
+                  ),
                 ),
               ],
             ),
@@ -286,6 +305,8 @@ class InvoiceDetailScreen extends StatelessWidget {
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 11,
             color: HousepitalColors.greyLight,
@@ -294,6 +315,8 @@ class InvoiceDetailScreen extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
@@ -310,14 +333,19 @@ class InvoiceDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isBold ? 16 : 14,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-              color: isBold ? HousepitalColors.black : HousepitalColors.grey,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isBold ? 16 : 14,
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+                color: isBold ? HousepitalColors.black : HousepitalColors.grey,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             DateHelper.formatCurrency(amount),
             style: TextStyle(

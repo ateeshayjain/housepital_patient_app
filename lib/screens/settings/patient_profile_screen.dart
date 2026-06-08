@@ -71,8 +71,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         TextEditingController(text: patient?.dietaryRestrictions ?? '');
     _addressController =
         TextEditingController(text: patient?.address ?? '');
-    _gender = patient?.gender ?? 'male';
+    // Normalise to the lowercase keys the dropdown items use — the backend /
+    // demo data may send 'Male' / 'Female', which would otherwise have no
+    // matching DropdownMenuItem and trip DropdownButton's single-match assert.
+    _gender = (patient?.gender ?? 'male').toLowerCase();
+    if (!const {'male', 'female', 'other'}.contains(_gender)) _gender = 'male';
     _mobility = patient?.mobilityStatus ?? 'ambulatory';
+    if (!const {'ambulatory', 'needs_support', 'wheelchair', 'bedridden'}
+        .contains(_mobility)) {
+      _mobility = 'ambulatory';
+    }
     _city = patient?.city ?? 'Delhi';
     if (!_cities.contains(_city)) _city = 'Delhi';
 
@@ -517,9 +525,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Emergency Contacts',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const Expanded(
+                  child: Text('Emergency Contacts',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
                 TextButton.icon(
                   onPressed: _addEmergencyContact,
                   icon: const Icon(Icons.add, size: 18),
@@ -660,9 +672,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Current Medications',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const Expanded(
+                  child: Text('Current Medications',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
                 TextButton.icon(
                   onPressed: _addMedication,
                   icon: const Icon(Icons.add, size: 18),

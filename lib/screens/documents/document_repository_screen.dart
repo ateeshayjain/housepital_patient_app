@@ -210,17 +210,27 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${_filteredDocs.length} document${_filteredDocs.length != 1 ? 's' : ''}',
-                  style: const TextStyle(
-                      fontSize: 13, color: HousepitalColors.greyLight),
+                Flexible(
+                  child: Text(
+                    '${_filteredDocs.length} document${_filteredDocs.length != 1 ? 's' : ''}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13, color: HousepitalColors.greyLight),
+                  ),
                 ),
-                const Spacer(),
-                Text(
-                  'Total: ${_formatFileSize(_documents.fold(0, (sum, d) => sum + (d.fileSizeBytes ?? 0)))}',
-                  style: const TextStyle(
-                      fontSize: 12, color: HousepitalColors.greyLight),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    'Total: ${_formatFileSize(_documents.fold(0, (sum, d) => sum + (d.fileSizeBytes ?? 0)))}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                        fontSize: 12, color: HousepitalColors.greyLight),
+                  ),
                 ),
               ],
             ),
@@ -302,18 +312,26 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      DateHelper.formatDateShort(doc.uploadedAt),
-                      style: const TextStyle(
-                          fontSize: 11, color: HousepitalColors.greyLight),
+                    Flexible(
+                      child: Text(
+                        DateHelper.formatDateShort(doc.uploadedAt),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 11, color: HousepitalColors.greyLight),
+                      ),
                     ),
                     if (doc.fileSizeBytes != null) ...[
                       const Text(' · ',
                           style: TextStyle(color: HousepitalColors.greyLight)),
-                      Text(
-                        _formatFileSize(doc.fileSizeBytes!),
-                        style: const TextStyle(
-                            fontSize: 11, color: HousepitalColors.greyLight),
+                      Flexible(
+                        child: Text(
+                          _formatFileSize(doc.fileSizeBytes!),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 11, color: HousepitalColors.greyLight),
+                        ),
                       ),
                     ],
                     if (doc.uploadedBy != null) ...[

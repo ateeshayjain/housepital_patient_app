@@ -322,11 +322,15 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   const Icon(Icons.calendar_today_outlined,
                       size: 14, color: HousepitalColors.greyLight),
                   const SizedBox(width: 6),
-                  Text(
-                    DateHelper.formatDate(DateTime.parse(createdAt)),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                  Flexible(
+                    child: Text(
+                      DateHelper.formatDate(DateTime.parse(createdAt)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: HousepitalColors.greyLight,
+                      ),
                     ),
                   ),
                 ],
@@ -334,12 +338,16 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 const Icon(Icons.payment_outlined,
                     size: 14, color: HousepitalColors.greyLight),
                 const SizedBox(width: 6),
-                Text(
-                  DateHelper.formatCurrency(totalAmount),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
+                Flexible(
+                  child: Text(
+                    DateHelper.formatCurrency(totalAmount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: HousepitalColors.black,
+                    ),
                   ),
                 ),
               ],

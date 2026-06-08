@@ -390,10 +390,14 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                         Icon(Icons.attach_file_rounded,
                             size: 20, color: HousepitalColors.orange),
                         SizedBox(width: 8),
-                        Text('Attach Documents',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
+                        Flexible(
+                          child: Text('Attach Documents',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600)),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -574,11 +578,15 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                       color: badgeColor)),
             ),
             const SizedBox(width: 8),
-            Text(groupLabel,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: HousepitalColors.greyLight)),
+            Flexible(
+              child: Text(groupLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: HousepitalColors.greyLight)),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -623,6 +631,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         subtitle: 'Helps us understand the patient\'s current state',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _condition,
             decoration:
                 const InputDecoration(labelText: 'Primary Condition'),
@@ -638,6 +647,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _mobility,
             decoration:
                 const InputDecoration(labelText: 'Mobility Status'),
@@ -701,6 +711,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule & Preference',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _shiftType,
             decoration:
                 const InputDecoration(labelText: 'Shift Type'),
@@ -717,6 +728,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _staffGender,
             decoration: const InputDecoration(
                 labelText: 'Preferred Staff Gender'),
@@ -890,6 +902,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _motherCondition,
             decoration:
                 const InputDecoration(labelText: 'Mother\'s Condition'),
@@ -905,6 +918,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _feedingType,
             decoration: const InputDecoration(labelText: 'Feeding Type'),
             items: const [
@@ -959,6 +973,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
 
       // Staff gender
       DropdownButtonFormField<String>(
+            isExpanded: true,
         initialValue: _staffGender,
         decoration:
             const InputDecoration(labelText: 'Preferred Staff Gender'),
@@ -995,6 +1010,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _numberOfChildren,
             decoration:
                 const InputDecoration(labelText: 'Number of Children'),
@@ -1044,6 +1060,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule & Preference',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _careSchedule,
             decoration:
                 const InputDecoration(labelText: 'Care Schedule'),
@@ -1061,6 +1078,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _staffGender,
             decoration: const InputDecoration(
                 labelText: 'Preferred Staff Gender'),
@@ -1092,6 +1110,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Condition Details',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _physioConditionType,
             decoration:
                 const InputDecoration(labelText: 'Condition Type'),
@@ -1116,6 +1135,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _affectedArea,
             decoration:
                 const InputDecoration(labelText: 'Affected Area'),
@@ -1144,6 +1164,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _currentMobilityLevel,
             decoration: const InputDecoration(
                 labelText: 'Current Mobility Level'),
@@ -1171,6 +1192,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Schedule',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _preferredVisitTime,
             decoration: const InputDecoration(
                 labelText: 'Preferred Visit Time'),
@@ -1206,6 +1228,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'About Your Situation',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _lossType,
             decoration:
                 const InputDecoration(labelText: 'Type of Loss'),
@@ -1228,6 +1251,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _previousCounselling,
             decoration: const InputDecoration(
                 labelText: 'Any Previous Counselling?'),
@@ -1246,6 +1270,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Session Preference',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _sessionFormat,
             decoration: const InputDecoration(
                 labelText: 'Preferred Session Format'),
@@ -1261,6 +1286,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _preferredTiming,
             decoration: const InputDecoration(
                 labelText: 'Preferred Timing'),
@@ -1296,6 +1322,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'About Your Concern',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _primaryConcern,
             decoration:
                 const InputDecoration(labelText: 'Primary Concern'),
@@ -1328,6 +1355,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _currentlyOnMedication,
             decoration: const InputDecoration(
                 labelText: 'Currently on Medication?'),
@@ -1346,6 +1374,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
         title: 'Session Preference',
         children: [
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _psychiatrySessionFormat,
             decoration: const InputDecoration(
                 labelText: 'Preferred Session Format'),

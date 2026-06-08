@@ -23,13 +23,20 @@ class VitalsTrendGrid extends StatelessWidget {
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 2,
+          GridView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 1.6,
+            // Fixed cell HEIGHT (mainAxisExtent) instead of a width-derived
+            // childAspectRatio: the card content (title row + reading + optional
+            // sparkline) has a known minimum height, so deriving height from
+            // width broke on narrow phones / large text. 116px fits the stack
+            // with breathing room on the smallest phone.
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              mainAxisExtent: 116,
+            ),
             children: [
               _vitalCard(context, 'BP', vitals.bp),
               _vitalCard(context, 'SpO2', vitals.spo2),
@@ -65,8 +72,14 @@ class VitalsTrendGrid extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title,
-                    style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                Flexible(
+                  child: Text(title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 12, color: HousepitalColors.greyLight)),
+                ),
+                const SizedBox(width: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -86,6 +99,8 @@ class VitalsTrendGrid extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(card.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             if (card.sparkline.length > 1) ...[

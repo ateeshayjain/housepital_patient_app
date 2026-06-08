@@ -152,22 +152,33 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ),
           const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                widget.service.isSessionBased
-                    ? 'Session ${widget.service.consumedDays} of ${widget.service.totalDays}'
-                    : 'Day ${widget.service.consumedDays} of ${widget.service.totalDays}',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600),
+              Flexible(
+                child: Text(
+                  widget.service.isSessionBased
+                      ? 'Session ${widget.service.consumedDays} of ${widget.service.totalDays}'
+                      : 'Day ${widget.service.consumedDays} of ${widget.service.totalDays}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               if (widget.service.dailyRate != null)
-                Text(
-                  '${DateHelper.formatCurrency(widget.service.dailyRate!)}/day',
-                  style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+                Flexible(
+                  child: Text(
+                    '${DateHelper.formatCurrency(widget.service.dailyRate!)}/day',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13),
+                  ),
                 ),
             ],
           ),
@@ -215,13 +226,22 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   ),
                   title: Row(
                     children: [
-                      Text(staff.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Flexible(
+                        child: Text(staff.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
+                      ),
                       if (staff.isReplacement)
-                        Text(' (Replacement)',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: HousepitalColors.warning)),
+                        Flexible(
+                          child: Text(' (Replacement)',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: HousepitalColors.warning)),
+                        ),
                     ],
                   ),
                   subtitle: Text(
@@ -265,9 +285,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         children: [
           Row(
             children: [
-              const Text('7-Day Attendance',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
+              const Flexible(
+                child: Text('7-Day Attendance',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
               const Spacer(),
               if (widget.service.deploymentIds.isNotEmpty)
                 TextButton(
@@ -297,9 +321,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   dotColor = HousepitalColors.divider;
               }
               final isToday = _isToday(day.date);
-              return Column(
+              return Expanded(
+                child: Column(
                 children: [
                   Text(DateHelper.formatDateShort(day.date),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
                   const SizedBox(height: 4),
                   Container(
@@ -314,6 +342,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     ),
                   ),
                 ],
+              ),
               );
             }).toList(),
           ),
@@ -400,10 +429,22 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey)),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 13, color: HousepitalColors.grey)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );

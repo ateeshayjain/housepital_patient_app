@@ -26,16 +26,25 @@ class CareReportSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(l.t('todays_care_report'),
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700)),
-              const Spacer(),
-              Text(
-                '${report.completedTasks}/${report.totalTasks} tasks, $percent%',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HousepitalColors.orange),
+              Flexible(
+                child: Text(l.t('todays_care_report'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '${report.completedTasks}/${report.totalTasks} tasks, $percent%',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: HousepitalColors.orange),
+                ),
               ),
             ],
           ),
