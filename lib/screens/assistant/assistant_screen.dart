@@ -33,12 +33,20 @@ class _AssistantScreenState extends State<AssistantScreen> {
 
   Future<void> _dial(String number) async {
     final uri = Uri.parse('tel:$number');
+    var launched = false;
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+        launched = await launchUrl(uri);
       }
     } catch (_) {
-      // Dial unavailable (e.g. web / no dialer) — fail silently, never crash.
+      launched = false;
+    }
+    // Apple Design P7 (error prevention) / standard #8: surface failure to the
+    // user instead of failing silently.
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Call nahi lag payi — number: $number')),
+      );
     }
   }
 
@@ -134,22 +142,27 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: const BoxConstraints(maxWidth: 280),
-        decoration: BoxDecoration(
-          color: isUser
-              ? HousepitalColors.orange
-              : HousepitalColors.greyLighter,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: isUser ? Colors.white : HousepitalColors.black,
+    // Accessibility (Apple P6): sender is conveyed by colour + alignment only,
+    // which a screen reader can't perceive — add an explicit label.
+    return Semantics(
+      label: '${isUser ? 'You' : 'Assistant'}: ${message.text}',
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          constraints: const BoxConstraints(maxWidth: 280),
+          decoration: BoxDecoration(
+            color: isUser
+                ? HousepitalColors.orange
+                : HousepitalColors.greyLighter,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            message.text,
+            style: TextStyle(
+              color: isUser ? Colors.white : HousepitalColors.black,
+            ),
           ),
         ),
       ),
@@ -170,7 +183,11 @@ class _ThinkingIndicator extends StatelessWidget {
           SizedBox(
             width: 16,
             height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(HousepitalColors.orange),
+            ),
           ),
           SizedBox(width: 8),
           Text('Soch raha hoon…'),

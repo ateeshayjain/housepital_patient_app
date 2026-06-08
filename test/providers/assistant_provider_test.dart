@@ -176,8 +176,10 @@ void main() {
     expect(p.pendingConfirmation, isNull);
   });
 
-  test('permission-blocked place_call shows blocked bubble, no pending',
+  test('family member place_call creates a pending confirmation (not blocked)',
       () async {
+    // Calling is non-destructive — a family member may call the care team;
+    // confirm-before-dial is the safety control, so a pending action appears.
     service.next = const AssistantResponse(
       action: AssistantAction.placeCall,
       params: {'target': 'health_manager'},
@@ -185,7 +187,7 @@ void main() {
     );
     final p = makeProvider(role: UserRole.familyMember);
     await p.sendText('call');
-    expect(p.pendingConfirmation, isNull);
+    expect(p.pendingConfirmation, isA<CallAction>());
     expect(p.messages.last.text, isNotEmpty);
   });
 

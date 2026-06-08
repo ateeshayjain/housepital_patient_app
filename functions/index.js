@@ -124,7 +124,9 @@ exports.assistant = onRequest(
     }
 
     const body = req.body || {};
-    const text = typeof body.text === "string" ? body.text.trim() : "";
+    // Cap input length — bounds token cost/latency and is a cheap abuse guard.
+    const text =
+        typeof body.text === "string" ? body.text.trim().slice(0, 1000) : "";
     if (!text) {
       res.status(200).json({
         action: "none",
@@ -134,7 +136,17 @@ exports.assistant = onRequest(
       return;
     }
 
-    const role = typeof body.role === "string" ? body.role : "primary_contact";
+    // Validate role against the known set so a caller can't inject arbitrary
+    // text into the prompt. (The app-side executor independently re-checks
+    // permissions against the real role, so this is defence-in-depth.)
+    const KNOWN_ROLES = [
+      "primary_contact",
+      "family_member",
+      "patient_self",
+      "caretaker",
+    ];
+    const rawRole = typeof body.role === "string" ? body.role : "";
+    const role = KNOWN_ROLES.includes(rawRole) ? rawRole : "primary_contact";
     const locale = typeof body.locale === "string" ? body.locale : "hi";
 
     try {

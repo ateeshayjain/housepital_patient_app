@@ -154,18 +154,29 @@ void main() {
       expect(r, isA<Degraded>());
     });
 
-    test('permission gate: FAMILY_MEMBER cannot place_call → Blocked',
+    test('FAMILY_MEMBER CAN place a call (calling is not a managed action)',
         () async {
-      // Calling staff is treated as a managed action gated on edit_patient,
-      // which FAMILY_MEMBER lacks.
+      // Placing a call is non-destructive — any role with app access may call
+      // the care team (confirm-before-dial is the safety control).
       final r = await makeExecutor(role: UserRole.familyMember).execute(
           const AssistantResponse(
         action: AssistantAction.placeCall,
         params: {'target': 'health_manager'},
         replyText: '',
       ));
-      expect(r, isA<Blocked>());
-      expect(r, isNot(isA<RequiresConfirmation>()));
+      expect(r, isA<RequiresConfirmation>());
+    });
+
+    test('SOS call is NEVER blocked, even for a view-only role', () async {
+      // sos has no phone in the test contacts → Degraded (no phone), but it
+      // must NOT be Blocked — emergency calls are never permission-gated.
+      final r = await makeExecutor(role: UserRole.patientSelf).execute(
+          const AssistantResponse(
+        action: AssistantAction.placeCall,
+        params: {'target': 'sos'},
+        replyText: '',
+      ));
+      expect(r, isNot(isA<Blocked>()));
     });
   });
 

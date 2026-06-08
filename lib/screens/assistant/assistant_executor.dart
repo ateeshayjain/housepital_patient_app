@@ -332,6 +332,10 @@ class AssistantExecutor {
 
   Future<ExecutorResult> _dutyDays() async {
     try {
+      // NOTE: reads page 1 of attendance only. A full month fits one page in
+      // practice (≤31 rows), but if the backend page size ever drops below a
+      // month this would undercount — switch to a paginated fetch then. This
+      // is a conversational convenience, not the billing source of truth.
       final history = await api.getAttendanceHistory(patientId);
       final now = DateTime.now();
       final present = history
@@ -349,16 +353,19 @@ class AssistantExecutor {
   }
 
   ExecutorResult _placeCall(Map<String, dynamic> params) {
-    // Permission gate first — calling/managing staff is a managed action.
-    if (!canUserPerform(role, UserAction.editPatient)) {
-      return const Blocked(
-          'Is action ki permission sirf primary contact ke paas hai.');
-    }
-
     final target = params['target'];
     if (target is! String || target.isEmpty) {
       return const Degraded(
           'Kisko call karna hai yeh samajh nahi aaya — menu se try karein.');
+    }
+
+    // Placing a call is not a managed/destructive action — any role with app
+    // access may call the care team, and an SOS/emergency call is NEVER gated.
+    // (Confirm-before-dial below is the safety control.) Only block if the role
+    // somehow lacks even view access, and never for sos.
+    if (target != 'sos' && !canUserPerform(role, UserAction.view)) {
+      return const Blocked(
+          'Is action ki permission abhi available nahi hai.');
     }
 
     final contact = contacts[target];
