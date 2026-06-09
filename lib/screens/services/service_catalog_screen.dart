@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -106,8 +107,8 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
                       top: 4,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: HousepitalColors.error,
+                        decoration: BoxDecoration(
+                          color: context.hc.error,
                           shape: BoxShape.circle,
                         ),
                         child: Text(
@@ -129,7 +130,7 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           labelColor: HousepitalColors.orange,
-          unselectedLabelColor: HousepitalColors.greyLight,
+          unselectedLabelColor: context.hc.greyLight,
           labelStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -140,7 +141,7 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
           ),
           indicatorColor: HousepitalColors.orange,
           indicatorWeight: 3,
-          dividerColor: HousepitalColors.divider,
+          dividerColor: context.hc.divider,
           tabs: const [
             Tab(text: 'Manpower'),
             Tab(text: 'Equipment'),

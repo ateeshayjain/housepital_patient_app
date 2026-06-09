@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../services/api_service.dart';
 import '../../../widgets/common_widgets.dart';
@@ -209,12 +210,12 @@ class _EquipmentTabState extends State<EquipmentTab> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? HousepitalColors.orange
-                        : HousepitalColors.white,
+                        : context.hc.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
                           ? HousepitalColors.orange
-                          : HousepitalColors.divider,
+                          : context.hc.divider,
                     ),
                   ),
                   child: Text(
@@ -223,8 +224,8 @@ class _EquipmentTabState extends State<EquipmentTab> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isSelected
-                          ? HousepitalColors.white
-                          : HousepitalColors.grey,
+                          ? context.hc.white
+                          : context.hc.grey,
                     ),
                   ),
                 ),
@@ -251,7 +252,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
                               Text(s, style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: s == _sortBy ? FontWeight.w600 : FontWeight.w400,
-                                color: s == _sortBy ? HousepitalColors.orange : HousepitalColors.black,
+                                color: s == _sortBy ? HousepitalColors.orange : context.hc.black,
                               )),
                             ],
                           ),
@@ -261,18 +262,18 @@ class _EquipmentTabState extends State<EquipmentTab> {
                   height: 40,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.white,
+                    color: context.hc.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: HousepitalColors.divider),
+                    border: Border.all(color: context.hc.divider),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.sort, size: 16, color: HousepitalColors.grey),
+                      Icon(Icons.sort, size: 16, color: context.hc.grey),
                       const SizedBox(width: 4),
                       Text(
                         _sortBy == 'Relevance' ? 'Sort' : _sortBy.split(':').first.trim(),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: HousepitalColors.grey),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.hc.grey),
                       ),
                     ],
                   ),
@@ -289,9 +290,9 @@ class _EquipmentTabState extends State<EquipmentTab> {
             children: [
               Text(
                 '${filtered.length} items',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
@@ -86,27 +87,27 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     switch (status) {
       case 'pending':
       case 'placed':
-        return HousepitalColors.warning;
+        return context.hc.warning;
       case 'confirmed':
       case 'assigned':
       case 'dispatched':
-        return HousepitalColors.info;
+        return context.hc.info;
       case 'in_progress':
       case 'completed':
       case 'delivered':
-        return HousepitalColors.success;
+        return context.hc.success;
       case 'cancelled':
-        return HousepitalColors.error;
+        return context.hc.error;
       case 'submitted':
       case 'in_review':
-        return HousepitalColors.warning;
+        return context.hc.warning;
       case 'quote_sent':
         return HousepitalColors.orange;
       case 'declined':
       case 'expired':
-        return HousepitalColors.error;
+        return context.hc.error;
       default:
-        return HousepitalColors.greyLight;
+        return context.hc.greyLight;
     }
   }
 
@@ -155,7 +156,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
         bottom: TabBar(
           controller: _tabController,
           labelColor: HousepitalColors.orange,
-          unselectedLabelColor: HousepitalColors.greyLight,
+          unselectedLabelColor: context.hc.greyLight,
           indicatorColor: HousepitalColors.orange,
           tabs: const [
             Tab(text: 'Orders'),
@@ -199,7 +200,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   filter[0].toUpperCase() + filter.substring(1),
                 ),
                 selected: selected,
-                selectedColor: HousepitalColors.orangeLight,
+                selectedColor: context.hc.orangeLight,
                 checkmarkColor: HousepitalColors.orange,
                 onSelected: (_) {
                   setState(() => _orderFilter = filter);
@@ -268,10 +269,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 Expanded(
                   child: Text(
                     orderId,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -279,15 +280,15 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.greyLighter,
+                    color: context.hc.greyLighter,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     orderType.toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -299,9 +300,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             // Items summary
             Text(
               itemsSummary,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: HousepitalColors.grey,
+                color: context.hc.grey,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -319,34 +320,34 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             Row(
               children: [
                 if (createdAt != null) ...[
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 14, color: HousepitalColors.greyLight),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 14, color: context.hc.greyLight),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       DateHelper.formatDate(DateTime.parse(createdAt)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                   ),
                 ],
                 const SizedBox(width: 16),
-                const Icon(Icons.payment_outlined,
-                    size: 14, color: HousepitalColors.greyLight),
+                Icon(Icons.payment_outlined,
+                    size: 14, color: context.hc.greyLight),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     DateHelper.formatCurrency(totalAmount),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -367,7 +368,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   _actionButton(
                     'Cancel',
                     Icons.cancel_outlined,
-                    HousepitalColors.error,
+                    context.hc.error,
                     () => _showCancelDialog(orderId),
                   ),
                 ],
@@ -423,29 +424,29 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Cancel Order',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   orderId,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Reason for cancellation',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -486,7 +487,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                         height: 48,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: HousepitalColors.error,
+                            backgroundColor: context.hc.error,
                           ),
                           onPressed: selectedReason == null
                               ? null
@@ -507,9 +508,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     if (confirmed == true && selectedReason != null && mounted) {
       context.read<OrdersProvider>().cancelOrder(orderId, selectedReason!);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Order cancelled successfully'),
-          backgroundColor: HousepitalColors.success,
+          backgroundColor: context.hc.success,
         ),
       );
     }
@@ -523,24 +524,24 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           Icon(
             Icons.receipt_long_outlined,
             size: 64,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No orders yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Book a service or add equipment to your cart to get started.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
           const SizedBox(height: 24),
@@ -599,10 +600,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 Expanded(
                   child: Text(
                     serviceName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -613,9 +614,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             // Assessment ID
             Text(
               assessmentId,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
               ),
             ),
             const SizedBox(height: 8),
@@ -631,14 +632,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             if (createdAt != null)
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 14, color: HousepitalColors.greyLight),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 14, color: context.hc.greyLight),
                   const SizedBox(width: 6),
                   Text(
                     DateHelper.formatDate(DateTime.parse(createdAt)),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
@@ -648,9 +649,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             // Status message
             Text(
               _assessmentStatusMessage(status),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: HousepitalColors.grey,
+                color: context.hc.grey,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -677,7 +678,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                     label: const Text('Cancel request',
                         style: TextStyle(fontSize: 13)),
                     style: TextButton.styleFrom(
-                      foregroundColor: HousepitalColors.error,
+                      foregroundColor: context.hc.error,
                     ),
                   ),
                 ],
@@ -725,9 +726,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     context.read<OrdersProvider>().cancelAssessment(assessmentId);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Assessment request cancelled'),
-        backgroundColor: HousepitalColors.success,
+        backgroundColor: context.hc.success,
       ),
     );
   }
@@ -759,26 +760,26 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
           Icon(
             Icons.assignment_outlined,
             size: 64,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No pending requests',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               'Request an assessment for nursing, caretaker, or other manpower services.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
               ),
             ),
           ),

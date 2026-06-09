@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/payment_service.dart';
@@ -342,15 +343,15 @@ class _PaymentScreenState extends State<PaymentScreen>
                     height: 120,
                     decoration: BoxDecoration(
                       color: isSuccess
-                          ? HousepitalColors.successLight
-                          : HousepitalColors.errorLight,
+                          ? context.hc.successLight
+                          : context.hc.errorLight,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       isSuccess ? Icons.check_circle : Icons.cancel,
                       color: isSuccess
-                          ? HousepitalColors.success
-                          : HousepitalColors.error,
+                          ? context.hc.success
+                          : context.hc.error,
                       size: 72,
                     ),
                   ),
@@ -366,8 +367,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: isSuccess
-                        ? HousepitalColors.success
-                        : HousepitalColors.error,
+                        ? context.hc.success
+                        : context.hc.error,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -375,10 +376,10 @@ class _PaymentScreenState extends State<PaymentScreen>
                 // Amount
                 Text(
                   DateHelper.formatCurrency(_totalAmount),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -387,9 +388,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Text(
                   widget.description,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -400,16 +401,16 @@ class _PaymentScreenState extends State<PaymentScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.greyLighter,
+                      color: context.hc.greyLighter,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
                         Text(
                           l.t('transaction_id'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -417,10 +418,10 @@ class _PaymentScreenState extends State<PaymentScreen>
                           label: 'Transaction ID: $_transactionId',
                           child: SelectableText(
                             _transactionId!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: HousepitalColors.black,
+                              color: context.hc.black,
                             ),
                           ),
                         ),
@@ -433,15 +434,15 @@ class _PaymentScreenState extends State<PaymentScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.errorLight,
+                      color: context.hc.errorLight,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       _failureMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: HousepitalColors.error,
+                        color: context.hc.error,
                       ),
                     ),
                   ),
@@ -512,8 +513,8 @@ class _PaymentScreenState extends State<PaymentScreen>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
+          gradient: LinearGradient(
+            colors: [HousepitalColors.orange, context.hc.orangeDark],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -568,13 +569,13 @@ class _PaymentScreenState extends State<PaymentScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? HousepitalColors.orangeLight
-                    : HousepitalColors.white,
+                    ? context.hc.orangeLight
+                    : context.hc.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected
                       ? HousepitalColors.orange
-                      : HousepitalColors.divider,
+                      : context.hc.divider,
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -585,7 +586,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     size: 24,
                     color: isSelected
                         ? HousepitalColors.orange
-                        : HousepitalColors.grey,
+                        : context.hc.grey,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -596,8 +597,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.w400,
                         color: isSelected
-                            ? HousepitalColors.orangeText
-                            : HousepitalColors.black,
+                            ? context.hc.orangeText
+                            : context.hc.black,
                       ),
                     ),
                   ),
@@ -624,11 +625,11 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: HousepitalColors.successLight,
+                  color: context.hc.successLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.local_offer,
-                    color: HousepitalColors.success, size: 20),
+                child: Icon(Icons.local_offer,
+                    color: context.hc.success, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -637,17 +638,17 @@ class _PaymentScreenState extends State<PaymentScreen>
                   children: [
                     Text(
                       _appliedCoupon!.code,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.success,
+                        color: context.hc.success,
                       ),
                     ),
                     Text(
                       '${l.t('you_save')} ${DateHelper.formatCurrency(_discountAmount)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.grey,
+                        color: context.hc.grey,
                       ),
                     ),
                   ],
@@ -658,7 +659,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 button: true,
                 child: IconButton(
                   onPressed: _removeCoupon,
-                  icon: const Icon(Icons.close, color: HousepitalColors.greyLight),
+                  icon: Icon(Icons.close, color: context.hc.greyLight),
                   iconSize: 20,
                 ),
               ),
@@ -679,8 +680,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   hintText: l.t('enter_coupon_code'),
-                  prefixIcon: const Icon(Icons.local_offer_outlined,
-                      color: HousepitalColors.greyLight),
+                  prefixIcon: Icon(Icons.local_offer_outlined,
+                      color: context.hc.greyLight),
                   errorText: _couponError,
                 ),
               ),
@@ -723,7 +724,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             _buildPriceRow(
               '${l.t('discount')} (${_appliedCoupon?.code ?? ''})',
               -_discountAmount,
-              valueColor: HousepitalColors.success,
+              valueColor: context.hc.success,
             ),
           ],
           if (gst > 0) ...[
@@ -748,24 +749,24 @@ class _PaymentScreenState extends State<PaymentScreen>
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'GST',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: HousepitalColors.grey,
+                color: context.hc.grey,
               ),
             ),
             const SizedBox(width: 4),
             InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: _showGstExplainer,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(4),
                 child: Icon(
                   Icons.info_outline,
                   size: 16,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                 ),
               ),
             ),
@@ -773,10 +774,10 @@ class _PaymentScreenState extends State<PaymentScreen>
         ),
         Text(
           DateHelper.formatCurrency(gst),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
         ),
       ],
@@ -804,12 +805,12 @@ class _PaymentScreenState extends State<PaymentScreen>
                     TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Healthcare nursing is GST-exempt under Notification 12/2017. '
                 'Equipment carries 18% GST. Lab tests carry 5%. '
                 'Your total GST is the sum of each line item taxed at its own rate.',
                 style: TextStyle(
-                    fontSize: 14, height: 1.4, color: HousepitalColors.grey),
+                    fontSize: 14, height: 1.4, color: context.hc.grey),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -839,7 +840,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           style: TextStyle(
             fontSize: isBold ? 16 : 14,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-            color: isBold ? HousepitalColors.black : HousepitalColors.grey,
+            color: isBold ? context.hc.black : context.hc.grey,
           ),
         ),
         Text(
@@ -847,7 +848,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           style: TextStyle(
             fontSize: isBold ? 18 : 14,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-            color: valueColor ?? HousepitalColors.black,
+            color: valueColor ?? context.hc.black,
           ),
         ),
       ],

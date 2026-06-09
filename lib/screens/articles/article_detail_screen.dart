@@ -3,7 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
 import '../../widgets/common_widgets.dart';
@@ -102,21 +102,21 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   children: [
                     Text(
                       article.category,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('•',
-                        style: TextStyle(color: HousepitalColors.greyLight)),
+                    Text('•',
+                        style: TextStyle(color: context.hc.greyLight)),
                     const SizedBox(width: 8),
                     Text(
                       '${article.readMinutes} min read',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                   ],

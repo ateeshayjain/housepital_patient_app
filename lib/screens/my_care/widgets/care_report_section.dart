@@ -1,5 +1,6 @@
 // lib/screens/my_care/widgets/care_report_section.dart
 import 'package:flutter/material.dart';
+import '../../../config/app_colors.dart';
 import '../../../config/theme.dart';
 import '../../../models/my_care_models.dart';
 import '../../../utils/app_localizations.dart';
@@ -66,10 +67,10 @@ class CareReportSection extends StatelessWidget {
                                       : Icons.radio_button_unchecked,
                               size: 18,
                               color: task.status == 'completed'
-                                  ? HousepitalColors.success
+                                  ? context.hc.success
                                   : task.status == 'in_progress'
                                       ? HousepitalColors.orange
-                                      : HousepitalColors.greyLight,
+                                      : context.hc.greyLight,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -78,8 +79,8 @@ class CareReportSection extends StatelessWidget {
                             ),
                             if (task.completedAt != null)
                               Text(task.completedAt!,
-                                  style: const TextStyle(
-                                      fontSize: 12, color: HousepitalColors.greyLight)),
+                                  style: TextStyle(
+                                      fontSize: 12, color: context.hc.greyLight)),
                           ],
                         ),
                       )),
@@ -88,7 +89,7 @@ class CareReportSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: HousepitalColors.orangeLight,
+                        color: context.hc.orangeLight,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

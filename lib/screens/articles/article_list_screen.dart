@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
 
@@ -58,8 +58,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
   Widget _buildSkeleton() {
     return Shimmer.fromColors(
-      baseColor: HousepitalColors.divider,
-      highlightColor: HousepitalColors.greyLighter,
+      baseColor: context.hc.divider,
+      highlightColor: context.hc.greyLighter,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 5,
@@ -88,7 +88,7 @@ class _ArticleCard extends StatelessWidget {
       label: '${article.title}. ${article.category}. '
           '${article.readMinutes} minute read.',
       child: Material(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -100,7 +100,7 @@ class _ArticleCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: HousepitalColors.divider),
+              border: Border.all(color: context.hc.divider),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,9 +135,9 @@ class _ArticleCard extends StatelessWidget {
                           article.summary,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                       ],
@@ -147,13 +147,13 @@ class _ArticleCard extends StatelessWidget {
                           _CategoryChip(label: article.category),
                           const SizedBox(width: 8),
                           Icon(Icons.schedule,
-                              size: 14, color: HousepitalColors.greyLight),
+                              size: 14, color: context.hc.greyLight),
                           const SizedBox(width: 4),
                           Text(
                             '${article.readMinutes} min read',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: HousepitalColors.greyLight,
+                              color: context.hc.greyLight,
                             ),
                           ),
                         ],
@@ -180,16 +180,16 @@ class _CategoryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: HousepitalColors.background,
+        color: context.hc.background,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w500,
-          color: HousepitalColors.greyLight,
+          color: context.hc.greyLight,
         ),
       ),
     );

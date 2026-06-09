@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_provider.dart';
 import '../../../providers/cart_provider.dart';
@@ -25,7 +26,7 @@ class EquipmentItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       borderRadius: BorderRadius.circular(12),
       elevation: 1,
       shadowColor: Colors.black12,
@@ -43,7 +44,7 @@ class EquipmentItemCard extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: HousepitalColors.orangeLight,
+                    color: context.hc.orangeLight,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: item.imageUrl != null
@@ -76,10 +77,10 @@ class EquipmentItemCard extends StatelessWidget {
                 item.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                   height: 1.2,
                 ),
               ),
@@ -89,9 +90,9 @@ class EquipmentItemCard extends StatelessWidget {
                 item.brand,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                 ),
               ),
               const Spacer(),
@@ -102,26 +103,26 @@ class EquipmentItemCard extends StatelessWidget {
                     children: [
                       Text(
                         DateHelper.formatCurrency(item.mrp!.toInt()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                           decoration: TextDecoration.lineThrough,
-                          decorationColor: HousepitalColors.greyLight,
+                          decorationColor: context.hc.greyLight,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HousepitalColors.successLight,
+                          color: context.hc.successLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: HousepitalColors.success,
+                            color: context.hc.success,
                           ),
                         ),
                       ),
@@ -131,18 +132,18 @@ class EquipmentItemCard extends StatelessWidget {
                 ],
                 Text(
                   DateHelper.formatCurrency(item.price!.toInt()),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: HousepitalColors.orangeText,
+                    color: context.hc.orangeText,
                   ),
                 ),
               ] else
-                const Text(
+                Text(
                   'Price on request',
                   style: TextStyle(
                     fontSize: 11,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -151,13 +152,13 @@ class EquipmentItemCard extends StatelessWidget {
               Row(
                 children: [
                   if (item.availableForRent) ...[
-                    _typeBadge('Rent', HousepitalColors.infoLight,
-                        HousepitalColors.info),
+                    _typeBadge('Rent', context.hc.infoLight,
+                        context.hc.info),
                     const SizedBox(width: 4),
                   ],
                   if (item.availableForSale)
-                    _typeBadge('Buy', HousepitalColors.successLight,
-                        HousepitalColors.success),
+                    _typeBadge('Buy', context.hc.successLight,
+                        context.hc.success),
                 ],
               ),
             ],
@@ -229,7 +230,7 @@ class EquipmentItemCard extends StatelessWidget {
             ..showSnackBar(
               SnackBar(
                 content: Text('${item.name} rental added to cart'),
-                backgroundColor: HousepitalColors.success,
+                backgroundColor: context.hc.success,
                 duration: const Duration(seconds: 2),
                 dismissDirection: DismissDirection.horizontal,
                 action: SnackBarAction(
@@ -254,7 +255,7 @@ class EquipmentItemCard extends StatelessWidget {
           ..showSnackBar(
             SnackBar(
               content: Text('$itemName added to cart'),
-              backgroundColor: HousepitalColors.success,
+              backgroundColor: context.hc.success,
               duration: const Duration(seconds: 2),
               action: SnackBarAction(
                 label: 'View Cart',

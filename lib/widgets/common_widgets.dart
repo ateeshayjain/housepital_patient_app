@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../config/app_colors.dart';
 import '../config/theme.dart';
 
 class HousepitalCard extends StatelessWidget {
@@ -105,22 +106,34 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-/// Vital status with accessible text label (not color-only)
-String _statusLabel(Color statusColor) {
-  if (statusColor == HousepitalColors.vitalNormal || statusColor == HousepitalColors.success) {
+/// Vital status with accessible text label (not color-only).
+/// Compares against BOTH the light and dark palettes, since in dark mode
+/// callers pass the brightened dark status colors.
+String _statusLabel(Color c) {
+  if (c == HousepitalColors.vitalNormal ||
+      c == HousepitalColors.success ||
+      c == HousepitalColorsDark.success) {
     return 'Normal';
-  } else if (statusColor == HousepitalColors.vitalBorderline || statusColor == HousepitalColors.warning) {
+  } else if (c == HousepitalColors.vitalBorderline ||
+      c == HousepitalColors.warning ||
+      c == HousepitalColorsDark.warning) {
     return 'Borderline';
-  } else if (statusColor == HousepitalColors.vitalAlert || statusColor == HousepitalColors.error) {
+  } else if (c == HousepitalColors.vitalAlert ||
+      c == HousepitalColors.error ||
+      c == HousepitalColorsDark.error) {
     return 'Alert';
   }
   return '';
 }
 
-IconData _statusIcon(Color statusColor) {
-  if (statusColor == HousepitalColors.vitalNormal || statusColor == HousepitalColors.success) {
+IconData _statusIcon(Color c) {
+  if (c == HousepitalColors.vitalNormal ||
+      c == HousepitalColors.success ||
+      c == HousepitalColorsDark.success) {
     return Icons.check_circle;
-  } else if (statusColor == HousepitalColors.vitalBorderline || statusColor == HousepitalColors.warning) {
+  } else if (c == HousepitalColors.vitalBorderline ||
+      c == HousepitalColors.warning ||
+      c == HousepitalColorsDark.warning) {
     return Icons.warning_amber_rounded;
   }
   return Icons.error;
@@ -149,7 +162,7 @@ class VitalCard extends StatelessWidget {
       label: '$label: $value ${unit ?? ''}, $status',
       button: onTap != null,
       child: Material(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -159,33 +172,33 @@ class VitalCard extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: HousepitalColors.divider),
+              border: Border.all(color: context.hc.divider),
             ),
             child: Column(
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 if (unit != null)
                   Text(
                     unit!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 const SizedBox(height: 4),
@@ -241,10 +254,10 @@ class SectionHeader extends StatelessWidget {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
           ),
@@ -257,10 +270,10 @@ class SectionHeader extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 child: Text(
                   actionText!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: HousepitalColors.orangeText,
+                    color: context.hc.orangeText,
                   ),
                 ),
               ),
@@ -287,7 +300,7 @@ class LoadingWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               message!,
-              style: const TextStyle(color: HousepitalColors.grey),
+              style: TextStyle(color: context.hc.grey),
             ),
           ],
         ],
@@ -312,9 +325,9 @@ class ErrorRetryWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: HousepitalColors.greyLight),
+          Icon(Icons.error_outline, size: 48, color: context.hc.greyLight),
           const SizedBox(height: 16),
-          Text(message, style: const TextStyle(color: HousepitalColors.grey)),
+          Text(message, style: TextStyle(color: context.hc.grey)),
           const SizedBox(height: 16),
           ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -348,7 +361,7 @@ Future<bool> confirmDestructiveAction(
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: HousepitalColors.error,
+            backgroundColor: context.hc.error,
             foregroundColor: Colors.white,
           ),
           child: Text(confirmLabel),
@@ -391,9 +404,9 @@ class DetailRow extends StatelessWidget {
             width: labelWidth,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
               ),
             ),
           ),
@@ -403,7 +416,7 @@ class DetailRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: valueFontSize,
                 fontWeight: FontWeight.w500,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
           ),

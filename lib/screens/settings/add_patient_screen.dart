@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 // audit batch 4 (Agent I): centralized validators for name + age.
@@ -108,9 +109,9 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text("Patient added. You're now their primary contact."),
-        backgroundColor: HousepitalColors.success,
+        backgroundColor: context.hc.success,
       ),
     );
   }
@@ -153,7 +154,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                 // audit batch 4 (Agent I): 14 → 16 per 8pt grid.
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.orangeLight.withValues(alpha: 0.3),
+                  color: context.hc.orangeLight.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Row(
@@ -249,10 +250,10 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               const Text('Conditions',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Tap a suggestion or type your own',
                 style: TextStyle(
-                    fontSize: 12, color: HousepitalColors.greyLight),
+                    fontSize: 12, color: context.hc.greyLight),
               ),
               const SizedBox(height: 12),
               Row(
@@ -300,7 +301,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                     .map((c) => ActionChip(
                           label: Text(c, style: const TextStyle(fontSize: 12)),
                           onPressed: () => _addCondition(c),
-                          backgroundColor: HousepitalColors.greyLighter,
+                          backgroundColor: context.hc.greyLighter,
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),

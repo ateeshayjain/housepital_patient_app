@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -99,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: HousepitalColors.orangeLight,
+                        backgroundColor: context.hc.orangeLight,
                         backgroundImage: _profilePhotoPath != null
                             ? FileImage(File(_profilePhotoPath!))
                             : null,
@@ -123,12 +124,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             color: HousepitalColors.orange,
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: HousepitalColors.white, width: 2),
+                                color: context.hc.white, width: 2),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.camera_alt,
                             size: 14,
-                            color: HousepitalColors.white,
+                            color: context.hc.white,
                           ),
                         ),
                       ),
@@ -250,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             icon: Icons.logout,
             title: l.t('logout'),
-            textColor: HousepitalColors.error,
+            textColor: context.hc.error,
             onTap: () => _confirmLogout(context),
           ),
         ],
@@ -431,7 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: HousepitalColors.error,
+              backgroundColor: context.hc.error,
             ),
             child: const Text('Logout'),
           ),

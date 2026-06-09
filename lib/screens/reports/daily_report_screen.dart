@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -150,9 +151,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                   errorBuilder: (_, _, _) => Container(
                                     width: 100,
                                     height: 100,
-                                    color: HousepitalColors.greyLighter,
-                                    child: const Icon(Icons.image,
-                                        color: HousepitalColors.greyLight),
+                                    color: context.hc.greyLighter,
+                                    child: Icon(Icons.image,
+                                        color: context.hc.greyLight),
                                   ),
                                 ),
                               );
@@ -169,9 +170,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                         HousepitalCard(
                           child: Text(
                             _report!.staffNotes!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: HousepitalColors.grey,
+                              color: context.hc.grey,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -196,12 +197,12 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                         child: TextButton.icon(
                           onPressed: () =>
                               Navigator.pushNamed(context, '/raise-concern'),
-                          icon: const Icon(Icons.warning_amber,
-                              color: HousepitalColors.warning),
+                          icon: Icon(Icons.warning_amber,
+                              color: context.hc.warning),
                           label: Text(
                             l.t('raise_concern'),
-                            style: const TextStyle(
-                                color: HousepitalColors.warning),
+                            style: TextStyle(
+                                color: context.hc.warning),
                           ),
                         ),
                       ),
@@ -217,10 +218,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final frac = r.totalTasks > 0 ? r.completedTasks / r.totalTasks : 0.0;
     final allDone = r.completedTasks == r.totalTasks && r.totalTasks > 0;
     final ringColor = allDone
-        ? HousepitalColors.success
+        ? context.hc.success
         : frac >= 0.5
-            ? HousepitalColors.warning
-            : HousepitalColors.error;
+            ? context.hc.warning
+            : context.hc.error;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -324,15 +325,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     String sectionStatus;
     switch (section.status) {
       case 'done':
-        sectionColor = HousepitalColors.success;
+        sectionColor = context.hc.success;
         sectionStatus = l.t('done');
         break;
       case 'partial':
-        sectionColor = HousepitalColors.warning;
+        sectionColor = context.hc.warning;
         sectionStatus = l.t('partial');
         break;
       default:
-        sectionColor = HousepitalColors.greyLight;
+        sectionColor = context.hc.greyLight;
         sectionStatus = l.t('pending');
     }
 
@@ -340,9 +341,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -361,10 +362,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                         Expanded(
                           child: Text(
                             section.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black,
+                              color: context.hc.black,
                             ),
                           ),
                         ),
@@ -385,10 +386,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                               : Icons.radio_button_unchecked,
                       size: 18,
                       color: task.completed
-                          ? HousepitalColors.success
+                          ? context.hc.success
                           : task.skipped
-                              ? HousepitalColors.error
-                              : HousepitalColors.greyLight,
+                              ? context.hc.error
+                              : context.hc.greyLight,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -402,8 +403,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: task.skipped
-                                      ? HousepitalColors.greyLight
-                                      : HousepitalColors.black,
+                                      ? context.hc.greyLight
+                                      : context.hc.black,
                                   decoration: task.skipped
                                       ? TextDecoration.lineThrough
                                       : null,
@@ -413,9 +414,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   task.completedAt!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
-                                    color: HousepitalColors.greyLight,
+                                    color: context.hc.greyLight,
                                   ),
                                 ),
                               ],
@@ -426,9 +427,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                               padding: const EdgeInsets.only(top: 2),
                               child: Text(
                                 '"${task.notes}"',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: HousepitalColors.greyLight,
+                                  color: context.hc.greyLight,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
@@ -498,9 +499,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,13 +511,13 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
             const Icon(Icons.medication,
                 size: 20, color: HousepitalColors.orange),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Medication Adherence',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
             ),
@@ -525,8 +526,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                   horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: takenCount == totalCount
-                    ? HousepitalColors.successLight
-                    : HousepitalColors.warningLight,
+                    ? context.hc.successLight
+                    : context.hc.warningLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -535,8 +536,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: takenCount == totalCount
-                      ? HousepitalColors.success
-                      : HousepitalColors.warning,
+                      ? context.hc.success
+                      : context.hc.warning,
                 ),
               ),
             ),
@@ -549,14 +550,14 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                 Row(
                   children: [
                     Icon(timingIcon(entry.key),
-                        size: 16, color: HousepitalColors.greyLight),
+                        size: 16, color: context.hc.greyLight),
                     const SizedBox(width: 6),
                     Text(
                       timingLabel(entry.key),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.grey,
+                        color: context.hc.grey,
                       ),
                     ),
                   ],
@@ -572,8 +573,8 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                 : Icons.radio_button_unchecked,
                             size: 18,
                             color: med.taken
-                                ? HousepitalColors.success
-                                : HousepitalColors.greyLight,
+                                ? context.hc.success
+                                : context.hc.greyLight,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -585,18 +586,18 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                   children: [
                                     Text(
                                       med.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: HousepitalColors.black,
+                                        color: context.hc.black,
                                       ),
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       med.dosage,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color:
-                                            HousepitalColors.greyLight,
+                                            context.hc.greyLight,
                                       ),
                                     ),
                                   ],
@@ -651,9 +652,9 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                                     med.notes!.isNotEmpty)
                                   Text(
                                     med.notes!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: HousepitalColors.greyLight,
+                                      color: context.hc.greyLight,
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),

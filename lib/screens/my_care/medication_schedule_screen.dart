@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
@@ -85,20 +86,20 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: HousepitalColors.successLight,
+            color: context.hc.successLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.successLight),
+            border: Border.all(color: context.hc.successLight),
           ),
           child: Row(
             children: [
-              const Icon(Icons.check_circle, color: HousepitalColors.success, size: 20),
+              Icon(Icons.check_circle, color: context.hc.success, size: 20),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'All medications taken for today!',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.success,
+                  color: context.hc.success,
                 ),
               ),
             ],
@@ -113,9 +114,9 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: HousepitalColors.orangeLight,
+        color: context.hc.orangeLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.orangeLight),
+        border: Border.all(color: context.hc.orangeLight),
       ),
       child: Row(
         children: [
@@ -125,10 +126,10 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
           Expanded(
             child: Text(
               'Next reminder: ${nextReminder.medicationName} ${nextReminder.dosage} at ${_formatSlotTime(nextReminder.time)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.orangeText,
+                color: context.hc.orangeText,
               ),
             ),
           ),
@@ -157,7 +158,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: slot.allGiven
-                      ? HousepitalColors.success
+                      ? context.hc.success
                       : HousepitalColors.orange,
                 ),
               ),
@@ -177,14 +178,14 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     Color bgColor;
     Color borderColor;
     if (isGiven) {
-      bgColor = HousepitalColors.successLight;
-      borderColor = HousepitalColors.successLight;
+      bgColor = context.hc.successLight;
+      borderColor = context.hc.successLight;
     } else if (isMissed) {
-      bgColor = HousepitalColors.errorLight;
-      borderColor = HousepitalColors.errorLight;
+      bgColor = context.hc.errorLight;
+      borderColor = context.hc.errorLight;
     } else {
-      bgColor = HousepitalColors.greyLighter;
-      borderColor = HousepitalColors.divider;
+      bgColor = context.hc.greyLighter;
+      borderColor = context.hc.divider;
     }
 
     return Container(
@@ -205,10 +206,10 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                     : Icons.radio_button_unchecked,
             size: 16,
             color: isGiven
-                ? HousepitalColors.success
+                ? context.hc.success
                 : isMissed
-                    ? HousepitalColors.error
-                    : HousepitalColors.greyLight,
+                    ? context.hc.error
+                    : context.hc.greyLight,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -220,11 +221,11 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: sm.isPast && !isGiven
-                          ? HousepitalColors.greyLight
-                          : HousepitalColors.black,
+                          ? context.hc.greyLight
+                          : context.hc.black,
                     )),
                 Text('${sm.medication.form} · ${sm.medication.instructions ?? ""}',
-                    style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                    style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
               ],
             ),
           ),
@@ -234,17 +235,17 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
               children: [
                 Text(
                     'Given ${DateHelper.formatTime(sm.log!.actualTime ?? sm.log!.scheduledTime)}',
-                    style: const TextStyle(
-                        fontSize: 11, color: HousepitalColors.success)),
+                    style: TextStyle(
+                        fontSize: 11, color: context.hc.success)),
                 if (sm.log!.staffName != null)
                   Text('by ${sm.log!.staffName}',
-                      style: const TextStyle(
-                          fontSize: 11, color: HousepitalColors.greyLight)),
+                      style: TextStyle(
+                          fontSize: 11, color: context.hc.greyLight)),
               ],
             )
           else if (!isGiven && !isMissed)
             Text(l.t('scheduled'),
-                style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
         ],
       ),
     );

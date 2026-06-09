@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -133,14 +134,14 @@ class _NotificationPreferencesScreenState
           : ListView(
               children: [
                 // Toggleable preferences
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Text(
                     'Preferences',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ),
@@ -153,25 +154,25 @@ class _NotificationPreferencesScreenState
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         'Required Notifications',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Icon(Icons.lock, size: 14, color: HousepitalColors.greyLight),
+                      Icon(Icons.lock, size: 14, color: context.hc.greyLight),
                     ],
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     'These notifications cannot be turned off for your safety.',
                     style: TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight),
+                        fontSize: 12, color: context.hc.greyLight),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -248,7 +249,7 @@ class _NotificationPreferencesScreenState
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
       subtitle: Text(pref.subtitle,
           style:
-              const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+              TextStyle(fontSize: 12, color: context.hc.greyLight)),
     );
   }
 
@@ -261,16 +262,16 @@ class _NotificationPreferencesScreenState
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w500)),
           ),
-          const StatusBadge(
+          StatusBadge(
             text: 'Required',
-            color: HousepitalColors.grey,
+            color: context.hc.grey,
             icon: Icons.lock,
           ),
         ],
       ),
       subtitle: Text(pref.subtitle,
           style:
-              const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+              TextStyle(fontSize: 12, color: context.hc.greyLight)),
       trailing: Switch(
         value: true,
         onChanged: null,

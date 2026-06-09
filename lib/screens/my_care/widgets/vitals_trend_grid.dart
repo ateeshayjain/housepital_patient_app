@@ -1,7 +1,7 @@
 // lib/screens/my_care/widgets/vitals_trend_grid.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/my_care_models.dart';
 import '../../../utils/app_localizations.dart';
 
@@ -50,7 +50,7 @@ class VitalsTrendGrid extends StatelessWidget {
   }
 
   Widget _vitalCard(BuildContext context, String title, VitalCard card) {
-    final statusColor = _statusColor(card.status);
+    final statusColor = _statusColor(context, card.status);
 
     return InkWell(
       onTap: () => Navigator.pushNamed(context, '/vitals', arguments: title.toLowerCase()),
@@ -61,10 +61,10 @@ class VitalsTrendGrid extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: card.status == 'critical'
-                ? HousepitalColors.error
-                : HousepitalColors.divider,
+                ? context.hc.error
+                : context.hc.divider,
           ),
-          color: HousepitalColors.white,
+          color: context.hc.white,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,8 +76,8 @@ class VitalsTrendGrid extends StatelessWidget {
                   child: Text(title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12, color: HousepitalColors.greyLight)),
+                      style: TextStyle(
+                          fontSize: 12, color: context.hc.greyLight)),
                 ),
                 const SizedBox(width: 4),
                 Container(
@@ -139,14 +139,14 @@ class VitalsTrendGrid extends StatelessWidget {
     );
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(BuildContext context, String status) {
     switch (status) {
       case 'critical':
-        return HousepitalColors.error;
+        return context.hc.error;
       case 'warning':
-        return HousepitalColors.warning;
+        return context.hc.warning;
       default:
-        return HousepitalColors.success;
+        return context.hc.success;
     }
   }
 }

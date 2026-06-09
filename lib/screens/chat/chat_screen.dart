@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 
 /// In-app chat screen backed by Firestore `chat_messages` collection.
@@ -139,9 +140,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (url == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text("Couldn't send photo. Check your connection and try again."),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
       return;
@@ -196,8 +197,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _isOnline
-                              ? HousepitalColors.success
-                              : HousepitalColors.greyLight,
+                              ? context.hc.success
+                              : context.hc.greyLight,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -206,8 +207,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           color: _isOnline
-                              ? HousepitalColors.success
-                              : HousepitalColors.greyLight,
+                              ? context.hc.success
+                              : context.hc.greyLight,
                         ),
                       ),
                     ],
@@ -249,18 +250,18 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.chat_bubble_outline,
-                    size: 64, color: HousepitalColors.divider),
+                    size: 64, color: context.hc.divider),
                 const SizedBox(height: 12),
                 Text(
                   'No messages yet',
                   style: TextStyle(
-                      fontSize: 16, color: HousepitalColors.greyLight),
+                      fontSize: 16, color: context.hc.greyLight),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Send a message to start the conversation',
                   style: TextStyle(
-                      fontSize: 13, color: HousepitalColors.greyLight),
+                      fontSize: 13, color: context.hc.greyLight),
                 ),
               ],
             ),
@@ -319,7 +320,7 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: _pickAndSendImage,
             icon: const Icon(Icons.photo_outlined),
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
 
           // Text field
@@ -331,9 +332,9 @@ class _ChatScreenState extends State<ChatScreen> {
               minLines: 1,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
-                hintStyle: TextStyle(color: HousepitalColors.greyLight),
+                hintStyle: TextStyle(color: context.hc.greyLight),
                 filled: true,
-                fillColor: HousepitalColors.greyLighter,
+                fillColor: context.hc.greyLighter,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -392,7 +393,7 @@ class _MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSent
               ? HousepitalColors.orange
-              : HousepitalColors.greyLighter,
+              : context.hc.greyLighter,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -410,11 +411,11 @@ class _MessageBubble extends StatelessWidget {
                 height: 140,
                 margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.divider,
+                  color: context.hc.divider,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
-                  child: Icon(Icons.image, color: HousepitalColors.greyLight, size: 40),
+                child: Center(
+                  child: Icon(Icons.image, color: context.hc.greyLight, size: 40),
                 ),
               ),
 
@@ -441,7 +442,7 @@ class _MessageBubble extends StatelessWidget {
                       fontSize: 11,
                       color: isSent
                           ? Colors.white.withValues(alpha: 0.7)
-                          : HousepitalColors.greyLight,
+                          : context.hc.greyLight,
                     ),
                   ),
                 if (isSent) ...[

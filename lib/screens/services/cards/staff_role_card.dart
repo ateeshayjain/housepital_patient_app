@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../config/daimaa_theme.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_provider.dart';
 import '../../../utils/permissions.dart';
@@ -53,7 +54,7 @@ class StaffRoleCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         elevation: 1,
         shadowColor: _isDaiMaa
@@ -91,7 +92,7 @@ class StaffRoleCard extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                     color: _isDaiMaa
                                         ? DaiMaaColors.plum
-                                        : HousepitalColors.black,
+                                        : context.hc.black,
                                   ),
                                 ),
                               ),
@@ -104,9 +105,9 @@ class StaffRoleCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             role.subtitle,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: HousepitalColors.greyLight,
+                              color: context.hc.greyLight,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -119,18 +120,18 @@ class StaffRoleCard extends StatelessWidget {
                               const SizedBox(width: 3),
                               Text(
                                 '${role.rating}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HousepitalColors.grey,
+                                  color: context.hc.grey,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '(${role.reviewCount} reviews)',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: HousepitalColors.greyLight,
+                                  color: context.hc.greyLight,
                                 ),
                               ),
                             ],
@@ -138,8 +139,8 @@ class StaffRoleCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: HousepitalColors.greyLight, size: 22),
+                    Icon(Icons.chevron_right,
+                        color: context.hc.greyLight, size: 22),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -208,18 +209,18 @@ class StaffRoleCard extends StatelessWidget {
                       children: [
                         Text(
                           role.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: HousepitalColors.black,
+                            color: context.hc.black,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           role.subtitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                       ],
@@ -236,18 +237,18 @@ class StaffRoleCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     '${role.rating}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '(${role.reviewCount} reviews)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
@@ -255,12 +256,12 @@ class StaffRoleCard extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Available shifts
-              const Text(
+              Text(
                 'Available Options',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               const SizedBox(height: 8),
@@ -278,12 +279,12 @@ class StaffRoleCard extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Scope of Service — level-based
-              const Text(
+              Text(
                 'Scope of Service',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               const SizedBox(height: 10),
@@ -296,15 +297,15 @@ class StaffRoleCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HousepitalColors.orangeLight,
+                            color: context.hc.orangeLight,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             level.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: HousepitalColors.orangeText,
+                              color: context.hc.orangeText,
                             ),
                           ),
                         ),
@@ -315,19 +316,19 @@ class StaffRoleCard extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Padding(
+                                Padding(
                                   padding: EdgeInsets.only(top: 3),
                                   child: Icon(Icons.check_circle,
                                       size: 16,
-                                      color: HousepitalColors.success),
+                                      color: context.hc.success),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     r,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: HousepitalColors.grey,
+                                      color: context.hc.grey,
                                       height: 1.3,
                                     ),
                                   ),
@@ -347,7 +348,7 @@ class StaffRoleCard extends StatelessWidget {
                                     child: Icon(Icons.cancel,
                                         size: 16,
                                         // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
-                                        color: HousepitalColors.greyLight
+                                        color: context.hc.greyLight
                                             .withValues(alpha: 0.5)),
                                   ),
                                   const SizedBox(width: 10),
@@ -357,7 +358,7 @@ class StaffRoleCard extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 14,
                                         // audit M-19: withOpacity → withValues (deprecated since Flutter 3.27)
-                                        color: HousepitalColors.greyLight
+                                        color: context.hc.greyLight
                                             .withValues(alpha: 0.7),
                                         height: 1.3,
                                       ),
@@ -377,22 +378,22 @@ class StaffRoleCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.successLight,
+                  color: context.hc.successLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Row(
                       children: [
                         Icon(Icons.verified_user,
-                            size: 16, color: HousepitalColors.success),
+                            size: 16, color: context.hc.success),
                         SizedBox(width: 8),
                         Text(
                           'Background verified & Aadhaar checked',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HousepitalColors.success,
+                            color: context.hc.success,
                           ),
                         ),
                       ],
@@ -401,14 +402,14 @@ class StaffRoleCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.shield,
-                            size: 16, color: HousepitalColors.success),
+                            size: 16, color: context.hc.success),
                         SizedBox(width: 8),
                         Text(
                           'Police verification completed',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HousepitalColors.success,
+                            color: context.hc.success,
                           ),
                         ),
                       ],
@@ -417,14 +418,14 @@ class StaffRoleCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.school,
-                            size: 16, color: HousepitalColors.success),
+                            size: 16, color: context.hc.success),
                         SizedBox(width: 8),
                         Text(
                           'Housepital trained & certified',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HousepitalColors.success,
+                            color: context.hc.success,
                           ),
                         ),
                       ],

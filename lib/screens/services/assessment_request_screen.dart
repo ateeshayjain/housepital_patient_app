@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
@@ -353,8 +354,8 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               const SizedBox(height: 4),
               Text(
                 _getFormSubtitle(),
-                style: const TextStyle(
-                    fontSize: 13, color: HousepitalColors.greyLight),
+                style: TextStyle(
+                    fontSize: 13, color: context.hc.greyLight),
               ),
               const SizedBox(height: 20),
 
@@ -378,9 +379,9 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.white,
+                  color: context.hc.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: HousepitalColors.divider),
+                  border: Border.all(color: context.hc.divider),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,11 +402,11 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Upload prescription, discharge summary, or medical reports',
                       style: TextStyle(
                           fontSize: 12,
-                          color: HousepitalColors.greyLight),
+                          color: context.hc.greyLight),
                     ),
                     const SizedBox(height: 14),
 
@@ -478,9 +479,9 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                 _isDaiMaa
                     ? 'Our Dai Maa coordinator will call you within 2 hours at ${DaiMaaColors.phoneDisplay}.'
                     : 'Our care coordinator will call you within 2 hours to discuss details and pricing.',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -523,9 +524,9 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,8 +545,8 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(subtitle,
-                style: const TextStyle(
-                    fontSize: 12, color: HousepitalColors.greyLight)),
+                style: TextStyle(
+                    fontSize: 12, color: context.hc.greyLight)),
           ],
           const SizedBox(height: 14),
           ...children,
@@ -582,10 +583,10 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               child: Text(groupLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.greyLight)),
+                      color: context.hc.greyLight)),
             ),
           ],
         ),
@@ -598,7 +599,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
             return FilterChip(
               label: Text(need),
               selected: isSelected,
-              selectedColor: HousepitalColors.orangeLight,
+              selectedColor: context.hc.orangeLight,
               checkmarkColor: HousepitalColors.orange,
               onSelected: (selected) {
                 setState(() {
@@ -679,21 +680,21 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           _careNeedChipGroup(
             groupLabel: 'Daily care',
             options: _basicCareNeeds,
-            badgeColor: HousepitalColors.success,
+            badgeColor: context.hc.success,
             levelTag: 'BASIC',
           ),
           const SizedBox(height: 14),
           _careNeedChipGroup(
             groupLabel: 'Clinical care',
             options: _advancedCareNeeds,
-            badgeColor: HousepitalColors.warning,
+            badgeColor: context.hc.warning,
             levelTag: 'ADVANCED',
           ),
           const SizedBox(height: 14),
           _careNeedChipGroup(
             groupLabel: 'Critical care',
             options: _criticalCareNeeds,
-            badgeColor: HousepitalColors.error,
+            badgeColor: context.hc.error,
             levelTag: 'CRITICAL',
           ),
         ],
@@ -754,15 +755,15 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     final label = _nurseLevelLabels[recommended]!;
     final desc = _nurseLevelDescriptions[recommended]!;
     final color = recommended == 'critical'
-        ? HousepitalColors.error
+        ? context.hc.error
         : recommended == 'advanced'
-            ? HousepitalColors.warning
-            : HousepitalColors.success;
+            ? context.hc.warning
+            : context.hc.success;
     final bgColor = recommended == 'critical'
-        ? HousepitalColors.errorLight
+        ? context.hc.errorLight
         : recommended == 'advanced'
-            ? HousepitalColors.warningLight
-            : HousepitalColors.successLight;
+            ? context.hc.warningLight
+            : context.hc.successLight;
 
     // Check if the service they tapped is a lower level than recommended
     final serviceId = widget.service.id;
@@ -817,24 +818,24 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: HousepitalColors.warningLight,
+              color: context.hc.warningLight,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: HousepitalColors.warning.withValues(alpha: 0.4)),
+                  color: context.hc.warning.withValues(alpha: 0.4)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        size: 18, color: HousepitalColors.warning),
+                    Icon(Icons.warning_amber_rounded,
+                        size: 18, color: context.hc.warning),
                     const SizedBox(width: 8),
                     Text('A ${_nurseLevelLabels[tappedLevel]} cannot do:',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.warning,
+                          color: context.hc.warning,
                         )),
                   ],
                 ),
@@ -852,24 +853,24 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Row(
                             children: [
-                              const Icon(Icons.close,
+                              Icon(Icons.close,
                                   size: 14,
-                                  color: HousepitalColors.error),
+                                  color: context.hc.error),
                               const SizedBox(width: 8),
                               Text(item,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 13,
-                                      color: HousepitalColors.grey)),
+                                      color: context.hc.grey)),
                             ],
                           ),
                         )),
                 const SizedBox(height: 6),
                 Text(
                   'We recommend upgrading to $label for the care you need.',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                       fontStyle: FontStyle.italic),
                 ),
               ],
@@ -946,7 +947,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               return FilterChip(
                 label: Text(need),
                 selected: isSelected,
-                selectedColor: HousepitalColors.orangeLight,
+                selectedColor: context.hc.orangeLight,
                 checkmarkColor: HousepitalColors.orange,
                 onSelected: (selected) {
                   setState(() {
@@ -1039,7 +1040,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               return FilterChip(
                 label: Text(activity),
                 selected: isSelected,
-                selectedColor: HousepitalColors.orangeLight,
+                selectedColor: context.hc.orangeLight,
                 checkmarkColor: HousepitalColors.orange,
                 onSelected: (selected) {
                   setState(() {
@@ -1417,8 +1418,8 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               : 'Select date',
           style: TextStyle(
             color: _startDate != null
-                ? HousepitalColors.black
-                : HousepitalColors.greyLight,
+                ? context.hc.black
+                : context.hc.greyLight,
           ),
         ),
       ),
@@ -1431,18 +1432,18 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     // Validate start date
     if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Please select a preferred start date'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
       return;
     }
     if (_startDate!.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Start date must be in the future'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
       return;
@@ -1468,7 +1469,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           // on dark dialog surfaces.
           color: _isDaiMaa
               ? daiMaaAccent(context)
-              : HousepitalColors.success,
+              : context.hc.success,
           size: 48,
         ),
         title: Text(l.t('concern_submitted')),

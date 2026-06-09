@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
@@ -369,7 +370,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HousepitalColors.background,
+      backgroundColor: context.hc.background,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(),
@@ -409,8 +410,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     return SliverAppBar(
       expandedHeight: 280,
       pinned: true,
-      backgroundColor: HousepitalColors.white,
-      foregroundColor: HousepitalColors.black,
+      backgroundColor: context.hc.white,
+      foregroundColor: context.hc.black,
       elevation: 0,
       actions: [
         IconButton(
@@ -441,7 +442,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             return GestureDetector(
               onTap: () => _openFullScreenImage(index),
               child: Container(
-                color: HousepitalColors.background,
+                color: context.hc.background,
                 child: images[index].startsWith('assets/')
                     ? Image.asset(
                         images[index],
@@ -510,7 +511,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   decoration: BoxDecoration(
                     color: isActive
                         ? HousepitalColors.orange
-                        : HousepitalColors.grey.withValues(alpha: 0.3),
+                        : context.hc.grey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -523,14 +524,14 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   Widget _buildPlaceholderHero() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            HousepitalColors.orangeLight,
+            context.hc.orangeLight,
             Color(0xFFFFE0B2),
-            HousepitalColors.white,
+            context.hc.white,
           ],
           stops: [0.0, 0.5, 1.0],
         ),
@@ -543,7 +544,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: HousepitalColors.white,
+                color: context.hc.white,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -614,7 +615,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   Widget _buildProductInfoSection() {
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,10 +623,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           // Name
           Text(
             _name,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: HousepitalColors.black,
+              color: context.hc.black,
               height: 1.3,
             ),
           ),
@@ -634,10 +635,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           // Brand / subcategory
           Text(
             _brand,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
           const SizedBox(height: 14),
@@ -648,22 +649,22 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               if (_canRent)
                 _AvailabilityBadge(
                   label: 'Rent',
-                  color: HousepitalColors.info,
-                  bgColor: HousepitalColors.infoLight,
+                  color: context.hc.info,
+                  bgColor: context.hc.infoLight,
                 ),
               if (_canRent && _canBuy) const SizedBox(width: 8),
               if (_canBuy)
                 _AvailabilityBadge(
                   label: 'Buy',
-                  color: HousepitalColors.success,
-                  bgColor: HousepitalColors.successLight,
+                  color: context.hc.success,
+                  bgColor: context.hc.successLight,
                 ),
               if (_catalogItem?.needsAssessment == true) ...[
                 const SizedBox(width: 8),
                 _AvailabilityBadge(
                   label: 'Assessment Required',
-                  color: HousepitalColors.warning,
-                  bgColor: HousepitalColors.warningLight,
+                  color: context.hc.warning,
+                  bgColor: context.hc.warningLight,
                 ),
               ],
             ],
@@ -685,20 +686,20 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: HousepitalColors.orangeLight,
+          color: context.hc.orangeLight,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.phone_outlined, size: 16, color: HousepitalColors.orangeText),
+            Icon(Icons.phone_outlined, size: 16, color: context.hc.orangeText),
             SizedBox(width: 8),
             Text(
               'Contact for pricing',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.orangeText,
+                color: context.hc.orangeText,
               ),
             ),
           ],
@@ -721,22 +722,22 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
           if (hasMrp) ...[
             Text(
               DateHelper.formatCurrency(_catalogItem!.mrp!.round()),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
                 decoration: TextDecoration.lineThrough,
-                decorationColor: HousepitalColors.greyLight,
+                decorationColor: context.hc.greyLight,
               ),
             ),
             const SizedBox(width: 8),
           ],
           Text(
             _priceText!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: HousepitalColors.orangeText,
+              color: context.hc.orangeText,
             ),
           ),
           if (hasMrp && discountPct > 0) ...[
@@ -744,15 +745,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: HousepitalColors.successLight,
+                color: context.hc.successLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$discountPct% off',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.success,
+                  color: context.hc.success,
                 ),
               ),
             ),
@@ -760,7 +761,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
         ],
         if (hasBuyPrice && hasRentPrice) ...[
           const SizedBox(width: 16),
-          Container(height: 24, width: 1, color: HousepitalColors.divider),
+          Container(height: 24, width: 1, color: context.hc.divider),
           const SizedBox(width: 16),
         ],
         if (hasRentPrice)
@@ -768,11 +769,11 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (hasBuyPrice)
-                const Text(
+                Text(
                   'or rent at',
                   style: TextStyle(
                     fontSize: 11,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                 ),
               Text(
@@ -780,7 +781,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 style: TextStyle(
                   fontSize: hasBuyPrice ? 16 : 24,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.info,
+                  color: context.hc.info,
                 ),
               ),
             ],
@@ -794,7 +795,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
   Widget _buildDescriptionSection() {
     final isLong = _description!.length > 200;
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,9 +806,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             _description!,
             maxLines: _descriptionExpanded ? null : 3,
             overflow: _descriptionExpanded ? null : TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: HousepitalColors.grey,
+              color: context.hc.grey,
               height: 1.6,
             ),
           ),
@@ -849,22 +850,22 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: HousepitalColors.successLight,
+                    color: context.hc.successLight,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check,
                     size: 14,
-                    color: HousepitalColors.success,
+                    color: context.hc.success,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     feature,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                       height: 1.5,
                     ),
                   ),
@@ -889,15 +890,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 18, color: HousepitalColors.success),
+                Icon(Icons.check_circle_outline,
+                    size: 18, color: context.hc.success),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     item,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                       height: 1.4,
                     ),
                   ),
@@ -928,9 +929,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 Expanded(
                   child: Text(
                     item,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                       height: 1.4,
                     ),
                   ),
@@ -945,7 +946,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
 
   Widget _buildDeliveryPromiseRow() {
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Row(
         children: const [
@@ -979,7 +980,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     final entries = specs.entries.toList();
 
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -994,8 +995,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 final isEven = index % 2 == 0;
                 return Container(
                   color: isEven
-                      ? HousepitalColors.greyLighter
-                      : HousepitalColors.white,
+                      ? context.hc.greyLighter
+                      : context.hc.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
@@ -1004,10 +1005,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         width: 120,
                         child: Text(
                           entry.key,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                       ),
@@ -1015,10 +1016,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       Expanded(
                         child: Text(
                           entry.value,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: HousepitalColors.black,
+                            color: context.hc.black,
                           ),
                         ),
                       ),
@@ -1053,16 +1054,16 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 height: 24,
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.orangeLight,
+                  color: context.hc.orangeLight,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Text(
                     '${i + 1}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                 ),
@@ -1071,9 +1072,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               Expanded(
                 child: Text(
                   steps[i],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: HousepitalColors.grey,
+                    color: context.hc.grey,
                     height: 1.5,
                   ),
                 ),
@@ -1101,10 +1102,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             children: [
               Text(
                 '${i + 1}. ${faq.question}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               const SizedBox(height: 6),
@@ -1112,9 +1113,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 padding: const EdgeInsets.only(left: 16),
                 child: Text(
                   faq.answer,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                     height: 1.5,
                   ),
                 ),
@@ -1142,7 +1143,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     }
 
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1170,7 +1171,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 children: [
                   Text(
                     avgRating.toStringAsFixed(1),
-                    style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: HousepitalColors.black),
+                    style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: context.hc.black),
                   ),
                   Row(
                     children: List.generate(5, (i) => Icon(
@@ -1182,7 +1183,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '${_reviews.length} reviews',
-                    style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                    style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                   ),
                 ],
               ),
@@ -1196,7 +1197,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         children: [
-                          Text('$star', style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
+                          Text('$star', style: TextStyle(fontSize: 12, color: context.hc.grey)),
                           const Icon(Icons.star, size: 12, color: HousepitalColors.orange),
                           const SizedBox(width: 8),
                           Expanded(
@@ -1204,7 +1205,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: pct,
-                                backgroundColor: HousepitalColors.greyLighter,
+                                backgroundColor: context.hc.greyLighter,
                                 color: HousepitalColors.orange,
                                 minHeight: 8,
                               ),
@@ -1215,7 +1216,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                             width: 32,
                             child: Text(
                               '${(pct * 100).round()}%',
-                              style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                              style: TextStyle(fontSize: 11, color: context.hc.greyLight),
                             ),
                           ),
                         ],
@@ -1243,7 +1244,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.background,
+          color: context.hc.background,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -1253,10 +1254,10 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: HousepitalColors.orangeLight,
-                  child: Text(initials, style: const TextStyle(
+                  backgroundColor: context.hc.orangeLight,
+                  child: Text(initials, style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: HousepitalColors.orangeText,
+                    color: context.hc.orangeText,
                     fontSize: 14,
                   )),
                 ),
@@ -1265,12 +1266,12 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(review.userName, style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black,
+                      Text(review.userName, style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black,
                       )),
                       Text(
                         '${review.date.day}/${review.date.month}/${review.date.year}',
-                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                        style: TextStyle(fontSize: 11, color: context.hc.greyLight),
                       ),
                     ],
                   ),
@@ -1288,7 +1289,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               const SizedBox(height: 10),
               Text(
                 review.text!,
-                style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.5),
+                style: TextStyle(fontSize: 13, color: context.hc.grey, height: 1.5),
               ),
             ],
           ],
@@ -1312,8 +1313,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Write a Review', style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: HousepitalColors.black,
+              Text('Write a Review', style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.black,
               )),
               const SizedBox(height: 16),
               // Star selector
@@ -1381,7 +1382,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HousepitalColors.orange,
-                    foregroundColor: HousepitalColors.white,
+                    foregroundColor: context.hc.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Submit Review', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1424,7 +1425,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -1443,8 +1444,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Rental Duration',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.grey)),
+                  Text('Rental Duration',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.grey)),
                   const SizedBox(height: 8),
                   Row(
                     children: [1, 3, 6, 12].map((months) {
@@ -1454,14 +1455,14 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         child: ChoiceChip(
                           label: Text('$months ${months == 1 ? "mo" : "mo"}'),
                           selected: isSelected,
-                          selectedColor: HousepitalColors.orangeLight,
+                          selectedColor: context.hc.orangeLight,
                           labelStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? HousepitalColors.orange : HousepitalColors.grey,
+                            color: isSelected ? HousepitalColors.orange : context.hc.grey,
                           ),
                           side: BorderSide(
-                            color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                            color: isSelected ? HousepitalColors.orange : context.hc.divider,
                           ),
                           onSelected: (_) => setState(() => _selectedRentalMonths = months),
                         ),
@@ -1472,7 +1473,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                     const SizedBox(height: 6),
                     Text(
                       '${DateHelper.formatCurrency(_catalogItem!.rentalPrice!.toInt())}/mo x $_selectedRentalMonths = ${DateHelper.formatCurrency((_catalogItem!.rentalPrice! * _selectedRentalMonths).toInt())}',
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                      style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                     ),
                   ],
                 ],
@@ -1488,19 +1489,19 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   icon: const Icon(Icons.bookmark_border, size: 16),
                   label: const Text('Save for Later'),
                   style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.greyLight,
+                    foregroundColor: context.hc.greyLight,
                     textStyle: const TextStyle(fontSize: 13),
                   ),
                 ),
               ),
             if (_showSavedConfirmation)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
                   '✓ Saved for later',
                   style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.success,
+                    color: context.hc.success,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1515,8 +1516,8 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                   icon: const Icon(Icons.phone_outlined, size: 18),
                   label: const Text('Price on request \u2014 contact us'),
                   style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: HousepitalColors.divider,
-                    disabledForegroundColor: HousepitalColors.greyLight,
+                    disabledBackgroundColor: context.hc.divider,
+                    disabledForegroundColor: context.hc.greyLight,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1534,13 +1535,13 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       child: _showAddedConfirmation
                           ? OutlinedButton.icon(
                               onPressed: null,
-                              icon: const Icon(Icons.check_circle, size: 18,
-                                  color: HousepitalColors.success),
-                              label: const Text('Added!',
-                                  style: TextStyle(color: HousepitalColors.success)),
+                              icon: Icon(Icons.check_circle, size: 18,
+                                  color: context.hc.success),
+                              label: Text('Added!',
+                                  style: TextStyle(color: context.hc.success)),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                    color: HousepitalColors.success, width: 1.5),
+                                side: BorderSide(
+                                    color: context.hc.success, width: 1.5),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -1556,9 +1557,9 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                                   icon: const Icon(Icons.shopping_cart, size: 18),
                                   label: const Text('Go to Cart'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: HousepitalColors.success,
-                                    side: const BorderSide(
-                                        color: HousepitalColors.success, width: 1.5),
+                                    foregroundColor: context.hc.success,
+                                    side: BorderSide(
+                                        color: context.hc.success, width: 1.5),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -1613,7 +1614,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HousepitalColors.orange,
-                          foregroundColor: HousepitalColors.white,
+                          foregroundColor: context.hc.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1645,7 +1646,7 @@ class _SectionDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(height: 8, color: HousepitalColors.background);
+    return Container(height: 8, color: context.hc.background);
   }
 }
 
@@ -1657,10 +1658,10 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w700,
-        color: HousepitalColors.black,
+        color: context.hc.black,
         letterSpacing: -0.2,
       ),
     );
@@ -1722,7 +1723,7 @@ class _CollapsibleSectionState extends State<_CollapsibleSection>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: HousepitalColors.white,
+      color: context.hc.white,
       child: Column(
         children: [
           InkWell(
@@ -1736,10 +1737,10 @@ class _CollapsibleSectionState extends State<_CollapsibleSection>
                   Expanded(
                     child: Text(
                       widget.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -1819,19 +1820,19 @@ class _DeliveryPromiseItem extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: HousepitalColors.successLight,
+            color: context.hc.successLight,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 22, color: HousepitalColors.success),
+          child: Icon(icon, size: 22, color: context.hc.success),
         ),
         const SizedBox(height: 8),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: HousepitalColors.grey,
+            color: context.hc.grey,
             height: 1.3,
           ),
         ),

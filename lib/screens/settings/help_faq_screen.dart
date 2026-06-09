@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 
 class _FaqItem {
   final String question;
@@ -204,7 +205,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                     : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: HousepitalColors.divider),
+                  borderSide: BorderSide(color: context.hc.divider),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
@@ -228,14 +229,14 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                     cat,
                     style: TextStyle(
                       fontSize: 12,
-                      color: selected ? Colors.white : HousepitalColors.grey,
+                      color: selected ? Colors.white : context.hc.grey,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
                   selected: selected,
                   selectedColor: HousepitalColors.orange,
-                  backgroundColor: HousepitalColors.greyLighter,
+                  backgroundColor: context.hc.greyLighter,
                   checkmarkColor: Colors.white,
                   onSelected: (_) =>
                       setState(() => _selectedCategory = cat),
@@ -253,11 +254,11 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.search_off,
-                            size: 48, color: HousepitalColors.greyLight),
+                            size: 48, color: context.hc.greyLight),
                         const SizedBox(height: 12),
-                        const Text('No matching questions found',
+                        Text('No matching questions found',
                             style: TextStyle(
-                                color: HousepitalColors.greyLight)),
+                                color: context.hc.greyLight)),
                       ],
                     ),
                   )
@@ -284,7 +285,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: HousepitalColors.divider),
+        side: BorderSide(color: context.hc.divider),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -298,7 +299,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
         leading: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: HousepitalColors.orangeLight,
+            color: context.hc.orangeLight,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -312,9 +313,9 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
         children: [
           Text(
             faq.answer,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
-                color: HousepitalColors.grey,
+                color: context.hc.grey,
                 height: 1.5),
           ),
         ],
@@ -334,10 +335,10 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Contact our support team',
             style:
-                TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+                TextStyle(fontSize: 13, color: context.hc.greyLight),
           ),
           const SizedBox(height: 16),
           Row(
@@ -346,13 +347,13 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
               _contactButton(
                 icon: Icons.phone,
                 label: 'Call',
-                color: HousepitalColors.success,
+                color: context.hc.success,
                 onTap: () => _launchUrl('tel:+919999999999'),
               ),
               _contactButton(
                 icon: Icons.email,
                 label: 'Email',
-                color: HousepitalColors.info,
+                color: context.hc.info,
                 onTap: () => _launchUrl('mailto:wecare@housepital.in'),
               ),
               _contactButton(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
 // audit batch 4 (Agent I): centralized validators replace inline regex check.
@@ -98,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: HousepitalColors.orangeLight,
+                            color: context.hc.orangeLight,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Icon(
@@ -119,9 +120,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 4),
                         Text(
                           l.t('tagline'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: HousepitalColors.grey,
+                            color: context.hc.grey,
                           ),
                         ),
                       ],
@@ -132,18 +133,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   Text(
                     l.t('login_title'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     l.t('login_subtitle'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -158,9 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: l.t('phone_label'),
                       hintText: l.t('phone_hint'),
                       prefixText: '+91 ',
-                      prefixStyle: const TextStyle(
+                      prefixStyle: TextStyle(
                         fontSize: 16,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                       ),
                       counterText: '',
                     ),
@@ -199,9 +200,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.only(top: 12),
                                 child: RichText(
                                   text: TextSpan(
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: HousepitalColors.grey,
+                                      color: context.hc.grey,
                                       height: 1.4,
                                     ),
                                     children: [
@@ -261,8 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Text(
                         auth.errorMessage!,
-                        style: const TextStyle(
-                          color: HousepitalColors.error,
+                        style: TextStyle(
+                          color: context.hc.error,
                           fontSize: 14,
                         ),
                       ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -280,9 +281,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       await context.read<AppProvider>().apiService.updatePatient(patient.id, updates);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Profile updated successfully'),
-          backgroundColor: HousepitalColors.success,
+          backgroundColor: context.hc.success,
         ),
       );
       Navigator.pop(context);
@@ -291,15 +292,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save: ${e.message}'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Something went wrong. Please try again.'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
     } finally {
@@ -351,19 +352,19 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.infoLight,
+                    color: context.hc.infoLight,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.lock_outline,
-                          size: 18, color: HousepitalColors.info),
+                          size: 18, color: context.hc.info),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'View only — only the primary contact can edit this profile.',
                           style: TextStyle(
-                              fontSize: 13, color: HousepitalColors.info),
+                              fontSize: 13, color: context.hc.info),
                         ),
                       ),
                     ],
@@ -381,7 +382,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 48,
-                        backgroundColor: HousepitalColors.orangeLight,
+                        backgroundColor: context.hc.orangeLight,
                         backgroundImage: _profilePhotoPath != null
                             ? FileImage(File(_profilePhotoPath!))
                             : null,
@@ -407,12 +408,12 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                             color: HousepitalColors.orange,
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: HousepitalColors.white, width: 2),
+                                color: context.hc.white, width: 2),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.camera_alt,
                             size: 16,
-                            color: HousepitalColors.white,
+                            color: context.hc.white,
                           ),
                         ),
                       ),
@@ -551,9 +552,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.white,
+                    color: context.hc.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: HousepitalColors.divider),
+                    border: Border.all(color: context.hc.divider),
                   ),
                   child: Column(
                     children: [
@@ -562,16 +563,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                           Expanded(
                             child: Text(
                               'Contact ${index + 1}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w500,
-                                color: HousepitalColors.grey,
+                                color: context.hc.grey,
                               ),
                             ),
                           ),
                           IconButton(
                             onPressed: () => _removeEmergencyContact(index),
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: HousepitalColors.error, size: 20),
+                            icon: Icon(Icons.remove_circle_outline,
+                                color: context.hc.error, size: 20),
                             constraints: const BoxConstraints(),
                             padding: EdgeInsets.zero,
                           ),
@@ -698,9 +699,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.white,
+                    color: context.hc.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: HousepitalColors.divider),
+                    border: Border.all(color: context.hc.divider),
                   ),
                   child: Column(
                     children: [
@@ -709,16 +710,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                           Expanded(
                             child: Text(
                               'Medication ${index + 1}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w500,
-                                color: HousepitalColors.grey,
+                                color: context.hc.grey,
                               ),
                             ),
                           ),
                           IconButton(
                             onPressed: () => _removeMedication(index),
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: HousepitalColors.error, size: 20),
+                            icon: Icon(Icons.remove_circle_outline,
+                                color: context.hc.error, size: 20),
                             constraints: const BoxConstraints(),
                             padding: EdgeInsets.zero,
                           ),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
-import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -89,7 +89,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
         actions: [
           if (isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: HousepitalColors.error),
+              icon: Icon(Icons.delete_outline, color: context.hc.error),
               onPressed: () => _confirmDelete(medProv, l),
             ),
         ],

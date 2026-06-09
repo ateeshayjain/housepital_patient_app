@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
 import '../../../widgets/common_widgets.dart';
@@ -25,7 +26,7 @@ class ConsultationCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         elevation: 1,
         shadowColor: Colors.black12,
@@ -47,10 +48,10 @@ class ConsultationCard extends StatelessWidget {
                     children: [
                       Text(
                         service.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
+                          color: context.hc.black,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -58,9 +59,9 @@ class ConsultationCard extends StatelessWidget {
                         service.description ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                           height: 1.3,
                         ),
                       ),
@@ -72,36 +73,36 @@ class ConsultationCard extends StatelessWidget {
                           // instead (user rule: caretaker/nursing/japa/nanny
                           // pricing is conversation-gated).
                           if (service.category == 'manpower')
-                            const Text(
+                            Text(
                               'Price on assessment',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: HousepitalColors.orangeText,
+                                color: context.hc.orangeText,
                               ),
                             )
                           else if (service.basePriceMin != null)
                             Text(
                               'From ${DateHelper.formatCurrency(service.basePriceMin!)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: HousepitalColors.orangeText,
+                                color: context.hc.orangeText,
                               ),
                             ),
                           const Spacer(),
                           if (service.durationMinutes != null)
                             Row(
                               children: [
-                                const Icon(Icons.schedule,
+                                Icon(Icons.schedule,
                                     size: 14,
-                                    color: HousepitalColors.greyLight),
+                                    color: context.hc.greyLight),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${service.durationMinutes} min',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: HousepitalColors.greyLight,
+                                    color: context.hc.greyLight,
                                   ),
                                 ),
                               ],
@@ -112,8 +113,8 @@ class ConsultationCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right,
-                    color: HousepitalColors.greyLight),
+                Icon(Icons.chevron_right,
+                    color: context.hc.greyLight),
               ],
             ),
           ),

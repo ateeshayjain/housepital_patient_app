@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 
 class StaffReplacementScreen extends StatefulWidget {
@@ -57,15 +58,15 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HousepitalColors.white,
+                color: context.hc.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HousepitalColors.divider),
+                border: Border.all(color: context.hc.divider),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: HousepitalColors.orangeLight,
+                    backgroundColor: context.hc.orangeLight,
                     backgroundImage: widget.staffPhoto != null
                         ? NetworkImage(widget.staffPhoto!)
                         : null,
@@ -84,8 +85,8 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
                         const SizedBox(height: 4),
                         Text(
                           widget.staffRole.replaceAll('_', ' ').toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 12, color: HousepitalColors.greyLight,
+                          style: TextStyle(
+                            fontSize: 12, color: context.hc.greyLight,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -93,7 +94,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
                           const SizedBox(height: 2),
                           Text(
                             'Assigned since ${widget.assignedSince!.day}/${widget.assignedSince!.month}/${widget.assignedSince!.year}',
-                            style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                            style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                           ),
                         ],
                       ],
@@ -131,7 +132,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
                 return ChoiceChip(
                   label: Text(g),
                   selected: isSelected,
-                  selectedColor: HousepitalColors.orangeLight,
+                  selectedColor: context.hc.orangeLight,
                   onSelected: (_) => setState(() => _preferredGender = g),
                 );
               }).toList(),
@@ -160,8 +161,8 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
                 onPressed: _reason != null && !_isSubmitting ? _submitRequest : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
-                  disabledBackgroundColor: HousepitalColors.greyLighter,
+                  foregroundColor: context.hc.white,
+                  disabledBackgroundColor: context.hc.greyLighter,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSubmitting
@@ -195,7 +196,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
-            icon: const Icon(Icons.check_circle, size: 48, color: HousepitalColors.success),
+            icon: Icon(Icons.check_circle, size: 48, color: context.hc.success),
             title: const Text('Request Submitted'),
             content: const Text(
               'We\'ll assign a new professional within 24 hours. '

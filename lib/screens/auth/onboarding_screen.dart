@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/constants.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/validators.dart';
@@ -98,9 +99,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     title: Text(l.t('enable_notifications')),
                     subtitle: Text(
                       l.t('notifications_benefit'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                     value: _enableNotifications,
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       auth.errorMessage!,
-                      style: const TextStyle(color: HousepitalColors.error),
+                      style: TextStyle(color: context.hc.error),
                     ),
                   ),
 

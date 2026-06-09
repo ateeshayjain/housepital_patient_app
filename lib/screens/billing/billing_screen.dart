@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
@@ -81,7 +82,7 @@ class _BillingScreenState extends State<BillingScreen> {
         'category': 'Services',
         'amount': serviceSpend,
         'icon': Icons.medical_services,
-        'color': HousepitalColors.info,
+        'color': context.hc.info,
       });
     }
     if (equipmentSpend > 0) {
@@ -89,7 +90,7 @@ class _BillingScreenState extends State<BillingScreen> {
         'category': 'Equipment',
         'amount': equipmentSpend,
         'icon': Icons.inventory_2,
-        'color': HousepitalColors.warning,
+        'color': context.hc.warning,
       });
     }
     return result;
@@ -114,9 +115,9 @@ class _BillingScreenState extends State<BillingScreen> {
         actions: [
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, '/transactions'),
-            icon: const Icon(Icons.receipt_long, size: 18, color: HousepitalColors.orangeText),
+            icon: Icon(Icons.receipt_long, size: 18, color: context.hc.orangeText),
             label: Text(l.t('transaction_history'),
-                style: const TextStyle(color: HousepitalColors.orangeText, fontSize: 13)),
+                style: TextStyle(color: context.hc.orangeText, fontSize: 13)),
           ),
         ],
       ),
@@ -164,10 +165,10 @@ class _BillingScreenState extends State<BillingScreen> {
                         children: [
                           Text(
                             _filter == 'all' ? l.t('all') : _filter[0].toUpperCase() + _filter.substring(1),
-                            style: const TextStyle(
-                                fontSize: 13, color: HousepitalColors.orangeText, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                fontSize: 13, color: context.hc.orangeText, fontWeight: FontWeight.w500),
                           ),
-                          const Icon(Icons.arrow_drop_down, color: HousepitalColors.orangeText, size: 20),
+                          Icon(Icons.arrow_drop_down, color: context.hc.orangeText, size: 20),
                         ],
                       ),
                     ),
@@ -183,11 +184,11 @@ class _BillingScreenState extends State<BillingScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Column(
                     children: [
-                      const Icon(Icons.receipt_long_outlined,
-                          size: 48, color: HousepitalColors.greyLight),
+                      Icon(Icons.receipt_long_outlined,
+                          size: 48, color: context.hc.greyLight),
                       const SizedBox(height: 12),
                       Text(l.t('no_data'),
-                          style: const TextStyle(color: HousepitalColors.greyLight)),
+                          style: TextStyle(color: context.hc.greyLight)),
                     ],
                   ),
                 ),
@@ -207,8 +208,8 @@ class _BillingScreenState extends State<BillingScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
+          gradient: LinearGradient(
+            colors: [HousepitalColors.orange, context.hc.orangeDark],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -255,7 +256,7 @@ class _BillingScreenState extends State<BillingScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(l.t('payment_successful')),
-                                backgroundColor: HousepitalColors.success,
+                                backgroundColor: context.hc.success,
                               ),
                             );
                           }
@@ -267,7 +268,7 @@ class _BillingScreenState extends State<BillingScreen> {
                               SnackBar(
                                 content:
                                     Text('${l.t('payment_failed')}: $message'),
-                                backgroundColor: HousepitalColors.error,
+                                backgroundColor: context.hc.error,
                               ),
                             );
                           }
@@ -317,7 +318,7 @@ class _BillingScreenState extends State<BillingScreen> {
           child: Semantics(
             label: 'Total paid: ${DateHelper.formatCurrency(totalPaidAmount)}',
             child: _summaryTile('Total Paid', DateHelper.formatCurrency(totalPaidAmount),
-                Icons.check_circle, HousepitalColors.success),
+                Icons.check_circle, context.hc.success),
           ),
         ),
         const SizedBox(width: 8),
@@ -325,7 +326,7 @@ class _BillingScreenState extends State<BillingScreen> {
           child: Semantics(
             label: 'Total orders: $totalOrders',
             child: _summaryTile('Orders', '$totalOrders',
-                Icons.receipt, HousepitalColors.grey),
+                Icons.receipt, context.hc.grey),
           ),
         ),
         const SizedBox(width: 8),
@@ -333,7 +334,7 @@ class _BillingScreenState extends State<BillingScreen> {
           child: Semantics(
             label: 'Overdue orders: $overdueCount',
             child: _summaryTile('Overdue', '$overdueCount',
-                Icons.warning_amber, overdueCount > 0 ? HousepitalColors.error : HousepitalColors.greyLight),
+                Icons.warning_amber, overdueCount > 0 ? context.hc.error : context.hc.greyLight),
           ),
         ),
       ],
@@ -352,7 +353,7 @@ class _BillingScreenState extends State<BillingScreen> {
                   fontSize: 16, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
         ],
       ),
     );
@@ -367,8 +368,8 @@ class _BillingScreenState extends State<BillingScreen> {
         const Text('Spend Summary',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
-        const Text('By category',
-            style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight)),
+        Text('By category',
+            style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
         const SizedBox(height: 12),
 
         // Stacked bar
@@ -418,13 +419,13 @@ class _BillingScreenState extends State<BillingScreen> {
                   Expanded(
                     child: Text(
                       item['category'] as String,
-                      style: const TextStyle(fontSize: 14, color: HousepitalColors.grey),
+                      style: TextStyle(fontSize: 14, color: context.hc.grey),
                     ),
                   ),
                   Text(
                     DateHelper.formatCurrency(amount),
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black),
                   ),
                   const SizedBox(width: 8),
                   SizedBox(
@@ -432,7 +433,7 @@ class _BillingScreenState extends State<BillingScreen> {
                     child: Text(
                       '$percentage%',
                       textAlign: TextAlign.right,
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                      style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                     ),
                   ),
                 ],
@@ -468,13 +469,13 @@ class _BillingScreenState extends State<BillingScreen> {
     Color statusColor;
     switch (status) {
       case 'completed':
-        statusColor = HousepitalColors.success;
+        statusColor = context.hc.success;
         break;
       case 'cancelled':
-        statusColor = HousepitalColors.error;
+        statusColor = context.hc.error;
         break;
       default:
-        statusColor = HousepitalColors.warning;
+        statusColor = context.hc.warning;
     }
 
     final subtitle = itemCount > 1
@@ -511,19 +512,19 @@ class _BillingScreenState extends State<BillingScreen> {
                       children: [
                         Text(
                           bookingNumber,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black),
                         ),
                         Text(
                           subtitle,
-                          style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                          style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         if (createdAt != null)
                           Text(
                             DateHelper.formatRelative(createdAt),
-                            style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                            style: TextStyle(fontSize: 11, color: context.hc.greyLight),
                           ),
                       ],
                     ),
@@ -533,8 +534,8 @@ class _BillingScreenState extends State<BillingScreen> {
                     children: [
                       Text(
                         DateHelper.formatCurrency(totalAmount),
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w600, color: HousepitalColors.black),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.black),
                       ),
                       StatusBadge(text: status.toUpperCase(), color: statusColor),
                     ],
@@ -549,23 +550,23 @@ class _BillingScreenState extends State<BillingScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.infoLight,
+                    color: context.hc.infoLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance_wallet,
-                          size: 14, color: HousepitalColors.info),
+                      Icon(Icons.account_balance_wallet,
+                          size: 14, color: context.hc.info),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           refundEta != null
                               ? 'Refund: ${DateHelper.formatCurrency(refundAmount)} pending (by ${DateHelper.formatDate(refundEta)})'
                               : 'Refund: ${DateHelper.formatCurrency(refundAmount)} pending',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: HousepitalColors.info,
+                            color: context.hc.info,
                           ),
                         ),
                       ),

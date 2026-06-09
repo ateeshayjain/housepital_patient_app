@@ -1,5 +1,6 @@
 // lib/screens/my_care/widgets/billing_summary_section.dart
 import 'package:flutter/material.dart';
+import '../../../config/app_colors.dart';
 import '../../../config/theme.dart';
 import '../../../models/my_care_models.dart';
 import '../../../utils/helpers.dart';
@@ -51,8 +52,8 @@ class BillingSummarySection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Package Paid',
-                              style: const TextStyle(
-                                  fontSize: 11, color: HousepitalColors.greyLight)),
+                              style: TextStyle(
+                                  fontSize: 11, color: context.hc.greyLight)),
                           Text(DateHelper.formatCurrency(totalPaid),
                               style: const TextStyle(
                                   fontSize: 20, fontWeight: FontWeight.w800)),
@@ -62,8 +63,8 @@ class BillingSummarySection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text('Consumed',
-                              style: const TextStyle(
-                                  fontSize: 11, color: HousepitalColors.greyLight)),
+                              style: TextStyle(
+                                  fontSize: 11, color: context.hc.greyLight)),
                           Text(DateHelper.formatCurrency(totalConsumed),
                               style: TextStyle(
                                   fontSize: 20,
@@ -79,7 +80,7 @@ class BillingSummarySection extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor: HousepitalColors.greyLighter,
+                      backgroundColor: context.hc.greyLighter,
                       valueColor: const AlwaysStoppedAnimation(
                           HousepitalColors.orange),
                     ),
@@ -90,13 +91,13 @@ class BillingSummarySection extends StatelessWidget {
                     children: [
                       Text(
                           '${DateHelper.formatCurrency(totalConsumed)} consumed',
-                          style: const TextStyle(
-                              fontSize: 12, color: HousepitalColors.grey)),
+                          style: TextStyle(
+                              fontSize: 12, color: context.hc.grey)),
                       Text(
                           '${DateHelper.formatCurrency(remaining)} remaining',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
-                              color: HousepitalColors.success,
+                              color: context.hc.success,
                               fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -106,8 +107,8 @@ class BillingSummarySection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Next renewal',
-                            style: const TextStyle(
-                                fontSize: 12, color: HousepitalColors.grey)),
+                            style: TextStyle(
+                                fontSize: 12, color: context.hc.grey)),
                         Text(DateHelper.formatDate(renewalDates.first),
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w600)),

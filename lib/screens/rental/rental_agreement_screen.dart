@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -38,7 +39,7 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HousepitalColors.orangeLight,
+                color: context.hc.orangeLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -58,9 +59,9 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
                     isBold: true,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     '(Deposit + 1st month rent)',
-                    style: TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                    style: TextStyle(fontSize: 11, color: context.hc.greyLight),
                   ),
                 ],
               ),
@@ -111,7 +112,7 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
                 label: const Text('Confirm & Add to Cart',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                  disabledBackgroundColor: HousepitalColors.greyLighter,
+                  disabledBackgroundColor: context.hc.greyLighter,
                 ),
               ),
             ),
@@ -130,13 +131,13 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
         children: [
           Text(label, style: TextStyle(
             fontSize: 14,
-            color: isBold ? HousepitalColors.black : HousepitalColors.grey,
+            color: isBold ? context.hc.black : context.hc.grey,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
           )),
           Text(value, style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-            color: isBold ? HousepitalColors.orangeText : HousepitalColors.black,
+            color: isBold ? context.hc.orangeText : context.hc.black,
           )),
         ],
       ),
@@ -158,12 +159,12 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black,
+                Text(title, style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black,
                 )),
                 const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(
-                  fontSize: 13, color: HousepitalColors.grey, height: 1.4,
+                Text(desc, style: TextStyle(
+                  fontSize: 13, color: context.hc.grey, height: 1.4,
                 )),
               ],
             ),

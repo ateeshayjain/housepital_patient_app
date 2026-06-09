@@ -1,6 +1,6 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 
 /// A single trust badge shown inside a [TrustBadgeBar].
 class TrustBadge {
@@ -20,7 +20,7 @@ class TrustBadgeBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: HousepitalColors.successLight,
+        color: context.hc.successLight,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -31,7 +31,7 @@ class TrustBadgeBar extends StatelessWidget {
               Container(
                 width: 1,
                 height: 16,
-                color: HousepitalColors.success.withValues(alpha: 0.3),
+                color: context.hc.success.withValues(alpha: 0.3),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
               ),
             ],
@@ -40,15 +40,15 @@ class TrustBadgeBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(badge.icon,
-                      size: 16, color: HousepitalColors.success),
+                      size: 16, color: context.hc.success),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       badge.text,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.success,
+                        color: context.hc.success,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

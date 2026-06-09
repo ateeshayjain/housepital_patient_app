@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
 import '../../../widgets/common_widgets.dart';
@@ -28,8 +29,8 @@ class LabTestDetailSheet extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (_, controller) {
         return Container(
-          decoration: const BoxDecoration(
-            color: HousepitalColors.white,
+          decoration: BoxDecoration(
+            color: context.hc.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -40,7 +41,7 @@ class LabTestDetailSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: HousepitalColors.divider,
+                  color: context.hc.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -54,9 +55,9 @@ class LabTestDetailSheet extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const AppIconTile(
+                        AppIconTile(
                             icon: Icons.science,
-                            color: HousepitalColors.info),
+                            color: context.hc.info),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -64,19 +65,19 @@ class LabTestDetailSheet extends StatelessWidget {
                             children: [
                               Text(
                                 test.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
-                                  color: HousepitalColors.black,
+                                  color: context.hc.black,
                                 ),
                               ),
                               if (test.alsoKnownAs != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
                                   test.alsoKnownAs!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: HousepitalColors.greyLight,
+                                    color: context.hc.greyLight,
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -89,15 +90,15 @@ class LabTestDetailSheet extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: HousepitalColors.orangeLight,
+                              color: context.hc.orangeLight,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               DateHelper.formatCurrency(test.price!),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: HousepitalColors.orangeText,
+                                color: context.hc.orangeText,
                               ),
                             ),
                           ),
@@ -120,8 +121,8 @@ class LabTestDetailSheet extends StatelessWidget {
                               ? 'Fasting Required'
                               : 'No Fasting',
                           color: test.fastingRequired
-                              ? HousepitalColors.warning
-                              : HousepitalColors.success,
+                              ? context.hc.warning
+                              : context.hc.success,
                         ),
                         if (test.reportTat != null)
                           _InfoChip(
@@ -135,8 +136,8 @@ class LabTestDetailSheet extends StatelessWidget {
                               ? 'Home Collection'
                               : 'Lab Visit',
                           color: test.homeCollection
-                              ? HousepitalColors.success
-                              : HousepitalColors.greyLight,
+                              ? context.hc.success
+                              : context.hc.greyLight,
                         ),
                         if (test.tube != null)
                           _InfoChip(icon: Icons.science, label: test.tube!),
@@ -147,65 +148,65 @@ class LabTestDetailSheet extends StatelessWidget {
                     ),
                     if (test.description != null) ...[
                       const SizedBox(height: 20),
-                      const Text('Description',
+                      Text('Description',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black)),
+                              color: context.hc.black)),
                       const SizedBox(height: 6),
                       Text(test.description!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
-                              color: HousepitalColors.grey,
+                              color: context.hc.grey,
                               height: 1.5)),
                     ],
                     if (test.components != null) ...[
                       const SizedBox(height: 16),
-                      const Text('Components / Parameters',
+                      Text('Components / Parameters',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black)),
+                              color: context.hc.black)),
                       const SizedBox(height: 6),
                       Text(test.components!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
-                              color: HousepitalColors.grey,
+                              color: context.hc.grey,
                               height: 1.5)),
                     ],
                     if (test.method != null) ...[
                       const SizedBox(height: 16),
-                      const Text('Method',
+                      Text('Method',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black)),
+                              color: context.hc.black)),
                       const SizedBox(height: 6),
                       Text(test.method!,
-                          style: const TextStyle(
-                              fontSize: 14, color: HousepitalColors.grey)),
+                          style: TextStyle(
+                              fontSize: 14, color: context.hc.grey)),
                     ],
                     if (test.commonlyPrescribedFor != null) ...[
                       const SizedBox(height: 16),
-                      const Text('Commonly Prescribed For',
+                      Text('Commonly Prescribed For',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black)),
+                              color: context.hc.black)),
                       const SizedBox(height: 6),
                       Text(test.commonlyPrescribedFor!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
-                              color: HousepitalColors.grey,
+                              color: context.hc.grey,
                               height: 1.5)),
                     ],
                     if (test.relatedTests != null) ...[
                       const SizedBox(height: 16),
-                      const Text('Related Tests',
+                      Text('Related Tests',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black)),
+                              color: context.hc.black)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -219,7 +220,7 @@ class LabTestDetailSheet extends StatelessWidget {
                                 label: Text(t,
                                     style: const TextStyle(fontSize: 12)),
                                 onPressed: () => onRelatedTap(t),
-                                backgroundColor: HousepitalColors.infoLight,
+                                backgroundColor: context.hc.infoLight,
                                 side: BorderSide.none,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -247,7 +248,7 @@ class LabTestDetailSheet extends StatelessWidget {
                             'Book Now  •  ${DateHelper.formatCurrency(test.price!)}'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HousepitalColors.orange,
-                          foregroundColor: HousepitalColors.white,
+                          foregroundColor: context.hc.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -269,16 +270,17 @@ class LabTestDetailSheet extends StatelessWidget {
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final Color? color;
 
   const _InfoChip({
     required this.icon,
     required this.label,
-    this.color = HousepitalColors.info,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? context.hc.info;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

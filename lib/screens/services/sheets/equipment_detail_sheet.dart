@@ -2,6 +2,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
 import '../widgets/catalog_text_helpers.dart';
@@ -57,7 +58,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: HousepitalColors.orangeLight,
+                  color: context.hc.orangeLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: item.imageUrl != null
@@ -80,17 +81,17 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   children: [
                     Text(
                       item.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                       ),
                     ),
                     Text(
                       item.brand,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                   ],
@@ -101,8 +102,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: item.category == 'Equipment'
-                      ? HousepitalColors.infoLight
-                      : HousepitalColors.successLight,
+                      ? context.hc.infoLight
+                      : context.hc.successLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -111,8 +112,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: item.category == 'Equipment'
-                        ? HousepitalColors.info
-                        : HousepitalColors.success,
+                        ? context.hc.info
+                        : context.hc.success,
                   ),
                 ),
               ),
@@ -130,8 +131,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 8),
-              title: const Text('Key Features',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+              title: Text('Key Features',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black)),
               leading: const Icon(Icons.star_outline, size: 18, color: HousepitalColors.orange),
               children: splitCatalogText(item.keyFeatures!).map((f) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -142,14 +143,14 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                           margin: const EdgeInsets.only(top: 2),
                           width: 18, height: 18,
                           decoration: BoxDecoration(
-                            color: HousepitalColors.successLight,
+                            color: context.hc.successLight,
                             borderRadius: BorderRadius.circular(5),
                           ),
-                          child: const Icon(Icons.check, size: 12, color: HousepitalColors.success),
+                          child: Icon(Icons.check, size: 12, color: context.hc.success),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(f, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4)),
+                          child: Text(f, style: TextStyle(fontSize: 13, color: context.hc.grey, height: 1.4)),
                         ),
                       ],
                     ),
@@ -163,18 +164,18 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 8),
-              title: const Text('Ideal For',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+              title: Text('Ideal For',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.black)),
               leading: const Icon(Icons.check_circle_outline, size: 18, color: HousepitalColors.orange),
               children: splitCatalogText(item.idealFor!).map((use) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle_outline, size: 16, color: HousepitalColors.success),
+                        Icon(Icons.check_circle_outline, size: 16, color: context.hc.success),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(use, style: const TextStyle(fontSize: 12, color: HousepitalColors.grey, height: 1.4)),
+                          child: Text(use, style: TextStyle(fontSize: 12, color: context.hc.grey, height: 1.4)),
                         ),
                       ],
                     ),
@@ -188,11 +189,11 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 8),
-              title: const Text('How to Use',
+              title: Text('How to Use',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black)),
+                      color: context.hc.black)),
               leading: const Icon(Icons.help_outline,
                   size: 18, color: HousepitalColors.orange),
               children: splitCatalogText(item.howToUse!).asMap().entries.map((entry) => Padding(
@@ -204,14 +205,14 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                           width: 22, height: 22,
                           margin: const EdgeInsets.only(top: 1),
                           decoration: BoxDecoration(
-                            color: HousepitalColors.orangeLight,
+                            color: context.hc.orangeLight,
                             borderRadius: BorderRadius.circular(11),
                           ),
                           child: Center(child: Text('${entry.key + 1}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.hc.orangeText))),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(entry.value, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4))),
+                        Expanded(child: Text(entry.value, style: TextStyle(fontSize: 13, color: context.hc.grey, height: 1.4))),
                       ],
                     ),
                   )).toList(),
@@ -224,14 +225,14 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 8),
-              title: const Text('FAQs',
+              title: Text('FAQs',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black)),
+                      color: context.hc.black)),
               leading: const Icon(Icons.question_answer_outlined,
                   size: 18, color: HousepitalColors.orange),
-              children: buildFaqItems(item.faqs!),
+              children: buildFaqItems(context, item.faqs!),
             ),
           ],
 
@@ -241,21 +242,21 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: HousepitalColors.greyLighter,
+                color: context.hc.greyLighter,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('${item.variantType}: ',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12,
-                          color: HousepitalColors.greyLight)),
+                          color: context.hc.greyLight)),
                   Text(item.variantValue!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black)),
+                          color: context.hc.black)),
                 ],
               ),
             ),
@@ -267,7 +268,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
           if (hasRental) ...[
             Container(
               decoration: BoxDecoration(
-                color: HousepitalColors.greyLighter,
+                color: context.hc.greyLighter,
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(4),
@@ -291,8 +292,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: !_isRental
-                                  ? HousepitalColors.white
-                                  : HousepitalColors.grey,
+                                  ? context.hc.white
+                                  : context.hc.grey,
                             ),
                           ),
                         ),
@@ -317,8 +318,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: _isRental
-                                  ? HousepitalColors.white
-                                  : HousepitalColors.grey,
+                                  ? context.hc.white
+                                  : context.hc.grey,
                             ),
                           ),
                         ),
@@ -336,7 +337,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
+              color: context.hc.orangeLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -346,9 +347,9 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   children: [
                     Text(
                       _isRental ? 'Rental (per month)' : 'Buy Price',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: HousepitalColors.grey,
+                        color: context.hc.grey,
                       ),
                     ),
                     Text(
@@ -360,10 +361,10 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                               ? DateHelper.formatCurrency(
                                   item.price!.toInt())
                               : 'On request'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: HousepitalColors.orangeText,
+                        color: context.hc.orangeText,
                       ),
                     ),
                   ],
@@ -376,9 +377,9 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                     children: [
                       Text(
                         _isRental ? 'Buy price' : 'Or rent at',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                         ),
                       ),
                       Text(
@@ -389,9 +390,9 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                             : (item.rentalPrice != null
                                 ? '${DateHelper.formatCurrency(item.rentalPrice!.toInt())}/month'
                                 : 'On request'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                         ),
                       ),
                     ],
@@ -408,21 +409,21 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HousepitalColors.infoLight,
+                color: context.hc.infoLight,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: HousepitalColors.infoLight),
+                border: Border.all(color: context.hc.infoLight),
               ),
               child: Row(
                 children: [
                   Icon(Icons.lightbulb_outline,
-                      color: HousepitalColors.info, size: 20),
+                      color: context.hc.info, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 13,
-                          color: HousepitalColors.info,
+                          color: context.hc.info,
                           height: 1.3,
                         ),
                         children: [
@@ -451,12 +452,12 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
             const SizedBox(height: 14),
             Row(
               children: [
-                const Text(
+                Text(
                   'Rental Duration',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 const Spacer(),
@@ -470,10 +471,10 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     '$_rentalMonths ${_rentalMonths == 1 ? "month" : "months"}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -502,10 +503,10 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                         ? DateHelper.formatCurrency(
                             (item.rentalPrice! * _rentalMonths).toInt())
                         : 'On request',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                 ],
@@ -518,17 +519,17 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: HousepitalColors.infoLight,
+                color: context.hc.infoLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: HousepitalColors.info),
+                  Icon(Icons.info_outline, size: 16, color: context.hc.info),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'This device requires a complimentary clinical assessment to determine the right settings and fit for the patient.',
-                      style: TextStyle(fontSize: 12, color: HousepitalColors.info, height: 1.3),
+                      style: TextStyle(fontSize: 12, color: context.hc.info, height: 1.3),
                     ),
                   ),
                 ],
@@ -556,7 +557,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                 label: const Text('Request Complimentary Assessment'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HousepitalColors.orange,
-                  foregroundColor: HousepitalColors.white,
+                  foregroundColor: context.hc.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -576,8 +577,8 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   icon: const Icon(Icons.phone_outlined, size: 20),
                   label: const Text('Price on request — contact us'),
                   style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: HousepitalColors.divider,
-                    disabledForegroundColor: HousepitalColors.greyLight,
+                    disabledBackgroundColor: context.hc.divider,
+                    disabledForegroundColor: context.hc.greyLight,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -617,7 +618,7 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   label: Text(_isRental ? 'Add Rental to Cart' : 'Add to Cart'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HousepitalColors.orange,
-                    foregroundColor: HousepitalColors.white,
+                    foregroundColor: context.hc.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

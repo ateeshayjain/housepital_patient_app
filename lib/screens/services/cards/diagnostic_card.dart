@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
 import '../../../widgets/common_widgets.dart';
@@ -29,7 +30,7 @@ class DiagnosticCard extends StatelessWidget {
             '${service.name}. ${service.category == 'manpower' ? 'Price on assessment' : (service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : "")}. Home collection available. Tap to book slot.',
         button: true,
         child: Material(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
           elevation: 1,
           shadowColor: Colors.black12,
@@ -43,7 +44,7 @@ class DiagnosticCard extends StatelessWidget {
                   AppIconTile(
                     icon: iconMap[service.iconName] ??
                         Icons.miscellaneous_services,
-                    color: HousepitalColors.info,
+                    color: context.hc.info,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -52,10 +53,10 @@ class DiagnosticCard extends StatelessWidget {
                       children: [
                         Text(
                           service.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: HousepitalColors.black,
+                            color: context.hc.black,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -63,37 +64,37 @@ class DiagnosticCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HousepitalColors.successLight,
+                            color: context.hc.successLight,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Home Collection',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HousepitalColors.success,
+                              color: context.hc.success,
                             ),
                           ),
                         ),
                         const SizedBox(height: 8),
                         // audit M-1: manpower → "Price on assessment".
                         if (service.category == 'manpower')
-                          const Text(
+                          Text(
                             'Price on assessment',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.orangeText,
+                              color: context.hc.orangeText,
                             ),
                           )
                         else if (service.basePriceMin != null)
                           Text(
                             DateHelper.formatCurrency(
                                 service.basePriceMin!),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.orangeText,
+                              color: context.hc.orangeText,
                             ),
                           ),
                       ],
@@ -105,7 +106,7 @@ class DiagnosticCard extends StatelessWidget {
                       onPressed: () => onNavigate(context, service),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HousepitalColors.orange,
-                        foregroundColor: HousepitalColors.white,
+                        foregroundColor: context.hc.white,
                         elevation: 0,
                         padding:
                             const EdgeInsets.symmetric(horizontal: 16),

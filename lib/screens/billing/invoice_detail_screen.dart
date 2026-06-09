@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
@@ -93,27 +94,28 @@ class InvoiceDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Invoice header
-            _buildHeader(invoice, l),
+            _buildHeader(context, invoice, l),
             const SizedBox(height: 20),
 
             // Line items
             SectionHeader(title: l.t('line_items')),
             const SizedBox(height: 8),
             ...invoice.lineItems
-                .map((item) => _buildLineItem(item))
+                .map((item) => _buildLineItem(context, item))
                 ,
             const SizedBox(height: 16),
 
             // Totals
             const Divider(),
             const SizedBox(height: 8),
-            _buildTotalRow(l.t('subtotal'), invoice.subtotal),
+            _buildTotalRow(context, l.t('subtotal'), invoice.subtotal),
             const SizedBox(height: 6),
-            _buildTotalRow(l.t('gst'), invoice.gstTotal),
+            _buildTotalRow(context, l.t('gst'), invoice.gstTotal),
             const SizedBox(height: 8),
             const Divider(),
             const SizedBox(height: 8),
             _buildTotalRow(
+              context,
               l.t('grand_total'),
               invoice.grandTotal,
               isBold: true,
@@ -149,17 +151,17 @@ class InvoiceDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Invoice invoice, AppLocalizations l) {
+  Widget _buildHeader(BuildContext context, Invoice invoice, AppLocalizations l) {
     Color statusColor;
     switch (invoice.status) {
       case 'paid':
-        statusColor = HousepitalColors.success;
+        statusColor = context.hc.success;
         break;
       case 'overdue':
-        statusColor = HousepitalColors.error;
+        statusColor = context.hc.error;
         break;
       default:
-        statusColor = HousepitalColors.warning;
+        statusColor = context.hc.warning;
     }
 
     return HousepitalCard(
@@ -174,10 +176,10 @@ class InvoiceDetailScreen extends StatelessWidget {
                   invoice.invoiceNumber,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
               ),
@@ -191,17 +193,17 @@ class InvoiceDetailScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.calendar_today,
-                  size: 16, color: HousepitalColors.greyLight),
+              Icon(Icons.calendar_today,
+                  size: 16, color: context.hc.greyLight),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${l.t('billing_period')}: ${DateHelper.formatDateShort(invoice.billingPeriodStart)} - ${DateHelper.formatDateShort(invoice.billingPeriodEnd)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.grey,
+                    color: context.hc.grey,
                   ),
                 ),
               ),
@@ -210,17 +212,17 @@ class InvoiceDetailScreen extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.event,
-                  size: 16, color: HousepitalColors.greyLight),
+              Icon(Icons.event,
+                  size: 16, color: context.hc.greyLight),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${l.t('due_date')}: ${DateHelper.formatDate(invoice.dueDate)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.grey,
+                    color: context.hc.grey,
                   ),
                 ),
               ),
@@ -231,7 +233,7 @@ class InvoiceDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLineItem(InvoiceLineItem item) {
+  Widget _buildLineItem(BuildContext context, InvoiceLineItem item) {
     IconData typeIcon;
     switch (item.type) {
       case 'attendant':
@@ -263,10 +265,10 @@ class InvoiceDetailScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -279,13 +281,14 @@ class InvoiceDetailScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                    child: _buildItemDetail(
+                    child: _buildItemDetail(context,
                         'Amount', DateHelper.formatCurrency(item.amount))),
                 Expanded(
-                    child: _buildItemDetail(
+                    child: _buildItemDetail(context,
                         'GST', DateHelper.formatCurrency(item.gst))),
                 Expanded(
                   child: _buildItemDetail(
+                    context,
                     'Total',
                     DateHelper.formatCurrency(item.total),
                     isBold: true,
@@ -299,7 +302,8 @@ class InvoiceDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildItemDetail(String label, String value, {bool isBold = false}) {
+  Widget _buildItemDetail(BuildContext context, String label, String value,
+      {bool isBold = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -307,9 +311,9 @@ class InvoiceDetailScreen extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
         ),
         const SizedBox(height: 2),
@@ -320,14 +324,15 @@ class InvoiceDetailScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTotalRow(String label, int amount, {bool isBold = false}) {
+  Widget _buildTotalRow(BuildContext context, String label, int amount,
+      {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -341,7 +346,7 @@ class InvoiceDetailScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: isBold ? 16 : 14,
                 fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-                color: isBold ? HousepitalColors.black : HousepitalColors.grey,
+                color: isBold ? context.hc.black : context.hc.grey,
               ),
             ),
           ),
@@ -351,7 +356,7 @@ class InvoiceDetailScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: isBold ? 18 : 14,
               fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-              color: HousepitalColors.black,
+              color: context.hc.black,
             ),
           ),
         ],

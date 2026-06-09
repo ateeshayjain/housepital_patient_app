@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_colors.dart';
 import '../../config/constants.dart';
 import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
@@ -188,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
                     _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
-                    _buildReportSnippet(app),
+                    _buildReportSnippet(context, app),
                     const SizedBox(height: 8),
                   ],
 
@@ -303,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Role badge — pill shown below the greeting that clarifies what this user
   // can do. Hover/long-press shows the tooltip for limited roles.
   // ---------------------------------------------------------------------------
-  Widget _buildRoleBadge(String role) {
+  Widget _buildRoleBadge(BuildContext context, String role) {
     String label;
     String? tooltip;
     Color color;
@@ -314,20 +315,20 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case UserRole.familyMember:
         label = 'Family Member';
-        color = HousepitalColors.info;
+        color = context.hc.info;
         tooltip =
             'You can view & rate. To book or pay, contact your primary contact.';
         break;
       case UserRole.patientSelf:
         label = 'Patient';
-        color = HousepitalColors.greyLight;
+        color = context.hc.greyLight;
         tooltip =
             "You're viewing your own care. Tap the big call button to reach your family.";
         break;
       // audit M-5: caretaker badge — view-only with concern raising.
       case UserRole.caretaker:
         label = 'Caretaker view';
-        color = HousepitalColors.grey;
+        color = context.hc.grey;
         tooltip =
             'Read-only view for hired caretaker. You can raise concerns; booking and payment are restricted to the family.';
         break;
@@ -404,14 +405,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 l.t('dashboard_care',
                                     {'name': app.currentPatient!.name}),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: HousepitalColors.grey,
+                                  color: context.hc.grey,
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down,
-                                  color: HousepitalColors.grey, size: 20),
+                              Icon(Icons.arrow_drop_down,
+                                  color: context.hc.grey, size: 20),
                             ],
                           ),
                         ),
@@ -459,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'SOS emergency',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.emergency, color: HousepitalColors.error),
+              icon: Icon(Icons.emergency, color: context.hc.error),
               tooltip: 'SOS',
               onPressed: () => Navigator.pushNamed(context, '/sos'),
             ),
@@ -484,14 +485,14 @@ class _HomeScreenState extends State<HomeScreen> {
       _BannerSlide(
         title: '24/7 ICU Setup\nat Home',
         subtitle: 'Critical care nursing & medical equipment',
-        gradientColors: [HousepitalColors.info, const Color(0xFF42A5F5)],
+        gradientColors: [context.hc.info, const Color(0xFF42A5F5)],
         icon: Icons.monitor_heart,
         imagePath: 'assets/images/branding/hero_nurse.jpg',
       ),
       _BannerSlide(
         title: 'Free Health\nAssessment',
         subtitle: 'Book now — no obligations',
-        gradientColors: [HousepitalColors.success, const Color(0xFF66BB6A)],
+        gradientColors: [context.hc.success, const Color(0xFF66BB6A)],
         icon: Icons.health_and_safety,
         ctaText: 'Book Now',
         onCtaTap: () {
@@ -634,7 +635,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: _currentBannerPage == index
                     ? HousepitalColors.orange
-                    : HousepitalColors.divider,
+                    : context.hc.divider,
                 borderRadius: BorderRadius.circular(3),
               ),
             );
@@ -660,15 +661,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               'Hi $firstName!',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: HousepitalColors.orangeText,
+                color: context.hc.orangeText,
               ),
             ),
           ),
           const SizedBox(width: 8),
-          _buildRoleBadge(app.currentUserRole),
+          _buildRoleBadge(context, app.currentUserRole),
         ],
       ),
     );
@@ -686,9 +687,9 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Padding(
           // Header removed — the "Your Health Team" section label above the
@@ -730,14 +731,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.info_outline,
-                          color: HousepitalColors.greyLight, size: 18),
+                          color: context.hc.greyLight, size: 18),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Your care team will appear here once services are active',
                           style: TextStyle(
                             fontSize: 13,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                       ),
@@ -772,14 +773,14 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Row(
             children: [
-              const AppIconTile(
-                  icon: Icons.medical_services, color: HousepitalColors.success),
+              AppIconTile(
+                  icon: Icons.medical_services, color: context.hc.success),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -791,7 +792,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Text(
                       deployment.staffName ?? 'Assigned',
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                      style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                     ),
                   ],
                 ),
@@ -813,11 +814,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Text(
                   '${daysRemaining}d left',
-                  style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight),
+                  style: TextStyle(fontSize: 11, color: context.hc.greyLight),
                 ),
               ],
               const SizedBox(width: 4),
-              const Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+              Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
             ],
           ),
         ),
@@ -849,9 +850,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.white,
+                  color: context.hc.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: HousepitalColors.divider),
+                  border: Border.all(color: context.hc.divider),
                 ),
                 child: Row(
                   children: [
@@ -859,21 +860,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: Icons.menu_book,
                         color: HousepitalColors.serviceCarePackage),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Care Guides',
+                          const Text('Care Guides',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
                           Text('Health tips & education for your family',
                               style: TextStyle(
-                                  fontSize: 12, color: HousepitalColors.grey)),
+                                  fontSize: 12, color: context.hc.grey)),
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: HousepitalColors.grey),
+                    Icon(Icons.chevron_right,
+                        color: context.hc.grey),
                   ],
                 ),
               ),
@@ -985,9 +986,9 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       // 3 columns filling the row edge-to-edge; 6 service tiles → compact 2×3.
       // mainAxisExtent fixes each cell's HEIGHT in absolute px (instead of a
@@ -1034,10 +1035,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Text(
                           action.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: HousepitalColors.grey,
+                            color: context.hc.grey,
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 2,
@@ -1173,16 +1174,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   // Report Snippet
   // ---------------------------------------------------------------------------
-  Widget _buildReportSnippet(AppProvider app) {
+  Widget _buildReportSnippet(BuildContext context, AppProvider app) {
     final r = app.todayReport!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Row(
           children: [
@@ -1191,8 +1192,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Stack(alignment: Alignment.center, children: [
                 CircularProgressIndicator(
                   value: r.totalTasks > 0 ? r.completedTasks / r.totalTasks : 0,
-                  backgroundColor: HousepitalColors.greyLighter,
-                  color: HousepitalColors.success,
+                  backgroundColor: context.hc.greyLighter,
+                  color: context.hc.success,
                   strokeWidth: 3,
                 ),
                 Text('${r.completedTasks}/${r.totalTasks}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
@@ -1206,11 +1207,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('${r.completedTasks} of ${r.totalTasks} tasks done', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   if (r.staffNotes != null)
                     Text(r.staffNotes!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                        style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+            Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
           ],
         ),
       ),
@@ -1251,32 +1252,32 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HousepitalColors.error.withValues(alpha: 0.08),
+                color: context.hc.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HousepitalColors.error.withValues(alpha: 0.3)),
+                border: Border.all(color: context.hc.error.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber, color: HousepitalColors.error, size: 24),
+                  Icon(Icons.warning_amber, color: context.hc.error, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Overdue Payment',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HousepitalColors.error)),
+                        Text('Overdue Payment',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.hc.error)),
                         // audit batch 4 (Agent L): drop the duplicate ₹ —
                         // DateHelper.formatCurrency already prepends the
                         // symbol, so the previous string rendered as "₹₹3,000".
                         Text('${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
-                            style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
+                            style: TextStyle(fontSize: 12, color: context.hc.grey)),
                       ],
                     ),
                   ),
                   ElevatedButton(
                     onPressed: () => MainShell.switchToTab(3),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: HousepitalColors.error,
+                      backgroundColor: context.hc.error,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
@@ -1293,9 +1294,9 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HousepitalColors.white,
+                color: context.hc.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HousepitalColors.divider),
+                border: Border.all(color: context.hc.divider),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1312,7 +1313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                             if (dueDate != null)
                               Text('Due on ${DateHelper.formatDate(dueDate)}',
-                                  style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                                  style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                           ],
                         ),
                       ),
@@ -1326,28 +1327,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.successLight,
+                      color: context.hc.successLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.savings, color: HousepitalColors.success, size: 20),
+                        Icon(Icons.savings, color: context.hc.success, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Pay early & save ${DateHelper.formatCurrency(earlyPayDiscount)}!',
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.success)),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.success)),
                               Text('Pay ${DateHelper.formatCurrency(earlyPayAmount)} instead of ${DateHelper.formatCurrency(amountDue)} (1% off)',
-                                  style: const TextStyle(fontSize: 11, color: HousepitalColors.grey)),
+                                  style: TextStyle(fontSize: 11, color: context.hc.grey)),
                             ],
                           ),
                         ),
                         ElevatedButton(
                           onPressed: () => MainShell.switchToTab(3),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: HousepitalColors.success,
+                            backgroundColor: context.hc.success,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
@@ -1400,9 +1401,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Row(
             children: [
@@ -1421,14 +1422,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                          fontSize: 11, color: HousepitalColors.greyLight),
+                      style: TextStyle(
+                          fontSize: 11, color: context.hc.greyLight),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right,
-                  color: HousepitalColors.greyLight, size: 18),
+              Icon(Icons.chevron_right,
+                  color: context.hc.greyLight, size: 18),
             ],
           ),
         ),
@@ -1462,7 +1463,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ...app.patients.map((patient) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: HousepitalColors.orangeLight,
+                  backgroundColor: context.hc.orangeLight,
                   child: Text(
                     patient.name[0].toUpperCase(),
                     style:
@@ -1559,17 +1560,17 @@ class _TeamMemberRow extends StatelessWidget {
             children: [
               Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               Text(
                 role,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                 ),
               ),
             ],
@@ -1581,7 +1582,7 @@ class _TeamMemberRow extends StatelessWidget {
             button: true,
             child: IconButton(
               icon: const Icon(Icons.phone, size: 20),
-              color: HousepitalColors.success,
+              color: context.hc.success,
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               onPressed: () => launchUrl(Uri.parse('tel:$phone')),
             ),

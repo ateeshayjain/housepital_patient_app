@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
-import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 
@@ -19,9 +19,9 @@ class SOSScreen extends StatelessWidget {
     final address = patient?.address;
 
     return Scaffold(
-      backgroundColor: HousepitalColors.sos,
+      backgroundColor: context.hc.sos,
       appBar: AppBar(
-        backgroundColor: HousepitalColors.sos,
+        backgroundColor: context.hc.sos,
         foregroundColor: Colors.white,
         title: Text(l.t('sos_title')),
       ),
@@ -113,29 +113,29 @@ class SOSScreen extends StatelessWidget {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on,
-                    color: HousepitalColors.sos, size: 22),
+                Icon(Icons.location_on,
+                    color: context.hc.sos, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Dispatch address',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: HousepitalColors.grey,
+                          color: context.hc.grey,
                           letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         address,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
+                          color: context.hc.black,
                         ),
                       ),
                     ],
@@ -143,8 +143,8 @@ class SOSScreen extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: 'Copy address',
-                  icon: const Icon(Icons.copy,
-                      color: HousepitalColors.sos, size: 20),
+                  icon: Icon(Icons.copy,
+                      color: context.hc.sos, size: 20),
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: address));
                     if (!context.mounted) return;
@@ -157,16 +157,16 @@ class SOSScreen extends StatelessWidget {
             )
           : Row(
               children: [
-                const Icon(Icons.location_off,
-                    color: HousepitalColors.warning, size: 22),
+                Icon(Icons.location_off,
+                    color: context.hc.warning, size: 22),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Add your address in Profile so we can dispatch faster',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                   ),
                 ),
@@ -174,7 +174,7 @@ class SOSScreen extends StatelessWidget {
                   onPressed: () =>
                       Navigator.pushNamed(context, '/patient-profile'),
                   style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.sos,
+                    foregroundColor: context.hc.sos,
                   ),
                   child: const Text('Add'),
                 ),
@@ -206,7 +206,7 @@ class SOSScreen extends StatelessWidget {
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: HousepitalColors.sos,
+          foregroundColor: context.hc.sos,
           padding: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -231,7 +231,7 @@ class SOSScreen extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: HousepitalColors.sos.withValues(alpha: 0.7),
+                      color: context.hc.sos.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

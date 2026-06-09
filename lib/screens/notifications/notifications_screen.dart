@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -53,20 +54,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.notifications_none,
-                  size: 64, color: HousepitalColors.greyLight),
+              Icon(Icons.notifications_none,
+                  size: 64, color: context.hc.greyLight),
               const SizedBox(height: 16),
               Text(l.t('no_data'),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.grey)),
+                      color: context.hc.grey)),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                   'No notifications yet',
                   style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight)),
+                      color: context.hc.greyLight)),
             ],
           ),
         ),
@@ -81,19 +82,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (n.type) {
       case 'attendance':
         icon = Icons.person_pin;
-        iconColor = HousepitalColors.success;
+        iconColor = context.hc.success;
         break;
       case 'vitals_alert':
         icon = Icons.monitor_heart;
-        iconColor = HousepitalColors.error;
+        iconColor = context.hc.error;
         break;
       case 'report_ready':
         icon = Icons.description;
-        iconColor = HousepitalColors.info;
+        iconColor = context.hc.info;
         break;
       case 'payment_reminder':
         icon = Icons.payment;
-        iconColor = HousepitalColors.warning;
+        iconColor = context.hc.warning;
         break;
       case 'booking_update':
         icon = Icons.event;
@@ -101,7 +102,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
       default:
         icon = Icons.notifications;
-        iconColor = HousepitalColors.grey;
+        iconColor = context.hc.grey;
     }
 
     return ListTile(
@@ -111,7 +112,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: n.isRead ? FontWeight.w400 : FontWeight.w600,
-          color: HousepitalColors.black,
+          color: context.hc.black,
         ),
       ),
       subtitle: Column(
@@ -120,13 +121,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Text(n.body,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  fontSize: 13, color: HousepitalColors.greyLight)),
+              style: TextStyle(
+                  fontSize: 13, color: context.hc.greyLight)),
           const SizedBox(height: 2),
           Text(
             DateHelper.formatRelative(n.createdAt),
-            style: const TextStyle(
-                fontSize: 11, color: HousepitalColors.greyLight),
+            style: TextStyle(
+                fontSize: 11, color: context.hc.greyLight),
           ),
         ],
       ),

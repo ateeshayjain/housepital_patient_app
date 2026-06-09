@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../data/care_packages.dart';
 import '../../../widgets/common_widgets.dart';
 
@@ -33,7 +34,7 @@ class PackagesTab extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Material(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
             elevation: 1,
             shadowColor: Colors.black12,
@@ -55,18 +56,18 @@ class PackagesTab extends StatelessWidget {
                             children: [
                               Text(
                                 pkg.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: HousepitalColors.black,
+                                  color: context.hc.black,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 pkg.condition,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: HousepitalColors.greyLight,
+                                  color: context.hc.greyLight,
                                 ),
                               ),
                             ],
@@ -75,7 +76,7 @@ class PackagesTab extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HousepitalColors.success,
+                            color: context.hc.success,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -96,18 +97,18 @@ class PackagesTab extends StatelessWidget {
                         children: [
                           Text(
                             '₹${pkg.pricePerDay!.toStringAsFixed(0)}/day',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.orangeText,
+                              color: context.hc.orangeText,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             '· Min ${pkg.minDays} days',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: HousepitalColors.greyLight,
+                              color: context.hc.greyLight,
                             ),
                           ),
                         ],
@@ -129,12 +130,12 @@ class PackagesTab extends StatelessWidget {
                       children: pkg.highlights.take(3).map((h) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: HousepitalColors.greyLighter,
+                          color: context.hc.greyLighter,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           h,
-                          style: const TextStyle(fontSize: 11, color: HousepitalColors.grey),
+                          style: TextStyle(fontSize: 11, color: context.hc.grey),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -142,9 +143,9 @@ class PackagesTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     // Arrow indicator
-                    const Align(
+                    Align(
                       alignment: Alignment.centerRight,
-                      child: Icon(Icons.arrow_forward_ios, size: 14, color: HousepitalColors.greyLight),
+                      child: Icon(Icons.arrow_forward_ios, size: 14, color: context.hc.greyLight),
                     ),
                   ],
                 ),

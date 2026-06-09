@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 // audit batch 4 (Agent I): centralized validators for pincode + phone.
 import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
@@ -237,7 +238,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: HousepitalColors.greyLighter,
+                      color: context.hc.greyLighter,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -278,7 +279,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.location_off_outlined, size: 64, color: HousepitalColors.greyLight),
+                      Icon(Icons.location_off_outlined, size: 64, color: context.hc.greyLight),
                       const SizedBox(height: 16),
                       const Text('No saved addresses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 16),
@@ -302,7 +303,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: addr.isDefault ? HousepitalColors.orange : HousepitalColors.divider,
+                          color: addr.isDefault ? HousepitalColors.orange : context.hc.divider,
                           width: addr.isDefault ? 1.5 : 1,
                         ),
                       ),
@@ -328,7 +329,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: HousepitalColors.orangeLight,
+                                    color: context.hc.orangeLight,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text('Default',
@@ -350,7 +351,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
                                   if (!addr.isDefault)
                                     const PopupMenuItem(value: 'default', child: Text('Set as Default')),
-                                  const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: HousepitalColors.error))),
+                                  PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: context.hc.error))),
                                 ],
                               ),
                             ],
@@ -359,10 +360,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                           Text(addr.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 2),
                           Text(addr.fullAddress,
-                              style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                           const SizedBox(height: 2),
                           Text('Phone: ${addr.phone}',
-                              style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                         ],
                       ),
                     );
@@ -478,13 +479,13 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
                       label: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(iconData, size: 16, color: _icon == ic ? HousepitalColors.orange : HousepitalColors.grey),
+                          Icon(iconData, size: 16, color: _icon == ic ? HousepitalColors.orange : context.hc.grey),
                           const SizedBox(width: 4),
                           Text(label),
                         ],
                       ),
                       selected: _icon == ic,
-                      selectedColor: HousepitalColors.orangeLight,
+                      selectedColor: context.hc.orangeLight,
                       onSelected: (_) => setState(() {
                         _icon = ic;
                         if (_labelController.text.isEmpty || ['Home', 'Office', 'Family'].contains(_labelController.text)) {

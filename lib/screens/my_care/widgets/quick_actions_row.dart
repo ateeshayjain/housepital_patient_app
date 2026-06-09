@@ -1,6 +1,6 @@
 // lib/screens/my_care/widgets/quick_actions_row.dart
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../utils/app_localizations.dart';
 
 class QuickActionsRow extends StatelessWidget {
@@ -19,9 +19,9 @@ class QuickActionsRow extends StatelessWidget {
             icon: Icons.warning_amber_rounded,
             label: l.t('raise_concern'),
             subtitle: l.t('staff_service_billing'),
-            color: HousepitalColors.error,
-            bgColor: HousepitalColors.errorLight,
-            borderColor: HousepitalColors.errorLight,
+            color: context.hc.error,
+            bgColor: context.hc.errorLight,
+            borderColor: context.hc.errorLight,
             onTap: () => Navigator.pushNamed(context, '/raise-concern'),
           ),
           const SizedBox(width: 8),
@@ -30,9 +30,9 @@ class QuickActionsRow extends StatelessWidget {
             icon: Icons.assignment_outlined,
             label: l.t('daily_reports'),
             subtitle: l.t('view_all_reports'),
-            color: HousepitalColors.info,
-            bgColor: HousepitalColors.infoLight,
-            borderColor: HousepitalColors.infoLight,
+            color: context.hc.info,
+            bgColor: context.hc.infoLight,
+            borderColor: context.hc.infoLight,
             onTap: () => Navigator.pushNamed(context, '/report-history',
                 arguments: ''), // FUTURE: pass primary deploymentId from active deployment
           ),
@@ -42,9 +42,9 @@ class QuickActionsRow extends StatelessWidget {
             icon: Icons.description_outlined,
             label: l.t('documents'),
             subtitle: l.t('prescriptions_reports'),
-            color: HousepitalColors.success,
-            bgColor: HousepitalColors.successLight,
-            borderColor: HousepitalColors.successLight,
+            color: context.hc.success,
+            bgColor: context.hc.successLight,
+            borderColor: context.hc.successLight,
             onTap: () => Navigator.pushNamed(context, '/documents'),
           ),
         ],
@@ -81,7 +81,7 @@ class QuickActionsRow extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: color)),
               Text(subtitle,
-                  style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                  style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
             ],
           ),
         ),

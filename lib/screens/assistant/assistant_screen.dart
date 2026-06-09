@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/assistant_models.dart';
 import '../../providers/assistant_provider.dart';
 import 'assistant_executor.dart' show CallAction;
@@ -155,13 +156,13 @@ class _Bubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: isUser
                 ? HousepitalColors.orange
-                : HousepitalColors.greyLighter,
+                : context.hc.greyLighter,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             message.text,
             style: TextStyle(
-              color: isUser ? Colors.white : HousepitalColors.black,
+              color: isUser ? Colors.white : context.hc.black,
             ),
           ),
         ),
@@ -209,7 +210,7 @@ class _ConfirmCard extends StatelessWidget {
         : Icons.check_circle_outline;
     return Card(
       margin: const EdgeInsets.all(12),
-      color: HousepitalColors.orangeLight,
+      color: context.hc.orangeLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -220,7 +221,7 @@ class _ConfirmCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, color: HousepitalColors.orangeDark),
+                Icon(icon, color: context.hc.orangeDark),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -299,7 +300,7 @@ class _InputBar extends StatelessWidget {
               constraints:
                   const BoxConstraints(minWidth: 48, minHeight: 48),
               tooltip: listening ? 'Stop listening' : 'Speak',
-              color: listening ? HousepitalColors.error : HousepitalColors.orange,
+              color: listening ? context.hc.error : HousepitalColors.orange,
               icon: Icon(listening ? Icons.stop : Icons.mic),
               onPressed: () =>
                   listening ? provider.stopVoice() : provider.startVoice(),

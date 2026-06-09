@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -106,8 +107,8 @@ class _CartScreenState extends State<CartScreen> {
                 ? const SizedBox.shrink()
                 : TextButton(
                     onPressed: () => _confirmClear(context, cart),
-                    child: const Text('Clear',
-                        style: TextStyle(color: HousepitalColors.greyLight)),
+                    child: Text('Clear',
+                        style: TextStyle(color: context.hc.greyLight)),
                   ),
           ),
         ],
@@ -127,11 +128,11 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     // Cart items
                     if (cart.isEmpty && cart.hasSavedItems)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(bottom: 16),
                         child: Text(
                           'Your cart is empty, but you have saved items below.',
-                          style: TextStyle(color: HousepitalColors.greyLight),
+                          style: TextStyle(color: context.hc.greyLight),
                         ),
                       ),
                     for (int i = 0; i < cart.items.length; i++)
@@ -148,8 +149,8 @@ class _CartScreenState extends State<CartScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Row(
                           children: [
-                            const Icon(Icons.bookmark_outline,
-                                size: 20, color: HousepitalColors.greyLight),
+                            Icon(Icons.bookmark_outline,
+                                size: 20, color: context.hc.greyLight),
                             const SizedBox(width: 8),
                             Text(
                               'Saved for Later (${cart.savedCount})',
@@ -184,14 +185,14 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.shopping_cart_outlined,
-              size: 80, color: HousepitalColors.greyLight),
+          Icon(Icons.shopping_cart_outlined,
+              size: 80, color: context.hc.greyLight),
           const SizedBox(height: 16),
           const Text('Your cart is empty',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text('Browse services & equipment to add items',
-              style: TextStyle(color: HousepitalColors.greyLight)),
+          Text('Browse services & equipment to add items',
+              style: TextStyle(color: context.hc.greyLight)),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
@@ -207,9 +208,9 @@ class _CartScreenState extends State<CartScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HousepitalColors.orangeLight.withValues(alpha: 0.3),
+        color: context.hc.orangeLight.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,39 +232,39 @@ class _CartScreenState extends State<CartScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: HousepitalColors.successLight,
+                color: context.hc.successLight,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                     color:
-                        HousepitalColors.success.withValues(alpha: 0.3)),
+                        context.hc.success.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      size: 18, color: HousepitalColors.success),
+                  Icon(Icons.check_circle,
+                      size: 18, color: context.hc.success),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_appliedCouponCode!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: HousepitalColors.success)),
+                                color: context.hc.success)),
                         Text(
                             'You save ${DateHelper.formatCurrency(_discountAmount)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
-                                color: HousepitalColors.success)),
+                                color: context.hc.success)),
                       ],
                     ),
                   ),
                   // WCAG 2.5.5 — IconButton enforces 48x48 tap target.
                   IconButton(
                     onPressed: _removeCoupon,
-                    icon: const Icon(Icons.close,
-                        size: 18, color: HousepitalColors.greyLight),
+                    icon: Icon(Icons.close,
+                        size: 18, color: context.hc.greyLight),
                     tooltip: 'Remove coupon',
                     constraints: const BoxConstraints(
                         minWidth: 44, minHeight: 44),
@@ -291,12 +292,12 @@ class _CartScreenState extends State<CartScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide:
-                            const BorderSide(color: HousepitalColors.divider),
+                            BorderSide(color: context.hc.divider),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide:
-                            const BorderSide(color: HousepitalColors.divider),
+                            BorderSide(color: context.hc.divider),
                       ),
                       filled: true,
                       fillColor: Colors.white,
@@ -338,8 +339,8 @@ class _CartScreenState extends State<CartScreen> {
           if (_couponError != null) ...[
             const SizedBox(height: 6),
             Text(_couponError!,
-                style: const TextStyle(
-                    fontSize: 12, color: HousepitalColors.error)),
+                style: TextStyle(
+                    fontSize: 12, color: context.hc.error)),
           ],
         ],
       ),
@@ -379,7 +380,7 @@ class _CartScreenState extends State<CartScreen> {
               _summaryRow(
                 'Coupon Discount',
                 '- ${DateHelper.formatCurrency(_discountAmount)}',
-                valueColor: HousepitalColors.success,
+                valueColor: context.hc.success,
               ),
               const SizedBox(height: 6),
             ],
@@ -390,18 +391,18 @@ class _CartScreenState extends State<CartScreen> {
                   ? 'FREE'
                   : DateHelper.formatCurrency(cart.deliveryCharge),
               valueColor: cart.deliveryCharge == 0
-                  ? HousepitalColors.success
+                  ? context.hc.success
                   : null,
             ),
             if (cart.deliveryCharge == 0)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 2),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Free delivery on orders above Rs.999',
                       style: TextStyle(
                           fontSize: 11,
-                          color: HousepitalColors.success)),
+                          color: context.hc.success)),
                 ),
               ),
             const Padding(
@@ -417,10 +418,10 @@ class _CartScreenState extends State<CartScreen> {
                         fontSize: 17, fontWeight: FontWeight.w700)),
                 Text(
                   DateHelper.formatCurrency(adjustedTotal),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: HousepitalColors.orangeText,
+                    color: context.hc.orangeText,
                   ),
                 ),
               ],
@@ -466,7 +467,7 @@ class _CartScreenState extends State<CartScreen> {
                           fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: HousepitalColors.info,
+                      backgroundColor: context.hc.info,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -480,19 +481,19 @@ class _CartScreenState extends State<CartScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.greyLighter,
+                  color: context.hc.greyLighter,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.lock_outline,
-                        size: 16, color: HousepitalColors.greyLight),
+                        size: 16, color: context.hc.greyLight),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Ask your family caregiver to place this order.',
                         style: TextStyle(
-                            fontSize: 13, color: HousepitalColors.grey),
+                            fontSize: 13, color: context.hc.grey),
                       ),
                     ),
                   ],
@@ -510,13 +511,13 @@ class _CartScreenState extends State<CartScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(
-                fontSize: 14, color: HousepitalColors.greyLight)),
+            style: TextStyle(
+                fontSize: 14, color: context.hc.greyLight)),
         Text(value,
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: valueColor ?? HousepitalColors.black)),
+                color: valueColor ?? context.hc.black)),
       ],
     );
   }
@@ -528,9 +529,9 @@ class _CartScreenState extends State<CartScreen> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: HousepitalColors.success),
+            Icon(Icons.check_circle, color: context.hc.success),
             SizedBox(width: 8),
             Expanded(child: Text('Request Sent')),
           ],
@@ -649,7 +650,7 @@ class _CartItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -660,13 +661,13 @@ class _CartItemCard extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               color: cartItem.isService
-                  ? HousepitalColors.infoLight
-                  : HousepitalColors.orangeLight,
+                  ? context.hc.infoLight
+                  : context.hc.orangeLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: cartItem.isService
-                ? const Icon(Icons.calendar_today_outlined,
-                    color: HousepitalColors.info, size: 28)
+                ? Icon(Icons.calendar_today_outlined,
+                    color: context.hc.info, size: 28)
                 : cartItem.imageUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(10),
@@ -692,24 +693,24 @@ class _CartItemCard extends StatelessWidget {
                         fontSize: 15, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(cartItem.brand,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.greyLight)),
+                        color: context.hc.greyLight)),
                 const SizedBox(height: 4),
                 if (cartItem.isService) ...[
                   // Service: show scheduled info
                   if (cartItem.scheduledDate != null)
                     Row(
                       children: [
-                        const Icon(Icons.schedule,
-                            size: 14, color: HousepitalColors.info),
+                        Icon(Icons.schedule,
+                            size: 14, color: context.hc.info),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             'Scheduled: ${DateHelper.formatDate(cartItem.scheduledDate!)}${cartItem.scheduledSlot != null ? ', ${_formatSlotLabel(cartItem.scheduledSlot)}' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: HousepitalColors.info,
+                              color: context.hc.info,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -720,15 +721,15 @@ class _CartItemCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 14, color: HousepitalColors.greyLight),
+                        Icon(Icons.location_on_outlined,
+                            size: 14, color: context.hc.greyLight),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             cartItem.selectedAddress!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11,
-                                color: HousepitalColors.greyLight),
+                                color: context.hc.greyLight),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -742,15 +743,15 @@ class _CartItemCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.infoLight,
+                      color: context.hc.infoLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Service',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.info,
+                        color: context.hc.info,
                       ),
                     ),
                   ),
@@ -761,8 +762,8 @@ class _CartItemCard extends StatelessWidget {
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: cartItem.isRental
-                          ? HousepitalColors.infoLight
-                          : HousepitalColors.successLight,
+                          ? context.hc.infoLight
+                          : context.hc.successLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -773,8 +774,8 @@ class _CartItemCard extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: cartItem.isRental
-                            ? HousepitalColors.info
-                            : HousepitalColors.success,
+                            ? context.hc.info
+                            : context.hc.success,
                       ),
                     ),
                   ),
@@ -788,10 +789,10 @@ class _CartItemCard extends StatelessWidget {
                       children: [
                         Text(
                           DateHelper.formatCurrency(cartItem.lineTotal),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: HousepitalColors.orangeText,
+                            color: context.hc.orangeText,
                           ),
                         ),
                         if (hasDiscount)
@@ -799,19 +800,19 @@ class _CartItemCard extends StatelessWidget {
                             children: [
                               Text(
                                 DateHelper.formatCurrency(cartItem.mrp!),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: HousepitalColors.greyLight,
+                                  color: context.hc.greyLight,
                                   decoration: TextDecoration.lineThrough,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '$discountPercent% off',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: HousepitalColors.success,
+                                  color: context.hc.success,
                                 ),
                               ),
                             ],
@@ -823,7 +824,7 @@ class _CartItemCard extends StatelessWidget {
                     if (!cartItem.isService)
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: HousepitalColors.divider),
+                          border: Border.all(color: context.hc.divider),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -869,8 +870,8 @@ class _CartItemCard extends StatelessWidget {
               );
               if (confirmed) cart.removeItem(index);
             },
-            icon: const Icon(Icons.close,
-                size: 18, color: HousepitalColors.greyLight),
+            icon: Icon(Icons.close,
+                size: 18, color: context.hc.greyLight),
           ),
         ],
       ),
@@ -907,7 +908,7 @@ class _SavedItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -917,7 +918,7 @@ class _SavedItemCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: HousepitalColors.greyLighter,
+              color: context.hc.greyLighter,
               borderRadius: BorderRadius.circular(10),
             ),
             child: cartItem.imageUrl != null
@@ -926,13 +927,13 @@ class _SavedItemCard extends StatelessWidget {
                     child: CachedNetworkImage(
                       imageUrl: cartItem.imageUrl!,
                       fit: BoxFit.contain,
-                      errorWidget: (_, _, _) => const Icon(
+                      errorWidget: (_, _, _) => Icon(
                           Icons.medical_services_outlined,
-                          color: HousepitalColors.greyLight),
+                          color: context.hc.greyLight),
                     ),
                   )
-                : const Icon(Icons.medical_services_outlined,
-                    color: HousepitalColors.greyLight, size: 24),
+                : Icon(Icons.medical_services_outlined,
+                    color: context.hc.greyLight, size: 24),
           ),
           const SizedBox(width: 12),
           // Details
@@ -945,9 +946,9 @@ class _SavedItemCard extends StatelessWidget {
                         fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(cartItem.brand,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.greyLight)),
+                        color: context.hc.greyLight)),
               ],
             ),
           ),
@@ -977,8 +978,8 @@ class _SavedItemCard extends StatelessWidget {
                 const BoxConstraints(minWidth: 44, minHeight: 44),
             padding: EdgeInsets.zero,
             onPressed: () => cart.removeSaved(index),
-            icon: const Icon(Icons.close,
-                size: 16, color: HousepitalColors.greyLight),
+            icon: Icon(Icons.close,
+                size: 16, color: context.hc.greyLight),
           ),
         ],
       ),

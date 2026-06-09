@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/helpers.dart';
@@ -100,8 +101,8 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.check_circle,
-                                        color: HousepitalColors.success,
+                                    Icon(Icons.check_circle,
+                                        color: context.hc.success,
                                         size: 18),
                                     const SizedBox(width: 8),
                                     Expanded(
@@ -214,7 +215,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: HousepitalColors.greyLighter,
+                              color: context.hc.greyLighter,
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
@@ -293,10 +294,10 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                     if (pkg.isDailyPackage)
                       Text(
                         '${DateHelper.formatCurrency(pkg.pricePerDay!)}/day',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: HousepitalColors.orangeText,
+                          color: context.hc.orangeText,
                         ),
                       )
                     else
@@ -321,9 +322,9 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                       pkg.isDailyPackage
                           ? '${pkg.condition} · Min ${pkg.minDays} days'
                           : pkg.condition,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
-                          color: HousepitalColors.greyLight)),
+                          color: context.hc.greyLight)),
                   ],
                 ),
               ),
@@ -331,9 +332,9 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           const SizedBox(height: 14),
           Text(pkg.description,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
-                  color: HousepitalColors.grey,
+                  color: context.hc.grey,
                   height: 1.4)),
         ],
       ),
@@ -354,7 +355,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         children: [
@@ -378,8 +379,8 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: pi.isRental
-                        ? HousepitalColors.info
-                        : HousepitalColors.success,
+                        ? context.hc.info
+                        : context.hc.success,
                   ),
                 ),
               ],
@@ -387,10 +388,10 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           Text(
             DateHelper.formatCurrency(price.toInt()),
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.orangeText),
+                color: context.hc.orangeText),
           ),
         ],
       ),
@@ -404,13 +405,13 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         children: [
-          const AppIconTile(
+          AppIconTile(
             icon: Icons.person,
-            color: HousepitalColors.info,
+            color: context.hc.info,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -423,18 +424,18 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${s.durationDays} days · ${DateHelper.formatCurrency(s.pricePerDay)}/day',
-                  style: const TextStyle(
-                      fontSize: 12, color: HousepitalColors.greyLight),
+                  style: TextStyle(
+                      fontSize: 12, color: context.hc.greyLight),
                 ),
               ],
             ),
           ),
           Text(
             DateHelper.formatCurrency(s.totalPrice),
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.orangeText),
+                color: context.hc.orangeText),
           ),
         ],
       ),
@@ -469,10 +470,10 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   Text(
                     '${DateHelper.formatCurrency(pkg.pricePerDay!)}/day',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                 ],
@@ -482,11 +483,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Minimum ${pkg.minDays} days · Billing & payment',
-                      style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                      style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                   Text(
                     'Min ${DateHelper.formatCurrency(pkg.pricePerDay! * (pkg.minDays ?? 5))}',
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.grey),
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.grey),
                   ),
                 ],
               ),
@@ -495,14 +496,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Individual total',
+                  Text('Individual total',
                       style: TextStyle(
-                          fontSize: 13, color: HousepitalColors.greyLight)),
+                          fontSize: 13, color: context.hc.greyLight)),
                   Text(
                     DateHelper.formatCurrency(_originalTotal.toInt()),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                       decoration: TextDecoration.lineThrough,
                     ),
                   ),
@@ -513,14 +514,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Package discount (${pkg.discountPercent.toInt()}%)',
-                      style: const TextStyle(
-                          fontSize: 13, color: HousepitalColors.success)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.hc.success)),
                   Text(
                     '- ${DateHelper.formatCurrency(_discount.toInt())}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.success),
+                        color: context.hc.success),
                   ),
                 ],
               ),
@@ -536,10 +537,10 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                           fontSize: 16, fontWeight: FontWeight.w700)),
                   Text(
                     DateHelper.formatCurrency(_packagePrice.toInt()),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                 ],
@@ -602,7 +603,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
         content: Text(needsAssessment
             ? '$addedCount equipment items added to cart. Services & respiratory devices require an assessment — our team will reach out.'
             : '${widget.package.name} added — $addedCount items in cart'),
-        backgroundColor: HousepitalColors.success,
+        backgroundColor: context.hc.success,
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'VIEW CART',
@@ -642,11 +643,11 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                     ),
                   )),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Our team will contact you to schedule a complimentary assessment.',
                 style: TextStyle(
                     fontSize: 12,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                     height: 1.3),
               ),
             ],
@@ -669,9 +670,9 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
 
   Widget _sectionTitle(String text) {
     return Text(text,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: HousepitalColors.black));
+            color: context.hc.black));
   }
 }

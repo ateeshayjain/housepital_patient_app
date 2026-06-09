@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 
 /// Collapsible text widget — shows 3 lines with "Read more" toggle.
 class CollapsibleText extends StatefulWidget {
@@ -24,9 +25,9 @@ class _CollapsibleTextState extends State<CollapsibleText> {
           widget.text,
           maxLines: _expanded ? null : 3,
           overflow: _expanded ? null : TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13,
-              color: HousepitalColors.grey,
+              color: context.hc.grey,
               height: 1.4),
         ),
         if (isLong) ...[

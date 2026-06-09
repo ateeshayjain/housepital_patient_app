@@ -1,6 +1,7 @@
 // lib/screens/my_care/widgets/health_manager_banner.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../config/app_colors.dart';
 import '../../../config/theme.dart';
 import '../../../models/my_care_models.dart';
 
@@ -15,13 +16,13 @@ class HealthManagerBanner extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [HousepitalColors.orangeLight, HousepitalColors.orangeLight],
+        gradient: LinearGradient(
+          colors: [context.hc.orangeLight, context.hc.orangeLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         children: [
@@ -47,16 +48,16 @@ class HealthManagerBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Your Health Manager',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                         letterSpacing: 0.5)),
                 Text(manager.name,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w700)),
                 Text(
                     'Available ${manager.availableFrom} – ${manager.availableTo}',
-                    style: const TextStyle(fontSize: 12, color: HousepitalColors.grey)),
+                    style: TextStyle(fontSize: 12, color: context.hc.grey)),
               ],
             ),
           ),
@@ -83,7 +84,7 @@ class HealthManagerBanner extends StatelessWidget {
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: HousepitalColors.divider),
+                side: BorderSide(color: context.hc.divider),
               ),
             ),
             icon: const Icon(Icons.chat_bubble_outline, size: 20),

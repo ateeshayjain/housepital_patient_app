@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
@@ -89,15 +90,15 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
             _listKey = UniqueKey(); // force refresh
           });
         },
-        selectedColor: HousepitalColors.orangeLight,
-        checkmarkColor: HousepitalColors.orangeText,
+        selectedColor: context.hc.orangeLight,
+        checkmarkColor: context.hc.orangeText,
         labelStyle: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: isSelected ? HousepitalColors.orangeText : HousepitalColors.grey,
+          color: isSelected ? context.hc.orangeText : context.hc.grey,
         ),
         side: BorderSide(
-          color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+          color: isSelected ? HousepitalColors.orange : context.hc.divider,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -123,10 +124,10 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
                 children: [
                   Text(
                     txn.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -134,9 +135,9 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
                   const SizedBox(height: 4),
                   Text(
                     DateHelper.formatRelative(txn.createdAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
@@ -148,10 +149,10 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
               children: [
                 Text(
                   DateHelper.formatCurrency(txn.amount),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -172,23 +173,23 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.receipt_long_outlined,
-              size: 64, color: HousepitalColors.greyLight),
+          Icon(Icons.receipt_long_outlined,
+              size: 64, color: context.hc.greyLight),
           const SizedBox(height: 16),
           Text(
             l.t('no_transactions'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: HousepitalColors.grey,
+              color: context.hc.grey,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             l.t('no_transactions_desc'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
         ],
@@ -222,10 +223,10 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
                   Expanded(
                     child: Text(
                       l.t('transaction_details'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                       ),
                     ),
                   ),
@@ -287,15 +288,15 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+            style: TextStyle(fontSize: 12, color: context.hc.greyLight),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: HousepitalColors.black,
+              color: context.hc.black,
             ),
           ),
         ],
@@ -315,21 +316,21 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
 
   Color _getMethodColor(String method) {
     switch (method) {
-      case 'upi': return HousepitalColors.info;
+      case 'upi': return context.hc.info;
       case 'card': return HousepitalColors.orange;
-      case 'netbanking': return HousepitalColors.success;
+      case 'netbanking': return context.hc.success;
       case 'wallet': return const Color(0xFF9C27B0);
-      default: return HousepitalColors.grey;
+      default: return context.hc.grey;
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'completed': return HousepitalColors.success;
-      case 'pending': return HousepitalColors.warning;
-      case 'failed': return HousepitalColors.error;
-      case 'refunded': return HousepitalColors.info;
-      default: return HousepitalColors.greyLight;
+      case 'completed': return context.hc.success;
+      case 'pending': return context.hc.warning;
+      case 'failed': return context.hc.error;
+      case 'refunded': return context.hc.info;
+      default: return context.hc.greyLight;
     }
   }
 

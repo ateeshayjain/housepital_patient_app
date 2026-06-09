@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../services/video_call_service.dart';
 
 /// Video Consultation screen — UI shell ready for Agora/WebRTC integration.
@@ -90,7 +91,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HousepitalColorsDark.surface,
+      backgroundColor: context.hc.background,
       body: SafeArea(
         child: switch (_state) {
           _CallState.preCall => _buildPreCall(),
@@ -164,9 +165,9 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
           const SizedBox(height: 40),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: HousepitalColors.error, fontSize: 16),
+              style: TextStyle(color: context.hc.error, fontSize: 16),
             ),
           ),
         ],
@@ -182,7 +183,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
       children: [
         // Remote video placeholder (full screen)
         Container(
-          color: HousepitalColorsDark.surfaceElevated,
+          color: context.hc.white,
           child: const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -207,7 +208,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
             height: 140,
             decoration: BoxDecoration(
               color: _isCameraOn
-                  ? HousepitalColorsDark.surfaceHigh
+                  ? context.hc.greyLighter
                   : Colors.black87,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: HousepitalColors.orange, width: 2),
@@ -334,8 +335,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                 child: Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(
-                    color: HousepitalColors.error,
+                  decoration: BoxDecoration(
+                    color: context.hc.error,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.call_end,
@@ -401,7 +402,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildPostCall() {
     return Scaffold(
-      backgroundColor: HousepitalColors.background,
+      backgroundColor: context.hc.background,
       appBar: AppBar(
         title: const Text('Consultation Complete'),
         automaticallyImplyLeading: false,
@@ -451,16 +452,16 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Duration: $_formattedDuration',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: HousepitalColors.greyLight,
+                              color: context.hc.greyLight,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.check_circle,
-                        color: HousepitalColors.success, size: 32),
+                    Icon(Icons.check_circle,
+                        color: context.hc.success, size: 32),
                   ],
                 ),
               ),

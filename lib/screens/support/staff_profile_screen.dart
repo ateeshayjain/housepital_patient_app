@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -145,8 +146,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   icon: const Icon(Icons.swap_horiz, size: 18),
                   label: const Text('Request Replacement'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: HousepitalColors.warning,
-                    side: const BorderSide(color: HousepitalColors.warning),
+                    foregroundColor: context.hc.warning,
+                    side: BorderSide(color: context.hc.warning),
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -193,7 +194,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         // Avatar
         CircleAvatar(
           radius: 48,
-          backgroundColor: HousepitalColors.orangeLight,
+          backgroundColor: context.hc.orangeLight,
           backgroundImage: _staff!.photoUrl != null
               ? NetworkImage(_staff!.photoUrl!)
               : null,
@@ -218,9 +219,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         const SizedBox(height: 4),
         Text(
           _staff!.role.replaceAll('_', ' ').toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
             letterSpacing: 0.5,
           ),
         ),
@@ -234,19 +235,19 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               const SizedBox(width: 8),
               Text(
                 _staff!.rating!.toStringAsFixed(1),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               if (_staff!.totalReviews != null) ...[
                 const SizedBox(width: 8),
                 Text(
                   '(${_staff!.totalReviews} reviews)',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                 ),
               ],
@@ -260,21 +261,21 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           alignment: WrapAlignment.center,
           children: [
             if (_staff!.idVerified)
-              const StatusBadge(
+              StatusBadge(
                 text: 'ID Verified',
-                color: HousepitalColors.success,
+                color: context.hc.success,
                 icon: Icons.verified_user,
               ),
             if (_staff!.policeVerified)
-              const StatusBadge(
+              StatusBadge(
                 text: 'Police Verified',
-                color: HousepitalColors.info,
+                color: context.hc.info,
                 icon: Icons.shield,
               ),
             if (_staff!.trainingComplete)
-              const StatusBadge(
+              StatusBadge(
                 text: 'Training Complete',
-                color: HousepitalColors.success,
+                color: context.hc.success,
                 icon: Icons.school,
               ),
           ],
@@ -290,12 +291,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Details',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -320,12 +321,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Verification Status',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -372,15 +373,15 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
           ),
           Icon(
             verified ? Icons.check_circle : Icons.pending,
-            color: verified ? HousepitalColors.success : HousepitalColors.warning,
+            color: verified ? context.hc.success : context.hc.warning,
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -389,7 +390,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: verified ? HousepitalColors.success : HousepitalColors.warning,
+              color: verified ? context.hc.success : context.hc.warning,
             ),
           ),
         ],
@@ -473,21 +474,21 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
             const Icon(Icons.calendar_month,
                 size: 20, color: HousepitalColors.orange),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Attendance',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
             ),
             Text(
               '${months[now.month - 1]} ${now.year}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -498,16 +499,16 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: HousepitalColors.orangeLight,
+            color: context.hc.orangeLight,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _attendanceStat('Present', '$presentCount', HousepitalColors.success),
-              _attendanceStat('Absent', '$absentCount', HousepitalColors.error),
-              _attendanceStat('Half Day', '$halfDayCount', HousepitalColors.warning),
-              _attendanceStat('Leave', '$leaveCount', HousepitalColors.greyLight),
+              _attendanceStat('Present', '$presentCount', context.hc.success),
+              _attendanceStat('Absent', '$absentCount', context.hc.error),
+              _attendanceStat('Half Day', '$halfDayCount', context.hc.warning),
+              _attendanceStat('Leave', '$leaveCount', context.hc.greyLight),
             ],
           ),
         ),
@@ -515,9 +516,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         // Day headers
         Container(
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           padding: const EdgeInsets.all(8),
           child: Column(
@@ -534,8 +535,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: d == 'S'
-                                    ? HousepitalColors.greyLight
-                                    : HousepitalColors.grey,
+                                    ? context.hc.greyLight
+                                    : context.hc.grey,
                               ),
                             ),
                           ),
@@ -570,16 +571,16 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                         } else {
                           switch (attendance.status) {
                             case 'present':
-                              dotColor = HousepitalColors.success;
+                              dotColor = context.hc.success;
                               break;
                             case 'absent':
-                              dotColor = HousepitalColors.error;
+                              dotColor = context.hc.error;
                               break;
                             case 'half_day':
-                              dotColor = HousepitalColors.warning;
+                              dotColor = context.hc.warning;
                               break;
                             case 'leave':
-                              dotColor = HousepitalColors.greyLight;
+                              dotColor = context.hc.greyLight;
                               break;
                             default:
                               dotColor = Colors.transparent;
@@ -596,7 +597,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                             height: 36,
                             decoration: BoxDecoration(
                               color: isToday
-                                  ? HousepitalColors.orangeLight
+                                  ? context.hc.orangeLight
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               border: isToday
@@ -616,8 +617,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                                         ? FontWeight.w700
                                         : FontWeight.w500,
                                     color: isFuture
-                                        ? HousepitalColors.greyLight
-                                        : HousepitalColors.black,
+                                        ? context.hc.greyLight
+                                        : context.hc.black,
                                   ),
                                 ),
                                 if (!isFuture && attendance != null)
@@ -646,13 +647,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _legendDot(HousepitalColors.success, 'Present'),
+            _legendDot(context.hc.success, 'Present'),
             const SizedBox(width: 16),
-            _legendDot(HousepitalColors.error, 'Absent'),
+            _legendDot(context.hc.error, 'Absent'),
             const SizedBox(width: 16),
-            _legendDot(HousepitalColors.warning, 'Half Day'),
+            _legendDot(context.hc.warning, 'Half Day'),
             const SizedBox(width: 16),
-            _legendDot(HousepitalColors.greyLight, 'Leave'),
+            _legendDot(context.hc.greyLight, 'Leave'),
           ],
         ),
       ],
@@ -673,9 +674,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
         ),
       ],
@@ -696,9 +697,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: HousepitalColors.greyLight,
+            color: context.hc.greyLight,
           ),
         ),
       ],
@@ -721,22 +722,22 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     IconData statusIcon;
     switch (attendance.status) {
       case 'present':
-        statusColor = HousepitalColors.success;
+        statusColor = context.hc.success;
         statusLabel = 'Present';
         statusIcon = Icons.check_circle;
         break;
       case 'absent':
-        statusColor = HousepitalColors.error;
+        statusColor = context.hc.error;
         statusLabel = 'Absent';
         statusIcon = Icons.cancel;
         break;
       case 'half_day':
-        statusColor = HousepitalColors.warning;
+        statusColor = context.hc.warning;
         statusLabel = 'Half Day';
         statusIcon = Icons.timelapse;
         break;
       default:
-        statusColor = HousepitalColors.greyLight;
+        statusColor = context.hc.greyLight;
         statusLabel = 'Leave / Off';
         statusIcon = Icons.event_busy;
     }
@@ -755,10 +756,10 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           children: [
             Text(
               '${dayNames[date.weekday - 1]}, ${date.day} ${monthNames[date.month - 1]}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
             const SizedBox(height: 16),
@@ -788,9 +789,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                         if (attendance.hoursWorked != null)
                           Text(
                             '${attendance.hoursWorked!.toStringAsFixed(0)} hours worked',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: HousepitalColors.greyLight,
+                              color: context.hc.greyLight,
                             ),
                           ),
                       ],
@@ -828,9 +829,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: HousepitalColors.greyLighter,
+        color: context.hc.greyLighter,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Column(
         children: [
@@ -838,17 +839,17 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           const SizedBox(height: 8),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: HousepitalColors.black,
+              color: context.hc.black,
             ),
           ),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
           ),
         ],
@@ -866,12 +867,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Documents',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -893,19 +894,19 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                         children: [
                           Text(
                             doc.label,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: HousepitalColors.black,
+                              color: context.hc.black,
                             ),
                           ),
                           const SizedBox(height: 2),
                           if (doc.verifiedAt != null)
                             Text(
                               'Verified on ${doc.verifiedAt!.day}/${doc.verifiedAt!.month}/${doc.verifiedAt!.year}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: HousepitalColors.greyLight,
+                                color: context.hc.greyLight,
                               ),
                             ),
                         ],
@@ -913,8 +914,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                     ),
                     _statusChip(doc.status),
                     const SizedBox(width: 8),
-                    const Icon(Icons.chevron_right,
-                        size: 18, color: HousepitalColors.greyLight),
+                    Icon(Icons.chevron_right,
+                        size: 18, color: context.hc.greyLight),
                   ],
                 ),
               ),
@@ -941,15 +942,15 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Color _docIconColor(String type) {
     switch (type) {
       case 'aadhaar':
-        return HousepitalColors.info;
+        return context.hc.info;
       case 'police_verification':
-        return HousepitalColors.success;
+        return context.hc.success;
       case 'training_certificate':
         return HousepitalColors.orange;
       case 'medical_certificate':
-        return HousepitalColors.error;
+        return context.hc.error;
       default:
-        return HousepitalColors.grey;
+        return context.hc.grey;
     }
   }
 
@@ -958,15 +959,15 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     String label;
     switch (status) {
       case 'verified':
-        color = HousepitalColors.success;
+        color = context.hc.success;
         label = 'Verified';
         break;
       case 'expired':
-        color = HousepitalColors.error;
+        color = context.hc.error;
         label = 'Expired';
         break;
       default:
-        color = HousepitalColors.warning;
+        color = context.hc.warning;
         label = 'Pending';
     }
     return StatusBadge(text: label, color: color);
@@ -1027,27 +1028,27 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
               width: double.infinity,
               height: 180,
               decoration: BoxDecoration(
-                color: HousepitalColors.greyLighter,
+                color: context.hc.greyLighter,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HousepitalColors.divider),
+                border: Border.all(color: context.hc.divider),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(_docIcon(doc.type), size: 48, color: HousepitalColors.greyLight),
+                  Icon(_docIcon(doc.type), size: 48, color: context.hc.greyLight),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Document preview',
                     style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Verified by Housepital',
                     style: TextStyle(
                       fontSize: 12,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
@@ -1074,20 +1075,20 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Reviews & Feedback',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
             const Spacer(),
             Text(
               '${reviews.length} reviews',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
               ),
             ),
           ],
@@ -1103,7 +1104,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 16,
-                          backgroundColor: HousepitalColors.orangeLight,
+                          backgroundColor: context.hc.orangeLight,
                           child: Text(
                             review.patientName[0].toUpperCase(),
                             style: const TextStyle(
@@ -1120,17 +1121,17 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                             children: [
                               Text(
                                 review.patientName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: HousepitalColors.black,
+                                  color: context.hc.black,
                                 ),
                               ),
                               Text(
                                 _timeAgo(review.date),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: HousepitalColors.greyLight,
+                                  color: context.hc.greyLight,
                                 ),
                               ),
                             ],
@@ -1144,10 +1145,10 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                             const SizedBox(width: 4),
                             Text(
                               review.rating.toStringAsFixed(1),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: HousepitalColors.black,
+                                color: context.hc.black,
                               ),
                             ),
                           ],
@@ -1159,9 +1160,9 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       const SizedBox(height: 8),
                       Text(
                         review.comment!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: HousepitalColors.grey,
+                          color: context.hc.grey,
                           height: 1.4,
                         ),
                       ),
@@ -1200,13 +1201,13 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(
-                          fontSize: 12, color: HousepitalColors.greyLight)),
+                      style: TextStyle(
+                          fontSize: 12, color: context.hc.greyLight)),
                   Text(value,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: HousepitalColors.black)),
+                          color: context.hc.black)),
                 ],
               ),
             ),
@@ -1226,8 +1227,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         stars.add(const Icon(Icons.star_half,
             size: 18, color: HousepitalColors.orange));
       } else {
-        stars.add(const Icon(Icons.star_border,
-            size: 18, color: HousepitalColors.greyLight));
+        stars.add(Icon(Icons.star_border,
+            size: 18, color: context.hc.greyLight));
       }
     }
     return stars;

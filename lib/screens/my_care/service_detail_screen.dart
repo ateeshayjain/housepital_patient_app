@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../models/my_care_models.dart';
 import '../../providers/my_care_provider.dart';
@@ -211,13 +212,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           const SizedBox(height: 8),
           ...detail.staffOnDuty.map((staff) => Card(
                 color: staff.isReplacement
-                    ? HousepitalColors.warningLight
-                    : HousepitalColors.successLight,
+                    ? context.hc.warningLight
+                    : context.hc.successLight,
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: staff.isReplacement
-                        ? HousepitalColors.warning
-                        : HousepitalColors.success,
+                        ? context.hc.warning
+                        : context.hc.success,
                     child: Text(
                       staff.name.split(' ').map((n) => n[0]).take(2).join(),
                       style: const TextStyle(
@@ -240,7 +241,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: HousepitalColors.warning)),
+                                  color: context.hc.warning)),
                         ),
                     ],
                   ),
@@ -257,12 +258,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: staff.isReplacement
-                                      ? HousepitalColors.warning
-                                      : HousepitalColors.success),
+                                      ? context.hc.warning
+                                      : context.hc.success),
                             ),
-                            const Text('on shift',
+                            Text('on shift',
                                 style: TextStyle(
-                                    fontSize: 11, color: HousepitalColors.greyLight)),
+                                    fontSize: 11, color: context.hc.greyLight)),
                           ],
                         )
                       : null,
@@ -308,17 +309,17 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               Color dotColor;
               switch (day.status) {
                 case 'on_time':
-                  dotColor = HousepitalColors.success;
+                  dotColor = context.hc.success;
                   break;
                 case 'replacement':
-                  dotColor = HousepitalColors.warning;
+                  dotColor = context.hc.warning;
                   break;
                 case 'absent':
                 case 'late':
-                  dotColor = HousepitalColors.error;
+                  dotColor = context.hc.error;
                   break;
                 default:
-                  dotColor = HousepitalColors.divider;
+                  dotColor = context.hc.divider;
               }
               final isToday = _isToday(day.date);
               return Expanded(
@@ -328,14 +329,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                      style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
                   const SizedBox(height: 4),
                   Container(
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isToday ? HousepitalColors.greyLight : dotColor,
+                      color: isToday ? context.hc.greyLight : dotColor,
                       border: isToday
                           ? Border.all(color: HousepitalColors.orange, width: 2)
                           : null,
@@ -433,8 +434,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             child: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 13, color: HousepitalColors.grey)),
+                style: TextStyle(
+                    fontSize: 13, color: context.hc.grey)),
           ),
           const SizedBox(width: 8),
           Flexible(
@@ -488,7 +489,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           icon: const Icon(Icons.verified_user, size: 20),
           label: const Text('Verify Staff'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: HousepitalColors.success,
+            backgroundColor: context.hc.success,
           ),
         ),
       ),

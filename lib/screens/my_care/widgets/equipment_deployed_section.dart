@@ -1,5 +1,6 @@
 // lib/screens/my_care/widgets/equipment_deployed_section.dart
 import 'package:flutter/material.dart';
+import '../../../config/app_colors.dart';
 import '../../../config/theme.dart';
 import '../../../models/my_care_models.dart';
 import '../../../utils/app_localizations.dart';
@@ -38,8 +39,8 @@ class EquipmentDeployedSection extends StatelessWidget {
                   trailing: StatusBadge(
                     text: eq.status == 'active' ? 'Active' : 'Returned',
                     color: eq.status == 'active'
-                        ? HousepitalColors.success
-                        : HousepitalColors.greyLight,
+                        ? context.hc.success
+                        : context.hc.greyLight,
                   ),
                 ),
               )),

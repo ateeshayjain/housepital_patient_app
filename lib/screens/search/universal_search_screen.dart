@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../data/care_packages.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
@@ -177,8 +178,8 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
               ? Icons.medical_services
               : Icons.inventory_2,
           iconColor: item.category == 'Equipment'
-              ? HousepitalColors.info
-              : HousepitalColors.success,
+              ? context.hc.info
+              : context.hc.success,
           data: item,
         ));
       }
@@ -247,7 +248,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
           subtitle: '${pkg.condition} · ${pkg.discountPercent.toInt()}% OFF',
           price: null,
           icon: Icons.card_giftcard,
-          iconColor: HousepitalColors.success,
+          iconColor: context.hc.success,
           data: pkg,
         ));
       }
@@ -275,8 +276,8 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
           onChanged: (v) => setState(() => _query = v.trim()),
           decoration: InputDecoration(
             hintText: 'Search services, equipment, packages...',
-            hintStyle: const TextStyle(
-                fontSize: 15, color: HousepitalColors.greyLight),
+            hintStyle: TextStyle(
+                fontSize: 15, color: context.hc.greyLight),
             border: InputBorder.none,
             suffixIcon: _query.isNotEmpty
                 ? IconButton(
@@ -324,11 +325,11 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Popular Searches',
+          Text('Popular Searches',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.black)),
+                  color: context.hc.black)),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
@@ -342,7 +343,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                         _controller.text = s.text;
                         setState(() => _query = s.text);
                       },
-                      backgroundColor: HousepitalColors.orangeLight,
+                      backgroundColor: context.hc.orangeLight,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -351,11 +352,11 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
           ),
           const SizedBox(height: 28),
           // Recent searches placeholder
-          const Text('Quick Links',
+          Text('Quick Links',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.black)),
+                  color: context.hc.black)),
           const SizedBox(height: 12),
           _quickLink(Icons.card_giftcard, 'Care Packages',
               'Bundled kits for specific conditions', () {
@@ -383,10 +384,10 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
       title: Text(title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle,
-          style: const TextStyle(
-              fontSize: 12, color: HousepitalColors.greyLight)),
-      trailing: const Icon(Icons.chevron_right,
-          size: 18, color: HousepitalColors.greyLight),
+          style: TextStyle(
+              fontSize: 12, color: context.hc.greyLight)),
+      trailing: Icon(Icons.chevron_right,
+          size: 18, color: context.hc.greyLight),
       onTap: onTap,
     );
   }
@@ -396,15 +397,15 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 56, color: HousepitalColors.greyLight),
+          Icon(Icons.search_off, size: 56, color: context.hc.greyLight),
           const SizedBox(height: 16),
           Text('No results for "$_query"',
               style: const TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text('Try a different search term',
+          Text('Try a different search term',
               style: TextStyle(
-                  fontSize: 13, color: HousepitalColors.greyLight)),
+                  fontSize: 13, color: context.hc.greyLight)),
         ],
       ),
     );
@@ -425,16 +426,16 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
         children: [
           Text(
             labels[type] ?? '',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: HousepitalColors.grey),
+                color: context.hc.grey),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
+              color: context.hc.orangeLight,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text('$count',
@@ -474,20 +475,20 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
           style:
               const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       subtitle: Text(r.subtitle,
-          style: const TextStyle(
-              fontSize: 12, color: HousepitalColors.greyLight)),
+          style: TextStyle(
+              fontSize: 12, color: context.hc.greyLight)),
       trailing: r.price != null
           ? Text(r.price!,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.orangeText))
+                  color: context.hc.orangeText))
           : r.type == SearchResultType.package
               ? Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: HousepitalColors.success,
+                    color: context.hc.success,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

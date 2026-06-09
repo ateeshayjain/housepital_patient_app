@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 
 /// Vertical timeline order-tracking screen.
@@ -154,7 +155,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                         : 'Visit Booking',
                     style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -275,9 +276,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Expected arrival',
-                style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+                style: TextStyle(fontSize: 13, color: context.hc.greyLight),
               ),
               Text(
                 etaText,
@@ -306,7 +307,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: HousepitalColors.orangeLight,
+              backgroundColor: context.hc.orangeLight,
               backgroundImage:
                   staffPhoto != null ? NetworkImage(staffPhoto) : null,
               child: staffPhoto == null
@@ -327,17 +328,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                   ),
                   Text(
                     staffRole,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
               ),
             ),
-            const StatusBadge(
+            StatusBadge(
               text: 'Assigned',
-              color: HousepitalColors.success,
+              color: context.hc.success,
             ),
           ],
         ),
@@ -392,19 +393,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isDone
-                            ? HousepitalColors.success
-                            : HousepitalColors.greyLighter,
+                            ? context.hc.success
+                            : context.hc.greyLighter,
                         border: Border.all(
                           color: isDone
-                              ? HousepitalColors.success
-                              : HousepitalColors.divider,
+                              ? context.hc.success
+                              : context.hc.divider,
                           width: 2,
                         ),
                       ),
                       child: Icon(
                         isDone ? Icons.check : step.icon,
                         size: 14,
-                        color: isDone ? Colors.white : HousepitalColors.greyLight,
+                        color: isDone ? Colors.white : context.hc.greyLight,
                       ),
                     ),
                   // Connector line
@@ -413,8 +414,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       width: 2,
                       height: 48,
                       color: isDone
-                          ? HousepitalColors.success
-                          : HousepitalColors.divider,
+                          ? context.hc.success
+                          : context.hc.divider,
                     ),
                 ],
               ),
@@ -434,25 +435,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                         fontWeight:
                             isCurrent ? FontWeight.w700 : FontWeight.w500,
                         color: isPending
-                            ? HousepitalColors.greyLight
-                            : HousepitalColors.black,
+                            ? context.hc.greyLight
+                            : context.hc.black,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       step.subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.greyLight,
+                        color: context.hc.greyLight,
                       ),
                     ),
                     if (timestamp != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         timestamp,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: HousepitalColors.greyLight,
+                          color: context.hc.greyLight,
                         ),
                       ),
                     ],
@@ -488,8 +489,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
             icon: const Icon(Icons.cancel_outlined),
             label: const Text('Cancel Order'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: HousepitalColors.error,
-              side: const BorderSide(color: HousepitalColors.error),
+              foregroundColor: context.hc.error,
+              side: BorderSide(color: context.hc.error),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -522,9 +523,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
               );
               Navigator.pop(context);
             },
-            child: const Text(
+            child: Text(
               'Yes, Cancel',
-              style: TextStyle(color: HousepitalColors.error),
+              style: TextStyle(color: context.hc.error),
             ),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 
 class EmiScreen extends StatefulWidget {
@@ -37,8 +38,8 @@ class _EmiScreenState extends State<EmiScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
+                gradient: LinearGradient(
+                  colors: [HousepitalColors.orange, context.hc.orangeDark],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -79,9 +80,9 @@ class _EmiScreenState extends State<EmiScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? HousepitalColors.orangeLight : HousepitalColors.white,
+                        color: isSelected ? context.hc.orangeLight : context.hc.white,
                         border: Border.all(
-                          color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                          color: isSelected ? HousepitalColors.orange : context.hc.divider,
                           width: isSelected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -90,18 +91,18 @@ class _EmiScreenState extends State<EmiScreen> {
                         children: [
                           Text('$months', style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.w700,
-                            color: isSelected ? HousepitalColors.orange : HousepitalColors.grey,
+                            color: isSelected ? HousepitalColors.orange : context.hc.grey,
                           )),
-                          const Text('months', style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                          Text('months', style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                           const SizedBox(height: 8),
                           Text(
                             DateHelper.formatCurrency(emi),
                             style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w600,
-                              color: isSelected ? HousepitalColors.orangeText : HousepitalColors.grey,
+                              color: isSelected ? context.hc.orangeText : context.hc.grey,
                             ),
                           ),
-                          const Text('/month', style: TextStyle(fontSize: 11, color: HousepitalColors.greyLight)),
+                          Text('/month', style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
                         ],
                       ),
                     ),
@@ -110,10 +111,10 @@ class _EmiScreenState extends State<EmiScreen> {
               }).toList(),
             ),
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text(
                 'No-cost EMI - Zero processing fee',
-                style: TextStyle(fontSize: 13, color: HousepitalColors.success, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 13, color: context.hc.success, fontWeight: FontWeight.w500),
               ),
             ),
             const SizedBox(height: 24),
@@ -129,7 +130,7 @@ class _EmiScreenState extends State<EmiScreen> {
                 children: [
                   // Header
                   Container(
-                    color: HousepitalColors.greyLighter,
+                    color: context.hc.greyLighter,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: const Row(
                       children: [
@@ -142,14 +143,14 @@ class _EmiScreenState extends State<EmiScreen> {
                   ...List.generate(_selectedMonths, (i) {
                     final dueDate = DateTime(now.year, now.month + i + 1, 1);
                     return Container(
-                      color: i.isEven ? HousepitalColors.white : HousepitalColors.greyLighter.withValues(alpha: 0.5),
+                      color: i.isEven ? context.hc.white : context.hc.greyLighter.withValues(alpha: 0.5),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
                           Expanded(flex: 2, child: Text('Month ${i + 1}', style: const TextStyle(fontSize: 13))),
                           Expanded(flex: 2, child: Text(
                             '${dueDate.day}/${dueDate.month}/${dueDate.year}',
-                            style: const TextStyle(fontSize: 13, color: HousepitalColors.grey),
+                            style: TextStyle(fontSize: 13, color: context.hc.grey),
                           )),
                           Expanded(flex: 2, child: Text(
                             DateHelper.formatCurrency(_emiAmount),
@@ -162,14 +163,14 @@ class _EmiScreenState extends State<EmiScreen> {
                   }),
                   // Total row
                   Container(
-                    color: HousepitalColors.orangeLight,
+                    color: context.hc.orangeLight,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
                         const Expanded(flex: 4, child: Text('Total', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700))),
                         Expanded(flex: 2, child: Text(
                           DateHelper.formatCurrency(widget.totalAmount),
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.hc.orangeText),
                           textAlign: TextAlign.right,
                         )),
                       ],
@@ -182,15 +183,15 @@ class _EmiScreenState extends State<EmiScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HousepitalColors.successLight,
+                color: context.hc.successLight,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.check_circle, size: 18, color: HousepitalColors.success),
+                  Icon(Icons.check_circle, size: 18, color: context.hc.success),
                   SizedBox(width: 8),
                   Text('Processing Fee: FREE', style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.success,
+                    fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.success,
                   )),
                 ],
               ),

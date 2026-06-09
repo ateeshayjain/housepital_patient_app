@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 
 /// Reusable +/- circle button used by quantity / duration selectors
 /// across the service catalog.
@@ -18,7 +19,7 @@ class QuantityButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: HousepitalColors.orangeLight,
+          color: context.hc.orangeLight,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, size: 18, color: HousepitalColors.orange),

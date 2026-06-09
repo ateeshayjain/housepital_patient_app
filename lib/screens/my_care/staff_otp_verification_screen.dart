@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -179,14 +180,14 @@ class _StaffOtpVerificationScreenState
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.orangeLight,
+                      color: context.hc.orangeLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       widget.staffRole,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.orangeText,
+                        color: context.hc.orangeText,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -214,9 +215,9 @@ class _StaffOtpVerificationScreenState
         Text(
           'Share this OTP with the staff member.\nThey will enter it on their app to confirm arrival.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: HousepitalColors.grey,
+            color: context.hc.grey,
             height: 1.5,
           ),
         ),
@@ -226,7 +227,7 @@ class _StaffOtpVerificationScreenState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
           decoration: BoxDecoration(
-            color: HousepitalColors.orangeLight,
+            color: context.hc.orangeLight,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: HousepitalColors.orange, width: 2),
           ),
@@ -274,9 +275,9 @@ class _StaffOtpVerificationScreenState
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Waiting for staff to enter OTP...',
-              style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+              style: TextStyle(fontSize: 13, color: context.hc.greyLight),
             ),
           ],
         ),
@@ -292,33 +293,33 @@ class _StaffOtpVerificationScreenState
           child: Container(
             width: 100,
             height: 100,
-            decoration: const BoxDecoration(
-              color: HousepitalColors.successLight,
+            decoration: BoxDecoration(
+              color: context.hc.successLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle,
-              color: HousepitalColors.success,
+              color: context.hc.success,
               size: 64,
             ),
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'Staff Verified!',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: HousepitalColors.success,
+            color: context.hc.success,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           '${widget.staffName} has been verified.\nThis screen will close automatically.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: HousepitalColors.grey,
+            color: context.hc.grey,
             height: 1.5,
           ),
         ),
@@ -330,9 +331,9 @@ class _StaffOtpVerificationScreenState
     return Column(
       children: [
         const Divider(height: 40),
-        const Text(
+        Text(
           "Can't verify?",
-          style: TextStyle(fontSize: 14, color: HousepitalColors.grey),
+          style: TextStyle(fontSize: 14, color: context.hc.grey),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -346,8 +347,8 @@ class _StaffOtpVerificationScreenState
           icon: const Icon(Icons.phone),
           label: const Text('Call Support'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: HousepitalColors.error,
-            side: const BorderSide(color: HousepitalColors.error),
+            foregroundColor: context.hc.error,
+            side: BorderSide(color: context.hc.error),
           ),
         ),
       ],

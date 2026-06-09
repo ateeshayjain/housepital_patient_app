@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 
 class ReferralScreen extends StatelessWidget {
   final String? userId;
@@ -27,8 +28,8 @@ class ReferralScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [HousepitalColors.orangeLight, Color(0xFFFFE0B2)],
+                gradient: LinearGradient(
+                  colors: [context.hc.orangeLight, Color(0xFFFFE0B2)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -40,7 +41,7 @@ class ReferralScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: HousepitalColors.white,
+                      color: context.hc.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -57,10 +58,10 @@ class ReferralScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Share your code and earn \u20B9500 when they complete their first booking!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: HousepitalColors.grey, height: 1.4),
+                    style: TextStyle(fontSize: 14, color: context.hc.grey, height: 1.4),
                   ),
                 ],
               ),
@@ -72,22 +73,22 @@ class ReferralScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: HousepitalColors.white,
+                color: context.hc.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: HousepitalColors.orange, width: 2),
               ),
               child: Column(
                 children: [
-                  const Text('Your Referral Code',
-                      style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight)),
+                  Text('Your Referral Code',
+                      style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
                   const SizedBox(height: 8),
                   Text(
                     _referralCode,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -123,7 +124,7 @@ class ReferralScreen extends StatelessWidget {
                           label: const Text('Share'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: HousepitalColors.orange,
-                            foregroundColor: HousepitalColors.white,
+                            foregroundColor: context.hc.white,
                           ),
                         ),
                       ),
@@ -144,11 +145,11 @@ class ReferralScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                _statCard('Total\nReferred', '0', Icons.people_outline, HousepitalColors.info),
+                _statCard(context, 'Total\nReferred', '0', Icons.people_outline, context.hc.info),
                 const SizedBox(width: 12),
-                _statCard('Successful', '0', Icons.check_circle_outline, HousepitalColors.success),
+                _statCard(context, 'Successful', '0', Icons.check_circle_outline, context.hc.success),
                 const SizedBox(width: 12),
-                _statCard('Earnings', '\u20B90', Icons.account_balance_wallet_outlined, HousepitalColors.orange),
+                _statCard(context, 'Earnings', '\u20B90', Icons.account_balance_wallet_outlined, HousepitalColors.orange),
               ],
             ),
             const SizedBox(height: 24),
@@ -161,16 +162,16 @@ class ReferralScreen extends StatelessWidget {
               )),
             ),
             const SizedBox(height: 12),
-            _howItWorksStep('1', 'Share your referral code with friends and family'),
-            _howItWorksStep('2', 'They sign up and enter your code during their first booking'),
-            _howItWorksStep('3', 'You earn \u20B9500 once they complete their first booking'),
+            _howItWorksStep(context, '1', 'Share your referral code with friends and family'),
+            _howItWorksStep(context, '2', 'They sign up and enter your code during their first booking'),
+            _howItWorksStep(context, '3', 'You earn \u20B9500 once they complete their first booking'),
           ],
         ),
       ),
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -186,8 +187,8 @@ class ReferralScreen extends StatelessWidget {
               fontSize: 20, fontWeight: FontWeight.w700, color: color,
             )),
             const SizedBox(height: 4),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(
-              fontSize: 11, color: HousepitalColors.greyLight,
+            Text(label, textAlign: TextAlign.center, style: TextStyle(
+              fontSize: 11, color: context.hc.greyLight,
             )),
           ],
         ),
@@ -195,7 +196,7 @@ class ReferralScreen extends StatelessWidget {
     );
   }
 
-  Widget _howItWorksStep(String number, String text) {
+  Widget _howItWorksStep(BuildContext context, String number, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -204,7 +205,7 @@ class ReferralScreen extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: HousepitalColors.orangeLight,
+              color: context.hc.orangeLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -215,8 +216,8 @@ class ReferralScreen extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(text, style: const TextStyle(
-              fontSize: 14, color: HousepitalColors.grey, height: 1.4,
+            child: Text(text, style: TextStyle(
+              fontSize: 14, color: context.hc.grey, height: 1.4,
             )),
           ),
         ],

@@ -1,6 +1,7 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 
 /// Shared search bar used by the manpower, consultations, and diagnostics tabs
 /// of the service catalog.
@@ -28,19 +29,19 @@ class CatalogSearchBar extends StatelessWidget {
         child: TextField(
           controller: controller,
           focusNode: focusNode,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
-            color: HousepitalColors.black,
+            color: context.hc.black,
           ),
           decoration: InputDecoration(
             hintText: 'Search services, equipment...',
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontSize: 15,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
             ),
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.search,
-              color: HousepitalColors.greyLight,
+              color: context.hc.greyLight,
               size: 22,
             ),
             suffixIcon: searchQuery.isNotEmpty
@@ -54,7 +55,7 @@ class CatalogSearchBar extends StatelessWidget {
                   )
                 : null,
             filled: true,
-            fillColor: HousepitalColors.greyLighter,
+            fillColor: context.hc.greyLighter,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,

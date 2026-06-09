@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
@@ -165,13 +166,13 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _urgencyChip('low', 'Low', HousepitalColors.info),
+                  _urgencyChip('low', 'Low', context.hc.info),
                   const SizedBox(width: 8),
-                  _urgencyChip('medium', 'Medium', HousepitalColors.warning),
+                  _urgencyChip('medium', 'Medium', context.hc.warning),
                   const SizedBox(width: 8),
                   _urgencyChip('high', 'High', HousepitalColors.orange),
                   const SizedBox(width: 8),
-                  _urgencyChip('emergency', 'Emergency', HousepitalColors.error),
+                  _urgencyChip('emergency', 'Emergency', context.hc.error),
                 ],
               ),
               const SizedBox(height: 16),
@@ -229,8 +230,8 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
                             child: GestureDetector(
                               onTap: () => _removePhoto(index),
                               child: Container(
-                                decoration: const BoxDecoration(
-                                  color: HousepitalColors.error,
+                                decoration: BoxDecoration(
+                                  color: context.hc.error,
                                   shape: BoxShape.circle,
                                 ),
                                 padding: const EdgeInsets.all(4),
@@ -282,7 +283,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.15) : HousepitalColors.greyLighter,
+            color: isSelected ? color.withValues(alpha: 0.15) : context.hc.greyLighter,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected ? color : Colors.transparent,
@@ -294,7 +295,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? color : HousepitalColors.greyLight,
+                color: isSelected ? color : context.hc.greyLight,
               ),
             ),
           ),
@@ -359,7 +360,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
               'Your concern was submitted without them — reply to the '
               "coordinator's message in chat to add photos.",
             ),
-            backgroundColor: HousepitalColors.warning,
+            backgroundColor: context.hc.warning,
           ),
         );
       }
@@ -386,8 +387,8 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle,
-              color: HousepitalColors.success, size: 48),
+          icon: Icon(Icons.check_circle,
+              color: context.hc.success, size: 48),
           title: Text(l.t('concern_submitted')),
           content: Text(slaText),
           actions: [
@@ -406,15 +407,15 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit: ${e.message}'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Something went wrong. Please try again.'),
-          backgroundColor: HousepitalColors.error,
+          backgroundColor: context.hc.error,
         ),
       );
     } finally {

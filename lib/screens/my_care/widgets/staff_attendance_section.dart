@@ -1,6 +1,6 @@
 // lib/screens/my_care/widgets/staff_attendance_section.dart
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/my_care_models.dart';
 import '../../../utils/app_localizations.dart';
 
@@ -42,8 +42,8 @@ class StaffAttendanceSection extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: checkedIn == totalStaff
-                      ? HousepitalColors.success
-                      : HousepitalColors.warning,
+                      ? context.hc.success
+                      : context.hc.warning,
                 ),
               ),
             ],
@@ -60,8 +60,8 @@ class StaffAttendanceSection extends StatelessWidget {
                         ? Icons.check_circle
                         : Icons.access_time,
                     color: checkedIn == totalStaff
-                        ? HousepitalColors.success
-                        : HousepitalColors.warning,
+                        ? context.hc.success
+                        : context.hc.warning,
                     size: 32,
                   ),
                   const SizedBox(width: 12),

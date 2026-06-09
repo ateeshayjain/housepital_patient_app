@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../utils/helpers.dart';
 
@@ -168,34 +169,34 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                     child: Container(
                       width: 110,
                       height: 110,
-                      decoration: const BoxDecoration(
-                        color: HousepitalColors.successLight,
+                      decoration: BoxDecoration(
+                        color: context.hc.successLight,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_circle,
-                        color: HousepitalColors.success,
+                        color: context.hc.success,
                         size: 72,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
+                  Text(
                     'Order Confirmed!',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.success,
+                      color: context.hc.success,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _bookingNumber,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black,
+                      color: context.hc.black,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -206,9 +207,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.white,
+                      color: context.hc.white,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: HousepitalColors.divider),
+                      border: Border.all(color: context.hc.divider),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,10 +242,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                                     fontWeight: FontWeight.w700)),
                             Text(
                               DateHelper.formatCurrency(widget.totalAmount),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: HousepitalColors.orangeText,
+                                color: context.hc.orangeText,
                               ),
                             ),
                           ],
@@ -259,23 +260,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.infoLight,
+                      color: context.hc.infoLight,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Icon(Icons.info_outline,
-                                color: HousepitalColors.info, size: 20),
+                                color: context.hc.info, size: 20),
                             SizedBox(width: 8),
                             Text(
                               'What happens next?',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: HousepitalColors.info,
+                                color: context.hc.info,
                               ),
                             ),
                           ],
@@ -375,8 +376,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
           height: 36,
           decoration: BoxDecoration(
             color: item.isService
-                ? HousepitalColors.infoLight
-                : HousepitalColors.orangeLight,
+                ? context.hc.infoLight
+                : context.hc.orangeLight,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -385,7 +386,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                 : Icons.medical_services_outlined,
             size: 18,
             color: item.isService
-                ? HousepitalColors.info
+                ? context.hc.info
                 : HousepitalColors.orange,
           ),
         ),
@@ -402,29 +403,29 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
               if (item.isService && item.scheduledDate != null)
                 Text(
                   'Scheduled: ${DateHelper.formatDate(item.scheduledDate!)}${item.scheduledSlot != null ? ', ${_slotLabel(item.scheduledSlot)}' : ''}',
-                  style: const TextStyle(
-                      fontSize: 12, color: HousepitalColors.info),
+                  style: TextStyle(
+                      fontSize: 12, color: context.hc.info),
                 ),
               if (!item.isService && item.brand.isNotEmpty)
                 Text(
                   item.brand,
-                  style: const TextStyle(
-                      fontSize: 12, color: HousepitalColors.greyLight),
+                  style: TextStyle(
+                      fontSize: 12, color: context.hc.greyLight),
                 ),
               if (item.isService)
-                const Text(
+                Text(
                   'Staff assignment in progress',
                   style: TextStyle(
                       fontSize: 11,
-                      color: HousepitalColors.warning,
+                      color: context.hc.warning,
                       fontStyle: FontStyle.italic),
                 ),
               if (!item.isService)
-                const Text(
+                Text(
                   'Delivery in 24 hours',
                   style: TextStyle(
                       fontSize: 11,
-                      color: HousepitalColors.success,
+                      color: context.hc.success,
                       fontStyle: FontStyle.italic),
                 ),
             ],
@@ -432,10 +433,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
         ),
         Text(
           DateHelper.formatCurrency(item.lineTotal),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: HousepitalColors.orangeText,
+            color: context.hc.orangeText,
           ),
         ),
       ],
@@ -450,16 +451,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: HousepitalColors.info.withValues(alpha: 0.15),
+            color: context.hc.info.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: HousepitalColors.info,
+              color: context.hc.info,
             ),
           ),
         ),
@@ -470,18 +471,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 desc,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: HousepitalColors.greyLight,
+                  color: context.hc.greyLight,
                 ),
               ),
             ],

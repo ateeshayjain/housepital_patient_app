@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/helpers.dart';
@@ -71,11 +72,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Never miss a payment. Add a card or UPI to automatically pay for recurring services like nurses, caretakers, and equipment rentals.',
                     style: TextStyle(
                         fontSize: 13,
-                        color: HousepitalColors.grey,
+                        color: context.hc.grey,
                         height: 1.4),
                   ),
                   const SizedBox(height: 12),
@@ -103,26 +104,26 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.greyLighter,
+                  color: context.hc.greyLighter,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: HousepitalColors.divider,
+                      color: context.hc.divider,
                       style: BorderStyle.solid),
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.credit_card_off,
-                        size: 40, color: HousepitalColors.greyLight),
+                    Icon(Icons.credit_card_off,
+                        size: 40, color: context.hc.greyLight),
                     const SizedBox(height: 12),
                     const Text('No saved payment methods',
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                         'Add a card or UPI to enable auto-pay',
                         style: TextStyle(
                             fontSize: 13,
-                            color: HousepitalColors.greyLight)),
+                            color: context.hc.greyLight)),
                   ],
                 ),
               )
@@ -167,21 +168,21 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HousepitalColors.infoLight,
+                color: context.hc.infoLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.verified_user,
-                      color: HousepitalColors.info, size: 18),
+                      color: context.hc.info, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Your payment information is secured with bank-grade encryption. Auto-pay follows RBI e-mandate guidelines. You will receive a notification before every debit and can cancel anytime.',
                       style: TextStyle(
                           fontSize: 12,
-                          color: HousepitalColors.info,
+                          color: context.hc.info,
                           height: 1.4),
                     ),
                   ),
@@ -208,8 +209,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           Icon(icon, size: 14, color: HousepitalColors.orange),
           const SizedBox(width: 4),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: HousepitalColors.grey)),
+              style: TextStyle(
+                  fontSize: 11, color: context.hc.grey)),
         ],
       ),
     );
@@ -232,7 +233,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         border: Border.all(
           color: method.isDefault
               ? HousepitalColors.orange
-              : HousepitalColors.divider,
+              : context.hc.divider,
         ),
       ),
       child: Row(
@@ -248,9 +249,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600)),
                 if (method.isDefault)
-                  const Text('Default',
+                  Text('Default',
                       style: TextStyle(
-                          fontSize: 11, color: HousepitalColors.success)),
+                          fontSize: 11, color: context.hc.success)),
               ],
             ),
           ),
@@ -259,14 +260,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: HousepitalColors.successLight,
+                color: context.hc.successLight,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('Auto-pay ON',
+              child: Text('Auto-pay ON',
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.success)),
+                      color: context.hc.success)),
             ),
         ],
       ),
@@ -280,7 +281,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Row(
         children: [
@@ -306,16 +307,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             ),
           ),
           Text(DateHelper.formatCurrency(r.amount.toInt()),
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.orangeText)),
+                  color: context.hc.orangeText)),
           const SizedBox(width: 8),
           Icon(
             r.autoPayEnabled ? Icons.check_circle : Icons.cancel_outlined,
             color: r.autoPayEnabled
-                ? HousepitalColors.success
-                : HousepitalColors.greyLight,
+                ? context.hc.success
+                : context.hc.greyLight,
             size: 18,
           ),
         ],
@@ -349,10 +350,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 "To add a card for auto-pay, please call our coordinator at +91-90502-00183 (10am–7pm IST). We'll set up the Razorpay mandate together over the phone — takes 3 minutes.",
                 style: TextStyle(
-                    fontSize: 14, color: HousepitalColors.grey, height: 1.4),
+                    fontSize: 14, color: context.hc.grey, height: 1.4),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
@@ -431,10 +432,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 ));
               });
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                       'UPI mandate created. Approve in your UPI app to enable auto-pay.'),
-                  backgroundColor: HousepitalColors.success,
+                  backgroundColor: context.hc.success,
                 ),
               );
             },

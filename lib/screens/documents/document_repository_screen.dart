@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -191,13 +192,13 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                     _categoryLabels[cat]!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: selected ? Colors.white : HousepitalColors.grey,
+                      color: selected ? Colors.white : context.hc.grey,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
                   selected: selected,
                   selectedColor: HousepitalColors.orange,
-                  backgroundColor: HousepitalColors.greyLighter,
+                  backgroundColor: context.hc.greyLighter,
                   checkmarkColor: Colors.white,
                   onSelected: (_) => setState(() => _selectedCategory = cat),
                 );
@@ -217,8 +218,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                     '${_filteredDocs.length} document${_filteredDocs.length != 1 ? 's' : ''}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 13, color: HousepitalColors.greyLight),
+                    style: TextStyle(
+                        fontSize: 13, color: context.hc.greyLight),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -228,8 +229,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
-                    style: const TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight),
+                    style: TextStyle(
+                        fontSize: 12, color: context.hc.greyLight),
                   ),
                 ),
               ],
@@ -245,10 +246,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.folder_open,
-                            size: 48, color: HousepitalColors.greyLight),
+                            size: 48, color: context.hc.greyLight),
                         const SizedBox(height: 12),
-                        const Text('No documents in this category',
-                            style: TextStyle(color: HousepitalColors.greyLight)),
+                        Text('No documents in this category',
+                            style: TextStyle(color: context.hc.greyLight)),
                       ],
                     ),
                   )
@@ -282,7 +283,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
         children: [
           AppIconTile(
             icon: icon,
-            color: isImage ? HousepitalColors.orange : HousepitalColors.info,
+            color: isImage ? HousepitalColors.orange : context.hc.info,
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -294,10 +295,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                   doc.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.black),
+                      color: context.hc.black),
                 ),
                 if (doc.description != null) ...[
                   const SizedBox(height: 2),
@@ -305,8 +306,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                     doc.description!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight),
+                    style: TextStyle(
+                        fontSize: 12, color: context.hc.greyLight),
                   ),
                 ],
                 const SizedBox(height: 4),
@@ -317,33 +318,33 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                         DateHelper.formatDateShort(doc.uploadedAt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 11, color: HousepitalColors.greyLight),
+                        style: TextStyle(
+                            fontSize: 11, color: context.hc.greyLight),
                       ),
                     ),
                     if (doc.fileSizeBytes != null) ...[
-                      const Text(' · ',
-                          style: TextStyle(color: HousepitalColors.greyLight)),
+                      Text(' · ',
+                          style: TextStyle(color: context.hc.greyLight)),
                       Flexible(
                         child: Text(
                           _formatFileSize(doc.fileSizeBytes!),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 11, color: HousepitalColors.greyLight),
+                          style: TextStyle(
+                              fontSize: 11, color: context.hc.greyLight),
                         ),
                       ),
                     ],
                     if (doc.uploadedBy != null) ...[
-                      const Text(' · ',
-                          style: TextStyle(color: HousepitalColors.greyLight)),
+                      Text(' · ',
+                          style: TextStyle(color: context.hc.greyLight)),
                       Flexible(
                         child: Text(
                           doc.uploadedBy!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 11, color: HousepitalColors.greyLight),
+                          style: TextStyle(
+                              fontSize: 11, color: context.hc.greyLight),
                         ),
                       ),
                     ],
@@ -355,7 +356,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
           const SizedBox(width: 8),
           StatusBadge(
             text: doc.fileType.toUpperCase(),
-            color: HousepitalColors.grey,
+            color: context.hc.grey,
           ),
         ],
       ),
@@ -389,8 +390,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             const SizedBox(height: 8),
             if (doc.description != null)
               Text(doc.description!,
-                  style: const TextStyle(
-                      fontSize: 14, color: HousepitalColors.grey)),
+                  style: TextStyle(
+                      fontSize: 14, color: context.hc.grey)),
             const SizedBox(height: 16),
             // audit batch 4 (Agent I): _detailRow → shared DetailRow widget
             // (labelWidth/fontSize tuned to match the document-detail look).
@@ -466,8 +467,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                   Navigator.pop(context);
                   _confirmDelete(doc);
                 },
-                child: const Text('Delete Document',
-                    style: TextStyle(color: HousepitalColors.error)),
+                child: Text('Delete Document',
+                    style: TextStyle(color: context.hc.error)),
               ),
             ),
           ],
@@ -558,9 +559,9 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             },
           ),
           ListTile(
-            leading: const AppIconTile(
+            leading: AppIconTile(
               icon: Icons.photo_library,
-              color: HousepitalColors.info,
+              color: context.hc.info,
               size: 22,
             ),
             title: const Text('Upload from Gallery'),
@@ -576,9 +577,9 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
           // SnackBar, no dart:io), so we show it on all platforms rather than
           // hiding the control with no explanation on web.
           ListTile(
-            leading: const AppIconTile(
+            leading: AppIconTile(
               icon: Icons.picture_as_pdf,
-              color: HousepitalColors.success,
+              color: context.hc.success,
               size: 22,
             ),
             title: const Text('Upload PDF'),
@@ -587,10 +588,10 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
             onTap: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                       'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'),
-                  backgroundColor: HousepitalColors.info,
+                  backgroundColor: context.hc.info,
                 ),
               );
             },

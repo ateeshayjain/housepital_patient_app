@@ -1,6 +1,6 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
-import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 
 /// Splits catalog text by `|` or newline — catalog uses both formats.
 List<String> splitCatalogText(String text) {
@@ -28,7 +28,7 @@ List<String> splitCatalogText(String text) {
 
 /// Parses FAQ text into Q/A pairs.
 /// Handles formats: "Q: ... | A: ... | Q: ..." or "Q: ... A: ... Q: ..."
-List<Widget> buildFaqItems(String faqs) {
+List<Widget> buildFaqItems(BuildContext context, String faqs) {
   // Extract Q/A pairs using a regex that finds "Q:" followed by "A:" patterns
   // Handles: "Q: q1? A: a1. | Q: q2? A: a2." and "Q: q1? A: a1. Q: q2? A: a2."
   final pairs = <Map<String, String>>[];
@@ -52,7 +52,7 @@ List<Widget> buildFaqItems(String faqs) {
   }
 
   if (pairs.isEmpty) {
-    return [Text(faqs, style: const TextStyle(fontSize: 13, color: HousepitalColors.grey, height: 1.4))];
+    return [Text(faqs, style: TextStyle(fontSize: 13, color: context.hc.grey, height: 1.4))];
   }
 
   return pairs.asMap().entries.map((entry) {
@@ -71,20 +71,20 @@ List<Widget> buildFaqItems(String faqs) {
                 width: 22, height: 22,
                 margin: const EdgeInsets.only(top: 1),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.orangeLight,
+                  color: context.hc.orangeLight,
                   borderRadius: BorderRadius.circular(11),
                 ),
                 child: Center(child: Text('$idx',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: HousepitalColors.orangeText))),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.hc.orangeText))),
               ),
               const SizedBox(width: 10),
-              Expanded(child: Text(q, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: HousepitalColors.black, height: 1.4))),
+              Expanded(child: Text(q, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.black, height: 1.4))),
             ],
           ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 32),
-            child: Text(a, style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight, height: 1.5)),
+            child: Text(a, style: TextStyle(fontSize: 12, color: context.hc.greyLight, height: 1.5)),
           ),
         ],
       ),

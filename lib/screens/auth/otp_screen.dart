@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_localizations.dart';
 
@@ -104,18 +105,18 @@ class _OtpScreenState extends State<OtpScreen> {
               const SizedBox(height: 24),
               Text(
                 l.t('otp_title'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.black,
+                  color: context.hc.black,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 '${l.t("otp_subtitle")} +91 ${auth.phone ?? ""}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: HousepitalColors.grey,
+                  color: context.hc.grey,
                 ),
               ),
               const SizedBox(height: 32),
@@ -133,11 +134,11 @@ class _OtpScreenState extends State<OtpScreen> {
                   borderRadius: BorderRadius.circular(12),
                   fieldHeight: 52,
                   fieldWidth: 48,
-                  activeFillColor: HousepitalColors.white,
-                  inactiveFillColor: HousepitalColors.greyLighter,
-                  selectedFillColor: HousepitalColors.orangeLight,
+                  activeFillColor: context.hc.white,
+                  inactiveFillColor: context.hc.greyLighter,
+                  selectedFillColor: context.hc.orangeLight,
                   activeColor: HousepitalColors.orange,
-                  inactiveColor: HousepitalColors.divider,
+                  inactiveColor: context.hc.divider,
                   selectedColor: HousepitalColors.orange,
                 ),
                 enableActiveFill: true,
@@ -152,12 +153,12 @@ class _OtpScreenState extends State<OtpScreen> {
 
               // audit M-6: countdown / expired helper text.
               if (_isExpired)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Text(
                     'OTP expired — tap Resend.',
                     style: TextStyle(
-                      color: HousepitalColors.error,
+                      color: context.hc.error,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -169,8 +170,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     'OTP expires in ${_formatExpiry(_expirySeconds)}',
-                    style: const TextStyle(
-                      color: HousepitalColors.greyLight,
+                    style: TextStyle(
+                      color: context.hc.greyLight,
                       fontSize: 12,
                     ),
                     textAlign: TextAlign.center,
@@ -184,8 +185,8 @@ class _OtpScreenState extends State<OtpScreen> {
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
                     auth.errorMessage!,
-                    style: const TextStyle(
-                      color: HousepitalColors.error,
+                    style: TextStyle(
+                      color: context.hc.error,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -222,8 +223,8 @@ class _OtpScreenState extends State<OtpScreen> {
                     ? Text(
                         l.t('resend_in',
                             {'seconds': _resendTimer.toString()}),
-                        style: const TextStyle(
-                          color: HousepitalColors.greyLight,
+                        style: TextStyle(
+                          color: context.hc.greyLight,
                         ),
                       )
                     : TextButton(

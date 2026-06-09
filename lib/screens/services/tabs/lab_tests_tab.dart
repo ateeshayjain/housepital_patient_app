@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../../../config/theme.dart';
+import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
 import '../../../widgets/common_widgets.dart';
@@ -196,12 +197,12 @@ class _LabTestsTabState extends State<LabTestsTab> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? HousepitalColors.orange
-                                : HousepitalColors.white,
+                                : context.hc.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
                                   ? HousepitalColors.orange
-                                  : HousepitalColors.divider,
+                                  : context.hc.divider,
                             ),
                           ),
                           child: Text(
@@ -210,8 +211,8 @@ class _LabTestsTabState extends State<LabTestsTab> {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isSelected
-                                  ? HousepitalColors.white
-                                  : HousepitalColors.grey,
+                                  ? context.hc.white
+                                  : context.hc.grey,
                             ),
                           ),
                         ),
@@ -222,7 +223,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
               ),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.sort, color: HousepitalColors.grey),
+                icon: Icon(Icons.sort, color: context.hc.grey),
                 onSelected: (v) => setState(() => _sortBy = v),
                 itemBuilder: (_) => _sortOptions
                     .map((o) => PopupMenuItem(
@@ -252,8 +253,8 @@ class _LabTestsTabState extends State<LabTestsTab> {
             alignment: Alignment.centerLeft,
             child: Text(
               '${filtered.length} tests found',
-              style: const TextStyle(
-                  fontSize: 13, color: HousepitalColors.greyLight),
+              style: TextStyle(
+                  fontSize: 13, color: context.hc.greyLight),
             ),
           ),
         ),
@@ -274,14 +275,14 @@ class _LabTestsTabState extends State<LabTestsTab> {
                         _searchQuery.isEmpty &&
                         _selectedCategory == 'All') {
                       if (index == 0) {
-                        return const Padding(
+                        return Padding(
                           padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                           child: Text(
                             'Popular Packages',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black,
+                              color: context.hc.black,
                             ),
                           ),
                         );
@@ -295,14 +296,14 @@ class _LabTestsTabState extends State<LabTestsTab> {
                         );
                       }
                       if (index == packages.length + 1) {
-                        return const Padding(
+                        return Padding(
                           padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: Text(
                             'All Individual Tests',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: HousepitalColors.black,
+                              color: context.hc.black,
                             ),
                           ),
                         );
@@ -342,7 +343,7 @@ class _LabTestCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         elevation: 1,
         shadowColor: Colors.black12,
@@ -354,8 +355,8 @@ class _LabTestCard extends StatelessWidget {
             child: Row(
               children: [
                 // Icon
-                const AppIconTile(
-                    icon: Icons.science, color: HousepitalColors.info),
+                AppIconTile(
+                    icon: Icons.science, color: context.hc.info),
                 const SizedBox(width: 12),
                 // Name + badges
                 Expanded(
@@ -364,10 +365,10 @@ class _LabTestCard extends StatelessWidget {
                     children: [
                       Text(
                         test.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
+                          color: context.hc.black,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -382,15 +383,15 @@ class _LabTestCard extends StatelessWidget {
                             _MiniChip(
                                 icon: Icons.schedule, label: test.reportTat!),
                           if (test.fastingRequired)
-                            const _MiniChip(
+                            _MiniChip(
                                 icon: Icons.no_food,
                                 label: 'Fasting',
-                                color: HousepitalColors.warning),
+                                color: context.hc.warning),
                           if (test.homeCollection)
-                            const _MiniChip(
+                            _MiniChip(
                                 icon: Icons.home,
                                 label: 'Home',
-                                color: HousepitalColors.success),
+                                color: context.hc.success),
                         ],
                       ),
                     ],
@@ -400,15 +401,15 @@ class _LabTestCard extends StatelessWidget {
                 if (test.price != null)
                   Text(
                     DateHelper.formatCurrency(test.price!),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: HousepitalColors.orangeText,
+                      color: context.hc.orangeText,
                     ),
                   ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right,
-                    color: HousepitalColors.greyLight, size: 20),
+                Icon(Icons.chevron_right,
+                    color: context.hc.greyLight, size: 20),
               ],
             ),
           ),
@@ -421,16 +422,17 @@ class _LabTestCard extends StatelessWidget {
 class _MiniChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final Color? color;
 
   const _MiniChip({
     required this.icon,
     required this.label,
-    this.color = HousepitalColors.greyLight,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? context.hc.greyLight;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(

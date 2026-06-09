@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
@@ -74,7 +75,7 @@ class _VitalsScreenState extends State<VitalsScreen>
         bottom: TabBar(
           controller: _tabController,
           labelColor: HousepitalColors.orange,
-          unselectedLabelColor: HousepitalColors.greyLight,
+          unselectedLabelColor: context.hc.greyLight,
           indicatorColor: HousepitalColors.orange,
           labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 14),
@@ -127,15 +128,15 @@ class _VitalsScreenState extends State<VitalsScreen>
         setState(() => _period = value);
         _generateMockData();
       },
-      selectedColor: HousepitalColors.orangeLight,
-      checkmarkColor: HousepitalColors.orangeText,
+      selectedColor: context.hc.orangeLight,
+      checkmarkColor: context.hc.orangeText,
       labelStyle: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: isSelected ? HousepitalColors.orangeText : HousepitalColors.grey,
+        color: isSelected ? context.hc.orangeText : context.hc.grey,
       ),
       side: BorderSide(
-        color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+        color: isSelected ? HousepitalColors.orange : context.hc.divider,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -227,9 +228,9 @@ class _VitalsScreenState extends State<VitalsScreen>
                         const SizedBox(width: 6),
                         Text(
                           unit,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: HousepitalColors.greyLight,
+                            color: context.hc.greyLight,
                           ),
                         ),
                       ],
@@ -245,15 +246,15 @@ class _VitalsScreenState extends State<VitalsScreen>
                         'Latest reading',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12, color: HousepitalColors.greyLight),
+                        style: TextStyle(
+                            fontSize: 12, color: context.hc.greyLight),
                       ),
                       Text(
                         DateHelper.formatDate(_vitals.last.recordedAt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12, color: HousepitalColors.greyLight),
+                        style: TextStyle(
+                            fontSize: 12, color: context.hc.greyLight),
                       ),
                     ],
                   ),
@@ -274,7 +275,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: _gridInterval(primaryKey),
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: HousepitalColors.divider,
+                      color: context.hc.divider,
                       strokeWidth: 0.5,
                     ),
                   ),
@@ -285,7 +286,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) => Text(
                           value.toInt().toString(),
-                          style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                          style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                         ),
                       ),
                     ),
@@ -301,7 +302,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
                                 DateHelper.formatDateShort(_vitals[idx].recordedAt),
-                                style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                                style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                               ),
                             );
                           }
@@ -339,7 +340,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                       LineChartBarData(
                         spots: secondarySpots,
                         isCurved: true,
-                        color: HousepitalColors.info,
+                        color: context.hc.info,
                         barWidth: 2,
                         dotData: FlDotData(show: _vitals.length <= 14),
                       ),
@@ -376,7 +377,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                 children: [
                   _legendDot(chartColor, 'Systolic'),
                   const SizedBox(width: 16),
-                  _legendDot(HousepitalColors.info, 'Diastolic'),
+                  _legendDot(context.hc.info, 'Diastolic'),
                 ],
               ),
             ),
@@ -388,9 +389,9 @@ class _VitalsScreenState extends State<VitalsScreen>
               children: [
                 _statCard('Average', avg.toStringAsFixed(1), unit, chartColor),
                 const SizedBox(width: 12),
-                _statCard('Highest', maxVal.toStringAsFixed(1), unit, HousepitalColors.error),
+                _statCard('Highest', maxVal.toStringAsFixed(1), unit, context.hc.error),
                 const SizedBox(width: 12),
-                _statCard('Lowest', minVal.toStringAsFixed(1), unit, HousepitalColors.info),
+                _statCard('Lowest', minVal.toStringAsFixed(1), unit, context.hc.info),
               ],
             ),
           ),
@@ -417,11 +418,11 @@ class _VitalsScreenState extends State<VitalsScreen>
 
   Color _chartColor(String key) {
     switch (key) {
-      case 'systolic': return HousepitalColors.error;
-      case 'temperature': return HousepitalColors.warning;
-      case 'spo2': return HousepitalColors.info;
+      case 'systolic': return context.hc.error;
+      case 'temperature': return context.hc.warning;
+      case 'spo2': return context.hc.info;
       case 'sugar': return const Color(0xFF7B1FA2);
-      case 'pulse': return HousepitalColors.error;
+      case 'pulse': return context.hc.error;
       default: return HousepitalColors.orange;
     }
   }
@@ -431,16 +432,16 @@ class _VitalsScreenState extends State<VitalsScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Column(
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+            Text(label, style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
             const SizedBox(height: 4),
             Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-            Text(unit, style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+            Text(unit, style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
           ],
         ),
       ),
@@ -460,10 +461,10 @@ class _VitalsScreenState extends State<VitalsScreen>
     final insights = <Widget>[];
 
     if (range < (avg * 0.1)) {
-      insights.add(_insightRow(Icons.check_circle, HousepitalColors.success,
+      insights.add(_insightRow(Icons.check_circle, context.hc.success,
           '$label has been stable over the past $period.'));
     } else {
-      insights.add(_insightRow(Icons.trending_up, HousepitalColors.warning,
+      insights.add(_insightRow(Icons.trending_up, context.hc.warning,
           '$label varied between ${minVal.toStringAsFixed(0)} and ${maxVal.toStringAsFixed(0)}.'));
     }
 
@@ -472,7 +473,7 @@ class _VitalsScreenState extends State<VitalsScreen>
       if (VitalHelper.getVitalStatus(primaryKey, val) == 'alert') alertCount++;
     }
     if (alertCount > 0) {
-      insights.add(_insightRow(Icons.warning_amber_rounded, HousepitalColors.error,
+      insights.add(_insightRow(Icons.warning_amber_rounded, context.hc.error,
           'Outside safe range on $alertCount occasion${alertCount > 1 ? "s" : ""}.'));
     }
 
@@ -483,7 +484,7 @@ class _VitalsScreenState extends State<VitalsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Insights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: HousepitalColors.black)),
+          Text('Insights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.black)),
           const SizedBox(height: 8),
           ...insights,
         ],
@@ -500,7 +501,7 @@ class _VitalsScreenState extends State<VitalsScreen>
           Icon(icon, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 14, color: HousepitalColors.grey, height: 1.4)),
+            child: Text(text, style: TextStyle(fontSize: 14, color: context.hc.grey, height: 1.4)),
           ),
         ],
       ),
@@ -523,7 +524,7 @@ class _VitalsScreenState extends State<VitalsScreen>
       children: [
         Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 13, color: HousepitalColors.greyLight)),
+        Text(label, style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
       ],
     );
   }

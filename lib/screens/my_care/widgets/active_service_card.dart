@@ -1,5 +1,6 @@
 // lib/screens/my_care/widgets/active_service_card.dart
 import 'package:flutter/material.dart';
+import '../../../config/app_colors.dart';
 import '../../../config/theme.dart';
 import '../../../models/my_care_models.dart';
 
@@ -52,11 +53,11 @@ class ActiveServiceCard extends StatelessWidget {
                             ),
                           ),
                           Text(progressLabel,
-                              style: const TextStyle(
-                                  fontSize: 11, color: HousepitalColors.greyLight)),
+                              style: TextStyle(
+                                  fontSize: 11, color: context.hc.greyLight)),
                           const SizedBox(width: 4),
-                          const Icon(Icons.chevron_right,
-                              size: 18, color: HousepitalColors.greyLight),
+                          Icon(Icons.chevron_right,
+                              size: 18, color: context.hc.greyLight),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -66,8 +67,8 @@ class ActiveServiceCard extends StatelessWidget {
                             Icon(allPresent ? Icons.check_circle : Icons.schedule,
                                 size: 14,
                                 color: allPresent
-                                    ? HousepitalColors.success
-                                    : HousepitalColors.warning),
+                                    ? context.hc.success
+                                    : context.hc.warning),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
@@ -78,23 +79,23 @@ class ActiveServiceCard extends StatelessWidget {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: allPresent
-                                        ? HousepitalColors.success
-                                        : HousepitalColors.warning),
+                                        ? context.hc.success
+                                        : context.hc.warning),
                               ),
                             ),
                           ],
                           if (service.renewalDate != null) ...[
                             const Spacer(),
-                            const Icon(Icons.event_repeat,
-                                size: 13, color: HousepitalColors.greyLight),
+                            Icon(Icons.event_repeat,
+                                size: 13, color: context.hc.greyLight),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text('Renews in ${service.daysRemaining}d',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
-                                      color: HousepitalColors.grey)),
+                                      color: context.hc.grey)),
                             ),
                           ],
                         ],
@@ -105,7 +106,7 @@ class ActiveServiceCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: service.progressFraction,
                           minHeight: 4,
-                          backgroundColor: HousepitalColors.greyLighter,
+                          backgroundColor: context.hc.greyLighter,
                           valueColor: AlwaysStoppedAnimation(color),
                         ),
                       ),

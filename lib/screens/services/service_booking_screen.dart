@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -158,11 +159,18 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     'critical': 'Critical Care Nurse',
   };
 
-  static const _nurseLevelColor = {
-    'basic': HousepitalColors.success,
-    'advanced': HousepitalColors.warning,
-    'critical': HousepitalColors.error,
-  };
+  Color _nurseLevelColor(BuildContext context, String? level) {
+    switch (level) {
+      case 'basic':
+        return context.hc.success;
+      case 'advanced':
+        return context.hc.warning;
+      case 'critical':
+        return context.hc.error;
+      default:
+        return context.hc.grey;
+    }
+  }
 
   String? get _ivNurseLevel {
     if (_selectedIvType == null) return null;
@@ -497,7 +505,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.orangeLight,
+          color: context.hc.orangeLight,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -508,17 +516,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     fontSize: 20, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(s.description ?? '',
-                style: const TextStyle(color: HousepitalColors.grey)),
+                style: TextStyle(color: context.hc.grey)),
             if (s.durationMinutes != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.schedule,
-                      size: 16, color: HousepitalColors.greyLight),
+                  Icon(Icons.schedule,
+                      size: 16, color: context.hc.greyLight),
                   const SizedBox(width: 4),
                   Text('${s.durationMinutes} minutes',
-                      style: const TextStyle(
-                          fontSize: 13, color: HousepitalColors.grey)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.hc.grey)),
                 ],
               ),
             ],
@@ -557,9 +565,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,10 +583,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Select the closest match — we\'ll recommend the right doctor',
                 style: TextStyle(
-                    fontSize: 12, color: HousepitalColors.greyLight),
+                    fontSize: 12, color: context.hc.greyLight),
               ),
               const SizedBox(height: 14),
               Wrap(
@@ -590,12 +598,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     label: Text(cat['label']!),
                     selected: selected,
                     onSelected: (_) => _onConcernSelected(cat['id']!),
-                    selectedColor: HousepitalColors.orangeLight,
+                    selectedColor: context.hc.orangeLight,
                     labelStyle: TextStyle(
                       fontSize: 13,
                       color: selected
                           ? HousepitalColors.orange
-                          : HousepitalColors.grey,
+                          : context.hc.grey,
                       fontWeight:
                           selected ? FontWeight.w600 : FontWeight.w400,
                     ),
@@ -604,7 +612,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       side: BorderSide(
                         color: selected
                             ? HousepitalColors.orange
-                            : HousepitalColors.divider,
+                            : context.hc.divider,
                       ),
                     ),
                   );
@@ -612,13 +620,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               // Hint text when no concern is selected yet
               if (_selectedConcernCategory == null)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
                     'Select your concern to continue',
                     style: TextStyle(
                       fontSize: 12,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -650,13 +658,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: _recommendedDoctor == 'icu'
-                  ? HousepitalColors.errorLight
-                  : HousepitalColors.successLight,
+                  ? context.hc.errorLight
+                  : context.hc.successLight,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _recommendedDoctor == 'icu'
-                    ? HousepitalColors.error
-                    : HousepitalColors.success,
+                    ? context.hc.error
+                    : context.hc.success,
                 width: 1.5,
               ),
             ),
@@ -668,8 +676,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       : Icons.person,
                   size: 28,
                   color: _recommendedDoctor == 'icu'
-                      ? HousepitalColors.error
-                      : HousepitalColors.success,
+                      ? context.hc.error
+                      : context.hc.success,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -684,8 +692,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: _recommendedDoctor == 'icu'
-                              ? HousepitalColors.error
-                              : HousepitalColors.success,
+                              ? context.hc.error
+                              : context.hc.success,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -696,8 +704,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           color: _recommendedDoctor == 'icu'
-                              ? HousepitalColors.error
-                              : HousepitalColors.success,
+                              ? context.hc.error
+                              : context.hc.success,
                         ),
                       ),
                     ],
@@ -716,9 +724,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,15 +740,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Select the procedure — nurse level and pricing are assigned automatically',
-                style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                style: TextStyle(fontSize: 12, color: context.hc.greyLight),
               ),
               const SizedBox(height: 14),
               ..._ivInfusionTypes.map((type) {
                 final selected = _selectedIvType == type['id'];
                 final level = type['level']!;
-                final levelColor = _nurseLevelColor[level]!;
+                final levelColor = _nurseLevelColor(context, level);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
@@ -751,17 +759,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: selected ? HousepitalColors.orange : HousepitalColors.divider,
+                          color: selected ? HousepitalColors.orange : context.hc.divider,
                           width: selected ? 2 : 1,
                         ),
-                        color: selected ? HousepitalColors.orangeLight : null,
+                        color: selected ? context.hc.orangeLight : null,
                       ),
                       child: Row(
                         children: [
                           Icon(
                             selected ? Icons.radio_button_checked : Icons.radio_button_off,
                             size: 20,
-                            color: selected ? HousepitalColors.orange : HousepitalColors.greyLight,
+                            color: selected ? HousepitalColors.orange : context.hc.greyLight,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -772,12 +780,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                                      color: HousepitalColors.black,
+                                      color: context.hc.black,
                                     )),
                                 const SizedBox(height: 2),
                                 Text(type['desc']!,
-                                    style: const TextStyle(
-                                        fontSize: 12, color: HousepitalColors.greyLight)),
+                                    style: TextStyle(
+                                        fontSize: 12, color: context.hc.greyLight)),
                               ],
                             ),
                           ),
@@ -812,17 +820,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _nurseLevelColor[_ivNurseLevel]!.withValues(alpha: 0.08),
+              color: _nurseLevelColor(context, _ivNurseLevel).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _nurseLevelColor[_ivNurseLevel]!,
+                color: _nurseLevelColor(context, _ivNurseLevel),
                 width: 1.5,
               ),
             ),
             child: Row(
               children: [
                 Icon(Icons.verified_user,
-                    size: 28, color: _nurseLevelColor[_ivNurseLevel]),
+                    size: 28, color: _nurseLevelColor(context, _ivNurseLevel)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -833,7 +841,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: _nurseLevelColor[_ivNurseLevel],
+                          color: _nurseLevelColor(context, _ivNurseLevel),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -841,7 +849,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         'This procedure requires a ${_nurseLevelLabel[_ivNurseLevel]?.toLowerCase()} (${DateHelper.formatCurrency(_ivPrice ?? 0)}/visit). Nurse level cannot be changed.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: _nurseLevelColor[_ivNurseLevel],
+                          color: _nurseLevelColor(context, _ivNurseLevel),
                         ),
                       ),
                     ],
@@ -857,9 +865,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -890,8 +898,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               const SizedBox(height: 14),
 
               // IV Access type
-              const Text('IV Access',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: HousepitalColors.grey)),
+              Text('IV Access',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.grey)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -900,14 +908,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     label: const Text('Fresh Cannulation'),
                     selected: _ivAccess == 'fresh',
                     onSelected: (_) => setState(() => _ivAccess = 'fresh'),
-                    selectedColor: HousepitalColors.orangeLight,
+                    selectedColor: context.hc.orangeLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: _ivAccess == 'fresh' ? HousepitalColors.orange : HousepitalColors.divider),
+                      side: BorderSide(color: _ivAccess == 'fresh' ? HousepitalColors.orange : context.hc.divider),
                     ),
                     labelStyle: TextStyle(
                       fontSize: 13,
-                      color: _ivAccess == 'fresh' ? HousepitalColors.orange : HousepitalColors.grey,
+                      color: _ivAccess == 'fresh' ? HousepitalColors.orange : context.hc.grey,
                       fontWeight: _ivAccess == 'fresh' ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
@@ -915,14 +923,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     label: const Text('PICC Line'),
                     selected: _ivAccess == 'picc',
                     onSelected: (_) => setState(() => _ivAccess = 'picc'),
-                    selectedColor: HousepitalColors.orangeLight,
+                    selectedColor: context.hc.orangeLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: _ivAccess == 'picc' ? HousepitalColors.orange : HousepitalColors.divider),
+                      side: BorderSide(color: _ivAccess == 'picc' ? HousepitalColors.orange : context.hc.divider),
                     ),
                     labelStyle: TextStyle(
                       fontSize: 13,
-                      color: _ivAccess == 'picc' ? HousepitalColors.orange : HousepitalColors.grey,
+                      color: _ivAccess == 'picc' ? HousepitalColors.orange : context.hc.grey,
                       fontWeight: _ivAccess == 'picc' ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
@@ -930,14 +938,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     label: const Text('Port'),
                     selected: _ivAccess == 'port',
                     onSelected: (_) => setState(() => _ivAccess = 'port'),
-                    selectedColor: HousepitalColors.orangeLight,
+                    selectedColor: context.hc.orangeLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: _ivAccess == 'port' ? HousepitalColors.orange : HousepitalColors.divider),
+                      side: BorderSide(color: _ivAccess == 'port' ? HousepitalColors.orange : context.hc.divider),
                     ),
                     labelStyle: TextStyle(
                       fontSize: 13,
-                      color: _ivAccess == 'port' ? HousepitalColors.orange : HousepitalColors.grey,
+                      color: _ivAccess == 'port' ? HousepitalColors.orange : context.hc.grey,
                       fontWeight: _ivAccess == 'port' ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
@@ -946,8 +954,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               const SizedBox(height: 14),
 
               // Number of sessions
-              const Text('Number of Sessions',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: HousepitalColors.grey)),
+              Text('Number of Sessions',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.grey)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -962,7 +970,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: HousepitalColors.divider),
+                      border: Border.all(color: context.hc.divider),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -979,7 +987,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   const SizedBox(width: 8),
                   Text(
                     _ivSessions == 1 ? 'session' : 'sessions',
-                    style: const TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+                    style: TextStyle(fontSize: 13, color: context.hc.greyLight),
                   ),
                 ],
               ),
@@ -1020,9 +1028,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1043,14 +1051,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle,
-                            size: 18, color: HousepitalColors.success),
+                        Icon(Icons.check_circle,
+                            size: 18, color: context.hc.success),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(item,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 14,
-                                  color: HousepitalColors.black)),
+                                  color: context.hc.black)),
                         ),
                       ],
                     ),
@@ -1066,9 +1074,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.warningLight,
+            color: context.hc.warningLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.warning),
+            border: Border.all(color: context.hc.warning),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1076,7 +1084,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Row(
                 children: [
                   Icon(Icons.info_outline,
-                      size: 20, color: HousepitalColors.warning),
+                      size: 20, color: context.hc.warning),
                   const SizedBox(width: 8),
                   const Text('Preparation Instructions',
                       style: TextStyle(
@@ -1085,8 +1093,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 10),
               Text(_getDiagnosticPreparation(s.id)!,
-                  style: const TextStyle(
-                      fontSize: 14, color: HousepitalColors.warning)),
+                  style: TextStyle(
+                      fontSize: 14, color: context.hc.warning)),
             ],
           ),
         ),
@@ -1098,9 +1106,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1132,9 +1140,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1155,14 +1163,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.check_circle,
-                            size: 18, color: HousepitalColors.success),
+                        Icon(Icons.check_circle,
+                            size: 18, color: context.hc.success),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(item,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 14,
-                                  color: HousepitalColors.black)),
+                                  color: context.hc.black)),
                         ),
                       ],
                     ),
@@ -1178,9 +1186,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.warningLight,
+            color: context.hc.warningLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.warning),
+            border: Border.all(color: context.hc.warning),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1188,7 +1196,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Row(
                 children: [
                   Icon(Icons.info_outline,
-                      size: 20, color: HousepitalColors.warning),
+                      size: 20, color: context.hc.warning),
                   const SizedBox(width: 8),
                   const Text('Before the Visit',
                       style: TextStyle(
@@ -1197,8 +1205,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
               const SizedBox(height: 10),
               Text(_getVisitPreparation(s.id)!,
-                  style: const TextStyle(
-                      fontSize: 14, color: HousepitalColors.warning)),
+                  style: TextStyle(
+                      fontSize: 14, color: context.hc.warning)),
             ],
           ),
         ),
@@ -1210,9 +1218,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1243,15 +1251,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Non-diagnostic preparation notes (existing behavior)
       if (!isDiag && !_isVisitService && s.preparationNotes != null) ...[
         const SizedBox(height: 16),
-        const Text('What to Prepare',
+        Text('What to Prepare',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HousepitalColors.black)),
+                color: context.hc.black)),
         const SizedBox(height: 8),
         Text(s.preparationNotes!,
-            style: const TextStyle(
-                fontSize: 14, color: HousepitalColors.grey)),
+            style: TextStyle(
+                fontSize: 14, color: context.hc.grey)),
       ],
 
       // Prescription / Notes / Online Assessment section
@@ -1260,9 +1268,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1289,7 +1297,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         : 'Attach prescription or add notes for the visiting professional',
                 style: TextStyle(
                     fontSize: 12,
-                    color: _isIvVisit ? HousepitalColors.error : HousepitalColors.greyLight,
+                    color: _isIvVisit ? context.hc.error : context.hc.greyLight,
                     fontWeight: _isIvVisit ? FontWeight.w500 : FontWeight.w400),
               ),
               const SizedBox(height: 14),
@@ -1406,8 +1414,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           width: 32,
           height: 32,
-          decoration: const BoxDecoration(
-            color: HousepitalColors.orangeLight,
+          decoration: BoxDecoration(
+            color: context.hc.orangeLight,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -1422,12 +1430,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Icon(icon, size: 18, color: HousepitalColors.greyLight),
+        Icon(icon, size: 18, color: context.hc.greyLight),
         const SizedBox(width: 8),
         Expanded(
           child: Text(label,
-              style: const TextStyle(
-                  fontSize: 14, color: HousepitalColors.black)),
+              style: TextStyle(
+                  fontSize: 14, color: context.hc.black)),
         ),
       ],
     );
@@ -1439,7 +1447,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       child: Container(
         width: 2,
         height: 20,
-        color: HousepitalColors.divider,
+        color: context.hc.divider,
       ),
     );
   }
@@ -1484,12 +1492,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? HousepitalColors.orange
-                    : HousepitalColors.white,
+                    : context.hc.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected
                       ? HousepitalColors.orange
-                      : HousepitalColors.divider,
+                      : context.hc.divider,
                 ),
               ),
               child: Column(
@@ -1501,7 +1509,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       fontWeight: FontWeight.w600,
                       color: isSelected
                           ? Colors.white
-                          : HousepitalColors.black,
+                          : context.hc.black,
                     ),
                   ),
                 ],
@@ -1518,8 +1526,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Shimmer loading state
       if (_slotsLoading)
         Shimmer.fromColors(
-          baseColor: HousepitalColors.divider,
-          highlightColor: HousepitalColors.greyLighter,
+          baseColor: context.hc.divider,
+          highlightColor: context.hc.greyLighter,
           child: GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
@@ -1544,12 +1552,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: HousepitalColors.warningLight,
+            color: context.hc.warningLight,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
-              const Icon(Icons.event_busy, size: 40, color: HousepitalColors.warning),
+              Icon(Icons.event_busy, size: 40, color: context.hc.warning),
               const SizedBox(height: 12),
               const Text(
                 'No slots available',
@@ -1559,7 +1567,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Text(
                 'All slots are booked for this date. Please try another date.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: HousepitalColors.greyLight),
+                style: TextStyle(fontSize: 13, color: context.hc.greyLight),
               ),
             ],
           ),
@@ -1592,15 +1600,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   color: isSelected
                       ? HousepitalColors.orange
                       : isAvailable
-                          ? HousepitalColors.white
-                          : HousepitalColors.greyLighter,
+                          ? context.hc.white
+                          : context.hc.greyLighter,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
                         ? HousepitalColors.orange
                         : isAvailable
-                            ? HousepitalColors.divider
-                            : HousepitalColors.divider,
+                            ? context.hc.divider
+                            : context.hc.divider,
                   ),
                 ),
                 child: Text(
@@ -1612,8 +1620,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     color: isSelected
                         ? Colors.white
                         : isAvailable
-                            ? HousepitalColors.black
-                            : HousepitalColors.greyLight,
+                            ? context.hc.black
+                            : context.hc.greyLight,
                     decoration: isAvailable
                         ? TextDecoration.none
                         : TextDecoration.lineThrough,
@@ -1652,7 +1660,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 4),
       Text('Minimum 48 hours advance booking required',
-          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+          style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
       const SizedBox(height: 12),
       Wrap(
         spacing: 8,
@@ -1667,12 +1675,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? HousepitalColors.orange
-                    : HousepitalColors.white,
+                    : context.hc.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected
                       ? HousepitalColors.orange
-                      : HousepitalColors.divider,
+                      : context.hc.divider,
                 ),
               ),
               child: Text(
@@ -1680,7 +1688,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : HousepitalColors.black,
+                  color: isSelected ? Colors.white : context.hc.black,
                 ),
               ),
             ),
@@ -1701,12 +1709,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 decoration: BoxDecoration(
                   color: _servicePeriod == '7'
                       ? HousepitalColors.orange
-                      : HousepitalColors.white,
+                      : context.hc.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _servicePeriod == '7'
                         ? HousepitalColors.orange
-                        : HousepitalColors.divider,
+                        : context.hc.divider,
                   ),
                 ),
                 child: Column(
@@ -1715,14 +1723,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700,
                           color: _servicePeriod == '7'
-                              ? Colors.white : HousepitalColors.black,
+                              ? Colors.white : context.hc.black,
                         )),
                     const SizedBox(height: 4),
                     Text('Trial / Short-term',
                         style: TextStyle(
                           fontSize: 11,
                           color: _servicePeriod == '7'
-                              ? Colors.white70 : HousepitalColors.greyLight,
+                              ? Colors.white70 : context.hc.greyLight,
                         )),
                   ],
                 ),
@@ -1738,12 +1746,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 decoration: BoxDecoration(
                   color: _servicePeriod == '30'
                       ? HousepitalColors.orange
-                      : HousepitalColors.white,
+                      : context.hc.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _servicePeriod == '30'
                         ? HousepitalColors.orange
-                        : HousepitalColors.divider,
+                        : context.hc.divider,
                   ),
                 ),
                 child: Column(
@@ -1752,14 +1760,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w700,
                           color: _servicePeriod == '30'
-                              ? Colors.white : HousepitalColors.black,
+                              ? Colors.white : context.hc.black,
                         )),
                     const SizedBox(height: 4),
                     Text('Monthly (Recommended)',
                         style: TextStyle(
                           fontSize: 11,
                           color: _servicePeriod == '30'
-                              ? Colors.white70 : HousepitalColors.greyLight,
+                              ? Colors.white70 : context.hc.greyLight,
                         )),
                   ],
                 ),
@@ -1774,16 +1782,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.successLight,
+            color: context.hc.successLight,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('$_servicePeriod days × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}/day',
-                  style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
+                  style: TextStyle(fontSize: 14, color: context.hc.success)),
               Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_servicePeriod)),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.hc.success)),
             ],
           ),
         ),
@@ -1796,9 +1804,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.greyLighter,
+          color: context.hc.greyLighter,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Column(
           children: [
@@ -1822,12 +1830,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
-                  backgroundColor: HousepitalColors.orangeLight,
+                  backgroundColor: context.hc.orangeLight,
                   child: const Icon(Icons.person, color: HousepitalColors.orange),
                 ),
                 title: const Text('Your previous staff', style: TextStyle(fontSize: 14)),
                 subtitle: const Text('Based on past deployments', style: TextStyle(fontSize: 12)),
-                trailing: const Icon(Icons.chevron_right, color: HousepitalColors.greyLight),
+                trailing: Icon(Icons.chevron_right, color: context.hc.greyLight),
                 onTap: () {
                   // NOTE: Requires backend API — will be wired when Cloud Functions deploy.
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1845,9 +1853,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.infoLight,
+          color: context.hc.infoLight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.info.withValues(alpha: 0.3)),
+          border: Border.all(color: context.hc.info.withValues(alpha: 0.3)),
         ),
         child: SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -1858,13 +1866,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             style: TextStyle(fontSize: 12),
           ),
           value: _enableAutopay,
-          activeThumbColor: HousepitalColors.info,
+          activeThumbColor: context.hc.info,
           onChanged: (v) => setState(() => _enableAutopay = v),
         ),
       ),
       const SizedBox(height: 12),
       Text('We\'ll call back immediately after booking to confirm requirements and assign staff.',
-          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight, fontStyle: FontStyle.italic)),
+          style: TextStyle(fontSize: 12, color: context.hc.greyLight, fontStyle: FontStyle.italic)),
     ];
   }
 
@@ -1891,17 +1899,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                color: isSelected ? HousepitalColors.orange : context.hc.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                  color: isSelected ? HousepitalColors.orange : context.hc.divider,
                 ),
               ),
               child: Text(
                 DateHelper.formatDateShort(date),
                 style: TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : HousepitalColors.black,
+                  color: isSelected ? Colors.white : context.hc.black,
                 ),
               ),
             ),
@@ -1912,8 +1920,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       const Text('Preferred Time',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       const SizedBox(height: 4),
-      const Text('Daytime slots only (9 AM – 5 PM)',
-          style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+      Text('Daytime slots only (9 AM – 5 PM)',
+          style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
       const SizedBox(height: 12),
       if (_slotsLoading)
         const Center(child: CircularProgressIndicator(color: HousepitalColors.orange))
@@ -1932,17 +1940,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               child: Container(
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                  color: isSelected ? HousepitalColors.orange : context.hc.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                    color: isSelected ? HousepitalColors.orange : context.hc.divider,
                   ),
                 ),
                 child: Text(
                   _slotLabel(hour),
                   style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : HousepitalColors.black,
+                    color: isSelected ? Colors.white : context.hc.black,
                   ),
                 ),
               ),
@@ -1964,10 +1972,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: isSelected ? HousepitalColors.orange : HousepitalColors.white,
+                    color: isSelected ? HousepitalColors.orange : context.hc.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected ? HousepitalColors.orange : HousepitalColors.divider,
+                      color: isSelected ? HousepitalColors.orange : context.hc.divider,
                     ),
                   ),
                   child: Column(
@@ -1975,12 +1983,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       Text(days,
                           style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w700,
-                            color: isSelected ? Colors.white : HousepitalColors.black,
+                            color: isSelected ? Colors.white : context.hc.black,
                           )),
                       Text('days',
                           style: TextStyle(
                             fontSize: 11,
-                            color: isSelected ? Colors.white70 : HousepitalColors.greyLight,
+                            color: isSelected ? Colors.white70 : context.hc.greyLight,
                           )),
                     ],
                   ),
@@ -1995,16 +2003,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.successLight,
+            color: context.hc.successLight,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('$_physioPeriod sessions × ${DateHelper.formatCurrency(widget.service.basePriceMin ?? 0)}',
-                  style: const TextStyle(fontSize: 14, color: HousepitalColors.success)),
+                  style: TextStyle(fontSize: 14, color: context.hc.success)),
               Text(DateHelper.formatCurrency((widget.service.basePriceMin ?? 0) * int.parse(_physioPeriod)),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.success)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.hc.success)),
             ],
           ),
         ),
@@ -2025,9 +2033,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2095,10 +2103,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
             ] else ...[
               const Divider(height: 20),
-              const Text('Pricing will be confirmed after assessment',
+              Text('Pricing will be confirmed after assessment',
                   style: TextStyle(
                       fontSize: 13,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                       fontStyle: FontStyle.italic)),
             ],
           ],
@@ -2109,9 +2117,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2152,13 +2160,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? HousepitalColors.orangeLight
-                          : HousepitalColors.white,
+                          ? context.hc.orangeLight
+                          : context.hc.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? HousepitalColors.orange
-                            : HousepitalColors.divider,
+                            : context.hc.divider,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -2170,7 +2178,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                               : Icons.radio_button_off,
                           color: isSelected
                               ? HousepitalColors.orange
-                              : HousepitalColors.greyLight,
+                              : context.hc.greyLight,
                           size: 20,
                         ),
                         const SizedBox(width: 10),
@@ -2181,7 +2189,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                                   ? Icons.business_outlined
                                   : Icons.family_restroom_outlined,
                           size: 18,
-                          color: HousepitalColors.grey,
+                          color: context.hc.grey,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -2195,10 +2203,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                                       fontWeight: FontWeight.w600)),
                               const SizedBox(height: 2),
                               Text(addr['address']!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       color:
-                                          HousepitalColors.greyLight)),
+                                          context.hc.greyLight)),
                             ],
                           ),
                         ),
@@ -2217,9 +2225,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HousepitalColors.white,
+          color: context.hc.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HousepitalColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2229,7 +2237,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 const Icon(Icons.autorenew,
                     color: HousepitalColors.orange, size: 22),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -2241,7 +2249,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                           'Automatically renew and pay at end of each cycle',
                           style: TextStyle(
                               fontSize: 12,
-                              color: HousepitalColors.greyLight)),
+                              color: context.hc.greyLight)),
                     ],
                   ),
                 ),
@@ -2254,11 +2262,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             ),
             if (_autoRenew) ...[
               const SizedBox(height: 14),
-              const Text('Billing Cycle',
+              Text('Billing Cycle',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.grey)),
+                      color: context.hc.grey)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -2271,13 +2279,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.infoLight,
+                  color: context.hc.infoLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.info_outline,
-                        color: HousepitalColors.info, size: 18),
+                        color: context.hc.info, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -2285,17 +2293,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                             ? 'Next payment will be auto-charged on ${DateHelper.formatDate(DateTime.now().add(const Duration(days: 30)))}'
                             : 'Next payment will be auto-charged on ${DateHelper.formatDate(DateTime.now().add(const Duration(days: 90)))}. You save 5% with quarterly billing.',
                         style: TextStyle(
-                            fontSize: 12, color: HousepitalColors.info),
+                            fontSize: 12, color: context.hc.info),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'You can cancel auto-renewal anytime from Settings',
                 style: TextStyle(
-                    fontSize: 11, color: HousepitalColors.greyLight),
+                    fontSize: 11, color: context.hc.greyLight),
               ),
             ],
           ],
@@ -2328,8 +2336,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           style: TextStyle(
             fontSize: 12,
             color: _promoMessageIsError
-                ? HousepitalColors.error
-                : HousepitalColors.success,
+                ? context.hc.error
+                : context.hc.success,
           ),
         ),
       ],
@@ -2339,12 +2347,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HousepitalColors.warningLight,
+            color: context.hc.warningLight,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.info_outline, color: HousepitalColors.warning),
+              Icon(Icons.info_outline, color: context.hc.warning),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2420,7 +2428,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ..showSnackBar(
                   SnackBar(
                     content: const Text('Service added to cart'),
-                    backgroundColor: HousepitalColors.success,
+                    backgroundColor: context.hc.success,
                     duration: const Duration(seconds: 2),
                     dismissDirection: DismissDirection.horizontal,
                     action: SnackBarAction(
@@ -2445,11 +2453,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 14, color: HousepitalColors.greyLight)),
+              style: TextStyle(
+                  fontSize: 14, color: context.hc.greyLight)),
           Text(value,
-              style: const TextStyle(
-                  fontSize: 14, color: HousepitalColors.black)),
+              style: TextStyle(
+                  fontSize: 14, color: context.hc.black)),
         ],
       ),
     );
@@ -2465,12 +2473,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? HousepitalColors.orange
-                : HousepitalColors.white,
+                : context.hc.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? HousepitalColors.orange
-                  : HousepitalColors.divider,
+                  : context.hc.divider,
             ),
           ),
           child: Center(
@@ -2479,7 +2487,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : HousepitalColors.grey,
+                color: isSelected ? Colors.white : context.hc.grey,
               ),
             ),
           ),
@@ -2499,7 +2507,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             decoration: BoxDecoration(
               color: isActive
                   ? HousepitalColors.orange
-                  : HousepitalColors.greyLighter,
+                  : context.hc.greyLighter,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -2508,15 +2516,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isActive ? Colors.white : HousepitalColors.greyLight,
+                  color: isActive ? Colors.white : context.hc.greyLight,
                 ),
               ),
             ),
           ),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: HousepitalColors.greyLight)),
+              style: TextStyle(
+                  fontSize: 11, color: context.hc.greyLight)),
         ],
       ),
     );
@@ -2526,7 +2534,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     return Container(
       width: 24,
       height: 2,
-      color: HousepitalColors.divider,
+      color: context.hc.divider,
     );
   }
 
@@ -2534,14 +2542,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: HousepitalColors.orangeLight,
+        color: context.hc.orangeLight,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: HousepitalColors.orange.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.videocam, color: HousepitalColors.orange, size: 20),
               SizedBox(width: 8),
@@ -2550,7 +2558,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HousepitalColors.orangeText,
+                  color: context.hc.orangeText,
                 ),
               ),
             ],

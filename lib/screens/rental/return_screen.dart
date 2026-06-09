@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 
@@ -83,23 +84,23 @@ class _ReturnScreenState extends State<ReturnScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HousepitalColors.infoLight,
+                color: context.hc.infoLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.itemName, style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, color: HousepitalColors.black,
+                  Text(widget.itemName, style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: context.hc.black,
                   )),
                   const SizedBox(height: 8),
                   Text(
                     'Rented since: ${widget.rentalStartDate.day}/${widget.rentalStartDate.month}/${widget.rentalStartDate.year}',
-                    style: const TextStyle(fontSize: 13, color: HousepitalColors.grey),
+                    style: TextStyle(fontSize: 13, color: context.hc.grey),
                   ),
                   Text(
                     'Monthly rate: ${DateHelper.formatCurrency(widget.monthlyRate)}',
-                    style: const TextStyle(fontSize: 13, color: HousepitalColors.grey),
+                    style: TextStyle(fontSize: 13, color: context.hc.grey),
                   ),
                 ],
               ),
@@ -139,7 +140,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
                 return ChoiceChip(
                   label: Text('${date.day}/${date.month}'),
                   selected: isSelected,
-                  selectedColor: HousepitalColors.orangeLight,
+                  selectedColor: context.hc.orangeLight,
                   onSelected: (_) => setState(() => _pickupDate = date),
                 );
               }).toList(),
@@ -158,7 +159,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
                 return ChoiceChip(
                   label: Text(slot),
                   selected: isSelected,
-                  selectedColor: HousepitalColors.orangeLight,
+                  selectedColor: context.hc.orangeLight,
                   onSelected: (_) => setState(() => _timeSlot = slot),
                 );
               }).toList(),
@@ -193,7 +194,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
               icon: Icon(_photoPath != null ? Icons.check_circle : Icons.camera_alt_outlined, size: 18),
               label: Text(_photoPath != null ? 'Photo Added' : 'Add Photo of Equipment (Optional)'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _photoPath != null ? HousepitalColors.success : HousepitalColors.grey,
+                foregroundColor: _photoPath != null ? context.hc.success : context.hc.grey,
               ),
             ),
             const SizedBox(height: 24),
@@ -205,7 +206,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
               child: ElevatedButton(
                 onPressed: _canSubmit ? _submitReturn : null,
                 style: ElevatedButton.styleFrom(
-                  disabledBackgroundColor: HousepitalColors.greyLighter,
+                  disabledBackgroundColor: context.hc.greyLighter,
                 ),
                 child: _isSubmitting
                     ? const SizedBox(
@@ -233,10 +234,10 @@ class _ReturnScreenState extends State<ReturnScreen> {
       // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap 14 to 16.
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HousepitalColors.successLight,
+        color: context.hc.successLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: HousepitalColors.success.withValues(alpha: 0.25),
+          color: context.hc.success.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -244,34 +245,34 @@ class _ReturnScreenState extends State<ReturnScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.account_balance_wallet,
-                  color: HousepitalColors.success, size: 18),
+              Icon(Icons.account_balance_wallet,
+                  color: context.hc.success, size: 18),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Refund estimate',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.success,
+                  color: context.hc.success,
                 ),
               ),
               const Spacer(),
               Text(
                 DateHelper.formatCurrency(estimate),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: HousepitalColors.success,
+                  color: context.hc.success,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Pro-rata refund for remaining days + security deposit.',
             style: TextStyle(
               fontSize: 12,
-              color: HousepitalColors.grey,
+              color: context.hc.grey,
             ),
           ),
           if (showDamageCaveat) ...[
@@ -280,20 +281,20 @@ class _ReturnScreenState extends State<ReturnScreen> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: HousepitalColors.warning.withValues(alpha: 0.15),
+                color: context.hc.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: HousepitalColors.warning, size: 16),
+                  Icon(Icons.warning_amber_rounded,
+                      color: context.hc.warning, size: 16),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Damaged condition may reduce refund by up to ${DateHelper.formatCurrency(_damageFeeMax)} (assessed at pickup).',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                       ),
                     ),
                   ),

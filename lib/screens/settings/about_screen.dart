@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -27,7 +28,7 @@ class AboutScreen extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: HousepitalColors.orangeLight,
+                color: context.hc.orangeLight,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
@@ -39,12 +40,12 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // App name
-            const Text(
+            Text(
               'Housepital',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: HousepitalColors.black,
+                color: context.hc.black,
               ),
             ),
             const SizedBox(height: 4),
@@ -52,7 +53,7 @@ class AboutScreen extends StatelessWidget {
               'Hospital-like expertise. Home-like care.',
               style: TextStyle(
                 fontSize: 14,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -60,14 +61,14 @@ class AboutScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: HousepitalColors.greyLighter,
+                color: context.hc.greyLighter,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 'Version $_appVersion',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: HousepitalColors.grey,
+                  color: context.hc.grey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -78,11 +79,11 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Company info
-            _infoRow(Icons.business, _companyName),
+            _infoRow(context, Icons.business, _companyName),
             const SizedBox(height: 12),
-            _infoRow(Icons.location_on, _address),
+            _infoRow(context, Icons.location_on, _address),
             const SizedBox(height: 12),
-            _infoRow(Icons.badge_outlined, _cin),
+            _infoRow(context, Icons.badge_outlined, _cin),
 
             const SizedBox(height: 24),
             const Divider(),
@@ -111,11 +112,11 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 40),
 
             // Made with love
-            const Text(
+            Text(
               'Made with \u2764\uFE0F in India',
               style: TextStyle(
                 fontSize: 14,
-                color: HousepitalColors.greyLight,
+                color: context.hc.greyLight,
               ),
             ),
             const SizedBox(height: 24),
@@ -125,20 +126,20 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
+  Widget _infoRow(BuildContext context, IconData icon, String text) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: HousepitalColors.grey),
+        Icon(icon, size: 18, color: context.hc.grey),
         const SizedBox(width: 8),
         Flexible(
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: HousepitalColors.grey,
+              color: context.hc.grey,
             ),
           ),
         ),
@@ -155,8 +156,8 @@ class AboutScreen extends StatelessWidget {
     return ListTile(
       leading: AppIconTile(icon: icon, color: HousepitalColors.orange, size: 22),
       title: Text(title, style: const TextStyle(fontSize: 15)),
-      trailing: const Icon(Icons.open_in_new,
-          size: 18, color: HousepitalColors.greyLight),
+      trailing: Icon(Icons.open_in_new,
+          size: 18, color: context.hc.greyLight),
       onTap: () => _launchUrl(context, url),
     );
   }

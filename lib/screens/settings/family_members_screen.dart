@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
@@ -110,12 +111,12 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Add Family Member',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: HousepitalColors.black,
+                        color: context.hc.black,
                       ),
                     ),
                     IconButton(
@@ -172,12 +173,12 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Notification Preferences',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: HousepitalColors.black,
+                    color: context.hc.black,
                   ),
                 ),
                 SwitchListTile(
@@ -271,7 +272,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => _showAddMemberSheet(context),
               backgroundColor: HousepitalColors.orange,
-              foregroundColor: HousepitalColors.white,
+              foregroundColor: context.hc.white,
               icon: const Icon(Icons.person_add),
               label: const Text('Add Family Member'),
             )
@@ -281,25 +282,25 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.family_restroom,
                     size: 64,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No family members added',
                     style: TextStyle(
                       fontSize: 16,
-                      color: HousepitalColors.grey,
+                      color: context.hc.grey,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Add family members to share updates',
                     style: TextStyle(
                       fontSize: 14,
-                      color: HousepitalColors.greyLight,
+                      color: context.hc.greyLight,
                     ),
                   ),
                 ],
@@ -321,12 +322,12 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     padding: const EdgeInsets.only(right: 20),
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
-                      color: HousepitalColors.error,
+                      color: context.hc.error,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.delete_outline,
-                      color: HousepitalColors.white,
+                      color: context.hc.white,
                     ),
                   ),
                   confirmDismiss: (direction) async {
@@ -346,7 +347,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: HousepitalColors.orangeLight,
+            backgroundColor: context.hc.orangeLight,
             child: Text(
               member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
               style: const TextStyle(
@@ -366,10 +367,10 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     Flexible(
                       child: Text(
                         member.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HousepitalColors.black,
+                          color: context.hc.black,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -381,24 +382,24 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                           : member.role.replaceAll('_', ' '),
                       color: member.isPrimaryContact
                           ? HousepitalColors.orange
-                          : HousepitalColors.greyLight,
+                          : context.hc.greyLight,
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   member.phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: HousepitalColors.grey,
+                    color: context.hc.grey,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   member.relationship,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: HousepitalColors.greyLight,
+                    color: context.hc.greyLight,
                   ),
                 ),
               ],

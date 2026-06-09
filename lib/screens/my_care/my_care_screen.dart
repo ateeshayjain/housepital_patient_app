@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/my_care_provider.dart';
@@ -161,8 +162,8 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                             value: app.todayReport!.totalTasks > 0
                                 ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
                                 : 0,
-                            backgroundColor: HousepitalColors.greyLighter,
-                            color: HousepitalColors.success,
+                            backgroundColor: context.hc.greyLighter,
+                            color: context.hc.success,
                             strokeWidth: 4,
                           ),
                           Text(
@@ -186,7 +187,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                               app.todayReport!.staffNotes!,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                              style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                             ),
                         ],
                       ),
@@ -220,28 +221,28 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HousepitalColors.white,
+                  color: context.hc.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: HousepitalColors.divider),
+                  border: Border.all(color: context.hc.divider),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
-                    SizedBox(width: 12),
+                    const AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('5 active medications',
+                          const Text('5 active medications',
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                           Text('Amlodipine, Metformin, Aspirin, Pantoprazole, Insulin',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, color: HousepitalColors.greyLight)),
+                              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: HousepitalColors.greyLight, size: 18),
+                    Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
                   ],
                 ),
               ),
@@ -271,7 +272,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.favorite_border,
-                size: 64, color: HousepitalColors.greyLight),
+                size: 64, color: context.hc.greyLight),
             const SizedBox(height: 16),
             Text(l.t('no_active_services'),
                 style: const TextStyle(
@@ -279,7 +280,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             const SizedBox(height: 8),
             Text(l.t('no_active_services_desc'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: HousepitalColors.greyLight)),
+                style: TextStyle(color: context.hc.greyLight)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => MainShell.switchToTab(2), // Services tab
@@ -297,14 +298,14 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
   }
 
   Widget _vitalPill(String label, String value, String unit, double? rawValue, String vitalType) {
-    Color statusColor = HousepitalColors.greyLight;
+    Color statusColor = context.hc.greyLight;
     if (rawValue != null) {
       final status = classifyVital(vitalType, rawValue);
       statusColor = status == 'green'
-          ? HousepitalColors.success
+          ? context.hc.success
           : status == 'yellow'
-              ? HousepitalColors.warning
-              : HousepitalColors.error;
+              ? context.hc.warning
+              : context.hc.error;
     }
 
     return Padding(
@@ -315,9 +316,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           width: 90,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: HousepitalColors.white,
+            color: context.hc.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: HousepitalColors.divider),
+            border: Border.all(color: context.hc.divider),
           ),
           // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1, so
           // there's zero visual change on-device. Only when text would exceed
@@ -343,8 +344,8 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                     ),
                     const SizedBox(width: 4),
                     Text(label,
-                        style: const TextStyle(
-                            fontSize: 11, color: HousepitalColors.greyLight)),
+                        style: TextStyle(
+                            fontSize: 11, color: context.hc.greyLight)),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -352,8 +353,8 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w700)),
                 Text(unit,
-                    style: const TextStyle(
-                        fontSize: 11, color: HousepitalColors.greyLight)),
+                    style: TextStyle(
+                        fontSize: 11, color: context.hc.greyLight)),
               ],
             ),
           ),
@@ -489,9 +490,9 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HousepitalColors.white,
+        color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HousepitalColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,9 +517,9 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
                   );
                 }),
                 const SizedBox(width: 8),
-                const Text('Rated today',
+                Text('Rated today',
                     style: TextStyle(
-                        fontSize: 12, color: HousepitalColors.greyLight)),
+                        fontSize: 12, color: context.hc.greyLight)),
               ],
             )
           else ...[
@@ -539,10 +540,10 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
               }),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Tap to rate. Your feedback helps us improve.',
               style:
-                  TextStyle(fontSize: 12, color: HousepitalColors.greyLight),
+                  TextStyle(fontSize: 12, color: context.hc.greyLight),
             ),
           ],
         ],
