@@ -153,13 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 1. Your Health Team
                   _sectionLabel('Your Health Team', onSeeAll: () => MainShell.switchToTab(1)),
                   _buildHealthTeamCard(context, l, app),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   // 2. Current Services
                   if (app.activeDeployment != null) ...[
                     _sectionLabel('Current Services', onSeeAll: () => MainShell.switchToTab(1)),
                     _buildActiveServicesQuickView(context, l, app),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ],
 
                   // Vitals intentionally NOT shown on Home — they live on the
@@ -168,29 +168,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // 3a. Medications snippet (only renders if active meds exist)
                   _buildMedicationsSnippet(context),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   // 4. Book Services — hidden from view-only roles.
                   if (canBook) ...[
                     _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
                     _buildQuickActionsGrid(context, l),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
 
                     // 4b. Dai Maa sub-brand entry
                     _buildDaiMaaEntry(context),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ],
 
                   // 4c. Care Guides entry — available to ALL roles (reading
                   // health education isn't a "booking" action).
                   _buildCareGuidesEntry(context),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
                     _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
                     _buildReportSnippet(context, app),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ],
 
                   // 6. Payments — only show to roles that can actually pay.
@@ -367,21 +367,23 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildHeader(BuildContext context, AppLocalizations l, AppProvider app) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'HOUSEPITAL',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: HousepitalColors.orange,
-                    letterSpacing: 1.5,
-                  ),
+                // Official brand logo (orange/grey on light, orange/white on
+                // dark — per brand guidelines the figurative mark stays orange).
+                Image.asset(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/images/housepital_logo_dark.png'
+                      : 'assets/images/housepital_logo.png',
+                  height: 26,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                  semanticLabel: 'Housepital',
                 ),
                 const SizedBox(height: 2),
                 if (app.currentPatient != null && app.patients.length > 1)
@@ -654,7 +656,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // one Row. The standalone "Here's your care summary" subtitle is dropped
     // to reclaim vertical space at the top of the scroll.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
       child: Row(
         children: [
           Flexible(
@@ -1030,7 +1032,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       AppIconTile(
                           icon: action.icon, color: action.color, size: 24),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Text(
