@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Dark-mode color tokens for the Housepital app.
 ///
@@ -134,11 +133,11 @@ class HousepitalTheme {
   // when Archivo has no coverage. Applied via fontFamilyFallback on
   // every text style below so it works regardless of active locale.
   static final List<String> _devanagariFallback = [
-    GoogleFonts.notoSansDevanagari().fontFamily ?? 'NotoSansDevanagari',
+    'NotoSansDevanagari',
   ];
 
   static ThemeData get lightTheme {
-    final archivoFamily = GoogleFonts.archivo().fontFamily;
+    final archivoFamily = 'Archivo';
 
     return ThemeData(
       useMaterial3: true,
@@ -155,48 +154,48 @@ class HousepitalTheme {
         onError: HousepitalColors.white,
       ),
       scaffoldBackgroundColor: HousepitalColors.background,
-      textTheme: GoogleFonts.archivoTextTheme().copyWith(
-        headlineLarge: GoogleFonts.archivo(
+      textTheme: Typography.material2021().black.apply(fontFamily: 'Archivo').copyWith(
+        headlineLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: HousepitalColors.black,
         ),
-        headlineMedium: GoogleFonts.archivo(
+        headlineMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: HousepitalColors.black,
         ),
-        headlineSmall: GoogleFonts.archivo(
+        headlineSmall: TextStyle(fontFamily: 'Archivo', 
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: HousepitalColors.black,
         ),
-        titleLarge: GoogleFonts.archivo(
+        titleLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: HousepitalColors.black,
         ),
-        titleMedium: GoogleFonts.archivo(
+        titleMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: HousepitalColors.black,
         ),
-        bodyLarge: GoogleFonts.archivo(
+        bodyLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: HousepitalColors.grey,
         ),
-        bodyMedium: GoogleFonts.archivo(
+        bodyMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: HousepitalColors.grey,
         ),
-        bodySmall: GoogleFonts.archivo(
+        bodySmall: TextStyle(fontFamily: 'Archivo', 
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: HousepitalColors.greyLight,
         ),
-        labelLarge: GoogleFonts.archivo(
+        labelLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: HousepitalColors.white,
@@ -207,7 +206,7 @@ class HousepitalTheme {
         foregroundColor: HousepitalColors.black,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.archivo(
+        titleTextStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: HousepitalColors.black,
@@ -221,7 +220,7 @@ class HousepitalTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.archivo(
+          textStyle: TextStyle(fontFamily: 'Archivo', 
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -278,7 +277,7 @@ class HousepitalTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: HousepitalColors.orangeLight,
-        labelStyle: GoogleFonts.archivo(
+        labelStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: HousepitalColors.orange,
@@ -301,7 +300,7 @@ class HousepitalTheme {
   ///   • Cards sit on #242424 over a #1A1A1A scaffold so elevation is
   ///     visible without shadow tricks.
   static ThemeData get darkTheme {
-    final archivoFamily = GoogleFonts.archivo().fontFamily;
+    final archivoFamily = 'Archivo';
 
     return ThemeData(
       useMaterial3: true,
@@ -320,49 +319,49 @@ class HousepitalTheme {
       ),
       scaffoldBackgroundColor: HousepitalColorsDark.surface,
       canvasColor: HousepitalColorsDark.surface,
-      textTheme: GoogleFonts.archivoTextTheme(ThemeData.dark().textTheme)
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Archivo')
           .copyWith(
-        headlineLarge: GoogleFonts.archivo(
+        headlineLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: HousepitalColorsDark.textPrimary,
         ),
-        headlineMedium: GoogleFonts.archivo(
+        headlineMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: HousepitalColorsDark.textPrimary,
         ),
-        headlineSmall: GoogleFonts.archivo(
+        headlineSmall: TextStyle(fontFamily: 'Archivo', 
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: HousepitalColorsDark.textPrimary,
         ),
-        titleLarge: GoogleFonts.archivo(
+        titleLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: HousepitalColorsDark.textPrimary,
         ),
-        titleMedium: GoogleFonts.archivo(
+        titleMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: HousepitalColorsDark.textPrimary,
         ),
-        bodyLarge: GoogleFonts.archivo(
+        bodyLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: HousepitalColorsDark.textSecondary,
         ),
-        bodyMedium: GoogleFonts.archivo(
+        bodyMedium: TextStyle(fontFamily: 'Archivo', 
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: HousepitalColorsDark.textSecondary,
         ),
-        bodySmall: GoogleFonts.archivo(
+        bodySmall: TextStyle(fontFamily: 'Archivo', 
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: HousepitalColorsDark.textSecondary,
         ),
-        labelLarge: GoogleFonts.archivo(
+        labelLarge: TextStyle(fontFamily: 'Archivo', 
           fontSize: 14,
           fontWeight: FontWeight.w600,
           // Used on buttons — match onPrimary so it shows on orange.
@@ -374,7 +373,7 @@ class HousepitalTheme {
         foregroundColor: HousepitalColorsDark.textPrimary,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.archivo(
+        titleTextStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: HousepitalColorsDark.textPrimary,
@@ -392,7 +391,7 @@ class HousepitalTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.archivo(
+          textStyle: TextStyle(fontFamily: 'Archivo', 
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -456,7 +455,7 @@ class HousepitalTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: HousepitalColorsDark.orangeMuted,
-        labelStyle: GoogleFonts.archivo(
+        labelStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: HousepitalColorsDark.orange,
@@ -467,12 +466,12 @@ class HousepitalTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: HousepitalColorsDark.surfaceElevated,
-        titleTextStyle: GoogleFonts.archivo(
+        titleTextStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: HousepitalColorsDark.textPrimary,
         ),
-        contentTextStyle: GoogleFonts.archivo(
+        contentTextStyle: TextStyle(fontFamily: 'Archivo', 
           fontSize: 14,
           color: HousepitalColorsDark.textSecondary,
         ),

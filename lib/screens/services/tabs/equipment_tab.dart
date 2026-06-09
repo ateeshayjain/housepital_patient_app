@@ -124,44 +124,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
 
     return Column(
       children: [
-        // Visual category hero header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [HousepitalColors.serviceEquipment, Color(0xFF34D399)],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Medical Equipment & Consumables',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Buy or rent — delivered in 24 hours',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Search
+        const SizedBox(height: 8),
         CatalogSearchBar(
           searchQuery: _searchQuery,
           controller: _searchController,

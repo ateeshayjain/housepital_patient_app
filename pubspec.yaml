@@ -87,4 +87,13 @@ flutter:
     - assets/equipment_catalog.json
     - assets/lab_tests_catalog.json
 
-  # Archivo font loaded via google_fonts package at runtime
+  # Fonts bundled (variable TTFs) instead of fetched at runtime, so typography
+  # is consistent from first paint and works offline (was: google_fonts runtime
+  # fetch, which caused a system-font→Archivo flash on launch).
+  fonts:
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo.ttf
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari.ttf
