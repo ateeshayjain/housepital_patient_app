@@ -716,12 +716,70 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (deployment != null) ...[
-                _TeamMemberRow(
-                  role: 'Health Manager',
-                  name: 'Housepital Care Team',
-                  icon: Icons.support_agent,
-                  color: HousepitalColors.orange,
-                  phone: AppConstants.supportPhone,
+                // FIRST option: the team GROUP CHAT — one tap reaches every
+                // member (manager, nurse, doctor) so queries resolve in one
+                // place. Whole row taps into the group thread.
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () =>
+                      Navigator.pushNamed(context, '/chat', arguments: {
+                    'patientId':
+                        app.currentPatient?.id ?? 'pat_demo_rajesh',
+                    'coordinatorName': 'Care Team',
+                  }),
+                  child: Row(
+                    children: [
+                      const AppIconTile(
+                          icon: Icons.groups, color: HousepitalColors.orange),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Care Team Group Chat',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.hc.black,
+                                )),
+                            Text('All queries in one place',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.hc.greyLight,
+                                )),
+                          ],
+                        ),
+                      ),
+                      Semantics(
+                        label: 'Call Housepital care team',
+                        button: true,
+                        child: IconButton(
+                          icon: const Icon(Icons.phone, size: 20),
+                          color: context.hc.success,
+                          constraints: const BoxConstraints(
+                              minWidth: 44, minHeight: 44),
+                          onPressed: () => launchUrl(Uri.parse(
+                              'tel:${AppConstants.supportPhone}')),
+                        ),
+                      ),
+                      Semantics(
+                        label: 'Open care team group chat',
+                        button: true,
+                        child: IconButton(
+                          icon: const Icon(Icons.forum, size: 20),
+                          color: HousepitalColors.orange,
+                          constraints: const BoxConstraints(
+                              minWidth: 44, minHeight: 44),
+                          onPressed: () => Navigator.pushNamed(
+                              context, '/chat', arguments: {
+                            'patientId': app.currentPatient?.id ??
+                                'pat_demo_rajesh',
+                            'coordinatorName': 'Care Team',
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 6),
                 _TeamMemberRow(
@@ -821,12 +879,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Lead with the SERVICE (what the tap opens), not the
+                    // staff role — 'Critical Care Nurse' here while the
+                    // detail said 'ICU Setup at Home' read as a mismatch.
+                    Builder(builder: (context) {
+                      final services =
+                          context.watch<MyCareProvider>().activeServices;
+                      String title = deployment.staffRole ?? 'Care Service';
+                      for (final s in services) {
+                        if (s.deploymentIds.contains(deployment.id)) {
+                          title = s.name;
+                          break;
+                        }
+                      }
+                      return Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      );
+                    }),
                     Text(
-                      deployment.staffRole ?? 'Care Service',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      deployment.staffName ?? 'Assigned',
+                      '${deployment.staffName ?? 'Assigned'} · ${deployment.staffRole ?? 'Staff'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                     ),
                   ],

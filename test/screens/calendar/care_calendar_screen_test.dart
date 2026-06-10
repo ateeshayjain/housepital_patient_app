@@ -106,9 +106,13 @@ void main() {
 
     // Today's detail: staff attendance + interactive dose list.
     expect(find.text('Staff attendance'), findsOneWidget);
-    expect(find.textContaining('staff present'), findsWidgets);
+    expect(find.textContaining('confirmed present'), findsWidgets);
+    expect(find.text('Mark present'), findsWidgets); // per-staff action
     expect(find.text("Today's doses"), findsOneWidget);
     expect(find.text('Mark taken'), findsWidgets);
+    // Doses are grouped by time of day (demo meds span 07:00–22:00 slots).
+    expect(find.text('MORNING'), findsOneWidget);
+    expect(find.text('EVENING'), findsOneWidget);
   });
 
   testWidgets('Tapping the future day with the doctor visit shows Follow-up',

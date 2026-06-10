@@ -132,9 +132,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   Widget _buildHeader(Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      // Brand hero (orange), NOT the service-category colour: care_package
+      // red made an ICU page read as an emergency alert — red is reserved
+      // for SOS/error meaning. Category colour stays for small accents only.
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.8)],
+          colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -211,10 +214,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
+          // Standard card surface — green is a STATUS accent (badge/time),
+          // not a fill colour; only the replacement flag keeps a warning tint.
           ...detail.staffOnDuty.map((staff) => Card(
-                color: staff.isReplacement
-                    ? context.hc.warningLight
-                    : context.hc.successLight,
+                color:
+                    staff.isReplacement ? context.hc.warningLight : null,
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: staff.isReplacement
@@ -489,9 +493,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           },
           icon: const Icon(Icons.verified_user, size: 20),
           label: const Text('Verify Staff'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: context.hc.success,
-          ),
+          // Standard orange primary — verification is an ACTION, not a
+          // success state; green buttons broke the one-accent brand system.
         ),
       ),
     );

@@ -22,6 +22,7 @@ import 'package:housepital_patient/models/models.dart';
 import 'package:housepital_patient/providers/app_provider.dart';
 import 'package:housepital_patient/providers/cart_provider.dart';
 import 'package:housepital_patient/providers/medication_provider.dart';
+import 'package:housepital_patient/providers/my_care_provider.dart';
 import 'package:housepital_patient/screens/home/home_screen.dart';
 import 'package:housepital_patient/services/api_service.dart';
 import 'package:housepital_patient/utils/app_localizations.dart';
@@ -67,6 +68,11 @@ Widget _host(AppProvider app) {
         ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
         ChangeNotifierProvider<MedicationProvider>(
           create: (_) => MedicationProvider(ApiService()),
+        ),
+        // Current Services quickview watches MyCareProvider for the service
+        // name (inert here: no loadMyCareData call → empty list → fallback).
+        ChangeNotifierProvider<MyCareProvider>(
+          create: (_) => MyCareProvider(ApiService()),
         ),
       ],
       child: const HomeScreen(),
@@ -114,12 +120,15 @@ void main() {
         reason: 'Layout B: team must be above hero');
   });
 
-  testWidgets('Health Team card shows manager + on-duty staff', (tester) async {
+  testWidgets('Health Team card: group chat first, then on-duty staff',
+      (tester) async {
     await _pumpHome(tester);
 
-    // Rendered twice: section label + card header.
     expect(find.text('Your Health Team'), findsWidgets);
-    expect(find.text('Health Manager'), findsOneWidget); // role label
+    // Contract: the FIRST option in the team card is the team group chat
+    // (one place for all queries) — it replaced the Health Manager row.
+    expect(find.text('Care Team Group Chat'), findsOneWidget);
+    expect(find.bySemanticsLabel('Open care team group chat'), findsOneWidget);
     expect(find.textContaining('Nurse'), findsWidgets); // on-duty staff role
   });
 

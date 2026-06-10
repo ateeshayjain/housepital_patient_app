@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
+import '../../data/demo_data.dart';
 import '../../models/care_event.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
@@ -34,6 +35,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   _CalView _view = _CalView.month;
   late DateTime _selected;
   late DateTime _visibleMonth;
+
+  // Patient-side staff attendance confirmations, keyed '<staffId>|<yyyy-MM-dd>'
+  // (demo session state — mirrors the dose Mark-taken pattern).
+  final Set<String> _staffMarked = {};
 
   static const _weekdayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -130,8 +135,20 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         padding: EdgeInsets.only(
             top: 8, bottom: MediaQuery.of(context).padding.bottom + 24),
         children: [
+          // Selected day + date FIRST — the question the screen answers.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              DateFormat('EEEE, d MMMM').format(_selected),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: context.hc.black,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: _segmentedControl(),
           ),
           Padding(
@@ -164,19 +181,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
               child: _legend(),
             ),
           ],
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              DateFormat('EEEE, d MMMM').format(_selected),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.hc.black,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ..._detailSections(),
         ],
       ),
@@ -543,6 +548,74 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       }
     }
 
+    // TODAY also answers "what's coming?" — the next 7 days' visits, tests
+    // and renewals in one list (previously only discoverable by tapping
+    // future dot-days on the grid).
+    if (isToday) {
+      final week = <(DateTime, CareEvent)>[];
+      for (var i = 1; i <= 7; i++) {
+        final day = _today.add(Duration(days: i));
+        for (final e in eventsFor(day)) {
+          if (e.type == CareEventType.visit ||
+              e.type == CareEventType.test ||
+              e.type == CareEventType.renewal) {
+            week.add((day, e));
+          }
+        }
+      }
+      if (week.isNotEmpty) {
+        widgets.add(const SectionHeader(title: 'Upcoming this week'));
+        widgets.add(_padCard(HousepitalCard(
+          child: Column(
+            children: [
+              for (final (day, e) in week)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 56,
+                        child: Text(
+                          DateFormat('EEE d').format(day),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.orangeText,
+                          ),
+                        ),
+                      ),
+                      Icon(_typeIcon(e.type),
+                          size: 18, color: _typeColor(e.type)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(e.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500)),
+                            if (e.subtitle != null)
+                              Text(e.subtitle!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.hc.greyLight)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        )));
+      }
+    }
+
     return widgets;
   }
 
@@ -568,34 +641,94 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     );
   }
 
+  /// Per-staff line items (like the dose rows): name + role, with the day's
+  /// attendance state. Today's unconfirmed staff get a 'Mark present' quick
+  /// action (patient-side confirmation, demo state — kept per day).
   Widget _staffCard(CareEvent e) {
+    final members = DemoData.icuServiceDetail.staffOnDuty;
+    final isToday = _sameDay(_selected, _today);
+    final isFuture = _selected.isAfter(_today);
+    final dayKey = DateFormat('yyyy-MM-dd').format(_selected);
+    final presentCount = isFuture
+        ? 0
+        : members
+            .where((m) =>
+                !isToday || _staffMarked.contains('${m.id}|$dayKey'))
+            .length;
+
     return HousepitalCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(icon: _typeIcon(e.type), color: context.hc.success),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(e.title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
-                if (e.subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(e.subtitle!,
-                      style:
-                          TextStyle(fontSize: 12, color: context.hc.grey)),
+          Row(
+            children: [
+              AppIconTile(icon: Icons.groups, color: context.hc.success),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isFuture
+                      ? 'Scheduled staff'
+                      : '$presentCount/${members.length} confirmed present',
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ...members.map((m) {
+            final marked = _staffMarked.contains('${m.id}|$dayKey');
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500)),
+                        Text(
+                          '${m.role} · ${m.shiftType} shift',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 12, color: context.hc.greyLight),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (isFuture)
+                    StatusBadge(
+                        text: 'Scheduled', color: context.hc.greyLight)
+                  else if (!isToday)
+                    StatusBadge(
+                        text: 'Present',
+                        color: context.hc.success,
+                        icon: Icons.check_circle)
+                  else if (marked)
+                    StatusBadge(
+                        text: 'Present',
+                        color: context.hc.success,
+                        icon: Icons.check_circle)
+                  else
+                    Semantics(
+                      label: 'Mark ${m.name} present',
+                      button: true,
+                      child: TextButton(
+                        onPressed: () => setState(
+                            () => _staffMarked.add('${m.id}|$dayKey')),
+                        child: const Text('Mark present'),
+                      ),
+                    ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          StatusBadge(
-            text: 'Present',
-            color: context.hc.success,
-            icon: Icons.check_circle,
-          ),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -705,10 +838,51 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          ...doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
+          // Doses grouped by time of day — matches how patients think about
+          // medication routines (subah / dopahar / raat).
+          ..._doseGroups(doses).expand((g) => [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(g.icon, size: 16, color: context.hc.greyLight),
+                      const SizedBox(width: 6),
+                      Text(g.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: context.hc.greyLight,
+                          )),
+                    ],
+                  ),
+                ),
+                ...g.doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
+              ]),
         ],
       ),
     );
+  }
+
+  /// Partition sorted (slot, med) pairs into Morning (<12:00),
+  /// Afternoon (12:00–16:59) and Evening (17:00+) groups; empty groups
+  /// are omitted.
+  List<({String label, IconData icon, List<(String, MedicationFull)> doses})>
+      _doseGroups(List<(String, MedicationFull)> doses) {
+    int hourOf(String slot) => int.tryParse(slot.split(':').first) ?? 0;
+    final morning = doses.where((d) => hourOf(d.$1) < 12).toList();
+    final afternoon = doses
+        .where((d) => hourOf(d.$1) >= 12 && hourOf(d.$1) < 17)
+        .toList();
+    final evening = doses.where((d) => hourOf(d.$1) >= 17).toList();
+    return [
+      if (morning.isNotEmpty)
+        (label: 'MORNING', icon: Icons.wb_sunny_outlined, doses: morning),
+      if (afternoon.isNotEmpty)
+        (label: 'AFTERNOON', icon: Icons.light_mode_outlined, doses: afternoon),
+      if (evening.isNotEmpty)
+        (label: 'EVENING', icon: Icons.nights_stay_outlined, doses: evening),
+    ];
   }
 
   Widget _doseRow(MedicationProvider medProv, String slot, MedicationFull med) {

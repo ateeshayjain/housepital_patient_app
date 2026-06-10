@@ -149,6 +149,9 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: GlassAppBar(
+        // This screen has its own in-bar document search — the universal
+        // search icon would be a confusing duplicate magnifier.
+        showSearch: false,
         title: _isSearching
             ? TextField(
                 controller: _searchController,
@@ -177,6 +180,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
       ),
       body: Column(
         children: [
+          // Breathing room below the glass app bar (chips sat flush under it).
+          const SizedBox(height: 12),
           // Category filter
           SizedBox(
             height: 44,
