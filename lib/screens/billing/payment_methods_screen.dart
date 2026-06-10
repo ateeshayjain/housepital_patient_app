@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../services/payment_reminder_service.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/glass.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -39,7 +40,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment & Auto-pay')),
+      appBar: GlassAppBar(title: const Text('Payment & Auto-pay')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

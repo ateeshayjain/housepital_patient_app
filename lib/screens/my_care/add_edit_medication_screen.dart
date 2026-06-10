@@ -6,6 +6,7 @@ import '../../providers/medication_provider.dart';
 import '../../config/app_colors.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class AddEditMedicationScreen extends StatefulWidget {
   final MedicationFull? medication; // null = add mode
@@ -84,7 +85,7 @@ class _AddEditMedicationScreenState extends State<AddEditMedicationScreen> {
     final medProv = context.watch<MedicationProvider>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(isEditing ? l.t('edit_medication') : l.t('add_medication')),
         actions: [
           if (isEditing)

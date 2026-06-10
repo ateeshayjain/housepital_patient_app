@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 // audit batch 4 (Agent I): centralized validators for name + age.
 import '../../utils/validators.dart';
+import '../../widgets/glass.dart';
 
 /// Add a new patient that the current user will care for as primary contact.
 ///
@@ -119,7 +120,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('Add Patient'),
         actions: [
           _isSaving

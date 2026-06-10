@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class StaffProfileScreen extends StatefulWidget {
   final String staffId;
@@ -128,7 +129,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('staff_profile'))),
+      appBar: GlassAppBar(title: Text(l.t('staff_profile'))),
       bottomNavigationBar: _staff != null
           ? SafeArea(
               child: Padding(

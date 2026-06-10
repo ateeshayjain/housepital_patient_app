@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
+import '../../widgets/glass.dart';
 
 class ReferralScreen extends StatelessWidget {
   final String? userId;
@@ -18,7 +19,7 @@ class ReferralScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Refer & Earn')),
+      appBar: GlassAppBar(title: const Text('Refer & Earn')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

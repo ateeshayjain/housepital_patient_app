@@ -65,7 +65,15 @@ void main() {
         const MaterialApp(home: Scaffold(floatingActionButton: AssistantFab())),
       );
       expect(find.byType(AssistantFab), findsOneWidget);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      // AssistantFab is a custom glass control (Material + InkWell), not a
+      // stock FloatingActionButton — assert the tappable surface instead.
+      expect(
+        find.descendant(
+          of: find.byType(AssistantFab),
+          matching: find.byType(InkWell),
+        ),
+        findsOneWidget,
+      );
       // Accessible label present.
       expect(
         find.bySemanticsLabel(RegExp('assistant', caseSensitive: false)),

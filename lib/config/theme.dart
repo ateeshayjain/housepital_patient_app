@@ -246,7 +246,9 @@ class HousepitalTheme {
         elevation: 3,
         shadowColor: Colors.black.withValues(alpha: 0.35),
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
+        // True Apple continuous corners (superellipse/squircle) — curvature
+        // eases into the straight edges instead of a circular-arc cutover.
+        shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -422,7 +424,8 @@ class HousepitalTheme {
         color: HousepitalColorsDark.surfaceElevated,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
+        // Continuous corners (squircle) matching the light theme.
+        shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: HousepitalColorsDark.divider),
         ),

@@ -9,6 +9,7 @@ import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+import '../../widgets/glass.dart';
 import 'data/catalog_seeds.dart';
 import 'tabs/consultations_tab.dart';
 import 'tabs/diagnostics_tab.dart';
@@ -89,7 +90,11 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
+      // Root tab: search yes (consistency), Home no (bottom nav has it).
+      // No extendBodyBehindAppBar here — the TabBar + 6 tab bodies need their
+      // own under-scroll pass; glass material applies without it.
+      appBar: GlassAppBar(
+        showHome: false,
         title: Text(l.t('book_services')),
         actions: [
           Consumer<CartProvider>(

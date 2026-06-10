@@ -5,6 +5,7 @@ import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/paginated_list.dart';
+import '../../widgets/glass.dart';
 
 class ReportHistoryScreen extends StatefulWidget {
   final String deploymentId;
@@ -23,7 +24,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     final patientId = app.currentPatient?.id ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('report_history'))),
+      appBar: GlassAppBar(title: Text(l.t('report_history'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: PaginatedListView<DailyReport>(

@@ -9,6 +9,7 @@ import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class PackageDetailScreen extends StatefulWidget {
   final CarePackage package;
@@ -74,7 +75,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     final pkg = widget.package;
 
     return Scaffold(
-      appBar: AppBar(title: Text(pkg.name)),
+      appBar: GlassAppBar(title: Text(pkg.name)),
       // audit batch 4 (Agent L): Apple P5 (perceived performance) — replace
       // bare spinner with a Shimmer skeleton matching the post-load layout
       // (hero card + highlights list + equipment rows).

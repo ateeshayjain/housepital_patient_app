@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -16,7 +17,7 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: GlassAppBar(title: const Text('About')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

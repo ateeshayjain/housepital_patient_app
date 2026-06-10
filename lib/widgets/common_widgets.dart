@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../config/app_colors.dart';
 import '../config/theme.dart';
 
-class HousepitalCard extends StatelessWidget {
+class HousepitalCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
@@ -16,20 +16,40 @@ class HousepitalCard extends StatelessWidget {
   });
 
   @override
+  State<HousepitalCard> createState() => _HousepitalCardState();
+}
+
+class _HousepitalCardState extends State<HousepitalCard> {
+  // Apple cards spec: 0.97 press-scale, ~120ms — tactile, fluid feedback.
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final content = Padding(
-      padding: padding ?? const EdgeInsets.all(16),
-      child: child,
+      padding: widget.padding ?? const EdgeInsets.all(16),
+      child: widget.child,
     );
-    return Card(
+    final card = Card(
       clipBehavior: Clip.antiAlias,
-      child: onTap != null
+      child: widget.onTap != null
           ? InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(16),
+              onTap: widget.onTap,
+              onTapDown: (_) => setState(() => _pressed = true),
+              onTapUp: (_) => setState(() => _pressed = false),
+              onTapCancel: () => setState(() => _pressed = false),
+              // Ripple clips to the same continuous-corner squircle as the card.
+              customBorder: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(16)),
               child: content,
             )
           : content,
+    );
+    if (widget.onTap == null) return card;
+    return AnimatedScale(
+      scale: _pressed ? 0.97 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: card,
     );
   }
 }

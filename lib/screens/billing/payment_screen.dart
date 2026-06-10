@@ -11,6 +11,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/pricing.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int amount;
@@ -259,7 +260,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('payment'))),
+      appBar: GlassAppBar(title: Text(l.t('payment'))),
       body: _isProcessing
           ? const LoadingWidget(message: 'Processing payment...')
           : SingleChildScrollView(

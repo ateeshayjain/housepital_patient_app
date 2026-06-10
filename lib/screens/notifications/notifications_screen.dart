@@ -8,6 +8,7 @@ import '../../utils/helpers.dart';
 import '../../utils/notification_router.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/paginated_list.dart';
+import '../../widgets/glass.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -24,7 +25,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('notifications_title')),
         actions: [
           TextButton(

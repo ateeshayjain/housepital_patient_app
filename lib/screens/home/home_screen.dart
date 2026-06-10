@@ -14,6 +14,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
 
@@ -1004,6 +1005,10 @@ class _HomeScreenState extends State<HomeScreen> {
       // leaving gaps on wide ones; a fixed 88px height fits the icon + 2-line
       // label on every width with no overflow and no gap.
       child: GridView.builder(
+        // Explicit zero padding: nested scrollables otherwise absorb the
+        // ambient bottom inset (the glass nav height under extendBody) as
+        // internal padding — which rendered as a blank band inside this card.
+        padding: EdgeInsets.zero,
         shrinkWrap: true,
         primary: false,
         physics: const NeverScrollableScrollPhysics(),
@@ -1464,7 +1469,13 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      builder: (context) => Column(
+      // Liquid Glass sheet: translucent blurred material; 0.85 fill keeps the
+      // patient list fully legible while the page glows through faintly.
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassSurface(
+        opacity: 0.85,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Padding(
@@ -1494,6 +1505,7 @@ class _HomeScreenState extends State<HomeScreen> {
               )),
           const SizedBox(height: 16),
         ],
+        ),
       ),
     );
   }

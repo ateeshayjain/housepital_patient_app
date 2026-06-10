@@ -7,6 +7,7 @@ import '../../config/app_colors.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 /// Renders a single care guide: cover image, title, category and a
 /// markdown-rendered body.
@@ -31,7 +32,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('Care Guide'),
         actions: [
           Consumer<BlogProvider>(

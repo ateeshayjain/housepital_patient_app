@@ -9,6 +9,7 @@ import '../../providers/orders_provider.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   final int initialTab;
@@ -151,7 +152,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('My Orders'),
         bottom: TabBar(
           controller: _tabController,

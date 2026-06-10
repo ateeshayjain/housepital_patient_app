@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class InvoiceDetailScreen extends StatelessWidget {
   final String invoiceId;
@@ -62,7 +63,7 @@ class InvoiceDetailScreen extends StatelessWidget {
     final invoice = _mockInvoice;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('invoice_details')),
         actions: [
           IconButton(

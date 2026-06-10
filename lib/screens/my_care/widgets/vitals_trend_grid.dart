@@ -24,6 +24,9 @@ class VitalsTrendGrid extends StatelessWidget {
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           GridView(
+            // Zero padding: padding-less nested scrollables absorb the ambient
+            // bottom inset (glass-nav height) as internal blank space.
+            padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             // Fixed cell HEIGHT (mainAxisExtent) instead of a width-derived

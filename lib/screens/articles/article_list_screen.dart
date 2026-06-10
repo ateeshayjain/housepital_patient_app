@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../config/app_colors.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
+import '../../widgets/glass.dart';
 
 /// Lists care-education articles ("Care Guides"). Tapping one opens the
 /// markdown detail screen.
@@ -27,7 +28,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Care Guides')),
+      appBar: GlassAppBar(title: const Text('Care Guides')),
       body: Consumer<BlogProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.articles.isEmpty) {

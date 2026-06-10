@@ -9,6 +9,7 @@ import '../../services/medication_reminder_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class MedicationScheduleScreen extends StatefulWidget {
   const MedicationScheduleScreen({super.key});
@@ -37,7 +38,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     final medProv = context.watch<MedicationProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('medication_schedule'))),
+      appBar: GlassAppBar(title: Text(l.t('medication_schedule'))),
       body: medProv.isLoading
           ? const LoadingWidget()
           : medProv.error != null

@@ -12,6 +12,7 @@ import '../../utils/app_localizations.dart';
 // audit batch 4 (Agent I): centralized validator caps description length
 // (audit F finding — was unbounded, 10MB DoS risk).
 import '../../utils/validators.dart';
+import '../../widgets/glass.dart';
 
 class RaiseConcernScreen extends StatefulWidget {
   const RaiseConcernScreen({super.key});
@@ -120,7 +121,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('raise_concern'))),
+      appBar: GlassAppBar(title: Text(l.t('raise_concern'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

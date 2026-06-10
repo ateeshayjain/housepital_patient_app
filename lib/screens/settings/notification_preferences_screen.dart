@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../providers/app_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class _NotifPref {
   final String key;
@@ -125,7 +126,7 @@ class _NotificationPreferencesScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notification Preferences')),
+      appBar: GlassAppBar(title: const Text('Notification Preferences')),
       // audit batch 4 (Agent L): Apple P5 — replace bare spinner with a
       // Shimmer skeleton that mimics the SwitchListTile rows so the layout
       // doesn't pop in when prefs arrive from the provider.

@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/glass.dart';
 
 class VitalsScreen extends StatefulWidget {
   final String? initialVital;
@@ -70,7 +71,7 @@ class _VitalsScreenState extends State<VitalsScreen>
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('todays_vitals')),
         bottom: TabBar(
           controller: _tabController,

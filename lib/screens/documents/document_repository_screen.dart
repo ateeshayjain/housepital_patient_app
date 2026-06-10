@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class MedicalDocument {
   final String id;
@@ -147,7 +148,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: _isSearching
             ? TextField(
                 controller: _searchController,

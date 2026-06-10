@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/glass.dart';
 
 /// OTP verification screen shown to patient when staff arrives.
 ///
@@ -109,7 +110,7 @@ class _StaffOtpVerificationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('Verify Staff'),
       ),
       body: SingleChildScrollView(

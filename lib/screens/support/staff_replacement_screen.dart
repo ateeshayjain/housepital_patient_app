@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
+import '../../widgets/glass.dart';
 
 class StaffReplacementScreen extends StatefulWidget {
   final String deploymentId;
@@ -48,7 +49,7 @@ class _StaffReplacementScreenState extends State<StaffReplacementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Request Replacement')),
+      appBar: GlassAppBar(title: const Text('Request Replacement')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

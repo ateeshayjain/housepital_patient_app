@@ -6,6 +6,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/paginated_list.dart';
+import '../../widgets/glass.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   final String deploymentId;
@@ -24,7 +25,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
     final apiService = context.read<AppProvider>().apiService;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('attendance_history'))),
+      appBar: GlassAppBar(title: Text(l.t('attendance_history'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: PaginatedListView<Attendance>(

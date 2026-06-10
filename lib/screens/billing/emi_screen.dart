@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/glass.dart';
 
 class EmiScreen extends StatefulWidget {
   final int totalAmount;
@@ -27,7 +28,7 @@ class _EmiScreenState extends State<EmiScreen> {
     final now = DateTime.now();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('EMI Options')),
+      appBar: GlassAppBar(title: const Text('EMI Options')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

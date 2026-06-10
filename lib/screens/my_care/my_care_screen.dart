@@ -8,6 +8,7 @@ import '../../providers/my_care_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 import '../../screens/main_shell.dart';
 import 'widgets/health_manager_banner.dart';
 import 'widgets/active_service_card.dart';
@@ -60,7 +61,10 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
     final app = context.watch<AppProvider>();
 
     return Scaffold(
-      appBar: AppBar(
+      // Liquid Glass: content scrolls under the translucent app bar.
+      extendBodyBehindAppBar: true,
+      appBar: GlassAppBar(
+        showHome: false,
         title: Text(l.t('tab_my_care')),
         automaticallyImplyLeading: false,
       ),
@@ -91,7 +95,10 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.only(bottom: 24 + MediaQuery.of(context).padding.bottom),
+      // top: clear the glass app bar; bottom: clear the glass nav.
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 8,
+          bottom: 24 + MediaQuery.of(context).padding.bottom),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

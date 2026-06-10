@@ -62,7 +62,12 @@ void main() {
 
   testWidgets('AssistantFab meets 44pt minimum touch-target', (tester) async {
     await tester.pumpWidget(_host(child: const AssistantFab()));
-    final fab = find.byType(FloatingActionButton);
+    // AssistantFab is a custom glass control (Material + InkWell), not a
+    // stock FloatingActionButton — measure the tappable surface itself.
+    final fab = find.descendant(
+      of: find.byType(AssistantFab),
+      matching: find.byType(InkWell),
+    );
     expect(fab, findsOneWidget);
     final size = tester.getSize(fab);
     // WCAG 2.5.5: interactive elements must be at least 44×44 logical pixels.
@@ -102,7 +107,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byType(AssistantFab));
     await tester.pumpAndSettle();
     expect(pushedRoute, '/assistant');
   });

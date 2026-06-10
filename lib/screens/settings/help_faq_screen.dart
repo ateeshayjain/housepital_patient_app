@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
+import '../../widgets/glass.dart';
 
 class _FaqItem {
   final String question;
@@ -183,7 +184,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
     final filtered = _filteredFaqs;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Help & FAQ')),
+      appBar: GlassAppBar(title: const Text('Help & FAQ')),
       body: Column(
         children: [
           // Search bar

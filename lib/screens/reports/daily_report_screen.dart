@@ -6,6 +6,7 @@ import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class DailyReportScreen extends StatefulWidget {
   final String reportId;
@@ -91,7 +92,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(_report != null
             ? '${l.t("todays_report")} — ${DateHelper.formatDate(_report!.date)}'
             : l.t('todays_report')),

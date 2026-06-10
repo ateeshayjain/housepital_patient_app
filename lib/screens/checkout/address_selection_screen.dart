@@ -7,6 +7,7 @@ import '../../config/app_colors.dart';
 // audit batch 4 (Agent I): centralized validators for pincode + phone.
 import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class SavedAddress {
   String label;
@@ -260,7 +261,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: const Text('Manage Addresses'),
         actions: [
           IconButton(
@@ -455,7 +456,7 @@ class _AddressFormScreenState extends State<_AddressFormScreen> {
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'Edit Address' : 'Add New Address')),
+      appBar: GlassAppBar(title: Text(isEdit ? 'Edit Address' : 'Add New Address')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

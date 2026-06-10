@@ -16,6 +16,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class BillingScreen extends StatefulWidget {
   const BillingScreen({super.key});
@@ -110,7 +111,10 @@ class _BillingScreenState extends State<BillingScreen> {
     final spend = _spendSummary(orders);
 
     return Scaffold(
-      appBar: AppBar(
+      // Liquid Glass: content scrolls under the translucent app bar.
+      extendBodyBehindAppBar: true,
+      appBar: GlassAppBar(
+        showHome: false,
         title: Text(l.t('billing_title')),
         actions: [
           TextButton.icon(
@@ -122,7 +126,11 @@ class _BillingScreenState extends State<BillingScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
+        padding: EdgeInsets.fromLTRB(
+            16,
+            MediaQuery.of(context).padding.top + 16,
+            16,
+            16 + MediaQuery.of(context).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

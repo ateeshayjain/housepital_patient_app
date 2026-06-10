@@ -9,6 +9,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/paginated_list.dart';
+import '../../widgets/glass.dart';
 
 class TransactionLogScreen extends StatefulWidget {
   const TransactionLogScreen({super.key});
@@ -27,7 +28,7 @@ class _TransactionLogScreenState extends State<TransactionLogScreen> {
     final patientId = context.read<AppProvider>().currentPatient?.id ?? '';
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('transaction_history'))),
+      appBar: GlassAppBar(title: Text(l.t('transaction_history'))),
       body: Column(
         children: [
           // Filter chips

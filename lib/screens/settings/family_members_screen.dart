@@ -9,6 +9,7 @@ import '../../utils/permissions.dart';
 // audit batch 4 (Agent I): centralized validators replace inline length/contains checks.
 import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({super.key});
@@ -265,7 +266,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     final canManage = canUserPerform(role, UserAction.manageFamily);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('family_members')),
       ),
       floatingActionButton: canManage

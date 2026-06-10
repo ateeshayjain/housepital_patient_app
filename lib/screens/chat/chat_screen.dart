@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/glass.dart';
 
 /// In-app chat screen backed by Firestore `chat_messages` collection.
 ///
@@ -157,8 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
+      appBar: GlassAppBar(
         title: Row(
           children: [
             CircleAvatar(

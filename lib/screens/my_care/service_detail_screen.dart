@@ -10,6 +10,7 @@ import '../../widgets/common_widgets.dart';
 import 'widgets/vitals_trend_grid.dart';
 import 'widgets/care_report_section.dart';
 import 'widgets/equipment_deployed_section.dart';
+import '../../widgets/glass.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   final ActiveService service;
@@ -41,7 +42,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final color = HousepitalColors.serviceColor(widget.service.serviceCategory);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(widget.service.name),
       ),
       body: myCare.isDetailLoading

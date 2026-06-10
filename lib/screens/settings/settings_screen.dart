@@ -11,6 +11,7 @@ import '../../providers/theme_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -83,7 +84,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final initials = patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P';
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.t('settings_title'))),
+      appBar: GlassAppBar(
+        // Root tab: bottom nav already provides Home.
+        showHome: false,
+        title: Text(l.t('settings_title')),
+      ),
       body: ListView(
         children: [
           // User profile section with photo

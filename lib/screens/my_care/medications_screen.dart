@@ -6,6 +6,7 @@ import '../../providers/medication_provider.dart';
 import '../../config/app_colors.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
@@ -31,7 +32,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     final medProv = context.watch<MedicationProvider>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('medications')),
         actions: [
           TextButton.icon(

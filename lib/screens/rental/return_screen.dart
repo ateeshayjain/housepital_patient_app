@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/glass.dart';
 
 class ReturnScreen extends StatefulWidget {
   final String orderId;
@@ -74,7 +75,7 @@ class _ReturnScreenState extends State<ReturnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Return Equipment')),
+      appBar: GlassAppBar(title: const Text('Return Equipment')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

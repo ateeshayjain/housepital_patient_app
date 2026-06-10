@@ -3,6 +3,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class RentalAgreementScreen extends StatefulWidget {
   final String itemName;
@@ -29,7 +30,7 @@ class _RentalAgreementScreenState extends State<RentalAgreementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rental Agreement')),
+      appBar: GlassAppBar(title: const Text('Rental Agreement')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

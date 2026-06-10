@@ -9,6 +9,7 @@ import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 /// Unified search result types.
 enum SearchResultType { equipment, manpower, consultation, diagnostic, package }
@@ -265,8 +266,10 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
+      appBar: GlassAppBar(
+        // This IS the universal search screen — a search action here would
+        // just push '/search' on top of itself.
+        showSearch: false,
         title: TextField(
           controller: _controller,
           focusNode: _focusNode,

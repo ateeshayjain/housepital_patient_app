@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 /// Vertical timeline order-tracking screen.
 ///
@@ -127,7 +128,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Order Tracking')),
+      appBar: GlassAppBar(title: const Text('Order Tracking')),
       // audit batch 4 (Agent L): Apple P5 (perceived performance) — replace
       // bare spinner with a Shimmer skeleton that mimics the final timeline
       // layout so the page feels populated within the same frame.

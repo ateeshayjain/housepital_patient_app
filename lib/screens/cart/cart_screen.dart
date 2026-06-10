@@ -11,6 +11,7 @@ import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -95,7 +96,7 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Consumer<CartProvider>(
           builder: (_, cart, _) => Text(
             cart.isEmpty ? 'My Cart' : 'My Cart (${cart.itemCount} items)',

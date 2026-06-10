@@ -12,6 +12,7 @@ import '../../utils/permissions.dart';
 // audit batch 4 (Agent I): centralized validators for name/age/phone.
 import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/glass.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
@@ -315,7 +316,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final canEdit = canUserPerform(role, UserAction.editPatient);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(l.t('patient_profile')),
         actions: [
           if (canEdit)

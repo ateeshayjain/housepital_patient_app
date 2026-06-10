@@ -7,6 +7,7 @@ import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/document_attach_widgets.dart';
+import '../../widgets/glass.dart';
 
 enum _ServiceType {
   nurse,
@@ -305,7 +306,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(widget.service.name),
       ),
       body: SingleChildScrollView(
