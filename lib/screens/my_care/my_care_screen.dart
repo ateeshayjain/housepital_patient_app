@@ -110,7 +110,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           // 2. Active Services
           SectionHeader(title: l.t('active_services')),
           ...myCare.activeServices.map((service) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                 child: ActiveServiceCard(
                   service: service,
                   onTap: () => Navigator.pushNamed(
@@ -498,28 +498,40 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
       return const SizedBox.shrink();
     }
 
+    // Rationale: rating belongs at the END of the journey (after the day's
+    // care summary) — user-review feedback was about the card's bulk, not its
+    // position, so it stays here and is compacted to a single row. The
+    // "Tap to rate" helper line is dropped: tapping a star still rates the
+    // day (SnackBar for 4–5 stars, "what went wrong" sheet for 1–3), so the
+    // post-tap feedback already explains the interaction.
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
       decoration: BoxDecoration(
         color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.hc.divider),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text(
-            "How was today's care?",
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          const Expanded(
+            child: Text(
+              "How was today's care?",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(width: 8),
           if (_ratedToday != null)
-            Row(
-              children: [
-                ...List.generate(5, (i) {
+            Semantics(
+              label: 'Rated $_ratedToday of 5 today',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (i) {
                   final filled = i < _ratedToday!;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 2, vertical: 8),
                     child: Icon(
                       filled ? Icons.star : Icons.star_border,
                       color: HousepitalColors.orange,
@@ -527,36 +539,25 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
                     ),
                   );
                 }),
-                const SizedBox(width: 8),
-                Text('Rated today',
-                    style: TextStyle(
-                        fontSize: 12, color: context.hc.greyLight)),
-              ],
+              ),
             )
-          else ...[
-            Row(
-              children: List.generate(5, (i) {
-                final stars = i + 1;
-                return Expanded(
-                  child: Semantics(
-                    label: 'Rate $stars star${stars == 1 ? '' : 's'}',
-                    button: true,
-                    child: IconButton(
-                      onPressed: () => _onRate(stars),
-                      icon: const Icon(Icons.star_border,
-                          color: HousepitalColors.orange, size: 32),
-                    ),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Tap to rate. Your feedback helps us improve.',
-              style:
-                  TextStyle(fontSize: 12, color: context.hc.greyLight),
-            ),
-          ],
+          else
+            // 24px stars, but each IconButton keeps a ≥44pt tap target.
+            ...List.generate(5, (i) {
+              final stars = i + 1;
+              return Semantics(
+                label: 'Rate $stars star${stars == 1 ? '' : 's'}',
+                button: true,
+                child: IconButton(
+                  onPressed: () => _onRate(stars),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                      minWidth: 44, minHeight: 44),
+                  icon: const Icon(Icons.star_border,
+                      color: HousepitalColors.orange, size: 24),
+                ),
+              );
+            }),
         ],
       ),
     );

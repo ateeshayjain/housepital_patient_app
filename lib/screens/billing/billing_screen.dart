@@ -36,13 +36,16 @@ class _BillingScreenState extends State<BillingScreen> {
   int _totalOutstanding(List<Map<String, dynamic>> orders) {
     return orders
         .where((o) =>
-            o['status'] == 'confirmed' || o['status'] == 'in_progress')
+            // Quote-pending orders have no amount yet — excluded from sums.
+            !OrdersProvider.isQuotePending(o) &&
+            (o['status'] == 'confirmed' || o['status'] == 'in_progress'))
         .fold(0, (sum, o) => sum + ((o['totalAmount'] as int?) ?? 0));
   }
 
   int _totalPaid(List<Map<String, dynamic>> orders) {
     return orders
-        .where((o) => o['status'] == 'completed')
+        .where((o) =>
+            !OrdersProvider.isQuotePending(o) && o['status'] == 'completed')
         .fold(0, (sum, o) => sum + ((o['totalAmount'] as int?) ?? 0));
   }
 
@@ -456,6 +459,8 @@ class _BillingScreenState extends State<BillingScreen> {
   Widget _buildOrderCard(Map<String, dynamic> order, AppLocalizations l) {
     final status = order['status'] as String? ?? 'confirmed';
     final totalAmount = order['totalAmount'] as int? ?? 0;
+    // Quote-pending: no amount yet — never render ₹0 for these.
+    final quotePending = OrdersProvider.isQuotePending(order);
     final bookingNumber = order['id'] as String? ?? '';
     final createdAt = DateTime.tryParse(order['createdAt'] as String? ?? '');
     final items = order['items'] as List<dynamic>? ?? [];
@@ -493,7 +498,9 @@ class _BillingScreenState extends State<BillingScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Semantics(
-        label: 'Order $bookingNumber, amount ${DateHelper.formatCurrency(totalAmount)}, status $status',
+        label: quotePending
+            ? 'Order $bookingNumber, quote pending — price will be confirmed on call, status $status'
+            : 'Order $bookingNumber, amount ${DateHelper.formatCurrency(totalAmount)}, status $status',
         button: true,
         child: HousepitalCard(
           onTap: () => Navigator.pushNamed(
@@ -502,6 +509,7 @@ class _BillingScreenState extends State<BillingScreen> {
             arguments: <String, dynamic>{
               'bookingId': order['id'] as String?,
               'orderType': order['type'] as String? ?? 'equipment',
+              'quotePending': quotePending,
             },
           ),
           child: Column(
@@ -540,16 +548,44 @@ class _BillingScreenState extends State<BillingScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        DateHelper.formatCurrency(totalAmount),
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.black),
-                      ),
+                      // Quote-pending orders never render a ₹ amount.
+                      if (quotePending)
+                        StatusBadge(
+                            text: 'Quote pending',
+                            color: context.hc.warning)
+                      else
+                        Text(
+                          DateHelper.formatCurrency(totalAmount),
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.black),
+                        ),
+                      const SizedBox(height: 2),
                       StatusBadge(text: status.toUpperCase(), color: statusColor),
                     ],
                   ),
                 ],
               ),
+              // Quote-pending hint line — replaces any money figure.
+              if (quotePending) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.phone_in_talk_outlined,
+                        size: 14, color: context.hc.warning),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Price will be confirmed on call',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: context.hc.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               // audit M-12: pending refund chip
               if (showRefundLine) ...[
                 const SizedBox(height: 8),

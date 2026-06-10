@@ -9,13 +9,19 @@ import '../../../services/api_service.dart';
 import '../../../widgets/common_widgets.dart';
 import '../cards/equipment_item_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/equipment_category_rail.dart';
 import '../widgets/trust_badges.dart';
 
 /// Equipment tab — loads the medical equipment & consumables catalog
-/// (with fallback to the bundled JSON asset) and renders the buy / rent
-/// browsing grid.
+/// (with fallback to the bundled JSON asset) and renders a Blinkit-style
+/// quick-commerce browse layout: left category rail + dense 2-column grid
+/// of compact buy / rent product cards.
 class EquipmentTab extends StatefulWidget {
-  const EquipmentTab({super.key});
+  /// Test seam: when provided, the catalog load (API / bundled JSON) is
+  /// skipped and these items are used directly.
+  final List<EquipmentItem>? initialItems;
+
+  const EquipmentTab({super.key, this.initialItems});
 
   @override
   State<EquipmentTab> createState() => _EquipmentTabState();
@@ -25,6 +31,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
   List<EquipmentItem> _allItems = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
+  String _selectedRailCategory = 'All';
   // Kept non-final: search is now driven by the universal app-bar search;
   // this field remains the local filter hook for re-wiring.
   // ignore: prefer_final_fields
@@ -39,7 +46,12 @@ class _EquipmentTabState extends State<EquipmentTab> {
   @override
   void initState() {
     super.initState();
-    _loadCatalog();
+    if (widget.initialItems != null) {
+      _allItems = widget.initialItems!;
+      _isLoading = false;
+    } else {
+      _loadCatalog();
+    }
   }
 
   @override
@@ -69,6 +81,11 @@ class _EquipmentTabState extends State<EquipmentTab> {
 
   List<EquipmentItem> get _filtered {
     var items = _allItems;
+    if (_selectedRailCategory != 'All') {
+      items = items
+          .where((i) => railCategoryForItem(i) == _selectedRailCategory)
+          .toList();
+    }
     if (_selectedCategory == 'Sale') {
       items = items.where((i) => i.availableForSale).toList();
     } else if (_selectedCategory == 'Rental') {
@@ -123,6 +140,14 @@ class _EquipmentTabState extends State<EquipmentTab> {
     }
 
     final filtered = _filtered;
+    final railCategories = buildRailCategories(_allItems);
+    // Sale / Rental counts are scoped to the selected rail category so the
+    // chips always reflect what's actually browsable in the grid.
+    final railScoped = _selectedRailCategory == 'All'
+        ? _allItems
+        : _allItems
+            .where((i) => railCategoryForItem(i) == _selectedRailCategory)
+            .toList();
 
     return Column(
       children: [
@@ -139,149 +164,168 @@ class _EquipmentTabState extends State<EquipmentTab> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        // Category chips + sort dropdown
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _categories.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final cat = _categories[index];
-                      final isSelected = cat == _selectedCategory;
-                      final count = cat == 'All'
-                          ? _allItems.length
-                          : cat == 'Sale'
-                              ? _allItems.where((i) => i.availableForSale).length
-                              : _allItems.where((i) => i.availableForRent).length;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedCategory = cat),
-                        child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? HousepitalColors.orange
-                        : context.hc.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected
-                          ? HousepitalColors.orange
-                          : context.hc.divider,
-                    ),
-                  ),
-                  child: Text(
-                    '$cat ($count)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? context.hc.white
-                          : context.hc.grey,
-                    ),
-                  ),
-                ),
-              );
-            },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Sort dropdown
-              PopupMenuButton<String>(
-                initialValue: _sortBy,
-                onSelected: (v) => setState(() => _sortBy = v),
-                itemBuilder: (_) => _sortOptions
-                    .map((s) => PopupMenuItem(
-                          value: s,
-                          child: Row(
-                            children: [
-                              if (s == _sortBy)
-                                const Icon(Icons.check, size: 16, color: HousepitalColors.orange)
-                              else
-                                const SizedBox(width: 16),
-                              const SizedBox(width: 8),
-                              Text(s, style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: s == _sortBy ? FontWeight.w600 : FontWeight.w400,
-                                color: s == _sortBy ? HousepitalColors.orange : context.hc.black,
-                              )),
-                            ],
-                          ),
-                        ))
-                    .toList(),
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: context.hc.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: context.hc.divider),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.sort, size: 16, color: context.hc.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        _sortBy == 'Relevance' ? 'Sort' : _sortBy.split(':').first.trim(),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.hc.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Results count
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Text(
-                '${filtered.length} items',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: context.hc.greyLight,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Grid
+        // Blinkit-style browse: left category rail + dense product grid
         Expanded(
-          child: filtered.isEmpty
-              ? const CatalogEmptyState()
-              : GridView.builder(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.of(context).padding.bottom),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    return EquipmentItemCard(
-                      item: item,
-                      icon: _iconForCategory(item.category),
-                    );
-                  },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EquipmentCategoryRail(
+                categories: railCategories,
+                selected: _selectedRailCategory,
+                onSelected: (cat) =>
+                    setState(() => _selectedRailCategory = cat),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    _buildControlsRow(context, railScoped),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const CatalogEmptyState()
+                          : _buildGrid(context, filtered),
+                    ),
+                  ],
                 ),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  /// Slim Sale / Rental chip row + sort menu shown above the grid.
+  Widget _buildControlsRow(
+      BuildContext context, List<EquipmentItem> railScoped) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 0, 12, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 32,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = _categories[index];
+                  final isSelected = cat == _selectedCategory;
+                  final count = cat == 'All'
+                      ? railScoped.length
+                      : cat == 'Sale'
+                          ? railScoped.where((i) => i.availableForSale).length
+                          : railScoped.where((i) => i.availableForRent).length;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? HousepitalColors.orange
+                            : context.hc.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? HousepitalColors.orange
+                              : context.hc.divider,
+                        ),
+                      ),
+                      child: Text(
+                        '$cat ($count)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isSelected ? context.hc.white : context.hc.grey,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Sort dropdown
+          PopupMenuButton<String>(
+            initialValue: _sortBy,
+            onSelected: (v) => setState(() => _sortBy = v),
+            itemBuilder: (_) => _sortOptions
+                .map((s) => PopupMenuItem(
+                      value: s,
+                      child: Row(
+                        children: [
+                          if (s == _sortBy)
+                            const Icon(Icons.check,
+                                size: 16, color: HousepitalColors.orange)
+                          else
+                            const SizedBox(width: 16),
+                          const SizedBox(width: 8),
+                          Text(s,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: s == _sortBy
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: s == _sortBy
+                                    ? HousepitalColors.orange
+                                    : context.hc.black,
+                              )),
+                        ],
+                      ),
+                    ))
+                .toList(),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: context.hc.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.hc.divider),
+              ),
+              child: Icon(Icons.sort, size: 16, color: context.hc.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Dense 2-column grid of compact product cards. Card height is computed
+  /// from the available width (square image + fixed text block) so the
+  /// layout never overflows — even at 320px-wide screens.
+  Widget _buildGrid(BuildContext context, List<EquipmentItem> filtered) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const padLeft = 10.0, padRight = 12.0, spacing = 8.0;
+        final cardWidth =
+            (constraints.maxWidth - padLeft - padRight - spacing) / 2;
+        // 8+8 card padding + square image (cardWidth-16) + 16 ADD overlap +
+        // 4 + 14 brand + 2 + 34 name + 4 + 16 mrp row + 2 + 18 price (+4 slack)
+        final cardHeight = cardWidth + 114;
+        return GridView.builder(
+          padding: EdgeInsets.fromLTRB(
+              padLeft, 0, padRight, 24 + MediaQuery.of(context).padding.bottom),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            mainAxisExtent: cardHeight,
+          ),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final item = filtered[index];
+            return EquipmentItemCard(
+              item: item,
+              icon: _iconForCategory(item.category),
+            );
+          },
+        );
+      },
     );
   }
 }

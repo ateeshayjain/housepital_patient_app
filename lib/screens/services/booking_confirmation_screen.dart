@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   /// When coming from cart checkout, cartItems will be non-null.
@@ -23,6 +24,11 @@ class BookingConfirmationScreen extends StatefulWidget {
   /// deprecated random suffix only when null.
   final String? bookingNumber;
 
+  /// Quote-pending orders (manpower services / price-on-request equipment)
+  /// have NO amount yet — render "Quote pending / Price will be confirmed on
+  /// call" instead of any ₹ figure.
+  final bool quotePending;
+
   const BookingConfirmationScreen({
     super.key,
     this.cartItems,
@@ -31,6 +37,7 @@ class BookingConfirmationScreen extends StatefulWidget {
     this.scheduledDate,
     this.scheduledSlot,
     this.bookingNumber,
+    this.quotePending = false,
   });
 
   @override
@@ -139,13 +146,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
   }
 
   void _shareBooking() {
+    // Quote-pending orders carry no amounts — never share a ₹0.
     final itemLines = _items
-        .map((i) => '- ${i.name}: ${DateHelper.formatCurrency(i.lineTotal)}')
+        .map((i) => widget.quotePending
+            ? '- ${i.name}'
+            : '- ${i.name}: ${DateHelper.formatCurrency(i.lineTotal)}')
         .join('\n');
+    final totalLine = widget.quotePending
+        ? 'Quote pending — price will be confirmed on call'
+        : 'Total: ${DateHelper.formatCurrency(widget.totalAmount)}';
     final text = 'Housepital Order Confirmation\n'
         'Order: $_bookingNumber\n'
         'Items:\n$itemLines\n'
-        'Total: ${DateHelper.formatCurrency(widget.totalAmount)}';
+        '$totalLine';
     SharePlus.instance.share(ShareParams(text: text));
   }
 
@@ -232,24 +245,44 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                           padding: EdgeInsets.symmetric(vertical: 10),
                           child: Divider(height: 1),
                         ),
-                        // Total
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700)),
-                            Text(
-                              DateHelper.formatCurrency(widget.totalAmount),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: context.hc.orangeText,
+                        // Total — quote-pending orders never show a ₹ figure.
+                        if (widget.quotePending) ...[
+                          Row(
+                            children: [
+                              StatusBadge(
+                                text: 'Quote pending',
+                                color: context.hc.warning,
+                                icon: Icons.schedule,
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Price will be confirmed on call',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: context.hc.warning,
                             ),
-                          ],
-                        ),
+                          ),
+                        ] else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700)),
+                              Text(
+                                DateHelper.formatCurrency(widget.totalAmount),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: context.hc.orangeText,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -282,37 +315,63 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                           ],
                         ),
                         const SizedBox(height: 14),
-                        if (_hasServices) ...[
+                        if (widget.quotePending) ...[
+                          // Quote-first orders: the price call comes first —
+                          // nothing is charged before the user confirms.
                           _nextStepItem(
                             '1',
-                            'Staff Assignment',
-                            'A qualified professional will be assigned within 2 hours.',
+                            'Price Confirmation Call',
+                            'Our team will call you to confirm the price before any payment.',
                           ),
                           const SizedBox(height: 10),
                           _nextStepItem(
                             '2',
-                            'Confirmation Call',
-                            'You will receive a confirmation call with staff details.',
+                            _hasServices
+                                ? 'Staff Assignment'
+                                : 'Equipment Delivery',
+                            _hasServices
+                                ? 'Once you approve the quote, a qualified professional is assigned.'
+                                : 'Once you approve the quote, your equipment is dispatched.',
                           ),
                           const SizedBox(height: 10),
-                        ],
-                        if (_hasEquipment) ...[
                           _nextStepItem(
-                            _hasServices ? '3' : '1',
-                            'Equipment Delivery',
-                            'Your equipment will be delivered within 24 hours.',
+                            '3',
+                            'Preparation Tips',
+                            'Keep prescription and medical records handy.',
                           ),
-                          const SizedBox(height: 10),
+                        ] else ...[
+                          if (_hasServices) ...[
+                            _nextStepItem(
+                              '1',
+                              'Staff Assignment',
+                              'A qualified professional will be assigned within 2 hours.',
+                            ),
+                            const SizedBox(height: 10),
+                            _nextStepItem(
+                              '2',
+                              'Confirmation Call',
+                              'You will receive a confirmation call with staff details.',
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          if (_hasEquipment) ...[
+                            _nextStepItem(
+                              _hasServices ? '3' : '1',
+                              'Equipment Delivery',
+                              'Your equipment will be delivered within 24 hours.',
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                          _nextStepItem(
+                            _hasServices && _hasEquipment
+                                ? '4'
+                                : _hasServices
+                                    ? '3'
+                                    : '2',
+                            'Preparation Tips',
+                            'Keep prescription and medical records handy for the visit.',
+                          ),
                         ],
-                        _nextStepItem(
-                          _hasServices && _hasEquipment
-                              ? '4'
-                              : _hasServices
-                                  ? '3'
-                                  : '2',
-                          'Preparation Tips',
-                          'Keep prescription and medical records handy for the visit.',
-                        ),
                       ],
                     ),
                   ),
@@ -431,14 +490,25 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
             ],
           ),
         ),
-        Text(
-          DateHelper.formatCurrency(item.lineTotal),
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: context.hc.orangeText,
+        // Quote-pending orders never render a ₹ line amount.
+        if (widget.quotePending)
+          Text(
+            'On call',
+            style: TextStyle(
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+              color: context.hc.warning,
+            ),
+          )
+        else
+          Text(
+            DateHelper.formatCurrency(item.lineTotal),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: context.hc.orangeText,
+            ),
           ),
-        ),
       ],
     );
   }

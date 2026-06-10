@@ -16,7 +16,9 @@ import '../widgets/permission_dialogs.dart';
 /// Tapping the card opens a bottom sheet with a need-based checklist
 /// ("Select what you need"): basic staff work comes pre-selected, ticking
 /// higher-level tasks live-infers the recommended staff tier, and the CTA
-/// continues into the existing assessment flow.
+/// continues into the full booking wizard (quote-pending — price confirmed
+/// on call before payment). A secondary link offers the callback/assessment
+/// path instead.
 class StaffRoleCard extends StatelessWidget {
   final StaffRole role;
   final List<ServiceItem> services;
@@ -246,19 +248,37 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
     return levelIndex == 0 ? '$name care' : '$name care adds';
   }
 
-  void _onContinue() {
-    final matchingService = widget.services.firstWhere(
-      (s) => s.name
-          .toLowerCase()
-          .contains(widget.role.title.toLowerCase().split(' ').first),
-      orElse: () => widget.services.first,
-    );
+  ServiceItem get _matchingService => widget.services.firstWhere(
+        (s) => s.name
+            .toLowerCase()
+            .contains(widget.role.title.toLowerCase().split(' ').first),
+        orElse: () => widget.services.first,
+      );
 
-    // The /assessment-request route only accepts a bare ServiceItem argument
-    // (main.dart rejects anything else), and showRequestBookingStub only takes
-    // a service name — neither can carry the needs list today, so we log it.
+  /// Role-permission gate shared by both CTAs. Returns true when the current
+  /// user may proceed; otherwise shows the request-booking stub /
+  /// view-only toast and returns false.
+  bool _gateBookingAction() {
+    final userRole = context.read<AppProvider>().currentUserRole;
+    if (!canUserPerform(userRole, UserAction.book)) {
+      if (canUserPerform(userRole, UserAction.requestBooking)) {
+        showRequestBookingStub(context, _matchingService.name);
+      } else {
+        showViewOnlyToast(context);
+      }
+      return false;
+    }
+    return true;
+  }
+
+  void _onContinue() {
+    final matchingService = _matchingService;
+
+    // The /service-booking route only accepts a bare ServiceItem argument
+    // (main.dart rejects anything else), so the needs checklist cannot ride
+    // along yet — we log it for now.
     // TODO(backend): attach `selectedTasks` + recommended level to the
-    // assessment request payload once the route/API accepts a needs list.
+    // quote-pending booking payload once the route/API accepts a needs list.
     final levelName = widget.role.levels[_recommendedLevelIndex].name;
     final selectedTasks = <String>[
       for (var i = 0; i < _levelTasks.length; i++)
@@ -268,18 +288,19 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
     debugPrint('StaffRole needs selection — role=${widget.role.title}, '
         'recommended=$levelName, tasks=$selectedTasks');
 
-    final userRole = context.read<AppProvider>().currentUserRole;
-    if (!canUserPerform(userRole, UserAction.book)) {
-      if (canUserPerform(userRole, UserAction.requestBooking)) {
-        showRequestBookingStub(context, matchingService.name);
-      } else {
-        showViewOnlyToast(context);
-      }
-      return;
-    }
+    if (!_gateBookingAction()) return;
+    // Book end-to-end: full wizard with quote-pending order (no upfront
+    // price — confirmed on call before payment).
     // Push first (context still valid), sheet auto-dismisses
     Navigator.of(context)
-        .pushNamed('/assessment-request', arguments: matchingService);
+        .pushNamed('/service-booking', arguments: matchingService);
+  }
+
+  /// Secondary path: user prefers a callback instead of booking directly.
+  void _onRequestCallback() {
+    if (!_gateBookingAction()) return;
+    Navigator.of(context)
+        .pushNamed('/assessment-request', arguments: _matchingService);
   }
 
   @override
@@ -287,6 +308,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
     final recommendedIndex = _recommendedLevelIndex;
     final recommendedName = widget.role.levels[recommendedIndex].name;
     final higherCount = _higherLevelSelectedCount;
+    // Exclusions of the currently RECOMMENDED level — recomputed every build,
+    // so the block live-updates as ticking tasks changes the recommendation.
+    final excludedTasks = widget.role.levels[recommendedIndex].excluded
+        .where((t) => !_metaEntry.hasMatch(t))
+        .toList();
 
     return Column(
       children: [
@@ -417,6 +443,44 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                     ),
                   ),
                   ..._levelTasks[i].map((task) => _taskRow(i, task)),
+                ],
+
+                // "Not included at this level" — mirrors the printed
+                // caretaker-profile PDF, where not-offered tasks are listed
+                // explicitly so families know the staff member's limits.
+                // Hidden when the recommended level excludes nothing.
+                if (excludedTasks.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Not included at this level',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.greyLight,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  ...excludedTasks.map((task) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.cancel_outlined,
+                                size: 16, color: context.hc.greyLight),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                task,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.hc.greyLight,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
                 ],
                 const SizedBox(height: 16),
 
@@ -551,6 +615,15 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                       child: Text(
                         'Continue — $recommendedName ${widget.role.title}',
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: _onRequestCallback,
+                    child: const Text(
+                      'Prefer a callback? Request an assessment',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13),
                     ),
                   ),
                 ],

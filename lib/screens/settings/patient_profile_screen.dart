@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
+import '../../data/demo_data.dart';
+import '../../models/medical_history.dart';
 import '../../providers/app_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
@@ -307,6 +309,130 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  // ── Medical History (read-only) helpers ────────────────────────────────
+
+  static String _yesNo(bool v) => v ? 'Yes' : 'No';
+
+  /// StatusBadge-style chip (orangeLight fill / orangeText label) for
+  /// condition + dietary-restriction lists. Wrapped in a [Wrap] by callers
+  /// so chips flow onto new lines at narrow widths (320px-safe).
+  Widget _historyChip(String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: context.hc.orangeLight,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: context.hc.orangeText,
+          ),
+        ),
+      );
+
+  /// Small note block (greyLighter fill, radius 12) for free-text fields
+  /// like Restrictions and Special instructions.
+  Widget _historyNote(String label, String text) => Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: context.hc.greyLighter,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style:
+                    TextStyle(fontSize: 12, color: context.hc.greyLight)),
+            const SizedBox(height: 4),
+            Text(text,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: context.hc.black)),
+          ],
+        ),
+      );
+
+  List<Widget> _buildMedicalHistory(MedicalHistory mh) {
+    final heightWeight = [
+      if (mh.heightCm != null) '${mh.heightCm} cm',
+      if (mh.weightKg != null) '${mh.weightKg} kg',
+    ].join(' · ');
+
+    return [
+      // Conditions as chips.
+      if (mh.conditions.isNotEmpty) ...[
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: mh.conditions.map(_historyChip).toList(),
+        ),
+        const SizedBox(height: 16),
+      ],
+      // Label/value pairs. DetailRow ellips-wraps its value, so long
+      // strings stay clean at 320px.
+      DetailRow(label: 'Diagnosis', value: mh.diagnosis, labelWidth: 130),
+      if (heightWeight.isNotEmpty)
+        DetailRow(
+            label: 'Height / Weight', value: heightWeight, labelWidth: 130),
+      DetailRow(
+          label: 'Lines',
+          value: mh.lines.isEmpty ? 'None' : mh.lines.join(', '),
+          labelWidth: 130),
+      DetailRow(
+          label: 'Discharge summary',
+          value: _yesNo(mh.dischargeSummaryAvailable),
+          labelWidth: 130),
+      DetailRow(
+          label: 'RT/PEG feeding',
+          value: _yesNo(mh.rtPegFeeding),
+          labelWidth: 130),
+      DetailRow(
+          label: 'Mental condition',
+          value: _yesNo(mh.mentalCondition),
+          labelWidth: 130),
+      DetailRow(
+          label: 'Motion status', value: mh.motionStatus, labelWidth: 130),
+      DetailRow(
+          label: 'BP/Sugar/Insulin monitoring',
+          value: _yesNo(mh.bpSugarInsulin),
+          labelWidth: 130),
+      if (mh.allergies != null && mh.allergies!.isNotEmpty)
+        DetailRow(label: 'Allergies', value: mh.allergies!, labelWidth: 130),
+      DetailRow(
+          label: 'Mobility', value: mh.mobilityStatus, labelWidth: 130),
+      if (mh.preferredHospital != null && mh.preferredHospital!.isNotEmpty)
+        DetailRow(
+            label: 'Preferred hospital',
+            value: mh.preferredHospital!,
+            labelWidth: 130),
+      // Dietary restrictions as chips.
+      if (mh.dietaryRestrictions.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Text('Dietary restrictions',
+            style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: mh.dietaryRestrictions.map(_historyChip).toList(),
+        ),
+        const SizedBox(height: 16),
+      ],
+      // Free-text notes.
+      if (mh.restrictions != null && mh.restrictions!.isNotEmpty)
+        _historyNote('Restrictions', mh.restrictions!),
+      if (mh.specialInstructions != null &&
+          mh.specialInstructions!.isNotEmpty)
+        _historyNote('Special instructions', mh.specialInstructions!),
+    ];
   }
 
   @override
@@ -759,6 +885,29 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 ),
               );
             }),
+
+            // ==================== Medical History (read-only) ====================
+            // Captured by the supervisor in the staff-app deployment wizard
+            // and synced down. Display-only — never editable here.
+            const SizedBox(height: 24),
+            const Text('Medical History',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.sync, size: 14, color: context.hc.greyLight),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Recorded by your supervisor at deployment · synced',
+                    style:
+                        TextStyle(fontSize: 12, color: context.hc.greyLight),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._buildMedicalHistory(DemoData.medicalHistory),
 
             // Bottom spacing for scroll comfort
             const SizedBox(height: 40),

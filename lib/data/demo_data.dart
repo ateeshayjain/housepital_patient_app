@@ -8,6 +8,7 @@ import 'dart:convert';
 import '../config/constants.dart';
 import '../models/care_event.dart';
 import '../models/doctor_recommendation.dart';
+import '../models/medical_history.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
@@ -64,6 +65,29 @@ class DemoData {
         mentalCondition: 'Alert, oriented',
         motionStatus: 'Bed-ridden',
         bpSugarInsulin: 'BP managed, Sugar variable, On insulin',
+      );
+
+  // ── Medical History (supervisor deployment wizard) ──────────────────
+  /// Snapshot of what the supervisor recorded in the staff-app deployment
+  /// wizard. Mirrors Rajesh's ICU-at-home, post-stroke story above.
+  /// `mobilityStatus` matches [patient].mobilityStatus ('Bed-ridden').
+  static MedicalHistory get medicalHistory => const MedicalHistory(
+        conditions: ['Hypertension', 'Diabetes', 'Stroke'],
+        diagnosis: 'Ischemic stroke — right hemiparesis',
+        heightCm: '172',
+        weightKg: '68',
+        lines: ['IV Line'],
+        dischargeSummaryAvailable: true,
+        rtPegFeeding: false,
+        mentalCondition: false,
+        motionStatus: 'Diaper',
+        bpSugarInsulin: true,
+        allergies: 'Penicillin',
+        mobilityStatus: 'Bed-ridden',
+        dietaryRestrictions: ['Low Salt', 'Diabetic Diet'],
+        restrictions: 'No stairs, no heavy lifting',
+        specialInstructions: 'Prefers Hindi; BP check before breakfast',
+        preferredHospital: 'Sarvodaya Hospital, Faridabad',
       );
 
   // ── Deployments ──────────────────────────────────────────────────────

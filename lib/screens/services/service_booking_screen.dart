@@ -6,10 +6,10 @@ import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/orders_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
-import '../../widgets/common_widgets.dart';
 import '../../widgets/document_attach_widgets.dart';
 import '../checkout/address_selection_screen.dart';
 
@@ -117,6 +117,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   /// Physio: pick a daytime slot + period (3/7/15/30 days)
   bool get _isPhysio => widget.service.id.startsWith('mp-physio');
+
+  /// Manpower services are quote-first: prices are NEVER shown in-app
+  /// (caretaker / nursing / japa / nanny / physio / ICU staffing) — the price
+  /// is confirmed on a call before payment. The wizard still runs end-to-end
+  /// and places a quote-pending order.
+  bool get _isManpower => widget.service.category == 'manpower';
 
   // Ongoing manpower state
   String _servicePeriod = '30'; // '7' or '30' days
@@ -278,22 +284,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final l = AppLocalizations.of(context)!;
     final s = widget.service;
 
-    // audit M-1: manpower bookings MUST flow through assessment-request, not
-    // the buy-now booking screen — never quote upfront prices for caretaker,
-    // nursing, japa, nanny. Defensive redirect if a stale link/deep-link
-    // lands a manpower service here.
-    if (s.category == 'manpower') {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed(
-          '/assessment-request',
-          arguments: s,
-        );
-      });
-      return const Scaffold(
-        body: LoadingWidget(),
-      );
-    }
+    // audit M-1 (superseded): manpower/zero-price services now run the FULL
+    // booking wizard end-to-end as a quote-first booking — every ₹/GST/total
+    // line is suppressed (never show prices for caretaker/nursing/japa/nanny)
+    // and the final CTA places a quote-pending order ("Price confirmed on
+    // call before payment") instead of going through cart/payment.
 
     return Scaffold(
       appBar: AppBar(
@@ -530,20 +525,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
             ],
-            // audit M-1: never quote upfront price for manpower services
-            // even if a stale basePriceMin somehow reaches here — show
-            // "Price on assessment" instead. (Defensive: the redirect at the
-            // top of build() should keep us out of this branch entirely.)
-            if (s.category == 'manpower') ...[
-              const SizedBox(height: 8),
-              const Text(
-                'Price on assessment',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: HousepitalColors.orange,
-                ),
-              ),
+            // audit M-1: never quote an upfront price for manpower services
+            // even if a stale basePriceMin somehow reaches here — show the
+            // quote-first info row instead. Booking continues end-to-end;
+            // the price is confirmed on call before payment.
+            if (_isManpower) ...[
+              const SizedBox(height: 12),
+              _quoteInfoRow(),
             ] else if (s.basePriceMin != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -1777,8 +1765,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ],
       ),
       const SizedBox(height: 16),
-      // Price summary
-      if (widget.service.basePriceMin != null)
+      // Price summary — NEVER for manpower (quote-first: price confirmed on
+      // call before payment).
+      if (_isManpower)
+        _quoteInfoRow()
+      else if (widget.service.basePriceMin != null)
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1873,6 +1864,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       const SizedBox(height: 12),
       Text('We\'ll call back immediately after booking to confirm requirements and assign staff.',
           style: TextStyle(fontSize: 12, color: context.hc.greyLight, fontStyle: FontStyle.italic)),
+      const SizedBox(height: 24),
+      SizedBox(
+        height: 52,
+        child: ElevatedButton(
+          onPressed: _selectedDate != null
+              ? () => setState(() => _step = 2)
+              : null,
+          child: const Text('Next'),
+        ),
+      ),
     ];
   }
 
@@ -1999,7 +2000,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         }).toList(),
       ),
       const SizedBox(height: 16),
-      if (widget.service.basePriceMin != null)
+      // Price summary — NEVER for manpower (physio is manpower): quote-first.
+      if (_isManpower)
+        _quoteInfoRow()
+      else if (widget.service.basePriceMin != null)
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2016,6 +2020,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             ],
           ),
         ),
+      const SizedBox(height: 24),
+      SizedBox(
+        height: 52,
+        child: ElevatedButton(
+          onPressed: _selectedDate != null && _selectedSlot != null
+              ? () => setState(() => _step = 2)
+              : null,
+          child: const Text('Next'),
+        ),
+      ),
     ];
   }
 
@@ -2023,6 +2037,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final app = context.read<AppProvider>();
     // For IV visits, use the dynamically determined price
     final price = _isIvVisit ? _ivPrice : s.basePriceMin;
+    // Quote-first flow: manpower NEVER shows a price; any other service with
+    // no usable price also books as a quote-pending order.
+    final isQuote = _isManpower || price == null || price == 0;
     // For IV visits with multiple sessions, multiply
     final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
     final subtotal = price != null ? price * sessionMultiplier : null;
@@ -2079,10 +2096,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               _infoRow('Notes', 'Included'),
             if (_requestOnlineAssessment)
               _infoRow('Online Assessment', 'Requested'),
-            if (subtotal != null) ...[
+            if (isQuote) ...[
+              // Quote-first: no ₹ / GST / total anywhere — money summary is
+              // replaced by the price-on-call info row.
+              const Divider(height: 20),
+              _quoteInfoRow(),
+            ] else if (subtotal != null) ...[
               const Divider(height: 20),
               if (_isIvVisit && _ivSessions > 1) ...[
-                _infoRow('Per Session', DateHelper.formatCurrency(price!)),
+                _infoRow('Per Session', DateHelper.formatCurrency(price)),
                 _infoRow('Sessions', '× $_ivSessions'),
               ],
               _infoRow('Service Fee', DateHelper.formatCurrency(subtotal)),
@@ -2101,13 +2123,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                           color: HousepitalColors.orange)),
                 ],
               ),
-            ] else ...[
-              const Divider(height: 20),
-              Text('Pricing will be confirmed after assessment',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: context.hc.greyLight,
-                      fontStyle: FontStyle.italic)),
             ],
           ],
         ),
@@ -2310,77 +2325,64 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ),
       ),
 
-      const SizedBox(height: 16),
-      TextField(
-        controller: _promoController,
-        enabled: _appliedPromoCode == null,
-        decoration: InputDecoration(
-          labelText: 'Promo code',
-          hintText: _appliedPromoCode != null
-              ? '$_appliedPromoCode applied'
-              : 'Promo code (optional)',
-          suffixIcon: TextButton(
-            onPressed:
-                _appliedPromoCode != null ? _clearPromo : _applyPromo,
-            child: Text(
-              _appliedPromoCode != null ? 'Remove' : 'Apply',
-              style: const TextStyle(color: HousepitalColors.orange),
+      // Promo entry only makes sense when there is a price to discount —
+      // quote-first bookings have no amount yet.
+      if (!isQuote) ...[
+        const SizedBox(height: 16),
+        TextField(
+          controller: _promoController,
+          enabled: _appliedPromoCode == null,
+          decoration: InputDecoration(
+            labelText: 'Promo code',
+            hintText: _appliedPromoCode != null
+                ? '$_appliedPromoCode applied'
+                : 'Promo code (optional)',
+            suffixIcon: TextButton(
+              onPressed:
+                  _appliedPromoCode != null ? _clearPromo : _applyPromo,
+              child: Text(
+                _appliedPromoCode != null ? 'Remove' : 'Apply',
+                style: const TextStyle(color: HousepitalColors.orange),
+              ),
             ),
           ),
         ),
-      ),
-      if (_promoMessage != null) ...[
-        const SizedBox(height: 6),
-        Text(
-          _promoMessage!,
-          style: TextStyle(
-            fontSize: 12,
-            color: _promoMessageIsError
-                ? context.hc.error
-                : context.hc.success,
+        if (_promoMessage != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _promoMessage!,
+            style: TextStyle(
+              fontSize: 12,
+              color: _promoMessageIsError
+                  ? context.hc.error
+                  : context.hc.success,
+            ),
           ),
-        ),
+        ],
       ],
       const SizedBox(height: 24),
-      // Guard: if no usable price, block "Add to Cart" and route to assessment
-      if (price == null || price == 0) ...[
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: context.hc.warningLight,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, color: context.hc.warning),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Price will be confirmed by our coordinator. Tap "Request Assessment" instead.',
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
+      // Quote-first services: book end-to-end WITHOUT a price — the order is
+      // placed directly as quote-pending (no cart, no payment) and our team
+      // confirms the price on call before any payment is taken.
+      if (isQuote) ...[
         SizedBox(
           height: 52,
           child: ElevatedButton(
-            onPressed: null, // Disabled — user must request assessment instead
-            child: const Text('Confirm & Add to Cart'),
+            onPressed: _confirmQuoteBooking,
+            child: const Text('Confirm Booking Request'),
           ),
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 48,
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/assessment-request',
-              arguments: widget.service,
-            ),
-            icon: const Icon(Icons.assignment_outlined),
-            label: const Text('Request Assessment'),
+        const SizedBox(height: 4),
+        TextButton(
+          onPressed: () => Navigator.pushNamed(
+            context,
+            '/assessment-request',
+            arguments: widget.service,
+          ),
+          child: const Text(
+            'Prefer a callback? Request an assessment',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13),
           ),
         ),
       ] else ...[
@@ -2444,6 +2446,83 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ),
       ],
     ];
+  }
+
+  /// Info row shown wherever a money summary would appear for quote-first
+  /// services (manpower / no-price): the price is confirmed on a call before
+  /// any payment is taken. Never renders a ₹ amount.
+  Widget _quoteInfoRow() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.hc.infoLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 18, color: context.hc.info),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Price confirmed on call before payment',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.hc.info,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Quote-first booking confirmation: places the order DIRECTLY via
+  /// OrdersProvider (bypasses cart + PaymentService entirely — there is no
+  /// amount to pay yet) and routes to the booking confirmation screen.
+  void _confirmQuoteBooking() {
+    final orders = context.read<OrdersProvider>();
+    final bookingNumber = orders.generateUniqueBookingNumber();
+
+    String? addressStr;
+    if (_savedAddresses.isNotEmpty &&
+        _selectedAddressIndex < _savedAddresses.length) {
+      final addr = _savedAddresses[_selectedAddressIndex];
+      addressStr = addr['address'] ?? addr['label'] ?? '';
+    }
+
+    final item = CartItem(
+      equipmentId: widget.service.id,
+      name: widget.service.name,
+      brand: widget.service.category,
+      unitPrice: 0, // quote pending — price confirmed on call before payment
+      isService: true,
+      scheduledDate: _selectedDate ?? DateTime.now(),
+      scheduledSlot: _selectedSlot ??
+          (_isOngoingManpower ? '$_servicePeriod days' : 'morning'),
+      selectedAddress: addressStr,
+      serviceNotes:
+          _notesController.text.isNotEmpty ? _notesController.text : null,
+    );
+
+    orders.addOrder(
+      items: [item],
+      totalAmount: 0,
+      bookingNumber: bookingNumber,
+      quotePending: true,
+    );
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/booking-confirmation',
+      arguments: <String, dynamic>{
+        'cartItems': [item],
+        'totalAmount': 0,
+        'bookingNumber': bookingNumber,
+        'quotePending': true,
+      },
+    );
   }
 
   Widget _infoRow(String label, String value) {

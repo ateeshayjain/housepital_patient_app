@@ -572,6 +572,9 @@ class _HousepitalAppState extends State<HousepitalApp> {
                       scheduledSlot: raw['scheduledSlot'] as String?,
                       // audit M-2: propagate booking number from cart.
                       bookingNumber: raw['bookingNumber'] as String?,
+                      // Quote-first orders (manpower / price-on-request):
+                      // render "Quote pending" instead of any ₹ figure.
+                      quotePending: raw['quotePending'] as bool? ?? false,
                     ));
           case '/booking-history':
           case '/my-orders':
@@ -631,6 +634,9 @@ class _HousepitalAppState extends State<HousepitalApp> {
             return MaterialPageRoute(
                 builder: (_) => OrderTrackingScreen(
                       bookingId: bookingId,
+                      // Quote-first orders show a "Quote pending" banner
+                      // instead of any amount.
+                      quotePending: raw['quotePending'] as bool? ?? false,
                       orderType: (raw['orderType'] as String?) ?? 'booking',
                     ));
           case '/rental-agreement':

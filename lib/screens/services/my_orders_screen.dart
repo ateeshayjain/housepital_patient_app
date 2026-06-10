@@ -230,6 +230,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     final status = order['status'] as String? ?? 'confirmed';
     final orderId = order['id'] as String? ?? '';
     final totalAmount = order['totalAmount'] as int? ?? 0;
+    // Quote-pending orders have no amount yet — never render ₹0 for these.
+    final quotePending = OrdersProvider.isQuotePending(order);
     final createdAt = order['createdAt'] as String?;
     final orderType = order['type'] as String? ?? 'equipment';
     final itemsList = order['items'] as List<dynamic>? ?? [];
@@ -310,14 +312,25 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             ),
             const SizedBox(height: 8),
 
-            // Status badge
-            StatusBadge(
-              text: _statusLabel(status),
-              color: _statusColor(status),
+            // Status badge(s) — Wrap keeps 320px widths overflow-free.
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                StatusBadge(
+                  text: _statusLabel(status),
+                  color: _statusColor(status),
+                ),
+                if (quotePending)
+                  StatusBadge(
+                    text: 'Quote pending',
+                    color: context.hc.warning,
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
 
-            // Date + amount row
+            // Date + amount row (quote-pending: price text instead of ₹)
             Row(
               children: [
                 if (createdAt != null) ...[
@@ -337,18 +350,26 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   ),
                 ],
                 const SizedBox(width: 16),
-                Icon(Icons.payment_outlined,
-                    size: 14, color: context.hc.greyLight),
+                Icon(
+                    quotePending
+                        ? Icons.phone_in_talk_outlined
+                        : Icons.payment_outlined,
+                    size: 14,
+                    color: context.hc.greyLight),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    DateHelper.formatCurrency(totalAmount),
+                    quotePending
+                        ? 'Price will be confirmed on call'
+                        : DateHelper.formatCurrency(totalAmount),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: context.hc.black,
+                      color: quotePending
+                          ? context.hc.warning
+                          : context.hc.black,
                     ),
                   ),
                 ),

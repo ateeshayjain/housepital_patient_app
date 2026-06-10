@@ -1,11 +1,27 @@
 // test/screens/services/service_booking_test.dart
 //
-// Tests IV infusion type -> nurse level mapping and doctor visit concern
-// categories from service_booking_screen.dart.
-// Since these are private static consts inside a State class, we replicate
-// the canonical data here and verify invariants.
+// 1. Tests IV infusion type -> nurse level mapping and doctor visit concern
+//    categories from service_booking_screen.dart. Since these are private
+//    static consts inside a State class, we replicate the canonical data here
+//    and verify invariants.
+// 2. Widget tests for the quote-first manpower contract (supersedes the old
+//    audit M-1 manpower→assessment redirect): manpower services run the FULL
+//    booking wizard with every ₹ suppressed and finish as a quote-pending
+//    order — "Price confirmed on call before payment".
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:housepital_patient/models/models.dart';
+import 'package:housepital_patient/providers/app_provider.dart';
+import 'package:housepital_patient/providers/cart_provider.dart';
+import 'package:housepital_patient/providers/orders_provider.dart';
+import 'package:housepital_patient/screens/services/service_booking_screen.dart';
+import 'package:housepital_patient/services/api_service.dart';
+import 'package:housepital_patient/utils/app_localizations.dart';
+import 'package:housepital_patient/utils/helpers.dart';
 
 // ---------------------------------------------------------------------------
 // Canonical data — must mirror _ServiceBookingScreenState exactly.
@@ -158,5 +174,107 @@ void main() {
         expect(cat['type'], 'icu');
       });
     }
+  });
+
+  // =========================================================================
+  // Manpower quote-first booking (replaces the audit M-1 forced redirect)
+  // =========================================================================
+  group('Manpower booking — quote-first wizard', () {
+    Widget host(ServiceItem service, OrdersProvider orders,
+        void Function(String?) onRoute) {
+      return MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AppProvider>(
+              create: (_) => AppProvider(ApiService())),
+          ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
+          ChangeNotifierProvider<OrdersProvider>.value(value: orders),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [AppLocalizations.delegate],
+          supportedLocales: const [Locale('en')],
+          home: ServiceBookingScreen(service: service),
+          onGenerateRoute: (settings) {
+            onRoute(settings.name);
+            return MaterialPageRoute(
+                builder: (_) => const Scaffold(body: SizedBox.shrink()));
+          },
+        ),
+      );
+    }
+
+    testWidgets(
+        'manpower runs the FULL wizard (no assessment redirect), shows no ₹ '
+        'anywhere, and places a quote-pending order', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      // Tall surface so all wizard sections lay out without scroll fights.
+      tester.view.physicalSize = const Size(1080, 4000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final orders = OrdersProvider();
+      final service = ServiceItem(
+        id: 'mp-caretaker-basic-12',
+        name: 'Caretaker (Basic) – 12 Hours',
+        category: 'manpower',
+        bookingType: 'scheduled',
+      );
+      String? pushedRoute;
+
+      await tester.runAsync(() async {
+        await tester.pumpWidget(
+            host(service, orders, (r) => pushedRoute = r));
+        // Let the async AppLocalizations delegate + slot fallback settle.
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pump();
+
+      // NOT redirected to /assessment-request — the wizard itself renders.
+      expect(pushedRoute, isNull);
+      expect(find.text('Select Slot'), findsWidgets);
+      // Quote info row instead of any price, and explicitly NO ₹ on screen.
+      expect(find.text('Price confirmed on call before payment'),
+          findsOneWidget);
+      expect(find.textContaining('₹'), findsNothing);
+
+      // Step 0 → 1 (ongoing manpower: start date + period).
+      await tester.tap(find.text('Select Slot').last);
+      await tester.pump();
+      expect(find.text('Select Start Date'), findsOneWidget);
+      expect(find.textContaining('₹'), findsNothing);
+
+      // Pick the first selectable start date (min 48 h ahead).
+      final firstDate = DateTime.now().add(const Duration(hours: 48));
+      await tester
+          .tap(find.text(DateHelper.formatDateShort(firstDate)).first);
+      await tester.pump();
+
+      // Step 1 → 2.
+      await tester.ensureVisible(find.text('Next'));
+      await tester.tap(find.text('Next'));
+      await tester.pump();
+
+      // Review step: still no ₹; quote CTA replaces add-to-cart.
+      expect(find.textContaining('₹'), findsNothing);
+      expect(
+          find.text('Price confirmed on call before payment'), findsWidgets);
+      expect(find.text('Confirm Booking Request'), findsOneWidget);
+      expect(find.text('Prefer a callback? Request an assessment'),
+          findsOneWidget);
+
+      // Confirm → order placed DIRECTLY via OrdersProvider (no cart/payment)
+      // and routed to the existing booking-confirmation screen.
+      final ordersBefore = orders.orders.length;
+      await tester.ensureVisible(find.text('Confirm Booking Request'));
+      await tester.tap(find.text('Confirm Booking Request'));
+      await tester.pump();
+
+      expect(orders.orders.length, ordersBefore + 1);
+      final order = orders.orders.first;
+      expect(order['quoteStatus'], 'pending');
+      expect(order['totalAmount'], 0);
+      expect(OrdersProvider.isQuotePending(order), isTrue);
+      expect(pushedRoute, '/booking-confirmation');
+    });
   });
 }

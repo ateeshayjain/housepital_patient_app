@@ -4,8 +4,22 @@
 // selected in the catalog.  The bottom sheet pops with a Map describing
 // which route the parent should navigate to, or null when no navigation
 // is needed (e.g. add-to-cart).
+//
+// Also widget-tests the price-on-request → "Reserve — price on confirmation"
+// flow: zero-price items are reservable end-to-end as quote-pending orders
+// (no ₹ shown; price confirmed on call before payment).
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:housepital_patient/models/models.dart';
+import 'package:housepital_patient/providers/app_provider.dart';
+import 'package:housepital_patient/providers/cart_provider.dart';
+import 'package:housepital_patient/providers/orders_provider.dart';
+import 'package:housepital_patient/screens/services/cards/equipment_item_card.dart';
+import 'package:housepital_patient/services/api_service.dart';
 
 void main() {
   // ===========================================================================
@@ -137,6 +151,92 @@ void main() {
       };
       final knownRoutes = ['/rental-agreement', '/assessment-request'];
       expect(knownRoutes.contains(unknownResult['route']), isFalse);
+    });
+  });
+
+  // ===========================================================================
+  // Price-on-request → Reserve (quote-pending order)
+  // ===========================================================================
+  group('Reserve — price on confirmation (quote-pending)', () {
+    testWidgets(
+        'zero-price item shows an ENABLED Reserve CTA and tapping it creates '
+        'a quote-pending order (booking-permitted role)', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final orders = OrdersProvider();
+      final item = EquipmentItem(
+        id: 'eq-premium-bed',
+        name: 'Premium Motorised Bed',
+        brand: 'Hospitech',
+        category: 'Equipment',
+        availableForSale: true,
+        price: null, // price on request — previously a dead "contact us" stop
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        home: MultiProvider(
+          providers: [
+            // AppProvider defaults to PRIMARY_CONTACT (booking permitted).
+            ChangeNotifierProvider<AppProvider>(
+                create: (_) => AppProvider(ApiService())),
+            ChangeNotifierProvider<CartProvider>(
+                create: (_) => CartProvider()),
+            ChangeNotifierProvider<OrdersProvider>.value(value: orders),
+          ],
+          child: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 220,
+                height: 340,
+                child: EquipmentItemCard(item: item, icon: Icons.bed),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Card shows the no-price label; ADD routes into the detail sheet
+      // (not a dead end, not a one-tap add).
+      expect(find.text('Price on request'), findsOneWidget);
+      await tester.tap(find.text('ADD'));
+      await tester.pumpAndSettle();
+
+      final reserve = find.text('Reserve — price on confirmation');
+      expect(reserve, findsOneWidget);
+      final button = tester.widget<ElevatedButton>(find
+          .ancestor(of: reserve, matching: find.byType(ElevatedButton))
+          .first);
+      expect(button.onPressed, isNotNull,
+          reason: 'Reserve must be ENABLED — no dead price-on-request state');
+      // No ₹ anywhere in the sheet for a price-on-request item.
+      expect(find.textContaining('₹'), findsNothing);
+
+      final before = orders.orders.length;
+      await tester.ensureVisible(reserve);
+      await tester.tap(reserve);
+      await tester.pumpAndSettle();
+
+      // Quote-pending order created via OrdersProvider.
+      expect(orders.orders.length, before + 1);
+      final order = orders.orders.first;
+      expect(order['quoteStatus'], 'pending');
+      expect(order['totalAmount'], 0);
+      expect(OrdersProvider.isQuotePending(order), isTrue);
+
+      // Confirmation SnackBar with the booking number.
+      expect(
+          find.textContaining(
+              'Reserved — our team will confirm the price shortly'),
+          findsOneWidget);
+      expect(find.textContaining(order['id'] as String), findsOneWidget);
+
+      // Let the SnackBar's auto-dismiss timer expire before teardown.
+      await tester.pump(const Duration(seconds: 4));
     });
   });
 }

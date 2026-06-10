@@ -39,7 +39,7 @@ class ActiveServiceCard extends StatelessWidget {
               Container(width: 4, color: color),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -49,7 +49,7 @@ class ActiveServiceCard extends StatelessWidget {
                             child: Text(
                               service.name,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 14),
+                                  fontWeight: FontWeight.w700, fontSize: 13.5),
                             ),
                           ),
                           Text(progressLabel,
@@ -60,7 +60,7 @@ class ActiveServiceCard extends StatelessWidget {
                               size: 18, color: context.hc.greyLight),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           if (service.hasStaff) ...[
@@ -76,7 +76,7 @@ class ActiveServiceCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w500,
                                     color: allPresent
                                         ? context.hc.success
@@ -94,18 +94,18 @@ class ActiveServiceCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 11.5,
                                       color: context.hc.grey)),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(2),
                         child: LinearProgressIndicator(
                           value: service.progressFraction,
-                          minHeight: 4,
+                          minHeight: 3,
                           backgroundColor: context.hc.greyLighter,
                           valueColor: AlwaysStoppedAnimation(color),
                         ),

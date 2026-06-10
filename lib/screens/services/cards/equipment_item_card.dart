@@ -7,24 +7,42 @@ import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_provider.dart';
 import '../../../providers/cart_provider.dart';
+import '../../../providers/orders_provider.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/permissions.dart';
 import '../sheets/equipment_detail_sheet.dart';
 import '../widgets/permission_dialogs.dart';
 
-/// Grid card shown on the Equipment tab for a single [EquipmentItem].
+/// Compact Blinkit-style grid card shown on the Equipment tab for a single
+/// [EquipmentItem]: square image area, brand/variant line, 2-line name,
+/// MRP-strikethrough + % off chip, bold price, and an 'ADD' pill overlapping
+/// the image's bottom edge.
 ///
-/// Tapping the card surfaces [EquipmentDetailSheet]; once the sheet returns,
-/// the card handles the resulting action (add to cart, rent, request
-/// assessment) including the role-based permission gating.
+/// Tapping the card body surfaces [EquipmentDetailSheet]; once the sheet
+/// returns, the card handles the resulting action (add to cart, rent, request
+/// assessment) including the role-based permission gating. The ADD pill
+/// one-tap adds simple sale-only items to the cart; anything with rental /
+/// assessment complexity falls back to opening the same detail sheet.
 class EquipmentItemCard extends StatelessWidget {
   final EquipmentItem item;
   final IconData icon;
 
   const EquipmentItemCard({super.key, required this.item, required this.icon});
 
+  /// One-tap ADD is only safe for plain sale items: a real sale price, no
+  /// rental option to choose, and no mandatory clinical assessment.
+  bool get _isSimpleSaleItem =>
+      item.availableForSale &&
+      !item.availableForRent &&
+      (item.price ?? 0) > 0 &&
+      !item.needsAssessment;
+
   @override
   Widget build(BuildContext context) {
+    final hasDiscount = item.price != null &&
+        item.mrp != null &&
+        item.mrp! > item.price!;
+
     return Material(
       color: context.hc.white,
       borderRadius: BorderRadius.circular(12),
@@ -34,132 +52,151 @@ class EquipmentItemCard extends StatelessWidget {
         onTap: () => _showItemDetail(context),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image placeholder / icon
-              Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: context.hc.orangeLight,
-                    borderRadius: BorderRadius.circular(10),
+              // Square image area with the ADD pill overlapping its bottom
+              // edge (the stack reserves 16px below the image so the whole
+              // button stays inside hit-test bounds).
+              Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: context.hc.greyLighter,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: _buildImage(context),
+                      ),
+                    ),
                   ),
-                  child: item.imageUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: item.imageUrl!.startsWith('assets/')
-                              ? Image.asset(
-                                  item.imageUrl!,
-                                  fit: BoxFit.contain,
-                                  semanticLabel: '${item.name} product photo',
-                                  errorBuilder: (_, _, _) => Icon(icon,
-                                      color: HousepitalColors.orange, size: 32),
-                                )
-                              : CachedNetworkImage(
-                                  imageUrl: item.imageUrl!,
-                                  fit: BoxFit.contain,
-                                  placeholder: (_, _) => Icon(icon,
-                                      color: HousepitalColors.orange, size: 32),
-                                  errorWidget: (_, _, _) => Icon(icon,
-                                      color: HousepitalColors.orange, size: 32),
-                                ),
-                        )
-                      : Icon(icon,
-                          color: HousepitalColors.orange, size: 32),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: _AddPill(
+                      itemName: item.name,
+                      onPressed: () => _handleAdd(context),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Brand / variant line
+              SizedBox(
+                height: 14,
+                child: Text(
+                  item.variantValue != null
+                      ? '${item.brand} · ${item.variantValue}'
+                      : item.brand,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1.2,
+                    color: context.hc.greyLight,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Name
-              Text(
-                item.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.black,
-                  height: 1.2,
+              const SizedBox(height: 2),
+              // Name (2 lines)
+              SizedBox(
+                height: 34,
+                child: Text(
+                  item.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: context.hc.black,
+                    height: 1.25,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
-              // Brand
-              Text(
-                item.brand,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: context.hc.greyLight,
-                ),
+              // Struck-through MRP + green % off chip
+              SizedBox(
+                height: 16,
+                child: hasDiscount
+                    ? FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              DateHelper.formatCurrency(item.mrp!.toInt()),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: context.hc.greyLight,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: context.hc.greyLight,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: context.hc.successLight,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.hc.success,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : (item.availableForRent && item.rentalPrice != null
+                        ? FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Rent ${DateHelper.formatCurrency(item.rentalPrice!.toInt())}/mo',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: context.hc.info,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
               ),
-              const Spacer(),
-              // Price with MRP strikethrough
-              if (item.price != null) ...[
-                if (item.mrp != null && item.mrp! > item.price!) ...[
-                  Row(
-                    children: [
-                      Text(
-                        DateHelper.formatCurrency(item.mrp!.toInt()),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.hc.greyLight,
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: context.hc.greyLight,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: context.hc.successLight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
+              const SizedBox(height: 2),
+              // Bold price
+              SizedBox(
+                height: 18,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: item.price != null
+                      ? Text(
+                          DateHelper.formatCurrency(item.price!.toInt()),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.black,
+                          ),
+                        )
+                      : Text(
+                          'Price on request',
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.success,
+                            color: context.hc.greyLight,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                ],
-                Text(
-                  DateHelper.formatCurrency(item.price!.toInt()),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.orangeText,
-                  ),
                 ),
-              ] else
-                Text(
-                  'Price on request',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.hc.greyLight,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              const SizedBox(height: 4),
-              // Category badges
-              Row(
-                children: [
-                  if (item.availableForRent) ...[
-                    _typeBadge('Rent', context.hc.infoLight,
-                        context.hc.info),
-                    const SizedBox(width: 4),
-                  ],
-                  if (item.availableForSale)
-                    _typeBadge('Buy', context.hc.successLight,
-                        context.hc.success),
-                ],
               ),
             ],
           ),
@@ -168,22 +205,67 @@ class EquipmentItemCard extends StatelessWidget {
     );
   }
 
-  Widget _typeBadge(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
-      ),
+  Widget _buildImage(BuildContext context) {
+    if (item.imageUrl == null) {
+      return Center(
+          child: Icon(icon, color: HousepitalColors.orange, size: 32));
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: item.imageUrl!.startsWith('assets/')
+          ? Image.asset(
+              item.imageUrl!,
+              fit: BoxFit.contain,
+              semanticLabel: '${item.name} product photo',
+              errorBuilder: (_, _, _) =>
+                  Icon(icon, color: HousepitalColors.orange, size: 32),
+            )
+          : CachedNetworkImage(
+              imageUrl: item.imageUrl!,
+              fit: BoxFit.contain,
+              placeholder: (_, _) =>
+                  Icon(icon, color: HousepitalColors.orange, size: 32),
+              errorWidget: (_, _, _) =>
+                  Icon(icon, color: HousepitalColors.orange, size: 32),
+            ),
     );
+  }
+
+  /// ADD pill action: one-tap add-to-cart for simple sale items (same cart
+  /// call + role gating the detail sheet flow uses); items with rental /
+  /// assessment / price-on-request complexity open the detail sheet instead.
+  void _handleAdd(BuildContext context) {
+    if (!_isSimpleSaleItem) {
+      _showItemDetail(context);
+      return;
+    }
+    // Same role gating as the post-sheet add-to-cart path below.
+    final role = context.read<AppProvider>().currentUserRole;
+    if (!canUserPerform(role, UserAction.book)) {
+      if (canUserPerform(role, UserAction.requestBooking)) {
+        showRequestBookingStub(context, item.name);
+      } else {
+        showViewOnlyToast(context);
+      }
+      return;
+    }
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    context.read<CartProvider>().addItem(item, isRental: false, rentalMonths: 1);
+    messenger
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('${item.name} added to cart'),
+          backgroundColor: context.hc.success,
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'View Cart',
+            textColor: Colors.white,
+            onPressed: () => navigator.pushNamed('/cart'),
+          ),
+        ),
+      );
   }
 
   void _showItemDetail(BuildContext context) async {
@@ -206,7 +288,8 @@ class EquipmentItemCard extends StatelessWidget {
       // Gate any write action (add-to-cart / rental commitment) by role.
       final role = context.read<AppProvider>().currentUserRole;
       final isWriteAction = result['action'] == 'rent' ||
-          result['action'] == 'add_to_cart';
+          result['action'] == 'add_to_cart' ||
+          result['action'] == 'reserve';
       if (isWriteAction && !canUserPerform(role, UserAction.book)) {
         if (canUserPerform(role, UserAction.requestBooking)) {
           showRequestBookingStub(context, item.name);
@@ -264,10 +347,92 @@ class EquipmentItemCard extends StatelessWidget {
               ),
             ),
           );
+      } else if (result['action'] == 'reserve') {
+        // Price-on-request flow: create a quote-pending order directly via
+        // OrdersProvider — no price shown, the team confirms it on call
+        // before any payment.
+        final orders = context.read<OrdersProvider>();
+        final bookingNumber = orders.generateUniqueBookingNumber();
+        orders.addOrder(
+          items: [
+            CartItem(
+              equipmentId: item.id,
+              name: item.name,
+              brand: item.brand,
+              imageUrl: item.imageUrl,
+              unitPrice: 0, // quote pending — confirmed on call
+              isRental: result['isRental'] as bool? ?? false,
+              rentalMonths: result['rentalMonths'] as int? ?? 1,
+            ),
+          ],
+          totalAmount: 0,
+          bookingNumber: bookingNumber,
+          quotePending: true,
+        );
+        messenger
+          ?..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Reserved — our team will confirm the price shortly ($bookingNumber)'),
+              backgroundColor: context.hc.success,
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'My Orders',
+                textColor: Colors.white,
+                onPressed: () => navigator.pushNamed('/my-orders'),
+              ),
+            ),
+          );
       } else if (result.containsKey('route')) {
         final route = result['route'] as String;
         navigator.pushNamed(route, arguments: result['args']);
       }
     }
+  }
+}
+
+/// Blinkit-style compact 'ADD' pill: outlined orange on a white chip, sized
+/// to sit overlapping the bottom edge of the card's image area.
+class _AddPill extends StatelessWidget {
+  final String itemName;
+  final VoidCallback onPressed;
+
+  const _AddPill({required this.itemName, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Add $itemName to cart',
+      child: Material(
+        color: context.hc.white,
+        elevation: 2,
+        shadowColor: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            height: 30,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: HousepitalColors.orange, width: 1.2),
+            ),
+            child: Text(
+              'ADD',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+                color: context.hc.orangeText,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

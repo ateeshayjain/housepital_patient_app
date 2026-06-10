@@ -13,6 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:housepital_patient/models/my_care_models.dart';
 import 'package:housepital_patient/screens/my_care/widgets/health_manager_banner.dart';
 import 'package:housepital_patient/screens/my_care/widgets/active_service_card.dart';
+import 'package:housepital_patient/screens/my_care/widgets/staff_attendance_section.dart';
+import 'package:housepital_patient/utils/app_localizations.dart';
 
 // ============================================================
 // Minimal test-host widget
@@ -476,6 +478,75 @@ void main() {
 
       expect(find.text('Japa Care'), findsOneWidget);
       expect(find.text('Day 10/45'), findsOneWidget);
+    });
+  });
+
+  // ----------------------------------------------------------
+  // StaffAttendanceSection
+  // ----------------------------------------------------------
+  group('StaffAttendanceSection', () {
+    // The section reads AppLocalizations (async asset-backed delegate), so
+    // the host wires the real delegate and tests pump inside runAsync —
+    // same pattern as test/screens/overflow_smoke_test.dart.
+    Widget host(List<ActiveService> services, List<String> pushedRoutes) =>
+        MaterialApp(
+          localizationsDelegates: const [AppLocalizations.delegate],
+          supportedLocales: const [Locale('en')],
+          onGenerateRoute: (settings) {
+            pushedRoutes.add(settings.name ?? '');
+            return MaterialPageRoute(builder: (_) => const Scaffold());
+          },
+          home: Scaffold(
+            body: StaffAttendanceSection(services: services),
+          ),
+        );
+
+    Future<void> pumpSection(
+      WidgetTester tester,
+      List<ActiveService> services,
+      List<String> pushedRoutes,
+    ) async {
+      await tester.runAsync(() async {
+        await tester.pumpWidget(host(services, pushedRoutes));
+        // Let the async AppLocalizations delegate finish loading the JSON.
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
+    }
+
+    testWidgets('summary card shows a trailing chevron affordance',
+        (tester) async {
+      final pushed = <String>[];
+      final service = _makeActiveService(totalStaff: 2, checkedInStaff: 1);
+
+      await pumpSection(tester, [service], pushed);
+
+      expect(find.text("Some staff haven't checked in yet"), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      // The card body is tappable (InkWell wraps the row).
+      expect(
+        find.ancestor(
+          of: find.byIcon(Icons.chevron_right),
+          matching: find.byType(InkWell),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('tapping the summary card navigates to /care-calendar',
+        (tester) async {
+      final pushed = <String>[];
+      final service = _makeActiveService(totalStaff: 2, checkedInStaff: 1);
+
+      await pumpSection(tester, [service], pushed);
+
+      await tester.tap(find.ancestor(
+        of: find.byIcon(Icons.chevron_right),
+        matching: find.byType(InkWell),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(pushed, contains('/care-calendar'));
     });
   });
 }

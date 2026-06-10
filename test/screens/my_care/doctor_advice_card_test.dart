@@ -59,9 +59,13 @@ void main() {
     expect(find.text('Recommended by Dr. Ananya Sharma · 2 days ago'),
         findsNWidgets(3));
 
-    // CTAs: equipment + lab get "Add to cart"; service gets "Book".
-    expect(find.text('Add to cart'), findsNWidgets(2));
+    // CTAs: equipment + lab get the compact "+ Add" pill (NOT the old wide
+    // "Add to cart" button); the service gets "+ Book".
+    expect(find.text('Add'), findsNWidgets(2));
+    expect(find.text('Add to cart'), findsNothing);
     expect(find.text('Book'), findsOneWidget);
+    // Each pill leads with the small "+" icon (Add all uses a cart icon).
+    expect(find.byIcon(Icons.add), findsNWidgets(3));
     expect(find.text('Add all to cart'), findsOneWidget);
   });
 

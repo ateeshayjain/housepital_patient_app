@@ -20,6 +20,12 @@ class OrdersProvider extends ChangeNotifier {
     _loadFromStorage();
   }
 
+  /// True when [order] is a quote-pending order — booked without a price,
+  /// awaiting price confirmation on call. Screens must never render ₹0 for
+  /// these.
+  static bool isQuotePending(Map<String, dynamic> order) =>
+      order['quoteStatus'] == 'pending';
+
   /// Generate a booking number like HPL-BOOK-1234567.
   /// Uses a millisecond timestamp suffix (last 7 digits) to avoid the collisions
   /// the previous 5-digit random approach was prone to, and salts with a small
@@ -42,11 +48,19 @@ class OrdersProvider extends ChangeNotifier {
     return candidate;
   }
 
-  /// Add a new order (called after successful checkout)
+  /// Add a new order (called after successful checkout).
+  ///
+  /// [quotePending]: quote-first orders (manpower services / price-on-request
+  /// equipment) are booked end-to-end in the app WITHOUT a price — the team
+  /// confirms the price on call before any payment. Such orders carry
+  /// `quoteStatus: 'pending'` and a totalAmount of 0; downstream screens must
+  /// render "Quote pending / Price will be confirmed on call" instead of ₹0
+  /// and exclude them from outstanding/paid sums.
   void addOrder({
     required List<CartItem> items,
     required int totalAmount,
     required String bookingNumber,
+    bool quotePending = false,
   }) {
     _orders.insert(0, {
       'id': bookingNumber,
@@ -55,6 +69,7 @@ class OrdersProvider extends ChangeNotifier {
       'status': 'confirmed',
       'createdAt': DateTime.now().toIso8601String(),
       'type': items.any((i) => i.isService) ? 'mixed' : 'equipment',
+      if (quotePending) 'quoteStatus': 'pending',
     });
     _persistAndNotify();
   }

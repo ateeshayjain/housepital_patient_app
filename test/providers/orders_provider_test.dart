@@ -157,6 +157,47 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // addOrder — quotePending (quote-first manpower / price-on-request orders)
+  // ---------------------------------------------------------------------------
+  group('addOrder quotePending', () {
+    test('quotePending:true stamps quoteStatus pending with totalAmount 0', () {
+      final provider = OrdersProvider();
+      provider.addOrder(
+        items: [_makeCartItem(unitPrice: 0, isService: true)],
+        totalAmount: 0,
+        bookingNumber: 'HPL-BOOK-70001',
+        quotePending: true,
+      );
+
+      final order = provider.orders.first;
+      expect(order['quoteStatus'], 'pending');
+      expect(order['totalAmount'], 0);
+      expect(order['status'], 'confirmed');
+      expect(OrdersProvider.isQuotePending(order), isTrue);
+    });
+
+    test('default addOrder carries no quoteStatus key', () {
+      final provider = OrdersProvider();
+      provider.addOrder(
+        items: [_makeCartItem()],
+        totalAmount: 1000,
+        bookingNumber: 'HPL-BOOK-70002',
+      );
+
+      final order = provider.orders.first;
+      expect(order.containsKey('quoteStatus'), isFalse);
+      expect(OrdersProvider.isQuotePending(order), isFalse);
+    });
+
+    test('isQuotePending only matches the pending state', () {
+      expect(OrdersProvider.isQuotePending({'quoteStatus': 'pending'}), isTrue);
+      expect(
+          OrdersProvider.isQuotePending({'quoteStatus': 'confirmed'}), isFalse);
+      expect(OrdersProvider.isQuotePending({}), isFalse);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // addAssessment
   // ---------------------------------------------------------------------------
   group('addAssessment', () {

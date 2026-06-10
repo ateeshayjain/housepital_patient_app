@@ -262,6 +262,18 @@ class _RecommendationRow extends StatelessWidget {
     required this.onBook,
   });
 
+  /// Compact tonal pill (FilledButton.tonal style): small visual, but the
+  /// padded Material tap target keeps the interactive area ≥ 44pt.
+  ButtonStyle _pillStyle(BuildContext context) => FilledButton.styleFrom(
+        backgroundColor: context.hc.orangeLight,
+        foregroundColor: context.hc.orangeText,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      );
+
   @override
   Widget build(BuildContext context) {
     final isService = rec.type == 'service';
@@ -271,17 +283,12 @@ class _RecommendationRow extends StatelessWidget {
       trailing = Semantics(
         label: 'Book ${rec.title}',
         button: true,
-        child: OutlinedButton(
+        child: FilledButton.tonalIcon(
           key: Key('advice-book-${rec.id}'),
           onPressed: onBook,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: context.hc.orangeText,
-            side: BorderSide(color: HousepitalColors.orange),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          child: const Text('Book', style: TextStyle(fontSize: 13)),
+          style: _pillStyle(context),
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Book'),
         ),
       );
     } else if (isAdded) {
@@ -301,17 +308,12 @@ class _RecommendationRow extends StatelessWidget {
       trailing = Semantics(
         label: 'Add ${rec.title} to cart',
         button: true,
-        child: OutlinedButton(
+        child: FilledButton.tonalIcon(
           key: Key('advice-add-${rec.id}'),
           onPressed: onAdd,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: context.hc.orangeText,
-            side: BorderSide(color: HousepitalColors.orange),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          child: const Text('Add to cart', style: TextStyle(fontSize: 13)),
+          style: _pillStyle(context),
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Add'),
         ),
       );
     }

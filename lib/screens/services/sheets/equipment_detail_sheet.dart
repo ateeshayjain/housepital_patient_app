@@ -11,8 +11,9 @@ import '../widgets/quantity_button.dart';
 
 /// Bottom sheet shown when an [EquipmentItem] card is tapped from the
 /// Equipment tab. Lets the user toggle Buy / Rent, pick rental duration,
-/// and either add to cart, request an assessment, or hit the "price on
-/// request" disabled state.
+/// and either add to cart, request an assessment, or reserve a
+/// price-on-request item as a quote-pending order (price confirmed on call
+/// before payment).
 ///
 /// The sheet pops with a `Map<String, dynamic>` describing the user's intent
 /// (action: 'add_to_cart' | 'rent' | route navigation). The parent widget
@@ -566,27 +567,65 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
               ),
             ),
           ] else ...[
-            // Check if price is available
+            // Price-on-request items are reservable end-to-end: the order is
+            // placed as quote-pending and the team confirms the price on call
+            // before payment — no dead "contact us" stop.
             if ((_isRental && (item.rentalPrice == null || item.rentalPrice == 0)) ||
-                (!_isRental && (item.price == null || item.price == 0)))
+                (!_isRental && (item.price == null || item.price == 0))) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: context.hc.infoLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: context.hc.info),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Price confirmed on call before payment',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: context.hc.info,
+                            height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.phone_outlined, size: 20),
-                  label: const Text('Price on request — contact us'),
+                  onPressed: () {
+                    // Reserve → pop with 'reserve' action; parent creates a
+                    // quote-pending order (same role gating as add-to-cart).
+                    Navigator.of(context).pop<Map<String, dynamic>>({
+                      'action': 'reserve',
+                      'itemId': item.id,
+                      'itemName': item.name,
+                      'itemBrand': item.brand,
+                      'itemImageUrl': item.imageUrl,
+                      'isRental': _isRental && hasRental,
+                      'rentalMonths': (_isRental && hasRental) ? _rentalMonths : 1,
+                    });
+                  },
+                  icon: const Icon(Icons.event_available_outlined, size: 20),
+                  label: const Text('Reserve — price on confirmation'),
                   style: ElevatedButton.styleFrom(
-                    disabledBackgroundColor: context.hc.divider,
-                    disabledForegroundColor: context.hc.greyLight,
+                    backgroundColor: HousepitalColors.orange,
+                    foregroundColor: context.hc.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-              )
-            else
+              ),
+            ] else
               SizedBox(
                 width: double.infinity,
                 height: 48,

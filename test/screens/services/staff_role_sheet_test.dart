@@ -77,9 +77,12 @@ void main() {
   }
 
   Future<void> tapTask(WidgetTester tester, String task) async {
-    await tester.ensureVisible(find.text(task));
+    // `.first` because a task name can also appear in the muted
+    // "Not included at this level" block below the checklist — the checklist
+    // row always comes first in the tree.
+    await tester.ensureVisible(find.text(task).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(task));
+    await tester.tap(find.text(task).first);
     await tester.pumpAndSettle();
   }
 
@@ -151,6 +154,29 @@ void main() {
     testWidgets('sheet shows no prices for manpower', (tester) async {
       await openSheet(tester);
       expect(find.textContaining('₹'), findsNothing);
+    });
+
+    testWidgets(
+        'shows "Not included at this level" for the recommended level '
+        'and updates live when the recommendation changes', (tester) async {
+      await openSheet(tester);
+
+      // Basic recommendation → the 14 Basic caretaker exclusions are listed.
+      expect(find.text('Not included at this level'), findsOneWidget);
+      expect(find.byIcon(Icons.cancel_outlined), findsNWidgets(14));
+      // Exclusions that are NOT checklist tasks appear exactly once.
+      expect(find.text('Patient massage'), findsOneWidget);
+      expect(find.text('Ventilator care'), findsOneWidget);
+
+      // Flip the recommendation to Advanced — the block live-updates to the
+      // Advanced level's (shorter) exclusion list.
+      await tapTask(tester, 'RT feeding');
+      expect(find.text('Recommended: Advanced Caretaker'), findsOneWidget);
+      expect(find.text('Not included at this level'), findsOneWidget);
+      expect(find.byIcon(Icons.cancel_outlined), findsNWidgets(10));
+      // 'RT feeding' is included at Advanced, so its only remaining
+      // occurrence is the (now checked) checklist row.
+      expect(find.text('RT feeding'), findsOneWidget);
     });
   });
 }

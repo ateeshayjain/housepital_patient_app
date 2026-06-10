@@ -49,31 +49,41 @@ class StaffAttendanceSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // Summary card — detailed attendance is in ServiceDetailScreen
+          // Summary card — tappable: today's per-staff attendance (with
+          // Mark-present) lives on the Care Calendar screen. clipBehavior
+          // keeps the InkWell ripple inside the card's rounded corners.
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    checkedIn == totalStaff
-                        ? Icons.check_circle
-                        : Icons.access_time,
-                    color: checkedIn == totalStaff
-                        ? context.hc.success
-                        : context.hc.warning,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/care-calendar'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
                       checkedIn == totalStaff
-                          ? l.t('all_staff_checked_in')
-                          : l.t('staff_pending_checkin'),
-                      style: const TextStyle(fontSize: 14),
+                          ? Icons.check_circle
+                          : Icons.access_time,
+                      color: checkedIn == totalStaff
+                          ? context.hc.success
+                          : context.hc.warning,
+                      size: 32,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        checkedIn == totalStaff
+                            ? l.t('all_staff_checked_in')
+                            : l.t('staff_pending_checkin'),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Visible affordance that the card opens the calendar.
+                    Icon(Icons.chevron_right,
+                        size: 22, color: context.hc.greyLight),
+                  ],
+                ),
               ),
             ),
           ),

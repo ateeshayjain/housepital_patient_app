@@ -50,6 +50,23 @@ void main() {
     expect(find.text(DemoData.articles.first.title), findsOneWidget);
   });
 
+  testWidgets('renders the featured hero card and category filter chips',
+      (tester) async {
+    final provider = BlogProvider(_OfflineApi());
+    final observer = _RouteObserver();
+    await tester.pumpWidget(_host(provider, observer));
+    await tester.pumpAndSettle();
+
+    // First article is promoted to the FEATURED hero card.
+    expect(find.text('FEATURED'), findsOneWidget);
+    expect(find.text(DemoData.articles.first.title), findsOneWidget);
+
+    // Filter row renders "All" plus the first article's category chip
+    // (which also appears on article cards, hence findsWidgets).
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text(DemoData.articles.first.category), findsWidgets);
+  });
+
   testWidgets('tapping an article pushes /article with its id', (tester) async {
     final provider = BlogProvider(_OfflineApi());
     final observer = _RouteObserver();

@@ -17,10 +17,15 @@ class OrderTrackingScreen extends StatefulWidget {
   final String bookingId;
   final String orderType; // 'booking' or 'equipment'
 
+  /// Quote-pending orders (manpower / price-on-request equipment) have no
+  /// price yet — show a "Quote pending" banner instead of any amount.
+  final bool quotePending;
+
   const OrderTrackingScreen({
     super.key,
     required this.bookingId,
     this.orderType = 'booking',
+    this.quotePending = false,
   });
 
   @override
@@ -159,6 +164,30 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                       color: context.hc.greyLight,
                     ),
                   ),
+                  // Quote-pending banner — this order has no ₹ amount yet.
+                  if (widget.quotePending) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        StatusBadge(
+                          text: 'Quote pending',
+                          color: context.hc.warning,
+                          icon: Icons.schedule,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Price will be confirmed on call',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: context.hc.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ETA section
