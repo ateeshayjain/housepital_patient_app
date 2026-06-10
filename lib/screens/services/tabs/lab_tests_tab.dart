@@ -9,7 +9,6 @@ import '../../../utils/helpers.dart';
 import '../../../widgets/common_widgets.dart';
 import '../cards/diagnostic_card.dart';
 import '../sheets/lab_test_detail_sheet.dart';
-import '../widgets/catalog_search_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
@@ -153,13 +152,6 @@ class _LabTestsTabState extends State<LabTestsTab> {
 
     return Column(
       children: [
-        // Search
-        CatalogSearchBar(
-          searchQuery: _searchQuery,
-          controller: _searchController,
-          focusNode: _searchFocusNode,
-          onChanged: (v) => setState(() => _searchQuery = v),
-        ),
         // Trust badges
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),

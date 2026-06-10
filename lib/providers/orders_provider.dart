@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/demo_data.dart';
 import '../models/models.dart';
 import '../utils/logger.dart';
 
@@ -170,6 +171,15 @@ class OrdersProvider extends ChangeNotifier {
       if (assessmentsJson != null) {
         final decoded = jsonDecode(assessmentsJson) as List;
         _assessments = decoded.cast<Map<String, dynamic>>();
+      }
+
+      // Demo-mode fallback (same pattern as the API providers): with no real
+      // backend and nothing persisted yet, Billing rendered ₹0 / "No data
+      // available". Seed the demo order history IN-MEMORY only — not
+      // persisted — so real checkout orders cleanly take over once the user
+      // transacts.
+      if (_orders.isEmpty) {
+        _orders = DemoData.orders;
       }
 
       notifyListeners();

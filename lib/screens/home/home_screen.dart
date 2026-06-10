@@ -9,7 +9,9 @@ import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../models/my_care_models.dart';
 import '../../providers/medication_provider.dart';
+import '../../providers/my_care_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
@@ -192,6 +194,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 4c. Care Guides entry — available to ALL roles (reading
                   // health education isn't a "booking" action).
                   _buildCareGuidesEntry(context),
+                  const SizedBox(height: 4),
+
+                  // 4d. Care Calendar entry — schedule/adherence/visits at a
+                  // glance, available to all roles (read-only surface).
+                  _buildCareCalendarEntry(context),
                   const SizedBox(height: 4),
 
                   // 5. Today's Report
@@ -778,7 +785,25 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: GestureDetector(
-        onTap: () => MainShell.switchToTab(1),
+        // Tapping the current service opens THAT service's detail page
+        // (was: a jarring jump to the My Care tab). Falls back to the tab
+        // only if the service list hasn't loaded yet.
+        onTap: () {
+          final services = context.read<MyCareProvider>().activeServices;
+          ActiveService? match;
+          for (final s in services) {
+            if (s.deploymentIds.contains(deployment.id)) {
+              match = s;
+              break;
+            }
+          }
+          match ??= services.isNotEmpty ? services.first : null;
+          if (match != null) {
+            Navigator.pushNamed(context, '/service-detail', arguments: match);
+          } else {
+            MainShell.switchToTab(1);
+          }
+        },
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -878,6 +903,65 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
                           Text('Health tips & education for your family',
+                              style: TextStyle(
+                                  fontSize: 12, color: context.hc.grey)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: context.hc.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Care Calendar entry — slim full-width row (mirrors Care Guides entry)
+  // ---------------------------------------------------------------------------
+  Widget _buildCareCalendarEntry(BuildContext context) {
+    const tileId = 'care_calendar_entry';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      child: Semantics(
+        button: true,
+        label: 'Care Calendar — schedule, adherence and visits',
+        child: AnimatedScale(
+          scale: _pressedScale[tileId] ?? 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.pushNamed(context, '/care-calendar'),
+              onTapDown: (_) => _onCardPressDown(tileId),
+              onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+              onTapCancel: () => _onCardPressUpOrCancel(tileId),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.hc.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.hc.divider),
+                ),
+                child: Row(
+                  children: [
+                    const AppIconTile(
+                        icon: Icons.calendar_month,
+                        color: HousepitalColors.orange),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Care Calendar',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text('Schedule, adherence & visits',
                               style: TextStyle(
                                   fontSize: 12, color: context.hc.grey)),
                         ],

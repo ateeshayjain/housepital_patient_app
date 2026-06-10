@@ -9,6 +9,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:housepital_patient/data/demo_data.dart';
 import 'package:housepital_patient/providers/orders_provider.dart';
 import 'package:housepital_patient/models/models.dart';
 
@@ -221,13 +222,22 @@ void main() {
       expect(provider.orders, isEmpty);
     });
 
-    test('empty SharedPreferences results in empty lists', () async {
+    test(
+        'empty SharedPreferences seeds demo orders (in-memory), '
+        'assessments stay empty', () async {
       SharedPreferences.setMockInitialValues({});
 
       final provider = OrdersProvider();
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      expect(provider.orders, isEmpty);
+      // Contract change (Billing demo-mode fix): with no backend and nothing
+      // persisted, the provider seeds DemoData.orders IN-MEMORY so Billing
+      // isn't an empty ₹0 screen. Nothing is written back to storage.
+      expect(provider.orders, isNotEmpty);
+      expect(provider.orders.first['id'], DemoData.orders.first['id']);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('housepital_orders'), isNull,
+          reason: 'demo seed must not be persisted');
       expect(provider.assessments, isEmpty);
     });
   });

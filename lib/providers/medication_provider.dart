@@ -34,6 +34,58 @@ class MedicationProvider extends ChangeNotifier {
   List<MedicationFull> get lowStockMedications =>
       activeMedications.where((m) => m.isLowStock).toList();
 
+  // ── Mark-taken state (Care Calendar quick actions) ─────────────────────
+  // The schedule screen renders staff-administered MedicationLogs from the
+  // backend; the patient-side "Mark taken" quick action on the Care Calendar
+  // needs its own session-local record. Lifted here (not screen-local) so the
+  // calendar and any future surface share one source of truth.
+  final Set<String> _takenDoseKeys = {};
+
+  String _doseKey(String medicationId, String timeSlot, DateTime day) =>
+      '$medicationId|$timeSlot|${day.year}-${day.month}-${day.day}';
+
+  bool isDoseTakenToday(String medicationId, String timeSlot) =>
+      _takenDoseKeys.contains(_doseKey(medicationId, timeSlot, DateTime.now()));
+
+  void markDoseTakenToday(String medicationId, String timeSlot) {
+    _takenDoseKeys.add(_doseKey(medicationId, timeSlot, DateTime.now()));
+    notifyListeners();
+  }
+
+  /// Doses marked taken today via the quick action (any med/slot).
+  int get dosesMarkedTakenToday {
+    final now = DateTime.now();
+    final suffix = '|${now.year}-${now.month}-${now.day}';
+    return _takenDoseKeys.where((k) => k.endsWith(suffix)).length;
+  }
+
+  // ── Refill requests (session state) ────────────────────────────────────
+  final Set<String> _refillRequestedIds = {};
+
+  bool isRefillRequested(String medicationId) =>
+      _refillRequestedIds.contains(medicationId);
+
+  /// Sends a refill request to the Health Manager via the same concerns
+  /// endpoint the Raise-Concern screen uses. Demo mode has no backend — the
+  /// request is treated as queued (success) so the flow stays demo-complete.
+  Future<bool> requestRefill(String patientId, MedicationFull med) async {
+    try {
+      await _apiService.raiseConcern(
+        patientId: patientId,
+        category: 'other',
+        description: 'Medication refill request: ${med.name} ${med.dosage} — '
+            'stock low (${med.stockCount ?? 0} ${med.stockUnit ?? 'units'} left).',
+        urgency: 'medium',
+      );
+    } catch (e) {
+      Log.warn('Refill concern API unavailable, queued locally (demo)',
+          error: e, tag: 'MedicationProvider');
+    }
+    _refillRequestedIds.add(med.id);
+    notifyListeners();
+    return true;
+  }
+
   /// Load medications list.
   Future<void> loadMedications(String patientId) async {
     _isLoading = true;

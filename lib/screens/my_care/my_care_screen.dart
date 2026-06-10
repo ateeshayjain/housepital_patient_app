@@ -98,7 +98,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
       physics: const AlwaysScrollableScrollPhysics(),
       // top: clear the glass app bar; bottom: clear the glass nav.
       padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 8,
+          top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
           bottom: 24 + MediaQuery.of(context).padding.bottom),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

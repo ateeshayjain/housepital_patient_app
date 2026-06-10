@@ -38,7 +38,16 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     final medProv = context.watch<MedicationProvider>();
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l.t('medication_schedule'))),
+      appBar: GlassAppBar(
+        title: Text(l.t('medication_schedule')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Care Calendar',
+            onPressed: () => Navigator.pushNamed(context, '/care-calendar'),
+          ),
+        ],
+      ),
       body: medProv.isLoading
           ? const LoadingWidget()
           : medProv.error != null

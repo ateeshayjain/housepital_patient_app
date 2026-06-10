@@ -8,7 +8,6 @@ import '../../../models/models.dart';
 import '../../../services/api_service.dart';
 import '../../../widgets/common_widgets.dart';
 import '../cards/equipment_item_card.dart';
-import '../widgets/catalog_search_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
@@ -26,6 +25,9 @@ class _EquipmentTabState extends State<EquipmentTab> {
   List<EquipmentItem> _allItems = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
+  // Kept non-final: search is now driven by the universal app-bar search;
+  // this field remains the local filter hook for re-wiring.
+  // ignore: prefer_final_fields
   String _searchQuery = '';
   String _sortBy = 'Relevance';
   final _searchController = TextEditingController();
@@ -124,13 +126,6 @@ class _EquipmentTabState extends State<EquipmentTab> {
 
     return Column(
       children: [
-        const SizedBox(height: 8),
-        CatalogSearchBar(
-          searchQuery: _searchQuery,
-          controller: _searchController,
-          focusNode: _searchFocusNode,
-          onChanged: (v) => setState(() => _searchQuery = v),
-        ),
         // Trust badges
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),

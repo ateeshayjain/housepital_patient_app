@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
+import '../../models/care_event.dart';
 import '../../models/medication_models.dart';
+import '../../models/models.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../config/app_colors.dart';
+import '../../config/theme.dart';
 import '../../utils/app_localizations.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
@@ -16,6 +23,10 @@ class MedicationsScreen extends StatefulWidget {
 }
 
 class _MedicationsScreenState extends State<MedicationsScreen> {
+  /// Lazily-loaded pharmacy/equipment catalog (only fetched on first
+  /// refill tap), mirroring equipment_tab's bundled-JSON fallback.
+  List<EquipmentItem>? _catalog;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +55,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final result = await Navigator.pushNamed(context, '/medication-add');
+          // Route fix: registered route is '/add-medication' ('/medication-add'
+          // fell through onGenerateRoute's default and opened MainShell).
+          final result = await Navigator.pushNamed(context, '/add-medication');
           if (result == true) {
             if (!context.mounted) return;
             final patientId = context.read<AppProvider>().currentPatient?.id;
@@ -94,13 +107,158 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       },
                       child: ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: medProv.activeMedications.length,
+                        // +1 for the weekly-adherence header card.
+                        itemCount: medProv.activeMedications.length + 1,
                         itemBuilder: (context, index) {
-                          final med = medProv.activeMedications[index];
+                          if (index == 0) return _adherenceHeader(context);
+                          final med =
+                              medProv.activeMedications[index - 1];
                           return _medicationCard(context, med, l, medProv);
                         },
                       ),
                     ),
+    );
+  }
+
+  // ── Weekly adherence header (deterministic demo calc) ──────────────────
+  // Tapping the card opens the Care Calendar (full history + day detail).
+  Widget _adherenceHeader(BuildContext context) {
+    final pct = weeklyAdherencePercent();
+    final perDay = dosesPerDay();
+    final weekTotal = perDay * 7;
+    final weekTaken = (weekTotal * pct / 100).round();
+    final today = dateOnly(DateTime.now());
+
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/care-calendar'),
+      child: HousepitalCard(
+        child: Row(
+          children: [
+            const AppIconTile(
+                icon: Icons.task_alt, color: HousepitalColors.orange),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("This week's adherence",
+                      style: TextStyle(fontSize: 12, color: context.hc.grey)),
+                  const SizedBox(height: 2),
+                  Text('$pct% · $weekTaken of $weekTotal doses',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  // 7 day-dots, oldest → today. Deterministic demo state:
+                  // success = full adherence day, warning = partial.
+                  Row(
+                    children: List.generate(7, (i) {
+                      final day = today.subtract(Duration(days: 6 - i));
+                      final full = adherencePercentFor(day) >= 90;
+                      return Container(
+                        width: 8,
+                        height: 8,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: full
+                              ? context.hc.success
+                              : context.hc.warning,
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: context.hc.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Refill quick action ─────────────────────────────────────────────────
+
+  /// Case-insensitive lookup of the medication in the bundled pharmacy /
+  /// equipment catalog (loaded lazily, like equipment_tab).
+  Future<EquipmentItem?> _findCatalogItem(String medName) async {
+    try {
+      _catalog ??=
+          (json.decode(await rootBundle.loadString(
+                      'assets/equipment_catalog.json')) as List)
+              .map((e) => EquipmentItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+    } catch (_) {
+      return null;
+    }
+    // Case-insensitive CONTAINS match either way round, so "Insulin" finds
+    // "Insulin Syringes 1ml" and "Paracetamol 500mg" finds "Paracetamol".
+    final q = medName.toLowerCase().trim();
+    for (final item in _catalog!) {
+      final n = item.name.toLowerCase().trim();
+      if (n.contains(q) || q.contains(n)) return item;
+    }
+    return null;
+  }
+
+  Future<void> _onRefillTap(MedicationFull med) async {
+    final medProv = context.read<MedicationProvider>();
+    final patientId =
+        context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
+
+    // If the medicine is sold in our catalog, add it straight to the cart.
+    final catalogItem = await _findCatalogItem(med.name);
+    if (!mounted) return;
+    if (catalogItem != null) {
+      context.read<CartProvider>().addItem(catalogItem);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Added to cart for refill')),
+      );
+      return;
+    }
+
+    // Otherwise route the request to the Health Manager via the concerns API.
+    await medProv.requestRefill(patientId, med);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Refill request sent to your Health Manager')),
+    );
+  }
+
+  Widget _refillAction(BuildContext context, MedicationFull med,
+      MedicationProvider medProv) {
+    if (medProv.isRefillRequested(med.id)) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: 16, color: context.hc.success),
+          const SizedBox(width: 6),
+          Text(
+            'Refill requested ✓',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: context.hc.success,
+            ),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      height: 36,
+      child: OutlinedButton.icon(
+        onPressed: () => _onRefillTap(med),
+        icon: const Icon(Icons.local_pharmacy, size: 16),
+        label: const Text('Request refill',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: context.hc.orangeText,
+          side: BorderSide(color: HousepitalColors.orange),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+      ),
     );
   }
 
@@ -118,7 +276,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       ),
       child: InkWell(
         onTap: () async {
-          final result = await Navigator.pushNamed(context, '/medication-add',
+          final result = await Navigator.pushNamed(context, '/add-medication',
               arguments: med);
           if (result == true) {
             if (!context.mounted) return;
@@ -209,6 +367,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       ),
                   ],
                 ),
+              ],
+              if (med.isLowStock) ...[
+                const SizedBox(height: 8),
+                _refillAction(context, med, medProv),
               ],
             ],
           ),

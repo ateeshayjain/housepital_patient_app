@@ -83,6 +83,7 @@ import 'providers/blog_provider.dart';
 import 'screens/articles/article_list_screen.dart';
 import 'screens/articles/article_detail_screen.dart';
 import 'screens/care_team/care_team_screen.dart';
+import 'screens/calendar/care_calendar_screen.dart';
 import 'config/constants.dart';
 import 'data/demo_data.dart';
 import 'utils/permissions.dart';
@@ -698,6 +699,9 @@ class _HousepitalAppState extends State<HousepitalApp> {
                       staffPhoto: raw['staffPhoto'] as String?,
                       assignedSince: raw['assignedSince'] as DateTime?,
                     ));
+          case '/care-calendar':
+            return MaterialPageRoute(
+                builder: (_) => const CareCalendarScreen());
           case '/care-team':
             return MaterialPageRoute(
                 builder: (_) => const CareTeamScreen());

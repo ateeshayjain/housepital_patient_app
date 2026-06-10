@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/models.dart';
 import '../cards/diagnostic_card.dart';
-import '../widgets/catalog_search_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
@@ -34,28 +33,12 @@ class DiagnosticsTab extends StatelessWidget {
     final filtered = filterBySearch(services);
 
     if (filtered.isEmpty && searchQuery.isNotEmpty) {
-      return Column(
-        children: [
-          CatalogSearchBar(
-            searchQuery: searchQuery,
-            controller: searchController,
-            focusNode: searchFocusNode,
-            onChanged: onSearchChanged,
-          ),
-          const Expanded(child: CatalogEmptyState()),
-        ],
-      );
+      return const CatalogEmptyState();
     }
 
     return ListView(
       padding: EdgeInsets.only(bottom: 24 + MediaQuery.of(context).padding.bottom),
       children: [
-        CatalogSearchBar(
-          searchQuery: searchQuery,
-          controller: searchController,
-          focusNode: searchFocusNode,
-          onChanged: onSearchChanged,
-        ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: TrustBadgeBar(

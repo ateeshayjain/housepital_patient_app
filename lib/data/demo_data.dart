@@ -6,6 +6,7 @@
 import 'dart:convert';
 
 import '../config/constants.dart';
+import '../models/care_event.dart';
 import '../models/doctor_recommendation.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
@@ -486,6 +487,48 @@ class DemoData {
           isActive: true,
         ),
       ];
+
+  // ── Upcoming appointments (Care Calendar) ────────────────────────────
+  /// Future visits/tests/renewals shown on the Care Calendar. Dates are
+  /// relative to "now" like the rest of the demo data:
+  ///  • Physiotherapy session tomorrow (active physio service).
+  ///  • CBC sample pickup +2 days (ties to Dr. Sharma's CBC recommendation).
+  ///  • Dr. Ananya Sharma follow-up visit +3 days.
+  ///  • ICU service renewal on ActiveService.renewalDate (~+15 days).
+  static List<CareEvent> get upcomingAppointments {
+    DateTime onDay(int daysFromNow, int hour) {
+      final d = _now.add(Duration(days: daysFromNow));
+      return DateTime(d.year, d.month, d.day, hour);
+    }
+
+    final renewal = activeServices.first.renewalDate!;
+    return [
+      CareEvent(
+        date: onDay(1, 11),
+        type: CareEventType.visit,
+        title: 'Physiotherapy session',
+        subtitle: '${physioDeployment.staffName} · 11:00 AM',
+      ),
+      CareEvent(
+        date: onDay(2, 9),
+        type: CareEventType.test,
+        title: 'CBC sample pickup',
+        subtitle: 'Home sample collection · 9:00 AM',
+      ),
+      CareEvent(
+        date: onDay(3, 17),
+        type: CareEventType.visit,
+        title: 'Follow-up visit — Dr. Ananya Sharma',
+        subtitle: 'Fortis Hospital · 5:00 PM',
+      ),
+      CareEvent(
+        date: DateTime(renewal.year, renewal.month, renewal.day, 10),
+        type: CareEventType.renewal,
+        title: 'ICU service renewal',
+        subtitle: 'ICU Setup at Home · 30-day cycle',
+      ),
+    ];
+  }
 
   // ── Orders (pre-seeded for billing visibility) ───────────────────────
   static List<Map<String, dynamic>> get orders => [

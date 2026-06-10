@@ -84,6 +84,52 @@ class CareTeamScreen extends StatelessWidget {
           bottom: 24 + MediaQuery.of(context).padding.bottom,
         ),
         children: [
+          // Group chat FIRST: one tap reaches the whole team — queries get
+          // resolved in one place; individual message/call options follow.
+          HousepitalCard(
+            onTap: () => Navigator.pushNamed(context, '/chat', arguments: {
+              'patientId': patientId,
+              'coordinatorName': 'Care Team',
+            }),
+            child: Row(
+              children: [
+                const AppIconTile(
+                    icon: Icons.groups, color: HousepitalColors.orange),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Care Team Group Chat',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.black)),
+                      const SizedBox(height: 2),
+                      Text('One place for all your queries',
+                          style: TextStyle(
+                              fontSize: 12, color: context.hc.greyLight)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Semantics(
+                  label: 'Open care team group chat',
+                  button: true,
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/chat', arguments: {
+                      'patientId': patientId,
+                      'coordinatorName': 'Care Team',
+                    }),
+                    icon: const Icon(Icons.forum, size: 18),
+                    label: const Text('Chat'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           ...members.map((m) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _MemberRow(member: m, patientId: patientId),
