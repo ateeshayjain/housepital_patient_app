@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../config/daimaa_theme.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
@@ -193,10 +192,6 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
     _autoPopulateFromPatient();
   }
 
-  bool get _isDaiMaa =>
-      _serviceType == _ServiceType.japa ||
-      _serviceType == _ServiceType.nanny;
-
   _ServiceType _resolveServiceType() {
     final id = widget.service.id;
     if (id.startsWith('mp-nurse-')) return _ServiceType.nurse;
@@ -309,17 +304,9 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    // Dai Maa surface adapts to the active theme (cream in light,
-    // plum-tinted dark in dark). App bar stays plum in both modes so the
-    // sub-brand still owns the top of the screen.
     return Scaffold(
-      backgroundColor: _isDaiMaa ? daiMaaScaffold(context) : null,
       appBar: AppBar(
         title: Text(widget.service.name),
-        backgroundColor: _isDaiMaa ? DaiMaaColors.plum : null,
-        foregroundColor: _isDaiMaa ? Colors.white : null,
-        iconTheme:
-            _isDaiMaa ? const IconThemeData(color: Colors.white) : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -328,27 +315,12 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_isDaiMaa) ...[
-                DaiMaaBrandHeader(
-                  title: _serviceType == _ServiceType.japa
-                      ? 'Japa Maid'
-                      : 'Nanny',
-                  subtitle: _serviceType == _ServiceType.japa
-                      ? 'Mother & newborn care (0 – 7 months)'
-                      : 'Childcare (7 months – 5 years)',
-                ),
-                const SizedBox(height: 20),
-              ],
               Text(
                 _getFormTitle(),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  // daiMaaPrimaryText() returns plum in light, a lightened
-                  // brand variant in dark to maintain AA contrast.
-                  color: _isDaiMaa
-                      ? daiMaaPrimaryText(context)
-                      : Theme.of(context).colorScheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -460,15 +432,6 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  style: _isDaiMaa
-                      ? ElevatedButton.styleFrom(
-                          backgroundColor: DaiMaaColors.plum,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        )
-                      : null,
                   onPressed: () => _submitRequest(context, l),
                   child: Text(l.t('submit')),
                 ),
@@ -476,9 +439,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
 
               const SizedBox(height: 12),
               Text(
-                _isDaiMaa
-                    ? 'Our Dai Maa coordinator will call you within 2 hours at ${DaiMaaColors.phoneDisplay}.'
-                    : 'Our care coordinator will call you within 2 hours to discuss details and pricing.',
+                'Our care coordinator will call you within 2 hours to discuss details and pricing.',
                 style: TextStyle(
                   fontSize: 12,
                   color: context.hc.greyLight,
@@ -1465,27 +1426,15 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
       builder: (context) => AlertDialog(
         icon: Icon(
           Icons.check_circle,
-          // Use the dark-adaptive Dai Maa accent so the icon stays visible
-          // on dark dialog surfaces.
-          color: _isDaiMaa
-              ? daiMaaAccent(context)
-              : context.hc.success,
+          color: context.hc.success,
           size: 48,
         ),
         title: Text(l.t('concern_submitted')),
         content: Text(
-          _isDaiMaa
-              ? 'Your request has been received. Our Dai Maa coordinator will call you within 2 hours at ${DaiMaaColors.phoneDisplay}.'
-              : 'Your request has been received. Our care coordinator will call you within 2 hours to discuss details and pricing.',
+          'Your request has been received. Our care coordinator will call you within 2 hours to discuss details and pricing.',
         ),
         actions: [
           ElevatedButton(
-            style: _isDaiMaa
-                ? ElevatedButton.styleFrom(
-                    backgroundColor: DaiMaaColors.plum,
-                    foregroundColor: Colors.white,
-                  )
-                : null,
             onPressed: () {
               Navigator.pop(context); // close dialog
               Navigator.pushReplacementNamed(

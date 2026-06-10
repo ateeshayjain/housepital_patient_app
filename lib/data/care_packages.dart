@@ -199,33 +199,7 @@ const List<CarePackage> carePackages = [
   ),
 
   // ─────────────────────────────────────────────
-  // 6. Baby & Mother Care
-  // ─────────────────────────────────────────────
-  CarePackage(
-    id: 'pkg_baby_care',
-    name: 'New Baby & Mother Care Kit',
-    condition: 'Baby Care',
-    icon: 'child_care',
-    description:
-        'Essential care package for newborns and new mothers. Includes health monitoring equipment and a trained Japa Maid for post-delivery care.',
-    discountPercent: 10,
-    highlights: [
-      'Trained Japa Maid (24-hr, 30 days)',
-      'Baby health monitoring essentials',
-      'Nebulizer for infant respiratory care',
-      'Breastfeeding support & mother care',
-    ],
-    items: [
-      PackageItem(equipmentId: '153', name: 'Nebulizer'),
-      PackageItem(equipmentId: '124', name: 'Humidifier', isRental: true, rentalMonths: 1),
-    ],
-    services: [
-      PackageService(name: 'Japa Maid (24-hr)', type: 'japa_maid', shift: '24hr', durationDays: 30, pricePerDay: 1500),
-    ],
-  ),
-
-  // ─────────────────────────────────────────────
-  // 7. Neuro Patient Care
+  // 6. Neuro Patient Care
   // ─────────────────────────────────────────────
   CarePackage(
     id: 'pkg_neuro',

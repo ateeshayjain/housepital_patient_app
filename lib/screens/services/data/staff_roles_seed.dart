@@ -15,8 +15,8 @@ class ServiceLevel {
   });
 }
 
-/// A staff role surfaced in the Manpower tab (Caretaker, Nurse, Japa Maid,
-/// Nanny, Physiotherapist).
+/// A staff role surfaced in the Manpower tab (Caretaker, Nurse,
+/// Physiotherapist).
 class StaffRole {
   final String title;
   final String subtitle;
@@ -185,94 +185,6 @@ const staffRoles = <StaffRole>[
           'Toilet assistance',
           'Patient massage',
           'Household chores',
-        ],
-      ),
-    ],
-  ),
-  // ── Japa Maid (from HOUSEPITAL Scope of Services – Nanny & Japa, 0-7 months) ──
-  StaffRole(
-    title: 'Japa Maid',
-    subtitle: 'Post-delivery mother & newborn care (0–7 months)',
-    icon: Icons.child_friendly,
-    availableShifts: ['12 Hours', '24 Hours'],
-    rating: 4.7,
-    reviewCount: 156,
-    levels: [
-      ServiceLevel(
-        name: 'Standard',
-        included: [
-          // Feeding
-          'Feeding baby at regular intervals (breastfeeding / formula)',
-          'Helping mothers in lactation or breast feeding',
-          'Feeding the baby (solid food)',
-          'Prepare basic food for mother – daal, daliya, khichadi',
-          // Grooming & hygiene
-          'Taking care of umbilical cord',
-          'Massaging and skin care of baby',
-          'Massage for the mother',
-          'Bathing, sponging and grooming – Baby',
-          'Changing diapers – Baby',
-          // Health safety
-          'Administering medicine with parents\' consent – Baby',
-          'Monitoring the baby\'s health',
-          'Holding and soothing the baby',
-          'Putting the child to sleep',
-          // Household chores & sterilization
-          'Cleaning and sterilization of baby items, toys',
-          'Organising child\'s room, folding clothes, cleaning & cooking for the child',
-          // Education & development
-          'Engaging the child in playing activities',
-          'Supervising & monitoring the safety of children',
-        ],
-        excluded: [
-          'Toilet training – Baby',
-          'Planning development activities (reading, arts & crafts)',
-          'Educating the baby',
-          'Dropping & picking children from/to school, parks, appointments',
-        ],
-      ),
-    ],
-  ),
-  // ── Nanny (from HOUSEPITAL Scope of Services – Nanny & Japa, 7 months–5 years) ──
-  StaffRole(
-    title: 'Nanny',
-    subtitle: 'Infant & toddler care (7 months – 5 years)',
-    icon: Icons.child_care,
-    availableShifts: ['12 Hours', '24 Hours'],
-    rating: 4.8,
-    reviewCount: 134,
-    levels: [
-      ServiceLevel(
-        name: 'Standard',
-        included: [
-          // Feeding
-          'Feeding the baby (solid food)',
-          // Grooming & hygiene
-          'Massaging and skin care of baby',
-          'Bathing, sponging and grooming – Baby',
-          'Changing diapers – Baby',
-          'Toilet training – Baby',
-          // Health safety
-          'Administering medicine with parents\' consent – Baby',
-          'Monitoring the baby\'s health',
-          'Holding and soothing the baby',
-          'Putting the child to sleep',
-          // Household chores & sterilization
-          'Cleaning and sterilization of baby items, toys',
-          'Organising child\'s room, folding clothes, cleaning & cooking for the child',
-          // Education & development
-          'Planning development activities (reading, arts & crafts)',
-          'Educating the baby',
-          'Engaging the child in playing activities',
-          'Supervising & monitoring the safety of children',
-          'Dropping & picking children from/to school, parks, appointments',
-        ],
-        excluded: [
-          'Feeding baby at regular intervals (breastfeeding / formula)',
-          'Helping mothers in lactation or breast feeding',
-          'Prepare basic food for mother – daal, daliya, khichadi',
-          'Taking care of umbilical cord',
-          'Massage for the mother',
         ],
       ),
     ],

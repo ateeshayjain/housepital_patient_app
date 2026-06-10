@@ -24,6 +24,10 @@ class DaiMaaColors {
   static const String phoneDisplay = '+91-90502 00183';
   static const String tagline = 'Maa Jaisi Care';
   static const String lockup = 'DAI MAA | A Housepital Company';
+
+  /// External URL for the standalone Dai Maa app — used by the cross-promo
+  /// banner on Home to link OUT to the separate Dai Maa product.
+  static const String exploreUrl = 'https://daimaa.com';
 }
 
 /// Dark-mode counterparts for the Dai Maa palette.

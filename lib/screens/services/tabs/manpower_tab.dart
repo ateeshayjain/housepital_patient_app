@@ -8,7 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/trust_badges.dart';
 
 /// Manpower tab — surfaces the role-based catalog (Caretaker, Nurse,
-/// Japa Maid, Nanny, Physiotherapist) instead of individual SKUs.
+/// Physiotherapist) instead of individual SKUs.
 class ManpowerTab extends StatelessWidget {
   final List<ServiceItem> services;
   final Map<String, IconData> iconMap;

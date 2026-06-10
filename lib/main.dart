@@ -69,7 +69,6 @@ import 'screens/rental/return_screen.dart';
 import 'screens/billing/emi_screen.dart';
 import 'screens/support/staff_replacement_screen.dart';
 import 'screens/settings/referral_screen.dart';
-import 'screens/daimaa/daimaa_landing_screen.dart';
 import 'models/my_care_models.dart';
 import 'models/medication_models.dart';
 import 'providers/my_care_provider.dart';
@@ -701,9 +700,6 @@ class _HousepitalAppState extends State<HousepitalApp> {
           case '/referrals':
             return MaterialPageRoute(
                 builder: (_) => const ReferralScreen());
-          case '/daimaa':
-            return MaterialPageRoute(
-                builder: (_) => const DaiMaaLandingScreen());
           case '/articles':
             return MaterialPageRoute(
                 builder: (_) => const ArticleListScreen());

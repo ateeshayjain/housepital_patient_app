@@ -1059,7 +1059,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Dai Maa sub-brand entry card
+  // Dai Maa cross-promo banner
+  //
+  // Dai Maa is a SEPARATE app (mother & baby care, a Housepital company). This
+  // banner is pure cross-promotion: tapping it opens the standalone Dai Maa app
+  // / site externally. The Housepital patient app itself does NOT sell any
+  // mother-&-baby care. Styled with DaiMaaColors so the sub-brand is
+  // recognisable.
   // ---------------------------------------------------------------------------
   Widget _buildDaiMaaEntry(BuildContext context) {
     return Padding(
@@ -1068,12 +1074,12 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () => Navigator.pushNamed(context, '/daimaa'),
+          onTap: () => launchUrl(
+            Uri.parse(DaiMaaColors.exploreUrl),
+            mode: LaunchMode.externalApplication,
+          ),
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            // audit batch 4 (Agent L): Apple 8pt grid (P1) — snap from off-grid
-            // 18 to 16. Visual change is negligible (2pt) but aligns with the
-            // rest of the home cards.
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -1097,7 +1103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Mother & Baby Care',
+                        'Dai Maa',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -1107,11 +1113,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        DaiMaaColors.tagline,
+                        'Mother & baby care — a Housepital company',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
-                          fontStyle: FontStyle.italic,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -1130,7 +1135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             // 320px; on real fonts it hugs the text unchanged.
                             const Flexible(
                               child: Text(
-                                'Explore Dai Maa',
+                                'Explore the app',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -1141,7 +1146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.arrow_forward,
+                            const Icon(Icons.open_in_new,
                                 color: DaiMaaColors.plum, size: 14),
                           ],
                         ),

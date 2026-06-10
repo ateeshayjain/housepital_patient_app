@@ -1,7 +1,6 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../config/daimaa_theme.dart';
 import '../../../config/theme.dart';
 import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
@@ -12,7 +11,7 @@ import '../data/staff_roles_seed.dart';
 import '../widgets/permission_dialogs.dart';
 
 /// Card surfaced in the Manpower tab summarising one staff role
-/// (Caretaker, Nurse, Japa Maid, Nanny, Physiotherapist).
+/// (Caretaker, Nurse, Physiotherapist).
 ///
 /// Tapping the card opens a bottom sheet detailing the full scope of service
 /// across each level, with a "Request Assessment" CTA.
@@ -28,18 +27,12 @@ class StaffRoleCard extends StatelessWidget {
     required this.onNavigate,
   });
 
-  bool get _isDaiMaa => role.title == 'Japa Maid' || role.title == 'Nanny';
-
   Color get _roleColor {
     switch (role.title) {
       case 'Nurse':
         return HousepitalColors.serviceNursing;
       case 'Caretaker':
         return HousepitalColors.serviceCaretaker;
-      case 'Japa Maid':
-      case 'Nanny':
-        // Dai Maa sub-brand — use plum so the role inherits brand color
-        return DaiMaaColors.plum;
       case 'Physiotherapist':
         return HousepitalColors.servicePhysio;
       default:
@@ -57,20 +50,11 @@ class StaffRoleCard extends StatelessWidget {
         color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         elevation: 1,
-        shadowColor: _isDaiMaa
-            ? DaiMaaColors.plum.withValues(alpha: 0.18)
-            : Colors.black12,
+        shadowColor: Colors.black12,
         child: InkWell(
           onTap: () => _showRoleDetail(context),
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            decoration: _isDaiMaa
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: DaiMaaColors.plum, width: 1.5),
-                  )
-                : null,
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -82,25 +66,13 @@ class StaffRoleCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  role.title,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: _isDaiMaa
-                                        ? DaiMaaColors.plum
-                                        : context.hc.black,
-                                  ),
-                                ),
-                              ),
-                              if (_isDaiMaa) ...[
-                                const SizedBox(width: 8),
-                                const DaiMaaBadge(),
-                              ],
-                            ],
+                          Text(
+                            role.title,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: context.hc.black,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/models.dart';
 
-/// Manpower service catalog (nurses, caretakers, japa, nanny, physio).
+/// Manpower service catalog (nurses, caretakers, physio).
 ///
 /// audit M-1 (extension): basePriceMin REMOVED from ALL manpower seeds
 /// including nurses. User memory rule covers "caretaker, nursing, japa,
@@ -87,22 +87,6 @@ final List<ServiceItem> manpowerServices = [
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock semi-nurse caretaker for patients needing intensive daily care.',
     durationMinutes: 1440, iconName: 'person',
-  ),
-  // ── Japa Maid ──
-  // audit M-1: basePriceMin REMOVED — assessment-only pricing.
-  ServiceItem(
-    id: 'mp-japa-24', name: 'Japa Maid – 24 Hours',
-    category: 'manpower', bookingType: 'scheduled',
-    description: 'Post-delivery care for mother & newborn (0-7 months) — breastfeeding support, baby massage, bathing, umbilical cord care & mother\'s diet preparation.',
-    durationMinutes: 1440, iconName: 'child_friendly',
-  ),
-  // ── Nanny ──
-  // audit M-1: basePriceMin REMOVED — assessment-only pricing.
-  ServiceItem(
-    id: 'mp-nanny-12', name: 'Nanny – 12 Hours',
-    category: 'manpower', bookingType: 'scheduled',
-    description: 'Professional nanny for infants & toddlers (7 months–5 years) — feeding, sleep routine, developmental activities, hygiene & safety supervision.',
-    durationMinutes: 720, iconName: 'child_care',
   ),
   // ── Physiotherapy ──
   ServiceItem(

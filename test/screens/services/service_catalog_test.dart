@@ -37,8 +37,6 @@ final List<ServiceItem> _manpowerServices = [
   ServiceItem(id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1000),
   ServiceItem(id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1000),
   ServiceItem(id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
-  ServiceItem(id: 'mp-japa-24', name: 'Japa Maid – 24 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 800),
-  ServiceItem(id: 'mp-nanny-12', name: 'Nanny – 12 Hours', category: 'manpower', bookingType: 'scheduled', basePriceMin: 600),
   ServiceItem(id: 'mp-physio-basic', name: 'Physiotherapy (Basic)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 900),
   ServiceItem(id: 'mp-physio-advance', name: 'Physiotherapy (Advanced)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1200),
   ServiceItem(id: 'mp-physio-critical', name: 'Physiotherapy (Critical)', category: 'manpower', bookingType: 'scheduled', basePriceMin: 1500),
@@ -164,7 +162,6 @@ void main() {
       'mp-caretaker-basic-12', 'mp-caretaker-basic-24',
       'mp-caretaker-adv-12', 'mp-caretaker-adv-24',
       'mp-caretaker-crit-12', 'mp-caretaker-crit-24',
-      'mp-japa-24', 'mp-nanny-12',
       'mp-physio-basic', 'mp-physio-advance', 'mp-physio-critical',
     };
 

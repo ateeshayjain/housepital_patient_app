@@ -47,7 +47,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
   List<EquipmentItem> _equipment = [];
 
   // Service data — mirrors ServiceCatalogScreen's static lists (HPL Tariff Annexure)
-  // No prices for caretaker/nursing/japa/nanny — assessment first
+  // No prices for caretaker/nursing — assessment first
   static final _manpowerServices = [
     // Nursing (no prices — assessment first)
     _svc('Nurse (Basic) – 12 Hours', 'manpower', 'medical_services', 0, 0),
@@ -63,9 +63,6 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
     _svc('Caretaker (Advanced) – 24 Hours', 'manpower', 'person', 0, 0),
     _svc('Caretaker (Critical / Semi-Nurse) – 12 Hours', 'manpower', 'person', 0, 0),
     _svc('Caretaker (Critical / Semi-Nurse) – 24 Hours', 'manpower', 'person', 0, 0),
-    // Japa & Nanny (no prices — assessment first)
-    _svc('Japa Maid – 24 Hours', 'manpower', 'child_friendly', 0, 0),
-    _svc('Nanny – 12 Hours', 'manpower', 'child_care', 0, 0),
     // Physiotherapy (prices shown — per-session visit)
     _svc('Physiotherapy (Basic)', 'manpower', 'fitness_center', 900, 900),
     _svc('Physiotherapy (Advanced)', 'manpower', 'fitness_center', 1200, 1200),
