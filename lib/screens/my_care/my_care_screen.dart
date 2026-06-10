@@ -12,6 +12,7 @@ import '../../widgets/glass.dart';
 import '../../screens/main_shell.dart';
 import 'widgets/health_manager_banner.dart';
 import 'widgets/active_service_card.dart';
+import 'widgets/doctor_advice_card.dart';
 import 'widgets/staff_attendance_section.dart';
 
 class MyCareScreen extends StatefulWidget {
@@ -204,6 +205,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               ),
             ),
           ],
+
+          // 4b. Doctor's Advice — recommendations from the last consultation
+          const DoctorAdviceCard(),
 
           // 4a. Daily Care Rating
           const Padding(

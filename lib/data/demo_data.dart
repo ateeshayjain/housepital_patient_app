@@ -5,6 +5,8 @@
 
 import 'dart:convert';
 
+import '../config/constants.dart';
+import '../models/doctor_recommendation.dart';
 import '../models/models.dart';
 import '../models/my_care_models.dart';
 import '../models/medication_models.dart';
@@ -369,6 +371,42 @@ class DemoData {
         availableFrom: '08:00',
         availableTo: '20:00',
       );
+
+  // ── Operations Supervisor (Care Team screen) ─────────────────────────
+  /// Escalation contact above the Health Manager. Demo-only record — the
+  /// backend has no supervisor endpoint yet, so this is a plain Dart record.
+  static ({String name, String role, String phone}) get supervisor => (
+        name: 'Rohit Verma',
+        role: 'Operations Supervisor',
+        phone: AppConstants.supportPhone,
+      );
+
+  // ── Doctor Recommendations (My Care → Doctor's Advice card) ──────────
+  /// What Dr. Ananya Sharma recommended at her visit 2 days ago.
+  static List<DoctorRecommendation> get doctorRecommendations => const [
+        DoctorRecommendation(
+          id: 'rec_nebulizer',
+          title: 'Nebulizer (Rental)',
+          note: 'Twice daily for chest congestion',
+          type: 'equipment',
+          catalogId: 'NDK-NEBULI',
+          isRental: true,
+        ),
+        DoctorRecommendation(
+          id: 'rec_cbc',
+          title: 'CBC Blood Test',
+          note: 'Repeat after 1 week of antibiotics',
+          type: 'lab',
+          catalogId: 'lab-cbc',
+        ),
+        DoctorRecommendation(
+          id: 'rec_physio',
+          title: 'Physiotherapy (Basic)',
+          note: '2 weeks, post-bedrest mobility',
+          type: 'service',
+          catalogId: 'mp-physio-basic',
+        ),
+      ];
 
   // ── Medications (MedicationFull) ─────────────────────────────────────
   static List<MedicationFull> get medications => [

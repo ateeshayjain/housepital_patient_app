@@ -157,7 +157,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (isPatientSelf) _buildCallCaregiverCard(context, app),
 
                   // 1. Your Health Team
-                  _sectionLabel('Your Health Team', onSeeAll: () => MainShell.switchToTab(1)),
+                  _sectionLabel('Your Health Team',
+                      onSeeAll: () =>
+                          Navigator.pushNamed(context, '/care-team')),
                   _buildHealthTeamCard(context, l, app),
                   const SizedBox(height: 4),
 
