@@ -264,7 +264,7 @@ class _LabTestsTabState extends State<LabTestsTab> {
           child: filtered.isEmpty
               ? const CatalogEmptyState()
               : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: EdgeInsets.only(bottom: 24 + MediaQuery.of(context).padding.bottom),
                   itemCount:
                       (packages.isNotEmpty && _searchQuery.isEmpty && _selectedCategory == 'All')
                           ? filtered.length + packages.length + 2

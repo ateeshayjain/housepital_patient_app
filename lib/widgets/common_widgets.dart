@@ -26,7 +26,7 @@ class HousepitalCard extends StatelessWidget {
       child: onTap != null
           ? InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: content,
             )
           : content,

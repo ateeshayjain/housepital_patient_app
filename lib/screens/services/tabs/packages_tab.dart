@@ -24,7 +24,7 @@ class PackagesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
       itemCount: carePackages.length,
       itemBuilder: (context, index) {
         final pkg = carePackages[index];

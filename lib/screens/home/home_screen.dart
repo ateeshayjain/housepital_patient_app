@@ -129,12 +129,17 @@ class _HomeScreenState extends State<HomeScreen> {
         canUserPerform(role, UserAction.requestBooking);
 
     return Scaffold(
+      // bottom:false + nav-height scroll padding: content glides under the
+      // glass nav bar (Liquid Glass) instead of stopping at an opaque edge.
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           color: HousepitalColors.orange,
           onRefresh: () => app.loadDashboard(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

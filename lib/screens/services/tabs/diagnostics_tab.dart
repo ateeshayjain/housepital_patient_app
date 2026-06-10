@@ -48,7 +48,7 @@ class DiagnosticsTab extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.only(bottom: 24 + MediaQuery.of(context).padding.bottom),
       children: [
         CatalogSearchBar(
           searchQuery: searchQuery,

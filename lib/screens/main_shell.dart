@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
+import '../widgets/glass.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -44,14 +45,21 @@ class MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
+      // Liquid Glass: the body extends behind the translucent nav bar so
+      // content visibly glides beneath the glass while scrolling.
+      extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
       floatingActionButton: const AssistantFab(),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: GlassSurface(
+        child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
+        // Transparent + flat: the GlassSurface provides the material.
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         items: [
           BottomNavigationBarItem(
             icon: const Icon(Icons.home_outlined),
@@ -79,6 +87,7 @@ class MainShellState extends State<MainShell> {
             label: l.t('tab_more'),
           ),
         ],
+        ),
       ),
     );
   }

@@ -57,7 +57,7 @@ class ManpowerTab extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.only(bottom: 24 + MediaQuery.of(context).padding.bottom),
       children: [
         const SizedBox(height: 8),
         CatalogSearchBar(

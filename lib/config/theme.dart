@@ -238,12 +238,16 @@ class HousepitalTheme {
       ),
       // Canonical card: radius 12, 1px divider border, no shadow — every
       // Card()/HousepitalCard inherits this so cards match app-wide.
+      // Liquid Glass depth model: cards read as soft floating panes (radius 16,
+      // low ambient shadow) instead of hard-outlined boxes. surfaceTint is
+      // disabled so M3 doesn't wash the white with primary tint.
       cardTheme: CardThemeData(
         color: HousepitalColors.white,
-        elevation: 0,
+        elevation: 3,
+        shadowColor: Colors.black.withValues(alpha: 0.35),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: HousepitalColors.divider),
+          borderRadius: BorderRadius.circular(16),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
       ),
@@ -275,16 +279,16 @@ class HousepitalTheme {
         color: HousepitalColors.divider,
         thickness: 1,
       ),
-      chipTheme: ChipThemeData(
+      // Capsule chips — Liquid Glass control geometry.
+      chipTheme: const ChipThemeData(
         backgroundColor: HousepitalColors.orangeLight,
-        labelStyle: TextStyle(fontFamily: 'Archivo', 
+        labelStyle: TextStyle(fontFamily: 'Archivo',
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: HousepitalColors.orange,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: StadiumBorder(),
+        side: BorderSide(color: Colors.transparent),
       ),
     );
   }
@@ -412,11 +416,14 @@ class HousepitalTheme {
           foregroundColor: HousepitalColorsDark.orange,
         ),
       ),
+      // Dark cards keep a faint border (shadows don't read on dark surfaces);
+      // radius 16 matches the light Liquid Glass geometry.
       cardTheme: CardThemeData(
         color: HousepitalColorsDark.surfaceElevated,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: HousepitalColorsDark.divider),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -453,16 +460,15 @@ class HousepitalTheme {
         color: HousepitalColorsDark.divider,
         thickness: 1,
       ),
-      chipTheme: ChipThemeData(
+      chipTheme: const ChipThemeData(
         backgroundColor: HousepitalColorsDark.orangeMuted,
-        labelStyle: TextStyle(fontFamily: 'Archivo', 
+        labelStyle: TextStyle(fontFamily: 'Archivo',
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: HousepitalColorsDark.orange,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: StadiumBorder(),
+        side: BorderSide(color: Colors.transparent),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: HousepitalColorsDark.surfaceElevated,
