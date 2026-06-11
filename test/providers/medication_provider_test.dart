@@ -177,23 +177,31 @@ void main() {
       expect(provider.schedule, isEmpty);
     });
 
-    test('ApiException during schedule load sets error', () async {
+    // Contract change (field bug, 2026-06-11): API failure must FALL BACK to
+    // demo data like every other loader in this provider — the device showed
+    // "Couldn't load data" on Today's Schedule in demo mode. No error is set;
+    // the schedule is built from DemoData.medications.
+    test('ApiException during schedule load falls back to demo schedule',
+        () async {
       mock.shouldThrowApiException = true;
       mock.apiExceptionMessage = 'Forbidden';
 
       await provider.loadTodaySchedule('patient1');
 
-      expect(provider.error, 'Forbidden');
-      expect(provider.schedule, isEmpty);
+      expect(provider.error, isNull);
+      expect(provider.medications, isNotEmpty);
+      expect(provider.schedule, isNotEmpty);
+      expect(provider.isLoading, isFalse);
     });
 
-    test('generic error during schedule load sets "Failed to load schedule"',
+    test('generic error during schedule load falls back to demo schedule',
         () async {
       mock.shouldThrowGenericError = true;
 
       await provider.loadTodaySchedule('patient1');
 
-      expect(provider.error, 'Failed to load schedule');
+      expect(provider.error, isNull);
+      expect(provider.schedule, isNotEmpty);
     });
 
     test('morning slot label for hour < 12', () async {

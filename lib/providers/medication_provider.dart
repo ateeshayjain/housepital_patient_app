@@ -131,10 +131,16 @@ class MedicationProvider extends ChangeNotifier {
       _medications = results[0] as List<MedicationFull>;
       _todayLogs = results[1] as List<MedicationLog>;
       _schedule = _buildSchedule();
-    } on ApiException catch (e) {
-      _error = e.message;
     } catch (e) {
-      _error = 'Failed to load schedule';
+      // Demo-mode fallback — every other loader in this provider falls back
+      // to DemoData when the API is unreachable; the schedule must too
+      // (field bug: Today's Schedule showed "Couldn't load data" on device).
+      Log.warn('Schedule API unavailable, using demo data',
+          error: e, tag: 'MedicationProvider');
+      if (_medications.isEmpty) {
+        _medications = DemoData.medications;
+      }
+      _schedule = _buildSchedule();
     }
 
     _isLoading = false;

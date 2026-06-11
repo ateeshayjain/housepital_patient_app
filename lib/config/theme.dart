@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 /// Dark-mode color tokens for the Housepital app.
 ///
 /// All values are paired with WCAG contrast checks (vs [surface] unless
-/// otherwise stated). Brand orange #F39314 is preserved; only ON-orange
-/// text changes (white on orange is only 2.7:1 — we use [onOrange] = surface).
+/// otherwise stated). Brand orange #F39314 is preserved. ON-orange text is
+/// WHITE by owner decision (brand look over the ~2.7:1 ratio) — keep it bold.
 ///
 /// Surface is intentionally #1A1A1A (true-dark) rather than pure black to
 /// avoid OLED smear and to give cards a visible elevation.
@@ -23,8 +23,9 @@ class HousepitalColorsDark {
   // Brand orange — same hue, but verify how it's used in dark.
   // #F39314 vs surface #1A1A1A → 6.32:1 — AA for normal text / AAA for large.
   static const Color orange = Color(0xFFF39314);
-  // White on orange is only 2.7:1 in dark — use dark text on orange buttons.
-  static const Color onOrange = Color(0xFF1A1A1A);     // 6.32:1 on orange
+  // ON-orange: WHITE by explicit owner decision (2026-06-11) — brand look
+  // over the AA ratio; keep on-orange text bold ≥14px to compensate.
+  static const Color onOrange = Color(0xFFFFFFFF);
   static const Color orangeMuted = Color(0xFF3D2A12);  // chip / tint bg
 
   // Functional
@@ -57,10 +58,12 @@ class HousepitalColors {
   static const Color orangeText = Color(0xFFB86E00); // 4.6:1 on white — use for text
   static const Color orangeLight = Color(0xFFFFF3E0);
   static const Color orangeDark = Color(0xFFCC6E00); // 4.5:1 on white
-  // ON-orange text/icons. White on orange is only ~2.3:1 (fails AA), so any
-  // text sitting on an orange fill uses this dark ink — same value the dark
-  // theme already uses (HousepitalColorsDark.onOrange): 6.3:1 on orange.
-  static const Color onOrange = Color(0xFF1A1A1A);
+  // ON-orange text/icons: WHITE, by explicit owner decision (2026-06-11) —
+  // the brand look wins over the AA ratio here (white on #F39314 is ~2.3:1;
+  // Apple ships white-on-orange too). Keep text on orange fills BOLD (w600+)
+  // and ≥14px to compensate. Do not flip back to dark ink without owner
+  // sign-off.
+  static const Color onOrange = Color(0xFFFFFFFF);
 
   // Brand Secondary - WCAG AA compliant
   static const Color grey = Color(0xFF3D3D3D); // 5.5:1 on #F8F9FA
