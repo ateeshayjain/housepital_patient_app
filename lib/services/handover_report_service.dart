@@ -281,18 +281,28 @@ class HandoverReportService {
     return doc.save();
   }
 
-  /// Builds the report and hands it to the platform share sheet.
-  Future<void> shareHandover() async {
-    final bytes = await buildHandoverPdf();
-    final now = DateTime.now();
+  /// Deterministic share-sheet filename for a given generation date — pure,
+  /// so tests can pin the date without touching the platform channel.
+  String handoverFilename(DateTime now) {
     final patientSlug = DemoData.patient.name
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
     final ymd = '${now.year.toString().padLeft(4, '0')}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}';
+    return 'housepital-handover-$patientSlug-$ymd.pdf';
+  }
+
+  /// Builds the report and hands it to the platform share sheet.
+  ///
+  /// [now] is injected for determinism (tests pin it); the SAME value drives
+  /// both the PDF content (header date, adherence week) and the filename, so
+  /// a share started at 23:59:59 can't end up with a filename dated a day
+  /// after the report it contains.
+  Future<void> shareHandover({DateTime? now}) async {
+    final generated = now ?? DateTime.now();
+    final bytes = await buildHandoverPdf(now: generated);
     await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'housepital-handover-$patientSlug-$ymd.pdf');
+        bytes: bytes, filename: handoverFilename(generated));
   }
 }

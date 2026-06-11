@@ -153,8 +153,10 @@ void main() {
   testWidgets('SOS lives in the header; Care Guides has its own entry',
       (tester) async {
     await _pumpHome(tester);
-    // SOS moved to the persistent header (always one tap away).
-    expect(find.bySemanticsLabel('SOS emergency'), findsOneWidget);
+    // SOS is a distinct red pill in the persistent header (always one tap
+    // away) — semantics label + visible 'SOS' text.
+    expect(find.bySemanticsLabel('SOS — emergency help'), findsOneWidget);
+    expect(find.text('SOS'), findsOneWidget);
     // Care Guides moved to a dedicated entry card below Book Services.
     expect(find.text('Care Guides'), findsOneWidget);
   });

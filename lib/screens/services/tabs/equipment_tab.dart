@@ -2,11 +2,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shimmer/shimmer.dart';
 import '../../../config/theme.dart';
 import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../services/api_service.dart';
-import '../../../widgets/common_widgets.dart';
 import '../cards/equipment_item_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/equipment_category_rail.dart';
@@ -136,7 +136,7 @@ class _EquipmentTabState extends State<EquipmentTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const LoadingWidget();
+      return _buildLoadingSkeleton(context);
     }
 
     final filtered = _filtered;
@@ -196,6 +196,84 @@ class _EquipmentTabState extends State<EquipmentTab> {
     );
   }
 
+  /// Initial-catalog-load skeleton: a 6-tile grid of grey squircle blocks
+  /// matching the product card shape, swept by a shimmer highlight. When the
+  /// user has reduced motion enabled (MediaQuery.disableAnimations) the
+  /// blocks render static instead.
+  Widget _buildLoadingSkeleton(BuildContext context) {
+    final grid = Semantics(
+      label: 'Loading equipment catalog',
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const padding = 16.0, spacing = 8.0;
+          final cardWidth =
+              (constraints.maxWidth - padding * 2 - spacing) / 2;
+          final cardHeight = cardWidth + 122;
+          return GridView.builder(
+            padding: const EdgeInsets.all(padding),
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              mainAxisExtent: cardHeight,
+            ),
+            itemCount: 6,
+            itemBuilder: (context, index) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: context.hc.greyLighter,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: cardWidth * 0.6,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: context.hc.greyLighter,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: cardWidth * 0.9,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: context.hc.greyLighter,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: cardWidth * 0.4,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: context.hc.greyLighter,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+    if (MediaQuery.of(context).disableAnimations) {
+      return grid; // reduced motion: static grey blocks, no shimmer sweep
+    }
+    return Shimmer.fromColors(
+      baseColor: context.hc.greyLighter,
+      highlightColor: context.hc.white,
+      child: grid,
+    );
+  }
+
   /// Slim Sale / Rental chip row + sort menu shown above the grid.
   Widget _buildControlsRow(
       BuildContext context, List<EquipmentItem> railScoped) {
@@ -204,8 +282,10 @@ class _EquipmentTabState extends State<EquipmentTab> {
       child: Row(
         children: [
           Expanded(
+            // 44pt-tall hit row (Apple HIG minimum); the visual pill stays
+            // 32px and is vertically centred inside each full-height InkWell.
             child: SizedBox(
-              height: 32,
+              height: 44,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
@@ -218,29 +298,45 @@ class _EquipmentTabState extends State<EquipmentTab> {
                       : cat == 'Sale'
                           ? railScoped.where((i) => i.availableForSale).length
                           : railScoped.where((i) => i.availableForRent).length;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = cat),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? HousepitalColors.orange
-                            : context.hc.white,
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '$cat items',
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedCategory = cat),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected
-                              ? HousepitalColors.orange
-                              : context.hc.divider,
-                        ),
-                      ),
-                      child: Text(
-                        '$cat ($count)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isSelected ? context.hc.white : context.hc.grey,
+                        child: Center(
+                          child: Container(
+                            height: 32,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? HousepitalColors.orange
+                                  : context.hc.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected
+                                    ? HousepitalColors.orange
+                                    : context.hc.divider,
+                              ),
+                            ),
+                            child: Text(
+                              '$cat ($count)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                // Dark ink on the orange fill — white on
+                                // orange fails AA (~2.3:1).
+                                color: isSelected
+                                    ? context.hc.onOrange
+                                    : context.hc.grey,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -250,9 +346,13 @@ class _EquipmentTabState extends State<EquipmentTab> {
             ),
           ),
           const SizedBox(width: 8),
-          // Sort dropdown
+          // Sort dropdown — icon form renders an internal IconButton with
+          // Material's standard 48pt touch target and a 'Sort' tooltip /
+          // semantics label for free.
           PopupMenuButton<String>(
             initialValue: _sortBy,
+            tooltip: 'Sort',
+            icon: Icon(Icons.sort, size: 20, color: context.hc.grey),
             onSelected: (v) => setState(() => _sortBy = v),
             itemBuilder: (_) => _sortOptions
                 .map((s) => PopupMenuItem(
@@ -279,16 +379,6 @@ class _EquipmentTabState extends State<EquipmentTab> {
                       ),
                     ))
                 .toList(),
-            child: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: context.hc.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: context.hc.divider),
-              ),
-              child: Icon(Icons.sort, size: 16, color: context.hc.grey),
-            ),
           ),
         ],
       ),
@@ -304,9 +394,9 @@ class _EquipmentTabState extends State<EquipmentTab> {
         const padLeft = 10.0, padRight = 12.0, spacing = 8.0;
         final cardWidth =
             (constraints.maxWidth - padLeft - padRight - spacing) / 2;
-        // 8+8 card padding + square image (cardWidth-16) + 16 ADD overlap +
+        // 8+8 card padding + square image (cardWidth-16) + 24 ADD overlap +
         // 4 + 14 brand + 2 + 34 name + 4 + 16 mrp row + 2 + 18 price (+4 slack)
-        final cardHeight = cardWidth + 114;
+        final cardHeight = cardWidth + 122;
         return GridView.builder(
           padding: EdgeInsets.fromLTRB(
               padLeft, 0, padRight, 24 + MediaQuery.of(context).padding.bottom),

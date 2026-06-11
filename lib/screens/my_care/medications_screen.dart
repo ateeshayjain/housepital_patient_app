@@ -11,9 +11,11 @@ import '../../providers/cart_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../services/handover_report_service.dart';
 import '../../config/app_colors.dart';
-import '../../config/theme.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
 class MedicationsScreen extends StatefulWidget {
@@ -33,7 +35,8 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     super.initState();
     Future.microtask(() {
       if (!mounted) return;
-      final patientId = context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
+      final patientId =
+          context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
       context.read<MedicationProvider>().loadMedications(patientId);
     });
   }
@@ -42,19 +45,24 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final medProv = context.watch<MedicationProvider>();
+    final role = context.watch<AppProvider>().currentUserRole;
 
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l.t('medications')),
         actions: [
           // Doctor Handover Report — same share as the My Care entry card.
-          IconButton(
-            tooltip: 'Share Doctor Handover Report',
-            icon: const Icon(Icons.ios_share, size: 20),
-            onPressed: () => HandoverReportService().shareHandover(),
-          ),
+          // audit R2: role-gated like the My Care card — hidden entirely for
+          // roles that may not export the full medical history.
+          if (canUserPerform(role, UserAction.shareHandover))
+            IconButton(
+              tooltip: 'Share Doctor Handover Report',
+              icon: const Icon(Icons.ios_share, size: 20),
+              onPressed: () => HandoverReportService().shareHandover(),
+            ),
           TextButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/medication-schedule'),
+            onPressed: () =>
+                Navigator.pushNamed(context, '/medication-schedule'),
             icon: const Icon(Icons.schedule, size: 18),
             label: Text(l.t('medication_schedule')),
           ),
@@ -78,52 +86,42 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       body: medProv.isLoading
           ? const LoadingWidget()
           : medProv.error != null
-              ? ErrorRetryWidget(
-                  message: l.t('error_load_data'),
-                  onRetry: () {
-                    final patientId =
-                        context.read<AppProvider>().currentPatient?.id ??
-                            'pat_demo_rajesh';
-                    medProv.loadMedications(patientId);
-                  },
-                )
-              : medProv.activeMedications.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.medication_outlined,
-                                size: 64, color: context.hc.greyLight),
-                            const SizedBox(height: 16),
-                            Text('No medications added yet',
-                                style: TextStyle(
-                                    fontSize: 16, color: context.hc.grey)),
-                          ],
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        final patientId =
-                            context.read<AppProvider>().currentPatient?.id;
-                        if (patientId != null) {
-                          await medProv.loadMedications(patientId);
-                        }
-                      },
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        // +1 for the weekly-adherence header card.
-                        itemCount: medProv.activeMedications.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) return _adherenceHeader(context);
-                          final med =
-                              medProv.activeMedications[index - 1];
-                          return _medicationCard(context, med, l, medProv);
-                        },
-                      ),
-                    ),
+          ? ErrorRetryWidget(
+              message: l.t('error_load_data'),
+              onRetry: () {
+                final patientId =
+                    context.read<AppProvider>().currentPatient?.id ??
+                    'pat_demo_rajesh';
+                medProv.loadMedications(patientId);
+              },
+            )
+          : medProv.activeMedications.isEmpty
+          ? HousepitalEmptyState(
+              icon: Icons.medication_outlined,
+              title: l.t('meds_empty_title'),
+              body: l.t('meds_empty_body'),
+            )
+          : RefreshIndicator(
+              onRefresh: () async {
+                final patientId = context
+                    .read<AppProvider>()
+                    .currentPatient
+                    ?.id;
+                if (patientId != null) {
+                  await medProv.loadMedications(patientId);
+                }
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                // +1 for the weekly-adherence header card.
+                itemCount: medProv.activeMedications.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) return _adherenceHeader(context);
+                  final med = medProv.activeMedications[index - 1];
+                  return _medicationCard(context, med, l, medProv);
+                },
+              ),
+            ),
     );
   }
 
@@ -137,89 +135,95 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     final weekTotal = perDay * 7;
     final weekTaken = (weekTotal * pct / 100).round();
     final today = dateOnly(DateTime.now());
-    // Weekday initials indexed by DateTime.weekday - 1 (Mon=1 … Sun=7).
+    // Weekday initials/names indexed by DateTime.weekday - 1 (Mon=1 … Sun=7).
     const dayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const dayNames = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
 
-    return GestureDetector(
+    // HousepitalCard(onTap:) — not a bare GestureDetector wrapper — so the
+    // card keeps its press-scale feedback and tap Semantics.
+    return HousepitalCard(
       onTap: () => Navigator.pushNamed(context, '/care-calendar'),
-      child: HousepitalCard(
-        child: Row(
-          children: [
-            // 56px adherence ring with the percentage centred inside.
-            SizedBox(
-              width: 56,
-              height: 56,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: CircularProgressIndicator(
-                      value: pct / 100,
-                      strokeWidth: 6,
-                      color: context.hc.success,
-                      backgroundColor: context.hc.greyLighter,
-                    ),
-                  ),
-                  Text('$pct%',
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700)),
-                ],
+      child: Row(
+        children: [
+          // 56px Care Pulse adherence ring with the percentage centred inside.
+          CarePulseRing(
+            value: pct / 100,
+            size: 56,
+            strokeWidth: 6,
+            semanticLabel: '$pct percent weekly adherence',
+            center: Text(
+              '$pct%',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("This week's adherence",
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text('$weekTaken of $weekTotal doses',
-                      style: TextStyle(
-                          fontSize: 12, color: context.hc.greyLight)),
-                  const SizedBox(height: 8),
-                  // 7-day row, oldest → today: weekday initial above a dot.
-                  // Deterministic demo state: success = full adherence day,
-                  // warning = partial (same seeded calc as Care Calendar).
-                  Row(
-                    children: List.generate(7, (i) {
-                      final day = today.subtract(Duration(days: 6 - i));
-                      final full = adherencePercentFor(day) >= 90;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(dayInitials[day.weekday - 1],
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    color: context.hc.greyLight)),
-                            const SizedBox(height: 3),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: full
-                                    ? context.hc.success
-                                    : context.hc.warning,
-                              ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "This week's adherence",
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$weekTaken of $weekTotal doses',
+                  style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+                ),
+                const SizedBox(height: 8),
+                // 7-day row, oldest → today: weekday initial above a dot.
+                // Deterministic demo state: full adherence = FILLED green
+                // circle, partial = OUTLINED orange ring (shape + colour,
+                // never colour alone; same seeded calc as Care Calendar).
+                Row(
+                  children: List.generate(7, (i) {
+                    final day = today.subtract(Duration(days: 6 - i));
+                    final full = adherencePercentFor(day) >= 90;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            dayInitials[day.weekday - 1],
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: context.hc.greyLight,
                             ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
+                          ),
+                          const SizedBox(height: 3),
+                          Semantics(
+                            label:
+                                '${dayNames[day.weekday - 1]}: '
+                                '${full ? 'full' : 'partial'} adherence',
+                            child: Icon(
+                              full ? Icons.circle : Icons.circle_outlined,
+                              size: 8,
+                              color: full
+                                  ? context.hc.success
+                                  : context.hc.warning,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right, color: context.hc.grey),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -231,8 +235,12 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   Future<EquipmentItem?> _findCatalogItem(String medName) async {
     try {
       _catalog ??=
-          (json.decode(await rootBundle.loadString(
-                      'assets/equipment_catalog.json')) as List)
+          (json.decode(
+                    await rootBundle.loadString(
+                      'assets/equipment_catalog.json',
+                    ),
+                  )
+                  as List)
               .map((e) => EquipmentItem.fromJson(e as Map<String, dynamic>))
               .toList();
     } catch (_) {
@@ -258,9 +266,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     if (!mounted) return;
     if (catalogItem != null) {
       context.read<CartProvider>().addItem(catalogItem);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Added to cart for refill')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to cart for refill')));
       return;
     }
 
@@ -269,12 +277,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-          content: Text('Refill request sent to your Health Manager')),
+        content: Text('Refill request sent to your Health Manager'),
+      ),
     );
   }
 
-  Widget _refillAction(BuildContext context, MedicationFull med,
-      MedicationProvider medProv) {
+  Widget _refillAction(
+    BuildContext context,
+    MedicationFull med,
+    MedicationProvider medProv,
+  ) {
     if (medProv.isRefillRequested(med.id)) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -292,38 +304,45 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         ],
       );
     }
-    return SizedBox(
-      height: 36,
-      child: OutlinedButton.icon(
-        onPressed: () => _onRefillTap(med),
-        icon: const Icon(Icons.local_pharmacy, size: 16),
-        label: const Text('Request refill',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.hc.orangeText,
-          side: BorderSide(color: HousepitalColors.orange),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-        ),
+    // Tonal stadium pill (matches doctor_advice_card's add/book grammar):
+    // small visual, padded Material tap target keeps the area ≥ 44pt.
+    return FilledButton.tonalIcon(
+      onPressed: () => _onRefillTap(med),
+      icon: const Icon(Icons.local_pharmacy, size: 16),
+      label: const Text('Request refill'),
+      style: FilledButton.styleFrom(
+        backgroundColor: context.hc.orangeLight,
+        foregroundColor: context.hc.orangeText,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       ),
     );
   }
 
-  Widget _medicationCard(BuildContext context, MedicationFull med,
-      AppLocalizations l, MedicationProvider medProv) {
+  Widget _medicationCard(
+    BuildContext context,
+    MedicationFull med,
+    AppLocalizations l,
+    MedicationProvider medProv,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: med.isLowStock
-              ? context.hc.warning
-              : context.hc.divider,
+          color: med.isLowStock ? context.hc.warning : context.hc.divider,
         ),
       ),
       child: InkWell(
         onTap: () async {
-          final result = await Navigator.pushNamed(context, '/add-medication',
-              arguments: med);
+          final result = await Navigator.pushNamed(
+            context,
+            '/add-medication',
+            arguments: med,
+          );
           if (result == true) {
             if (!context.mounted) return;
             final patientId = context.read<AppProvider>().currentPatient?.id;
@@ -342,18 +361,29 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${med.name} ${med.dosage}',
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(
+                          '${med.name} ${med.dosage}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Text(
-                            '${med.form} · ${med.frequencyLabel} · ${med.instructions ?? ""}',
-                            style: TextStyle(
-                                fontSize: 12, color: context.hc.grey)),
+                          '${med.form} · ${med.frequencyLabel} · ${med.instructions ?? ""}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.hc.grey,
+                          ),
+                        ),
                         if (med.prescribedBy != null)
-                          Text('Prescribed by ${med.prescribedBy}',
-                              style: TextStyle(
-                                  fontSize: 11, color: context.hc.greyLight)),
+                          Text(
+                            'Prescribed by ${med.prescribedBy}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: context.hc.greyLight,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -368,7 +398,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                     if (med.isLowStock)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: context.hc.warningLight,
                           borderRadius: BorderRadius.circular(8),
@@ -376,15 +408,18 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         child: Text(
                           '${med.stockCount} ${med.stockUnit ?? "units"} left — refill soon',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: context.hc.warning,
-                              fontWeight: FontWeight.w600),
+                            fontSize: 12,
+                            color: context.hc.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       )
                     else
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: context.hc.successLight,
                           borderRadius: BorderRadius.circular(8),
@@ -392,15 +427,18 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         child: Text(
                           '${med.stockCount} ${med.stockUnit ?? "units"} left',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: context.hc.success,
-                              fontWeight: FontWeight.w600),
+                            fontSize: 12,
+                            color: context.hc.success,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     if (med.daysOfSupplyLeft != null && !med.isLowStock)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: context.hc.greyLighter,
                           borderRadius: BorderRadius.circular(8),
@@ -408,7 +446,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                         child: Text(
                           'Refill in ${med.daysOfSupplyLeft} days',
                           style: TextStyle(
-                              fontSize: 12, color: context.hc.grey),
+                            fontSize: 12,
+                            color: context.hc.grey,
+                          ),
                         ),
                       ),
                   ],

@@ -1,5 +1,13 @@
 # Visual Consistency Audit — Housepital Patient App
 
+> **RESOLVED 2026-06-08 — historical snapshot only.** All four fix waves were
+> executed the same day (`c24788f`) and the canon is now enforced in CI by
+> `scripts/check_design_consistency.sh` plus the overflow and dark-mode guard
+> suites. Parts of the card/chrome guidance below were later **superseded by
+> the Liquid Glass system** (squircle `RoundedSuperellipseBorder(16)` cards,
+> `GlassAppBar`/`GlassSurface` chrome — see `lib/widgets/glass.dart` and
+> `lib/config/theme.dart`). Do not treat the findings below as open work.
+
 **Date:** 2026-06-08
 **Method:** 4 parallel agents read **every** screen in `lib/screens/` (85 files) and
 measured each widget against the canonical design system *and against each other*

@@ -54,7 +54,23 @@ hex=$(grep -rnE 'Color\(0x[A-Fa-f0-9]{8}\)' "$SCAN_DIR" $EXCLUDE --include='*.da
 report "Hardcoded Color(0xFF…) is banned in screens — use HousepitalColors.* (allowlist: $ALLOW)" \
   "$hex"
 
-# 5. CircleAvatar holding an Icon — use AppIconTile. (Avatars for real people /
+# 5. Raw brand orange (#F39314) as TEXT color — fails WCAG AA on white (~2.3:1)
+#    and on orangeLight tints (~2:1). Text must use orangeText (4.6:1) — or
+#    onOrange when the text sits ON an orange fill. Pragmatic single-line grep:
+#    flags TextStyle + a plain `.orange` token on the same line (orangeText /
+#    orangeDark / orangeLight / onOrange don't match because the char after
+#    "orange" must be a non-letter). Fills/borders/icons are not flagged.
+# Allowlist (file:line or unique snippet regex) for genuine false positives,
+# e.g. orange text deliberately placed on a dark surface. Keep '__none__' as
+# the first alternative so an otherwise-empty list matches nothing.
+ORANGE_TEXT_ALLOW='__none__'
+orange_text=$(grep -rnE 'TextStyle' "$SCAN_DIR" $EXCLUDE --include='*.dart' \
+                | grep -E '(HousepitalColors|context\.hc)\.orange[^A-Za-z]' \
+                | grep -viE "$ORANGE_TEXT_ALLOW")
+report "Raw orange as text color is banned (2.3:1 on white) — use context.hc.orangeText, or onOrange on orange fills" \
+  "$orange_text"
+
+# 6. CircleAvatar holding an Icon — use AppIconTile. (Avatars for real people /
 #    initials / images are fine, so we only flag CircleAvatar with a child:Icon
 #    on the same or next line.)
 circle=$(grep -rnA2 'CircleAvatar(' "$SCAN_DIR" $EXCLUDE --include='*.dart' \

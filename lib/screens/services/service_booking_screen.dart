@@ -2342,7 +2342,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   _appliedPromoCode != null ? _clearPromo : _applyPromo,
               child: Text(
                 _appliedPromoCode != null ? 'Remove' : 'Apply',
-                style: const TextStyle(color: HousepitalColors.orange),
+                // Color comes from textButtonTheme (orangeText, AA on white).
               ),
             ),
           ),

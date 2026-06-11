@@ -1,6 +1,6 @@
 # Feature Tracker -- Housepital Patient App
 
-**Last updated:** 2026-06-05
+**Last updated:** 2026-06-11
 
 Legend: Done = feature is shipped and working | In Progress = partially built | Not Started = not yet coded
 
@@ -110,7 +110,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend                 | Backend              | Status         | Notes                                        |
 |---|-------------------------------------|--------------------------|----------------------|----------------|----------------------------------------------|
-| 1 | Service Catalog (7 sub-tabs)        | ServiceCatalogScreen     | GET /services        | Done           | Manpower, Equipment, Consults, Visits, Diag, Lab, Packages |
+| 1 | Service Catalog (6 sub-tabs)        | ServiceCatalogScreen     | GET /services        | Done           | Manpower, Equipment, Consultations, Diagnostics, Lab Tests, Packages |
 | 2 | Service Booking Wizard (3-step)     | ServiceBookingScreen     | POST /bookings       | Done           | Slot select, promo, review, pay              |
 | 3 | Assessment Request Flow             | AssessmentRequestScreen  | POST /assessments    | Done           | Dynamic questionnaire per category           |
 | 4 | Equipment Detail Page               | EquipmentDetailScreen    | GET /equipment       | Done           | Variant selection, rent/buy, add-to-cart     |
@@ -118,7 +118,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | Coupon system fully wired in cart + booking  |
 | 7 | Cart System                         | CartScreen               | --                   | Done -- rewritten | Flat CartItem model, List-based CartProvider with index-based ops, SharedPreferences persistence, coupon support (WELCOME10). Rewritten 2026-03-25 to fix grey screen / empty cart bugs. |
 | 8 | Universal Search                    | UniversalSearchScreen    | --                   | Done           | Local search across services                 |
-| 9 | Manpower Price Display              | ServiceCatalogScreen     | master Excel sync    | Done           | Prices now shown (synced from master Excel). MRP + strikethrough on equipment. |
+| 9 | Manpower Price Rule (inviolable)    | catalog/wizard/cart/orders | OrdersProvider     | Done (2026-06) | Prices hidden EVERYWHERE for manpower; booking is quote-pending ("Price confirmed on call before payment"); billing sums exclude quotes. Equipment keeps MRP + strikethrough. |
 | 10| Slot Availability Check             | ServiceBookingScreen     | GET /services/:id/slots | Done        | getAvailableSlots API checks real-time availability |
 | 11| Booking Cancellation                | BookingHistoryScreen     | PUT /bookings/:id/cancel | Done       | Cancel from booking history with confirmation dialog |
 | 12| Post-Service Rating                 | BookingHistoryScreen     | POST /ratings        | Done           | Rate completed bookings from booking history |
@@ -126,10 +126,25 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 14| Booking History                     | BookingHistoryScreen     | GET /patients/:id/bookings | Done     | Filter by status, cancel, rate, re-book      |
 | 15| Address Selection (checkout)        | AddressSelectionScreen   | SharedPreferences    | Done           | Saved addresses, pincode validation, add/edit/delete |
 | 16| My Orders                          | MyOrdersScreen           | OrdersProvider       | Done           | Done -- reads from OrdersProvider                    |
+| 17| Needs-Based Staff Tier Selection    | staff_role_card.dart     | --                   | Done (2026-06) | Care-needs checklist infers manpower tier; still quote-pending, no price |
+| 18| Quote-Pending Manpower Booking      | OrdersProvider           | --                   | Done (2026-06) | quoteStatus: 'pending'; never renders ₹0; PRO FORMA invoice without amounts |
+| 19| Blinkit-Style Equipment Browse      | equipment_tab.dart       | equipment_catalog    | Done (2026-06) | Left category rail + dense 2-col grid; MRP strikethrough + discounted price |
+| 20| Reserve Flow (price-on-request)     | equipment cards/sheet    | --                   | Done (2026-06) | No fabricated prices; Reserve instead of Add-to-cart |
 
 ---
 
-## Billing Tab
+## Care Calendar & Care Team
+
+| # | Feature                            | Frontend                 | Backend              | Status         | Notes                                        |
+|---|-------------------------------------|--------------------------|----------------------|----------------|----------------------------------------------|
+| 1 | Care Calendar (Day/Week/Month)      | CareCalendarScreen       | demo/CareEvent       | Done (2026-06) | /care-calendar; segmented Day-Week-Month views |
+| 2 | Dose groups + mark taken            | CareCalendarScreen       | MedicationProvider   | Done (2026-06) | Med quick-actions; future-day "N doses scheduled" cards |
+| 3 | Staff attendance + mark present     | CareCalendarScreen       | --                   | Done (2026-06) | Patient-side attendance confirmations        |
+| 4 | Care Team hub                       | CareTeamScreen           | demo data            | Done (2026-06) | /care-team; group chat FIRST, then member rows |
+| 5 | Member call/chat rows               | CareTeamScreen           | tel: / /chat         | Done (2026-06) | Health manager, on-duty staff, doctors       |
+| 6 | Ambulance card                      | CareTeamScreen           | tel:                 | Done (2026-06) | 24x7 emergency call                          |
+| 7 | Past staff history                  | CareTeamScreen           | DemoData.pastStaff   | Done (2026-06) | Read-only; no call/chat for past staff       |
+| 8 | Doctor recommendations → cart       | doctor_recommendation.dart | CartProvider       | Done (2026-06) | Recommended equipment addable to cart        |
 
 | # | Feature                            | Frontend               | Backend                          | Status         | Notes                                    |
 |---|-------------------------------------|------------------------|----------------------------------|----------------|------------------------------------------|
@@ -139,7 +154,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 4 | Transaction Log                     | TransactionLogScreen   | /patients/:id/transactions       | Done           | Payment history with status badges       |
 | 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Done -- web simulation mode              |
 | 6 | Payment Webhook Handler             | --                     | /payments/webhook                | Done           | payment.captured, payment.failed, refund |
-| 7 | Invoice PDF Download                | InvoiceDetailScreen    | --                               | Not Started    | Button exists, shows "Coming soon"       |
+| 7 | Invoice PDF Download                | InvoiceDetailScreen    | invoice_pdf_service.dart (client-side) | Done (2026-06) | On-device PDF via pdf+printing; PRO FORMA without amounts for quote orders |
 | 8 | Payment Methods Management          | PaymentMethodsScreen   | --                               | Not Started    | Placeholder screen                       |
 | 9 | EMI Payment Support                 | EmiScreen              | BillingProvider                  | Done           | EMI plan display, installment tracking   |
 | 10| Payment Reminders (push)            | --                     | --                               | Not Started    | PaymentReminderService exists but not connected to FCM |
@@ -216,9 +231,9 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 5 | Empty States                        | In Progress    | Some screens have empty states, some do not          |
 | 6 | WCAG Accessibility                  | In Progress    | Colors are AA compliant, semantic labels partial     |
 | 7 | Analytics / Event Tracking          | Not Started    |                                                      |
-| 8 | Crash Reporting (Crashlytics)       | Not Started    |                                                      |
+| 8 | Crash Reporting (Crashlytics)       | Done           | firebase_crashlytics dep + guarded init in main.dart (mobile-only, release-only) |
 | 9 | Deep Linking                        | Not Started    |                                                      |
-| 10| App Performance Monitoring          | Not Started    |                                                      |
+| 10| App Performance Monitoring          | Done           | firebase_performance dep + guarded init alongside Crashlytics |
 | 11| Rate Limiting (backend)             | Done           | express-rate-limit applied to all endpoints          |
 | 12| Structured Logging (backend)        | Done           | Structured logging with correlation IDs              |
 | 13| Zod Validation (backend)            | Done           | Request payload validation with Zod schemas          |
@@ -227,6 +242,13 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 16| Pagination Widget                   | Done           | Reusable PaginatedList widget in lib/widgets/        |
 | 17| Video Consultation                  | Done           | VideoConsultationScreen + video_call_service          |
 | 18| Referral Program                    | Done           | ReferralScreen with share code + reward tracking     |
+| 19| Dark Mode (full)                    | Done (2026-06) | context.hc token resolver (HcPalette light/dark) across all screens; dark_mode_test guard |
+| 20| Liquid Glass Design System          | Done (2026-06) | GlassAppBar/GlassSurface chrome, HousepitalCard squircles (radius-16), motion gated on disableAnimations |
+| 21| Bundled Fonts                       | Done (2026-06) | Archivo + NotoSansDevanagari TTFs in assets/fonts/; google_fonts removed |
+| 22| Medical History (read-only)         | Done (2026-06) | MedicalHistory model + read-only profile section     |
+| 23| Doctor Handover PDF (role-gated)    | Done (2026-06) | handover_report_service.dart, on-device via pdf+printing |
+| 24| Articles Redesign                   | Done (2026-06) | Featured hero, category accent colors, markdown detail |
+| 25| Design Consistency Gate (CI)        | Done (2026-06) | scripts/check_design_consistency.sh + overflow smoke (37 screens × 3 widths) + i18n sync guard |
 
 ---
 
@@ -234,7 +256,6 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | Feature                    | Blocked By                                            | Owner   |
 |----------------------------|-------------------------------------------------------|---------|
-| Invoice PDF generation     | Razorpay live mode approval pending + pdfkit backend  | Founder |
 | WhatsApp notifications     | MSG91 template approval from WhatsApp                 | Founder |
 | ~~Lab test catalog (detailed)~~| ~~Lab partner pricing not finalized~~ (RESOLVED -- 153 individual tests added) | Ops |
 | Razorpay production mode   | Business verification with Razorpay                   | Founder |

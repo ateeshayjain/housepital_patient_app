@@ -20,6 +20,20 @@ extension HcColors on BuildContext {
       : const HcPalette.light();
 }
 
+/// Decorative hero-gradient stops. These are the ONLY sanctioned gradient
+/// hexes (mirrored in the allowlist of scripts/check_design_consistency.sh) —
+/// screens must reference these named constants instead of re-typing the
+/// literals. Each `*End` is the lighter end-stop paired with a token start
+/// (orange / hc.info / hc.success).
+class HeroGradient {
+  HeroGradient._();
+
+  static const Color orangeStart = Color(0xFFFF8C00);
+  static const Color orangeEnd = Color(0xFFFF6B35);
+  static const Color blueEnd = Color(0xFF42A5F5);
+  static const Color greenEnd = Color(0xFF66BB6A);
+}
+
 class HcPalette {
   // Neutrals
   final Color background; // page background
@@ -46,6 +60,9 @@ class HcPalette {
   final Color orangeText;
   final Color orangeDark;
   final Color orangeLight;
+  // Text/icons ON an orange fill. White on orange fails AA (~2.3:1), so both
+  // modes use the same dark ink (6.3:1 on orange).
+  final Color onOrange;
 
   // Misc semantic
   final Color sos;
@@ -75,6 +92,7 @@ class HcPalette {
         orangeText = HousepitalColors.orangeText,
         orangeDark = HousepitalColors.orangeDark,
         orangeLight = HousepitalColors.orangeLight,
+        onOrange = HousepitalColors.onOrange,
         sos = HousepitalColors.sos,
         checkedIn = HousepitalColors.checkedIn,
         vitalNormal = HousepitalColors.vitalNormal,
@@ -102,6 +120,7 @@ class HcPalette {
         orangeText = HousepitalColorsDark.orange,
         orangeDark = HousepitalColorsDark.orange,
         orangeLight = HousepitalColorsDark.orangeMuted,
+        onOrange = HousepitalColorsDark.onOrange,
         sos = HousepitalColorsDark.sos,
         checkedIn = HousepitalColorsDark.success,
         vitalNormal = HousepitalColorsDark.vitalNormal,

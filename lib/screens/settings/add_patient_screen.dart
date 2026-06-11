@@ -134,8 +134,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                 )
               : TextButton(
                   onPressed: _submit,
-                  child: const Text('Save',
-                      style: TextStyle(color: HousepitalColors.orange)),
+                  child: Text('Save',
+                      style: TextStyle(color: context.hc.orangeText)),
                 ),
         ],
       ),

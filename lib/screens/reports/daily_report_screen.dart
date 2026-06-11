@@ -5,7 +5,9 @@ import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/day_part_header.dart';
 import '../../widgets/glass.dart';
 
 class DailyReportScreen extends StatefulWidget {
@@ -168,14 +170,38 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                           _report!.staffNotes!.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         SectionHeader(title: l.t('staff_notes')),
-                        HousepitalCard(
-                          child: Text(
-                            _report!.staffNotes!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.hc.grey,
-                              fontStyle: FontStyle.italic,
+                        // THE sentence remote families open the app for —
+                        // promoted to its own emphasized block: full note
+                        // (NEVER truncated on this screen), regular 14px in
+                        // hc.black, on a softly orange-tinted squircle with a
+                        // quote mark. Not italic grey small print.
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: ShapeDecoration(
+                            color: context.hc.orangeLight
+                                .withValues(alpha: 0.55),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.format_quote,
+                                  size: 20, color: context.hc.orangeText),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _report!.staffNotes!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.45,
+                                    color: context.hc.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -223,6 +249,16 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         : frac >= 0.5
             ? context.hc.warning
             : context.hc.error;
+    final dayLabel = allDone
+        ? 'Good day'
+        : frac >= 0.5
+            ? 'Watch'
+            : 'Difficult day';
+    final dayIcon = allDone
+        ? Icons.check_circle
+        : frac >= 0.5
+            ? Icons.warning_amber_rounded
+            : Icons.error;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -238,29 +274,23 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 56,
-            height: 56,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    value: frac,
-                    strokeWidth: 5,
-                    backgroundColor: Colors.white.withValues(alpha: 0.3),
-                    valueColor: const AlwaysStoppedAnimation(Colors.white),
-                  ),
-                ),
-                Text('${r.completedTasks}/${r.totalTasks}',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14)),
-              ],
-            ),
+          // Care Pulse ring on the orange hero: the brand orange→green arc
+          // can't hold contrast on an orange fill, so this site keeps its
+          // white-on-orange palette via the explicit color overrides (the
+          // capped ends + calm sweep are still the signature).
+          CarePulseRing(
+            value: frac,
+            size: 56,
+            strokeWidth: 5,
+            trackColor: Colors.white.withValues(alpha: 0.3),
+            color: Colors.white,
+            semanticLabel:
+                '${r.completedTasks} of ${r.totalTasks} tasks done',
+            center: Text('${r.completedTasks}/${r.totalTasks}',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -297,10 +327,14 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                       const Icon(Icons.schedule,
                           size: 13, color: Colors.white70),
                       const SizedBox(width: 4),
-                      Text(
-                        'Submitted ${DateHelper.formatTime(r.submittedAt!)}',
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                      Expanded(
+                        child: Text(
+                          'Submitted ${DateHelper.formatTime(r.submittedAt!)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
@@ -308,13 +342,31 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               ],
             ),
           ),
-          // a tiny accent reflecting overall health of the day
+          // Day-health at a glance: a labeled StatusBadge-style chip (icon +
+          // text on a white stadium so the status hue reads on the orange
+          // gradient) — never a bare color dot.
           Container(
-            width: 10,
-            height: 10,
             margin: const EdgeInsets.only(left: 8),
-            decoration:
-                BoxDecoration(color: ringColor, shape: BoxShape.circle),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: const ShapeDecoration(
+              color: Colors.white,
+              shape: StadiumBorder(),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(dayIcon, size: 14, color: ringColor),
+                const SizedBox(width: 4),
+                Text(
+                  dayLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: ringColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -338,14 +390,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         sectionStatus = l.t('pending');
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
+    // Canonical top-level section card: HousepitalCard (squircle 16, theme
+    // vertical-8 margin) — zero inner padding so the status accent stripe
+    // still runs edge-to-edge down the left side.
+    return HousepitalCard(
+      padding: EdgeInsets.zero,
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -459,51 +508,24 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final takenCount = meds.where((m) => m.taken).length;
     final totalCount = meds.length;
 
-    // Group by timing
-    final timings = ['morning', 'afternoon', 'evening', 'night'];
-    final grouped = <String, List<MedicationEntry>>{};
-    for (final timing in timings) {
-      final items = meds.where((m) => m.timing == timing).toList();
-      if (items.isNotEmpty) grouped[timing] = items;
+    // Group by timing into the app-wide three-part day motif (DayPartHeader).
+    // 'night' folds into evening — the motif's evening label is already
+    // 'Evening · Raat', so a separate Night group would duplicate it.
+    DayPart partOf(String timing) => switch (timing) {
+          'morning' => DayPart.morning,
+          'afternoon' => DayPart.afternoon,
+          _ => DayPart.evening, // 'evening', 'night', unknown
+        };
+    final grouped = <DayPart, List<MedicationEntry>>{};
+    for (final part in DayPart.values) {
+      final items = meds.where((m) => partOf(m.timing) == part).toList();
+      if (items.isNotEmpty) grouped[part] = items;
     }
 
-    String timingLabel(String timing) {
-      switch (timing) {
-        case 'morning':
-          return 'Morning';
-        case 'afternoon':
-          return 'Afternoon';
-        case 'evening':
-          return 'Evening';
-        case 'night':
-          return 'Night';
-        default:
-          return timing;
-      }
-    }
-
-    IconData timingIcon(String timing) {
-      switch (timing) {
-        case 'morning':
-          return Icons.wb_sunny;
-        case 'afternoon':
-          return Icons.wb_cloudy;
-        case 'evening':
-          return Icons.wb_twilight;
-        case 'night':
-          return Icons.nightlight_round;
-        default:
-          return Icons.schedule;
-      }
-    }
-
-    return Container(
+    // Canonical top-level section card: HousepitalCard, not a hand-rolled
+    // radius-12 bordered Container.
+    return HousepitalCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -548,21 +570,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         ...grouped.entries.map((entry) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(timingIcon(entry.key),
-                        size: 16, color: context.hc.greyLight),
-                    const SizedBox(width: 6),
-                    Text(
-                      timingLabel(entry.key),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.grey,
-                      ),
-                    ),
-                  ],
-                ),
+                DayPartHeader(entry.key),
                 const SizedBox(height: 6),
                 ...entry.value.map((med) => Padding(
                       padding: const EdgeInsets.only(left: 22, bottom: 8),
@@ -685,24 +693,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  final emojis = ['\u{1F61F}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F929}'];
-                  return GestureDetector(
-                    onTap: () =>
-                        setDialogState(() => selectedRating = index + 1),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        emojis[index],
-                        style: TextStyle(
-                          fontSize: selectedRating == index + 1 ? 36 : 28,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+              // One rating idiom app-wide: stars, not emoji. The emoji faces
+              // clashed with the calm-clinical voice and duplicated My Care's
+              // star rater. Shared StarRatingInput = 44pt targets + per-star
+              // Semantics.
+              StarRatingInput(
+                value: selectedRating,
+                onChanged: (stars) =>
+                    setDialogState(() => selectedRating = stars),
+                size: 28,
               ),
               const SizedBox(height: 16),
               TextField(

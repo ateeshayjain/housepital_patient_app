@@ -1,6 +1,8 @@
-// audit batch 4 (Agent K): extracted from service_catalog_screen.dart
+// audit batch 4 (Agent K): extracted from service_catalog_screen.dart.
+// Now a thin wrapper over the shared HousepitalEmptyState
+// (lib/widgets/empty_state.dart) so every empty state shares one calm style.
 import 'package:flutter/material.dart';
-import '../../../config/app_colors.dart';
+import '../../../widgets/empty_state.dart';
 
 /// Empty-state widget shown when a catalog search yields no matches.
 class CatalogEmptyState extends StatelessWidget {
@@ -8,34 +10,10 @@ class CatalogEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 56,
-            color: context.hc.greyLight.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No services found',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: context.hc.grey,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Try a different search term',
-            style: TextStyle(
-              fontSize: 14,
-              color: context.hc.greyLight,
-            ),
-          ),
-        ],
-      ),
+    return const HousepitalEmptyState(
+      icon: Icons.search_off,
+      title: 'No services found',
+      body: 'Try a different search term',
     );
   }
 }

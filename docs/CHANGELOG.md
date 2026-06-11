@@ -4,6 +4,104 @@
 
 ---
 
+## [2026-06-11] -- PDF Exports, Medical History, UX Fixes (8d7b0eb)
+
+### On-device PDF generation (`pdf` + `printing` deps)
+- NEW `lib/services/invoice_pdf_service.dart` — client-side invoice PDFs;
+  quote-pending orders render as PRO FORMA **without amounts** (manpower
+  price rule holds in exports too)
+- NEW `lib/services/handover_report_service.dart` — Doctor Handover report
+  PDF; role-gated (sensitive export)
+- Both inject `DateTime` for deterministic tests
+- Resolves the long-standing "Invoice PDF blocked on pdfkit backend" item —
+  generation is client-side, no backend dependency
+
+### Medical history
+- NEW `lib/models/medical_history.dart` — MedicalHistory model
+- Read-only medical history section in the patient profile screen
+
+---
+
+## [2026-06-10] -- Full In-App Commerce, Equipment/Articles Redesign (1b2627b)
+
+### Commerce
+- Equipment: full cart → address → Razorpay checkout in-app
+- Manpower: quote-pending bookings — `OrdersProvider` sets
+  `quoteStatus: 'pending'`; copy is "Price confirmed on call before payment";
+  no ₹/GST anywhere on the manpower path; billing sums exclude quote orders
+- Reserve flow for price-on-request equipment (no fabricated prices)
+
+### Equipment browse (Blinkit-style)
+- Left category rail + dense 2-column grid (`equipment_tab.dart`)
+- MRP strikethrough + discounted price on equipment cards
+
+### Articles redesign
+- Featured hero card for the newest guide; per-category accent colors
+  (`article_category_style.dart`); markdown detail screen polish
+
+---
+
+## [2026-06-10] -- Care Team, Care Calendar, Needs-Based Tiers, Liquid Glass (6c921ff…49916eb)
+
+### Care Team hub (NEW `/care-team`)
+- Group chat first — one tap reaches the whole team
+- Member rows with call/chat (health manager, staff, doctors)
+- Ambulance card (24x7); past staff read-only history
+- Doctor recommendations can be added to cart (`doctor_recommendation.dart`)
+
+### Care Calendar (NEW `/care-calendar`)
+- Day / Week / Month segmented views; `care_event.dart` model
+- Dose groups with mark-taken; staff attendance with mark-present
+- Medication quick-actions; future-day "N doses scheduled" cards
+
+### Needs-based staff tier selection
+- `staff_role_card.dart`: care-needs checklist infers the manpower tier
+  (no price involved — still quote-pending)
+
+### Liquid Glass design system (phases A + B)
+- `lib/widgets/glass.dart` — GlassAppBar, GlassSurface glass chrome on every
+  screen; under-scroll + soft depth
+- `HousepitalCard` squircles (`RoundedSuperellipseBorder(16)`, press-scale
+  0.97 @ 120ms); motion gated on `MediaQuery.disableAnimations`
+
+### Dai Maa separation
+- Dai Maa is a separate business: offering removed from catalog; Home keeps a
+  single cross-promo banner linking to the external app, nothing else
+- Japa/Nanny are no longer Housepital offerings
+
+---
+
+## [2026-06-09] -- Real Dark Mode, Bundled Fonts, Official Logo (49422ab…2f7b197)
+
+### Dark mode
+- Theme-aware color resolver: `context.hc.*` tokens (`lib/config/app_colors.dart`,
+  `HcPalette` light/dark) applied across all screens
+- `test/widgets/dark_mode_test.dart` guard added
+
+### Typography
+- Archivo + NotoSansDevanagari now **bundled** TTFs in `assets/fonts/`
+  (consistent first paint, works offline); google_fonts runtime fetch removed
+  from pubspec — never re-add it
+- Gradient banners removed from services; official logo in header + compact Home
+
+---
+
+## [2026-06-08] -- Visual-Consistency Waves + CI Gates (913a075…f66626a)
+
+- App-wide visual-consistency pass (all 4 waves) following the holistic audit
+  (`docs/VISUAL_CONSISTENCY_AUDIT.md`)
+- Home: Book Services = bookable only, compact 3-col grid; icon + card system
+  unified; My Care decluttered, vitals deduped, report screen redesigned
+- NEW CI gates:
+  - `scripts/check_design_consistency.sh` — static design gate (banned color/
+    chrome patterns), runs in CI before tests
+  - `test/screens/overflow_smoke_test.dart` — 37 screens × 3 widths
+    (320/375/414), demo data present, Ahem font worst case
+- CI test step runs with `--dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key`
+  (un-skips 8 payment groups); coverage gate via lcov threshold
+
+---
+
 ## [2026-06-08] -- Assistant Action-Taking, AI Backend, Tri-Audit Fixes
 
 1407 passing tests, analyzer clean.
@@ -89,8 +187,11 @@
 - GoogleService-Info.plist registered in Xcode Runner target
 
 ### Other
-- CLAUDE.md added with Dynamic Workflows guidance
 - Dai Maa lockup label removed from home entry card
+
+> Correction (2026-06-11): an earlier version of this entry claimed
+> "CLAUDE.md added" — that file was never tracked at the time; CLAUDE.md was
+> actually created on 2026-06-11.
 
 ---
 

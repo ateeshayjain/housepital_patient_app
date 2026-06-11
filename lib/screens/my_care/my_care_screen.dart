@@ -4,10 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/medication_provider.dart';
 import '../../providers/my_care_provider.dart';
 import '../../services/handover_report_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
 import '../../utils/vital_classifier.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 import '../../screens/main_shell.dart';
@@ -47,13 +50,12 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
   }
 
   void _loadData() {
-    final patientId = context.read<AppProvider>().currentPatient?.id;
-    if (patientId != null) {
-      context.read<MyCareProvider>().loadMyCareData(patientId);
-    } else {
-      // Patient not loaded yet — seed demo data directly
-      context.read<MyCareProvider>().loadMyCareData('pat_demo_rajesh');
-    }
+    final patientId =
+        context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
+    context.read<MyCareProvider>().loadMyCareData(patientId);
+    // Medications summary card reads MedicationProvider (same source as the
+    // Home snippet) — make sure it's populated even if Home wasn't visited.
+    context.read<MedicationProvider>().loadMedications(patientId);
   }
 
   @override
@@ -83,6 +85,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
   }
 
   Widget _buildBody(MyCareProvider myCare, AppProvider app, AppLocalizations l) {
+    // Watch so the summary card live-updates when meds are added/stopped.
+    final activeMeds = context.watch<MedicationProvider>().activeMedications;
+
     if (myCare.isLoading && myCare.activeServices.isEmpty) {
       return const LoadingWidget();
     }
@@ -161,25 +166,17 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               child: HousepitalCard(
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: app.todayReport!.totalTasks > 0
-                                ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
-                                : 0,
-                            backgroundColor: context.hc.greyLighter,
-                            color: context.hc.success,
-                            strokeWidth: 4,
-                          ),
-                          Text(
-                            '${app.todayReport!.completedTasks}/${app.todayReport!.totalTasks}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                    CarePulseRing(
+                      value: app.todayReport!.totalTasks > 0
+                          ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
+                          : 0,
+                      size: 48,
+                      strokeWidth: 4,
+                      semanticLabel:
+                          '${app.todayReport!.completedTasks} of ${app.todayReport!.totalTasks} tasks completed',
+                      center: Text(
+                        '${app.todayReport!.completedTasks}/${app.todayReport!.totalTasks}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -210,12 +207,6 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           // 4b. Doctor's Advice — recommendations from the last consultation
           const DoctorAdviceCard(),
 
-          // 4a. Daily Care Rating
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: _DailyCareRatingCard(),
-          ),
-
           // 5. Today's Staff Attendance
           if (myCare.activeServices.any((s) => s.hasStaff))
             StaffAttendanceSection(services: myCare.activeServices),
@@ -228,44 +219,59 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
+            // Canonical top-level card: HousepitalCard (squircle 16, press
+            // 0.97) with onTap — no more hand-rolled radius-12 Container in a
+            // bare GestureDetector.
+            child: HousepitalCard(
+              padding: const EdgeInsets.all(12),
               onTap: () => Navigator.pushNamed(context, '/medications'),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.hc.divider),
-                ),
-                child: Row(
-                  children: [
-                    const AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('5 active medications',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                          Text('Amlodipine, Metformin, Aspirin, Pantoprazole, Insulin',
+              child: Row(
+                children: [
+                  const AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Live count + names from MedicationProvider — same
+                        // source as the Home medications snippet (no more
+                        // hardcoded "5 active medications" demo copy).
+                        Text(
+                            activeMeds.isEmpty
+                                ? 'No active medications'
+                                : '${activeMeds.length} active medication${activeMeds.length == 1 ? '' : 's'}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        if (activeMeds.isNotEmpty)
+                          Text(activeMeds.map((m) => m.name).join(', '),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
-                        ],
-                      ),
+                      ],
                     ),
-                    Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
-                  ],
-                ),
+                  ),
+                  Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
+                ],
               ),
             ),
           ),
 
           // 7. Doctor Handover Report — flagship share-with-your-doctor card.
-          const SectionHeader(title: 'Share with your doctor'),
+          // audit R2: role-gated. The handover PDF is the patient's full
+          // medical history — only the patient/family may export it, so the
+          // card is hidden entirely (not disabled) for staff-type roles.
+          if (canUserPerform(app.currentUserRole, UserAction.shareHandover)) ...[
+            const SectionHeader(title: 'Share with your doctor'),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _DoctorHandoverCard(),
+            ),
+          ],
+
+          // 8. Daily Care Rating — rating belongs at the END of the journey,
+          // after the day's care summary (last content card before padding).
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _DoctorHandoverCard(),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _DailyCareRatingCard(),
           ),
 
           // Billing intentionally NOT shown here — it lives in the Billing tab
@@ -327,54 +333,61 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               : context.hc.error;
     }
 
+    // Flat radius-12 bordered SUB-tile by canon (small pill inside the strip,
+    // not a top-level card) — but tappable surfaces use Material + InkWell,
+    // never a bare GestureDetector, so taps get ripple feedback.
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(context, '/vitals'),
-        child: Container(
-          width: 90,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: context.hc.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.hc.divider),
-          ),
-          // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1, so
-          // there's zero visual change on-device. Only when text would exceed
-          // the box (very large Dynamic Type / the Ahem test font) does it
-          // shrink to fit instead of painting an overflow stripe.
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
+      child: Material(
+        color: context.hc.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, '/vitals'),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 90,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.hc.divider),
+            ),
+            // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1,
+            // so there's zero visual change on-device. Only when text would
+            // exceed the box (very large Dynamic Type / the Ahem test font)
+            // does it shrink to fit instead of painting an overflow stripe.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(label,
-                        style: TextStyle(
-                            fontSize: 11, color: context.hc.greyLight)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
-                Text(unit,
-                    style: TextStyle(
-                        fontSize: 11, color: context.hc.greyLight)),
-              ],
+                      const SizedBox(width: 4),
+                      Text(label,
+                          style: TextStyle(
+                              fontSize: 11, color: context.hc.greyLight)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+                  Text(unit,
+                      style: TextStyle(
+                          fontSize: 11, color: context.hc.greyLight)),
+                ],
+              ),
             ),
           ),
         ),
@@ -405,7 +418,9 @@ class _DoctorHandoverCardState extends State<_DoctorHandoverCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Couldn't build the report. Please try again.")),
+              content: Text(
+                  "Couldn't build the report. Please try again, or ask your "
+                  'Health Manager to send it to you.')),
         );
       }
     } finally {
@@ -418,7 +433,45 @@ class _DoctorHandoverCardState extends State<_DoctorHandoverCard> {
     return HousepitalCard(
       child: Row(
         children: [
-          AppIconTile(icon: Icons.ios_share, color: context.hc.info),
+          // Mini page thumbnail — an instantly readable "document" glyph that
+          // teases the PDF artifact this flagship card produces (decorative;
+          // hc.white = surface in light, elevated surface in dark).
+          ExcludeSemantics(
+            child: Container(
+              width: 40,
+              height: 52,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: context.hc.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: context.hc.divider),
+              ),
+              child: Row(
+                children: [
+                  // 3px orange left rule — the report's brand spine.
+                  Container(width: 3, color: context.hc.orange),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 5,
+                        children: [
+                          for (final w in const [24.0, 18.0, 21.0])
+                            Container(
+                              width: w,
+                              height: 2,
+                              color: context.hc.greyLight,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -595,13 +648,10 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
     // ellipsised), the 5 stars left-aligned on line 2. Tapping a star still
     // rates the day (SnackBar for 4–5 stars, "what went wrong" sheet for
     // 1–3), so the post-tap feedback already explains the interaction.
-    return Container(
+    // Canonical top-level card: HousepitalCard (squircle 16) instead of a
+    // hand-rolled radius-12 bordered Container.
+    return HousepitalCard(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -632,28 +682,14 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
               ),
             )
           else
-            // 24px stars; each IconButton keeps a ≥44pt tap target. No extra
-            // gap widgets: the ~48px Material tap targets around the 24px
-            // glyphs already yield a comfortable visual gap, and 5×48 = 240
-            // is exactly what fits inside the card at the 320px minimum.
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(5, (i) {
-                final stars = i + 1;
-                return Semantics(
-                  label: 'Rate $stars star${stars == 1 ? '' : 's'}',
-                  button: true,
-                  child: IconButton(
-                    onPressed: () => _onRate(stars),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                        minWidth: 44, minHeight: 44),
-                    icon: const Icon(Icons.star_border,
-                        color: HousepitalColors.orange, size: 24),
-                  ),
-                );
-              }),
-            ),
+            // 24px stars; each star keeps a ≥44pt tap target. No extra gap
+            // widgets: the ~48px Material tap targets around the 24px glyphs
+            // already yield a comfortable visual gap, and 5×48 = 240 is
+            // exactly what fits inside the card at the 320px minimum.
+            // This card's accessible rater is now the shared StarRatingInput
+            // (lib/widgets/common_widgets.dart) — same Semantics + 44pt
+            // behavior, used app-wide.
+            StarRatingInput(value: 0, onChanged: _onRate),
         ],
       ),
     );

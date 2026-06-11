@@ -31,18 +31,19 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 | AI Assistant | **Claude** via Firebase Cloud Function (`functions/`) | Sahayak — Hinglish voice/text bot; key held as a Firebase secret |
 | Charts | **fl_chart** | Vitals sparklines in My Care tab |
 | Payments | **Razorpay** | Indian payment gateway (cards, UPI, netbanking) |
-| Fonts | **Archivo** (Google Fonts) | Per Housepital Brand Guidelines V1 |
+| PDF | **pdf + printing** | On-device invoice PDFs (PRO FORMA for quotes) + Doctor Handover report |
+| Fonts | **Bundled Archivo + NotoSansDevanagari TTFs** (`assets/fonts/`) | Consistent from first paint, works offline; google_fonts dependency removed — never re-add it |
 | Colors | **#F39314** (Primary Orange) | Per Brand Guidelines |
 | Localization | **English + Hindi** | Custom AppLocalizations with JSON assets |
 | Loading | **Shimmer** | Skeleton loading animations |
 
 ## Quick Stats
 
-- **45+ Dart source files** | **15,000+ lines of code**
-- **72 test files** | **1407 unit tests** | **2,900+ test LOC**
+- **144 Dart source files** | **~50,000 lines of code**
+- **86 test files** | **1,550+ tests** | **~19,800 test LOC**
 - **5 bottom tabs** (Home, My Care, Services, Billing, Settings)
-- **25+ screens** with full EN/HI localization
-- **30+ named routes** in onGenerateRoute
+- **40+ screens** with full EN/HI localization and dark mode
+- **52 named routes** in onGenerateRoute
 
 ---
 
@@ -96,7 +97,9 @@ get` first; the workaround is `--no-tree-shake-icons` (see
 
 1. Add google-services.json (Android) and GoogleService-Info.plist (iOS)
 2. Enable Phone Auth in Firebase Console
-3. Uncomment Firebase initialization in main.dart
+
+Firebase is initialized in `main.dart` (`Firebase.initializeApp`) — no code change
+needed; Crashlytics + Performance init is guarded (mobile-only, release-only).
 
 ---
 
@@ -104,71 +107,108 @@ get` first; the workaround is `--no-tree-shake-icons` (see
 
 ```
 housepital_patient_app/
-├── pubspec.yaml                      # Dependencies (20+ packages)
+├── pubspec.yaml                      # Dependencies (incl. pdf, printing; bundled fonts)
 │
 ├── lib/
-│   ├── main.dart                     # Entry point + Provider setup + routes
+│   ├── main.dart                     # Entry point + Provider setup + 52 routes
 │   │
 │   ├── config/
 │   │   ├── constants.dart            # API URLs, vital ranges, cities, relationships
-│   │   └── theme.dart                # Brand theme (#F39314, Archivo, service colors)
+│   │   ├── theme.dart                # Brand theme (#F39314, Archivo, light + dark)
+│   │   ├── app_colors.dart           # context.hc token resolver (HcPalette light/dark)
+│   │   ├── daimaa_theme.dart         # Dai Maa cross-promo banner colors
+│   │   └── firebase_options.dart     # Firebase config
 │   │
-│   ├── models/                       # 3 model files
-│   │   ├── models.dart               # Patient, Deployment, Attendance, Vitals, Invoice, ServiceItem, etc. (25+ classes)
-│   │   ├── my_care_models.dart       # ActiveService, HealthManager, ServiceDetail, StaffOnDuty, etc. (10 classes)
-│   │   └── medication_models.dart    # MedicationFull, MedicationLog, ScheduleSlot (4 classes)
+│   ├── models/                       # 9 model files
+│   │   ├── models.dart               # Patient, Deployment, Attendance, Vitals, Invoice, ServiceItem, etc.
+│   │   ├── my_care_models.dart       # ActiveService, HealthManager, ServiceDetail, StaffOnDuty, etc.
+│   │   ├── medication_models.dart    # MedicationFull, MedicationLog, ScheduleSlot
+│   │   ├── care_event.dart           # Care Calendar events (doses, attendance)
+│   │   ├── equipment_order.dart      # Orders + quote-pending bookings
+│   │   ├── medical_history.dart      # Read-only medical history (profile section)
+│   │   ├── doctor_recommendation.dart# Doctor recommendations → cart
+│   │   ├── article.dart              # Care Guides articles
+│   │   └── assistant_models.dart     # Assistant actions + safe parsing
 │   │
-│   ├── services/                     # 5 service classes
-│   │   ├── api_service.dart          # REST client with Bearer auth, all API endpoints
-│   │   ├── firebase_service.dart     # Phone OTP + FCM tokens
+│   ├── services/                     # 13 service classes
+│   │   ├── api_service.dart          # REST client with Bearer auth (+ i_api_service.dart interface)
+│   │   ├── firebase_service.dart     # Phone OTP + FCM tokens + Storage uploads
 │   │   ├── payment_service.dart      # Razorpay wrapper
+│   │   ├── invoice_pdf_service.dart  # On-device invoice PDF (PRO FORMA for quotes)
+│   │   ├── handover_report_service.dart # Doctor Handover PDF (role-gated)
+│   │   ├── assistant_service.dart    # AI assistant backend client + Hinglish stub
+│   │   ├── voice_service.dart        # speech_to_text + flutter_tts wrapper
+│   │   ├── medication_reminder_service.dart # Local dose notifications
 │   │   ├── payment_reminder_service.dart  # Due payment notifications
+│   │   ├── cache_service.dart        # Offline caching with TTL
+│   │   ├── video_call_service.dart   # Video consultation
 │   │   └── sync_service.dart         # Background sync for offline
 │   │
-│   ├── providers/                    # 4 providers
+│   ├── providers/                    # 10 providers
 │   │   ├── auth_provider.dart        # Auth state, session, user profile
 │   │   ├── app_provider.dart         # Patient, deployment, vitals, dashboard, locale
+│   │   ├── theme_provider.dart       # ThemeMode (system/light/dark), persisted
 │   │   ├── my_care_provider.dart     # Active services, health manager, service detail
 │   │   ├── medication_provider.dart  # Medications CRUD, schedule builder
-│   │   └── cart_provider.dart        # Equipment cart state
+│   │   ├── cart_provider.dart        # Equipment cart state
+│   │   ├── orders_provider.dart      # Orders + quote-pending bookings + assessments
+│   │   ├── billing_provider.dart     # Billing summary, EMI (quote orders excluded from sums)
+│   │   ├── blog_provider.dart        # Care Guides articles
+│   │   └── assistant_provider.dart   # Assistant orchestration (service+executor+voice)
 │   │
-│   ├── screens/                      # 25+ screens across 12 folders
+│   ├── screens/                      # 40+ screens across 20+ folders
 │   │   ├── auth/                     # login, otp, onboarding
-│   │   ├── home/                     # dashboard with vitals + attendance + report
-│   │   ├── my_care/                  # service monitoring hub (7 screens + 8 widgets)
-│   │   ├── services/                 # catalog (5 tabs), booking, assessment, equipment
-│   │   ├── billing/                  # invoices, payments, transactions
-│   │   ├── settings/                 # profile, family members
-│   │   ├── support/                  # raise concern, staff profile
+│   │   ├── home/                     # dashboard with vitals + attendance + Dai Maa banner
+│   │   ├── my_care/                  # service monitoring hub + medications
+│   │   ├── calendar/                 # Care Calendar (Day/Week/Month, doses, attendance)
+│   │   ├── care_team/                # Care Team hub (group chat, members, ambulance)
+│   │   ├── services/                 # catalog (6 tabs), booking, equipment, my orders
+│   │   ├── orders/                   # order tracking
+│   │   ├── rental/                   # rental agreement, equipment return
+│   │   ├── checkout/                 # address selection
+│   │   ├── billing/                  # invoices, payments, transactions, EMI
+│   │   ├── articles/                 # Care Guides list + markdown detail
+│   │   ├── assistant/                # Sahayak voice/text chat + action executor
+│   │   ├── consultation/             # video consultation
+│   │   ├── chat/                     # coordinator chat
+│   │   ├── settings/                 # profile (incl. medical history), family members
+│   │   ├── support/                  # raise concern, staff profile, replacement
 │   │   ├── reports/                  # daily report detail, vitals history
 │   │   ├── sos/                      # emergency contacts
 │   │   ├── notifications/            # push notification list
-│   │   ├── cart/                     # equipment cart + checkout
+│   │   ├── cart/                     # equipment cart
 │   │   ├── documents/                # prescription/report repository
 │   │   ├── search/                   # universal search
 │   │   └── packages/                 # care package detail
 │   │
 │   ├── widgets/                      # Reusable components
-│   │   └── common/                   # app_button, status_badge, loading_widget, etc.
+│   │   ├── glass.dart                # GlassAppBar, GlassSurface, HousepitalCard (Liquid Glass chrome)
+│   │   ├── common_widgets.dart       # app_button, status_badge, loading_widget, etc.
+│   │   ├── paginated_list.dart       # Reusable pagination
+│   │   └── assistant_fab.dart        # ✨ assistant entry point
 │   │
 │   └── utils/                        # Business logic helpers
 │       ├── app_localizations.dart    # Custom i18n with JSON (en/hi)
 │       └── helpers.dart              # VitalHelper, DateHelper, AttendanceHelper
 │
 ├── assets/
+│   ├── fonts/                        # Bundled Archivo.ttf + NotoSansDevanagari.ttf
 │   ├── i18n/en.json                  # English strings
 │   ├── i18n/hi.json                  # Hindi strings
 │   ├── equipment_catalog.json        # Equipment specs + pricing
 │   └── images/                       # App images
 │
+├── scripts/
+│   └── check_design_consistency.sh   # Static design gate (banned color/chrome patterns)
+│
 ├── docs/
 │   ├── my-care-tab.md                # My Care tab developer guide
 │   └── superpowers/                  # Design specs + implementation plans
 │
-└── test/                             # 1407 unit tests
-    ├── models/                       # 129 model tests
-    ├── providers/                    # 62 provider tests
-    └── screens/my_care/              # 29 widget tests
+└── test/                             # 86 test files, 1,550+ tests
+    ├── screens/overflow_smoke_test.dart  # 37 screens × 3 widths overflow guard
+    ├── widgets/dark_mode_test.dart       # dark-mode token guard
+    └── utils/i18n_sync_test.dart         # EN/HI key-sync guard
 ```
 
 ---
@@ -206,11 +246,16 @@ housepital_patient_app/
 - Report history and attendance history
 
 ### Tab 3 — Service Catalog
-- 5 sub-tabs: Manpower, Equipment, Consultations, Diagnostics, Sleep Therapy
-- Service booking wizard (3-step: details → slot → payment)
-- Assessment request flow (for nursing, japa, nanny)
-- Equipment detail modal (buy vs. rent, specs, add to cart)
-- Cart + Razorpay checkout
+- 6 sub-tabs: Manpower, Equipment, Consultations, Diagnostics, Lab Tests, Packages
+- Needs-based staff tier selection: checklist on `staff_role_card.dart` infers the
+  right manpower tier from care needs
+- Quote-pending manpower booking — **no prices shown anywhere** for manpower;
+  copy is "Price confirmed on call before payment"
+- Blinkit-style equipment browse: left category rail + dense 2-column grid,
+  MRP strikethrough + discounted price
+- Reserve flow for price-on-request equipment (no fabricated prices)
+- Equipment detail sheet (buy vs. rent, specs, add to cart)
+- Cart + Razorpay checkout (equipment); service booking wizard for bookable services
 
 ### Tab 4 — Billing
 - Invoice dashboard (total due, overdue count, total paid)
@@ -239,18 +284,59 @@ housepital_patient_app/
 - Powered by Claude via a Firebase Cloud Function (`functions/`); offline
   Hinglish keyword stub when `ASSISTANT_API_URL` is not set
 
+### Care Calendar (`/care-calendar`)
+- Day / Week / Month views in one segmented control
+- Dose groups with mark-taken quick actions
+- Staff attendance with mark-present confirmations
+- Future-day "N doses scheduled" cards
+
+### Care Team Hub (`/care-team`)
+- Group chat first — one tap reaches the whole team
+- Per-member call/chat rows (health manager, on-duty staff, doctors)
+- Ambulance card (call ambulance, 24x7 emergency)
+- Past staff history (read-only)
+
+### Commerce & Orders
+- Full in-app equipment commerce: cart → address → Razorpay checkout
+- Quote-pending manpower bookings (`quoteStatus: 'pending'`, no prices ever)
+- Reserve flow for price-on-request items
+- My Orders + order tracking, rental agreement + return, EMI plans
+- On-device PDF invoices via `invoice_pdf_service.dart` (PRO FORMA without
+  amounts for quote orders) and Doctor Handover report via
+  `handover_report_service.dart` (role-gated) — `pdf` + `printing` packages
+
+### Medical History
+- `MedicalHistory` model + read-only section in the patient profile
+
 ### Care Guides (Education)
 - 28 articles across 7 categories (Pulmo, Neuro, Ortho, Elderly, Mother & Baby,
-  Post-hospitalisation) — markdown bodies, category chips, read-time
+  Post-hospitalisation) — markdown bodies, read-time
+- Redesigned list: featured hero card for the newest guide + per-category accent colors
 - BlogProvider with offline demo fallback
 
+### Design System — Liquid Glass
+- `GlassAppBar` / `GlassSurface` chrome on every screen (`lib/widgets/glass.dart`)
+- `HousepitalCard` squircle cards (`RoundedSuperellipseBorder(16)`, press-scale)
+- Full dark mode: every brightness-sensitive color resolves through `context.hc`
+  tokens (`HcPalette` light/dark in `lib/config/app_colors.dart`)
+- Bundled Archivo + NotoSansDevanagari fonts (no runtime font fetch)
+- Dai Maa is a separate business — a single cross-promo banner on Home, nothing else
+
 ### Cross-Cutting Features
-- SOS emergency screen (Housepital, Police, Medical emergency)
+- SOS emergency screen (Housepital, Police, Medical emergency) — never blocked
 - Push notifications (FCM)
 - Universal search
 - Pull-to-refresh on all data screens
 - Shimmer loading skeletons
 - Custom error states with retry
+
+### Guards & CI
+- CI: `flutter analyze` → design gate (`scripts/check_design_consistency.sh`) →
+  full test run with `--dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key` →
+  coverage gate (lcov threshold)
+- Overflow smoke test: 37 screens × 3 widths (320/375/414)
+- Dark-mode token guard (`test/widgets/dark_mode_test.dart`)
+- EN/HI i18n key-sync guard (`test/utils/i18n_sync_test.dart`)
 
 ---
 
@@ -271,18 +357,21 @@ housepital_patient_app/
 ## Testing
 
 ```bash
-flutter test                    # All 1407 tests
-flutter test test/models/       # 129 model tests
-flutter test test/providers/    # 62 provider tests
-flutter test test/screens/      # 29 widget tests
+# Full suite (the dart-define un-skips 8 payment groups):
+flutter test --dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key
+
+# Targeted guards:
+flutter test test/screens/overflow_smoke_test.dart   # 37 screens × 3 widths
+flutter test test/widgets/dark_mode_test.dart        # dark-mode tokens
+flutter test test/utils/i18n_sync_test.dart          # EN/HI key sync
 ```
 
 ### Test Coverage
 
 Authoritative, always-current counts live in [docs/TEST_MAP.md](./docs/TEST_MAP.md).
-As of 2026-06-08: **1407 tests across 72 files** (analyzer clean). The table
-below is an illustrative sample of the earliest coverage; later batches added
-auth, payments, API, assistant, blogs, and home-layout suites.
+As of 2026-06-11: **1,550+ tests across 86 files** (analyzer clean). The table
+below is an illustrative sample; later batches added calendar, care-team,
+commerce, PDF-service, dark-mode, and overflow suites.
 
 | Module (sample) | Tests | What's Covered |
 |--------|-------|----------------|
@@ -291,14 +380,14 @@ auth, payments, API, assistant, blogs, and home-layout suites.
 | my_care_provider | 22 | loadMyCareData, loadServiceDetail, staleness, error handling |
 | medication_provider | 40 | CRUD operations, schedule builder, computed getters, error handling |
 | assistant (executor/service/provider/screen) | 52 | actions, confirm-first, permission gating, stub patterns |
-| blogs/articles | 10 | Article model, BlogProvider fallback, list screen |
-| **Total** | **1407** | see TEST_MAP.md for the full per-file breakdown |
+| overflow smoke | 111 | 37 screens × 320/375/414 widths, Ahem worst-case font |
+| **Total** | **1,550+** | see TEST_MAP.md for the full per-file breakdown |
 
 ---
 
 ## Business Rules
 
-- **Never show prices for manpower services** (caretaker, nursing, japa, nanny) — users reject without talking to sales
+- **Never show prices for manpower services** (caretaker, nursing, attendant; legacy japa/nanny removed with Dai Maa split) — users reject without talking to sales. Manpower booking is quote-pending: "Price confirmed on call before payment"; quote invoices are PRO FORMA without amounts; billing sums exclude quotes
 - **Equipment pricing is monthly** (minimum 15 days = 1 month), never per-day
 - **Staff app writes administration logs** — patient app is read-only for medication logs
 - **Patient app writes medication CRUD** — add, edit, delete, stock updates
@@ -309,7 +398,7 @@ auth, payments, API, assistant, blogs, and home-layout suites.
 
 ## Remaining Steps for Production
 
-1. **Firebase Setup** — Add google-services.json / GoogleService-Info.plist, uncomment Firebase.initializeApp() in main.dart
+1. **Firebase Setup** — Add google-services.json / GoogleService-Info.plist (Firebase.initializeApp() is already wired in main.dart)
 2. **Wire Mock Data** — AppProvider uses _loadMockData(); connect to real REST API
 3. **Backend API** — Build REST endpoints matching ApiService methods
 4. **Push Notifications** — Wire FCM token registration and notification handlers

@@ -458,7 +458,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 : TextButton(
                     onPressed: _saveProfile,
                     child: Text(l.t('save'),
-                        style: const TextStyle(color: HousepitalColors.orange)),
+                        style: TextStyle(color: context.hc.orangeText)),
                   ),
         ],
       ),
@@ -664,9 +664,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   onPressed: _addEmergencyContact,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.orange,
-                  ),
                 ),
               ],
             ),
@@ -676,13 +673,10 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               final ec = entry.value;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Container(
+                // Canonical card: HousepitalCard (squircle 16) instead of a
+                // hand-rolled radius-12 bordered Container.
+                child: HousepitalCard(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.hc.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: context.hc.divider),
-                  ),
                   child: Column(
                     children: [
                       Row(
@@ -811,9 +805,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   onPressed: _addMedication,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.orange,
-                  ),
                 ),
               ],
             ),
@@ -823,13 +814,10 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               final med = entry.value;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Container(
+                // Canonical card: HousepitalCard (squircle 16) instead of a
+                // hand-rolled radius-12 bordered Container.
+                child: HousepitalCard(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.hc.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: context.hc.divider),
-                  ),
                   child: Column(
                     children: [
                       Row(

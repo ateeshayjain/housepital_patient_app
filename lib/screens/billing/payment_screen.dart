@@ -98,13 +98,15 @@ class _PaymentScreenState extends State<PaymentScreen>
   void initState() {
     super.initState();
     _initPaymentService();
+    // Apple P8: celebrations stay under the 500ms ceiling — 450ms easeOutBack
+    // (was 600ms elasticOut).
     _checkAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 450),
     );
     _checkScaleAnimation = CurvedAnimation(
       parent: _checkAnimController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutBack,
     );
 
     _fadeAnimController = AnimationController(
@@ -200,8 +202,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           _failureMessage = null;
         });
         HapticFeedback.mediumImpact();
-        _fadeAnimController.forward();
-        _checkAnimController.forward();
+        _playResultAnimations();
       },
       onFailure: (message) {
         if (!mounted) return;
@@ -213,10 +214,22 @@ class _PaymentScreenState extends State<PaymentScreen>
           _failureMessage = message;
         });
         HapticFeedback.heavyImpact();
-        _fadeAnimController.forward();
-        _checkAnimController.forward();
+        _playResultAnimations();
       },
     );
+  }
+
+  /// WCAG 2.3.3 / Apple P8: the payment-result reveal honors Reduce Motion —
+  /// with the OS flag on, the result renders at its final frame immediately.
+  /// (Safe to read MediaQuery here: this only runs from post-build callbacks.)
+  void _playResultAnimations() {
+    if (MediaQuery.of(context).disableAnimations) {
+      _fadeAnimController.value = 1.0;
+      _checkAnimController.value = 1.0;
+    } else {
+      _fadeAnimController.forward();
+      _checkAnimController.forward();
+    }
   }
 
   /// Web payment simulation — simulates a successful payment after a brief delay.
@@ -236,8 +249,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       _transactionId = txnId;
       _failureMessage = null;
     });
-    _fadeAnimController.forward();
-    _checkAnimController.forward();
+    _playResultAnimations();
   }
 
   void _retryPayment() {

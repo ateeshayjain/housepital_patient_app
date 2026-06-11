@@ -91,8 +91,11 @@ class StaffRoleCard extends StatelessWidget {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Icons.star,
-                                  size: 14, color: HousepitalColors.orange),
+                              const Icon(
+                                Icons.star,
+                                size: 14,
+                                color: HousepitalColors.orange,
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 '${role.rating}',
@@ -115,8 +118,11 @@ class StaffRoleCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right,
-                        color: context.hc.greyLight, size: 22),
+                    Icon(
+                      Icons.chevron_right,
+                      color: context.hc.greyLight,
+                      size: 22,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -127,12 +133,15 @@ class StaffRoleCard extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: color.withValues(alpha: 0.2)),
+                            color: color.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Text(
                           shift,
@@ -213,8 +222,10 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
   void initState() {
     super.initState();
     _levelTasks = widget.role.levels
-        .map((level) =>
-            level.included.where((t) => !_metaEntry.hasMatch(t)).toList())
+        .map(
+          (level) =>
+              level.included.where((t) => !_metaEntry.hasMatch(t)).toList(),
+        )
         .toList();
     // Basic staff work is selected by default.
     for (final task in _levelTasks.first) {
@@ -249,11 +260,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
   }
 
   ServiceItem get _matchingService => widget.services.firstWhere(
-        (s) => s.name
-            .toLowerCase()
-            .contains(widget.role.title.toLowerCase().split(' ').first),
-        orElse: () => widget.services.first,
-      );
+    (s) => s.name.toLowerCase().contains(
+      widget.role.title.toLowerCase().split(' ').first,
+    ),
+    orElse: () => widget.services.first,
+  );
 
   /// Role-permission gate shared by both CTAs. Returns true when the current
   /// user may proceed; otherwise shows the request-booking stub /
@@ -285,22 +296,26 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
         for (final task in _levelTasks[i])
           if (_selected.contains(_taskKey(i, task))) task,
     ];
-    debugPrint('StaffRole needs selection — role=${widget.role.title}, '
-        'recommended=$levelName, tasks=$selectedTasks');
+    debugPrint(
+      'StaffRole needs selection — role=${widget.role.title}, '
+      'recommended=$levelName, tasks=$selectedTasks',
+    );
 
     if (!_gateBookingAction()) return;
     // Book end-to-end: full wizard with quote-pending order (no upfront
     // price — confirmed on call before payment).
     // Push first (context still valid), sheet auto-dismisses
-    Navigator.of(context)
-        .pushNamed('/service-booking', arguments: matchingService);
+    Navigator.of(
+      context,
+    ).pushNamed('/service-booking', arguments: matchingService);
   }
 
   /// Secondary path: user prefers a callback instead of booking directly.
   void _onRequestCallback() {
     if (!_gateBookingAction()) return;
-    Navigator.of(context)
-        .pushNamed('/assessment-request', arguments: _matchingService);
+    Navigator.of(
+      context,
+    ).pushNamed('/assessment-request', arguments: _matchingService);
   }
 
   @override
@@ -327,8 +342,9 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                 Row(
                   children: [
                     AppIconTile(
-                        icon: widget.role.icon,
-                        color: HousepitalColors.orange),
+                      icon: widget.role.icon,
+                      color: HousepitalColors.orange,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -359,8 +375,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                 // Rating
                 Row(
                   children: [
-                    const Icon(Icons.star,
-                        size: 18, color: HousepitalColors.orange),
+                    const Icon(
+                      Icons.star,
+                      size: 18,
+                      color: HousepitalColors.orange,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${widget.role.rating}',
@@ -395,11 +414,16 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                 Wrap(
                   spacing: 8,
                   children: widget.role.availableShifts
-                      .map((shift) => Chip(
-                            label: Text(shift),
-                            avatar: const Icon(Icons.schedule,
-                                size: 16, color: HousepitalColors.orange),
-                          ))
+                      .map(
+                        (shift) => Chip(
+                          label: Text(shift),
+                          avatar: const Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: HousepitalColors.orange,
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
                 const SizedBox(height: 16),
@@ -428,7 +452,9 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                   Container(
                     margin: const EdgeInsets.only(top: 8, bottom: 4),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: context.hc.orangeLight,
                       borderRadius: BorderRadius.circular(8),
@@ -460,27 +486,32 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  ...excludedTasks.map((task) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.cancel_outlined,
-                                size: 16, color: context.hc.greyLight),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                task,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: context.hc.greyLight,
-                                  height: 1.3,
-                                ),
+                  ...excludedTasks.map(
+                    (task) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.cancel_outlined,
+                            size: 16,
+                            color: context.hc.greyLight,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              task,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: context.hc.greyLight,
+                                height: 1.3,
                               ),
                             ),
-                          ],
-                        ),
-                      )),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 16),
 
@@ -495,8 +526,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.verified_user,
-                              size: 16, color: context.hc.success),
+                          Icon(
+                            Icons.verified_user,
+                            size: 16,
+                            color: context.hc.success,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Background verified & Aadhaar checked',
@@ -511,8 +545,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.shield,
-                              size: 16, color: context.hc.success),
+                          Icon(
+                            Icons.shield,
+                            size: 16,
+                            color: context.hc.success,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Police verification completed',
@@ -527,8 +564,11 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.school,
-                              size: 16, color: context.hc.success),
+                          Icon(
+                            Icons.school,
+                            size: 16,
+                            color: context.hc.success,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Housepital trained & certified',
@@ -638,37 +678,46 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
   Widget _taskRow(int levelIndex, String task) {
     final key = _taskKey(levelIndex, task);
     final selected = _selected.contains(key);
-    return InkWell(
-      onTap: () => setState(() {
-        if (selected) {
-          _selected.remove(key);
-        } else {
-          _selected.add(key);
-        }
-      }),
-      borderRadius: BorderRadius.circular(8),
-      child: ConstrainedBox(
-        // 44pt minimum tap target (Apple HIG / accessibility).
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          children: [
-            Icon(
-              selected ? Icons.check_box : Icons.check_box_outline_blank,
-              size: 22,
-              color: selected ? context.hc.success : context.hc.greyLight,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                task,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: selected ? context.hc.black : context.hc.grey,
-                  height: 1.3,
+    // Semantics(checked:) so VoiceOver announces checkbox role + state.
+    return Semantics(
+      checked: selected,
+      label: task,
+      child: InkWell(
+        onTap: () => setState(() {
+          if (selected) {
+            _selected.remove(key);
+          } else {
+            _selected.add(key);
+          }
+        }),
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          // 44pt minimum tap target (Apple HIG / accessibility).
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.check_box : Icons.check_box_outline_blank,
+                size: 22,
+                // Selection = orange app-wide (green is reserved for status
+                // outcomes).
+                color: selected
+                    ? HousepitalColors.orange
+                    : context.hc.greyLight,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  task,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: selected ? context.hc.black : context.hc.grey,
+                    height: 1.3,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -47,8 +47,12 @@ jobs:
       #
       # --coverage emits coverage/lcov.info which the next step parses to
       # enforce a minimum line-coverage threshold.
+      # RAZORPAY_KEY dart-define: payment_service_test gates 8 groups behind a
+      # non-placeholder key — without this static test value they silently
+      # skip and CI looks green while never exercising payment payload/status
+      # logic. Static dummy, never a real credential.
       - name: Test
-        run: flutter test --coverage --reporter=expanded
+        run: flutter test --coverage --reporter=expanded --dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key
 
       # Coverage gate. Fails the build if line coverage drops below the
       # threshold. Starting baseline is intentionally conservative (50%) —

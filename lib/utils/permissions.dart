@@ -5,11 +5,13 @@
 /// - FAMILY_MEMBER: View + limited actions — can view, rate, raise concern,
 ///   and request bookings (which the primary contact must approve and pay).
 ///   CANNOT directly book, pay, edit patient, or manage family.
-/// - PATIENT_SELF: View-only access.
+/// - PATIENT_SELF: View-only access, plus sharing their own Doctor Handover
+///   report (it is the patient's own medical history).
 /// - CARETAKER: Hired staff handed temporary read-only view of one patient's
 ///   care plan. Can view and raise concerns (so they can flag medical issues
 ///   from the field) but cannot book, pay, rate, edit, or even request a
-///   booking — that is the family's call, not the staff's.
+///   booking — that is the family's call, not the staff's. They also must
+///   NOT export the Doctor Handover report (full medical history).
 library;
 
 /// All known roles.
@@ -31,6 +33,9 @@ class UserAction {
   static const String view = 'view';
   static const String rate = 'rate';
   static const String raiseConcern = 'raise_concern';
+  // audit R2: exporting the Doctor Handover PDF (full medical history) is a
+  // family/patient decision — hired staff must never be able to export it.
+  static const String shareHandover = 'share_handover';
 }
 
 /// Permission matrix: role -> set of allowed actions.
@@ -44,17 +49,21 @@ const Map<String, Set<String>> _permissions = {
     'view',
     'rate',
     'raise_concern',
+    'share_handover',
   },
   'FAMILY_MEMBER': {
     'view',
     'request_booking',
     'rate',
     'raise_concern',
+    'share_handover',
   },
   'PATIENT_SELF': {
     'view',
+    'share_handover',
   },
   // audit M-5: caretaker — narrower than family (no booking, no rating).
+  // audit R2: no 'share_handover' — staff must not export the medical history.
   'CARETAKER': {
     'view',
     'raise_concern',

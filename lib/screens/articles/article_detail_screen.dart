@@ -306,7 +306,6 @@ class _HelpfulCardState extends State<_HelpfulCard> {
               icon: const Icon(Icons.support_agent, size: 18),
               label: const Text('Talk to your Health Manager'),
               style: TextButton.styleFrom(
-                foregroundColor: context.hc.orangeText,
                 textStyle: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

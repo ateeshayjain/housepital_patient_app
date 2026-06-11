@@ -21,6 +21,7 @@ import 'package:housepital_patient/providers/medication_provider.dart';
 import 'package:housepital_patient/screens/my_care/medications_screen.dart';
 import 'package:housepital_patient/services/api_service.dart';
 import 'package:housepital_patient/utils/app_localizations.dart';
+import 'package:housepital_patient/widgets/care_pulse_ring.dart';
 
 class _TestAppProvider extends AppProvider {
   _TestAppProvider() : super(ApiService());
@@ -107,11 +108,10 @@ void main() {
     expect(find.text("This week's adherence"), findsOneWidget);
     // The percentage now lives INSIDE the 56px progress ring…
     expect(find.text('$pct%'), findsOneWidget);
-    // …with a determinate CircularProgressIndicator at pct/100.
-    final ring = tester.widgetList<CircularProgressIndicator>(
-        find.byType(CircularProgressIndicator));
-    expect(ring.where((r) => r.value != null && (r.value! - pct / 100).abs() < 0.001),
-        isNotEmpty);
+    // …with a determinate CarePulseRing (the signature ring) at pct/100.
+    final ring = tester.widgetList<CarePulseRing>(find.byType(CarePulseRing));
+    expect(
+        ring.where((r) => (r.value - pct / 100).abs() < 0.001), isNotEmpty);
     // Dose count is its own line now.
     expect(find.text('$weekTaken of $weekTotal doses'), findsOneWidget);
   });

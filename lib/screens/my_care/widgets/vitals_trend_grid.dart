@@ -19,9 +19,10 @@ class VitalsTrendGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.t('vitals_trend'),
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(
+            l.t('vitals_trend'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           GridView(
             // Zero padding: padding-less nested scrollables absorb the ambient
@@ -55,88 +56,111 @@ class VitalsTrendGrid extends StatelessWidget {
   Widget _vitalCard(BuildContext context, String title, VitalCard card) {
     final statusColor = _statusColor(context, card.status);
 
-    return InkWell(
-      onTap: () => Navigator.pushNamed(context, '/vitals', arguments: title.toLowerCase()),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: card.status == 'critical'
-                ? context.hc.error
-                : context.hc.divider,
-          ),
-          color: context.hc.white,
+    // Accessibility: the card is tappable, so it must read as a button to
+    // assistive tech, with a label that summarises it ("BP, normal"). Press
+    // feedback comes from the InkWell ripple (house pattern for flat,
+    // bordered tiles).
+    return Semantics(
+      button: true,
+      label: '$title, ${card.status}',
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(
+          context,
+          '/vitals',
+          arguments: title.toLowerCase(),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(title,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: card.status == 'critical'
+                  ? context.hc.error
+                  : context.hc.divider,
+            ),
+            color: context.hc.white,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 12, color: context.hc.greyLight)),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                        fontSize: 12,
+                        color: context.hc.greyLight,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    card.status[0].toUpperCase() + card.status.substring(1),
-                    style: TextStyle(
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      card.status[0].toUpperCase() + card.status.substring(1),
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: statusColor),
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                card.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (card.sparkline.length > 1) ...[
+                const Spacer(),
+                SizedBox(
+                  height: 24,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: const FlGridData(show: false),
+                      titlesData: const FlTitlesData(show: false),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: card.sparkline
+                              .asMap()
+                              .entries
+                              .map((e) => FlSpot(e.key.toDouble(), e.value))
+                              .toList(),
+                          isCurved: true,
+                          color: statusColor,
+                          barWidth: 2,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: statusColor.withValues(alpha: 0.1),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 4),
-            Text(card.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-            if (card.sparkline.length > 1) ...[
-              const Spacer(),
-              SizedBox(
-                height: 24,
-                child: LineChart(
-                  LineChartData(
-                    gridData: const FlGridData(show: false),
-                    titlesData: const FlTitlesData(show: false),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: card.sparkline
-                            .asMap()
-                            .entries
-                            .map((e) => FlSpot(e.key.toDouble(), e.value))
-                            .toList(),
-                        isCurved: true,
-                        color: statusColor,
-                        barWidth: 2,
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          color: statusColor.withValues(alpha: 0.1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );

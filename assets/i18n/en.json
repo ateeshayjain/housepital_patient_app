@@ -300,5 +300,9 @@
   "gst": "GST",
   "grand_total": "Grand Total",
   "download_pdf": "Download PDF",
-  "downloading_pdf": "Downloading PDF..."
+  "downloading_pdf": "Downloading PDF...",
+  "billing_empty_title": "No bills yet",
+  "billing_empty_body": "When your services begin, every invoice and payment will live here.",
+  "meds_empty_title": "No medicines yet",
+  "meds_empty_body": "Add medicines or let your supervisor sync the prescription — reminders and adherence tracking start here."
 }

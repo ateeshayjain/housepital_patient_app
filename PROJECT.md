@@ -112,7 +112,7 @@ Skim once. Bookmark when you'll need it.
 - **Branches:** `fix/<topic>` or `feat/<topic>` — never push directly to `main`.
 - **PRs:** all must pass CI (`flutter analyze --no-fatal-warnings --no-fatal-infos` + `flutter test` + `flutter build web --release`).
 - **Commits:** Conventional — `fix:`, `feat:`, `docs:`, `chore:`, `test:` prefix.
-- **Business rule (durable):** manpower service prices — currently **shown** in catalog (reversed from "hidden" rule on 2026-03-24, per BUSINESS_RULES.md). Do not re-introduce price-hiding without explicit product sign-off.
-- **Sub-brand (durable):** Dai Maa (mother & baby care) — uses plum/lavender/cream palette in `lib/config/daimaa_theme.dart`. Japa Maid + Nanny routes through Dai Maa branded screens.
+- **Business rule (durable, INVIOLABLE):** manpower service prices (caretaker, nursing, attendant — and legacy japa/nanny) are **NEVER shown anywhere in the app**. Customers reject without talking when they see a price. Booking is fully in-app but quote-pending: no ₹/GST anywhere in the wizard, copy "Price confirmed on call before payment" (`catalog_seeds.dart` strips prices; `orders_provider.dart` sets `quoteStatus: 'pending'`); never render ₹0; quote invoices export PRO FORMA without amounts. *(An earlier note here claiming prices were re-shown on 2026-03-24 was a documentation error — code has hidden them since the M-1 fix.)* Do not re-introduce price display without explicit owner sign-off.
+- **Separate business (durable):** Dai Maa (mother & baby) is a **different company and app** — not a Housepital offering. In-app presence is ONE cross-promo banner on Home linking out; Japa/Nanny are not sold in this app. `daimaa_theme.dart` exists only for the banner's branding.
 
 Full conventions: [CONTRIBUTING.md](./CONTRIBUTING.md).

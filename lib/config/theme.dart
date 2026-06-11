@@ -57,6 +57,10 @@ class HousepitalColors {
   static const Color orangeText = Color(0xFFB86E00); // 4.6:1 on white — use for text
   static const Color orangeLight = Color(0xFFFFF3E0);
   static const Color orangeDark = Color(0xFFCC6E00); // 4.5:1 on white
+  // ON-orange text/icons. White on orange is only ~2.3:1 (fails AA), so any
+  // text sitting on an orange fill uses this dark ink — same value the dark
+  // theme already uses (HousepitalColorsDark.onOrange): 6.3:1 on orange.
+  static const Color onOrange = Color(0xFF1A1A1A);
 
   // Brand Secondary - WCAG AA compliant
   static const Color grey = Color(0xFF3D3D3D); // 5.5:1 on #F8F9FA
@@ -145,7 +149,8 @@ class HousepitalTheme {
       fontFamilyFallback: _devanagariFallback,
       colorScheme: ColorScheme.light(
         primary: HousepitalColors.orange,
-        onPrimary: HousepitalColors.white,
+        // Dark ink on orange — white on orange is only ~2.3:1 (fails AA).
+        onPrimary: HousepitalColors.onOrange,
         secondary: HousepitalColors.grey,
         onSecondary: HousepitalColors.white,
         surface: HousepitalColors.surface,
@@ -195,10 +200,11 @@ class HousepitalTheme {
           fontWeight: FontWeight.w400,
           color: HousepitalColors.greyLight,
         ),
-        labelLarge: TextStyle(fontFamily: 'Archivo', 
+        labelLarge: TextStyle(fontFamily: 'Archivo',
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: HousepitalColors.white,
+          // Used on buttons — match onPrimary so it passes AA on orange fills.
+          color: HousepitalColors.onOrange,
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -215,7 +221,8 @@ class HousepitalTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: HousepitalColors.orange,
-          foregroundColor: HousepitalColors.white,
+          // Dark text on orange — 6.3:1 vs white's ~2.3:1 (brand fill kept).
+          foregroundColor: HousepitalColors.onOrange,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -234,6 +241,13 @@ class HousepitalTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+        ),
+      ),
+      // Raw brand orange on white is only ~2.3:1 — TextButtons use the
+      // darkened orangeText (4.6:1, AA) instead.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: HousepitalColors.orangeText,
         ),
       ),
       // Canonical card: radius 12, 1px divider border, no shadow — every
@@ -287,7 +301,8 @@ class HousepitalTheme {
         labelStyle: TextStyle(fontFamily: 'Archivo',
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: HousepitalColors.orange,
+          // Raw orange on orangeLight is ~2:1 — orangeText keeps AA.
+          color: HousepitalColors.orangeText,
         ),
         shape: StadiumBorder(),
         side: BorderSide(color: Colors.transparent),

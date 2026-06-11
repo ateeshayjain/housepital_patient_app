@@ -89,7 +89,14 @@ class InvoicePdfService {
 
   /// Builds the invoice PDF bytes for [order]. Never displays amounts for
   /// quote-pending orders (pro forma).
-  Future<Uint8List> buildInvoicePdf(Map<String, dynamic> order) async {
+  ///
+  /// [compress] exists for tests only: uncompressed content streams keep the
+  /// base-14-font text literal, so the no-amounts-on-pro-forma policy can be
+  /// asserted against the actual bytes.
+  Future<Uint8List> buildInvoicePdf(
+    Map<String, dynamic> order, {
+    bool compress = true,
+  }) async {
     final logo = await _loadLogo();
 
     final orderId = order['id'] as String? ?? '';
@@ -111,7 +118,7 @@ class InvoicePdfService {
         fontSize: 10, fontWeight: pw.FontWeight.bold, color: _grey);
     const cellStyle = pw.TextStyle(fontSize: 10);
 
-    final doc = pw.Document();
+    final doc = pw.Document(compress: compress);
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,

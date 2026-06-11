@@ -1,37 +1,27 @@
-// test/screens/overflow_smoke_test.dart
+// test/screens/dark_mode_sweep_test.dart
 //
-// Screen-level OVERFLOW smoke tests.
+// Dark-mode SWEEP across the full overflow-smoke screen list.
 //
-// Why this exists: a "BOTTOM OVERFLOWED" stripe shipped on the My Care
-// "Today's Vitals" strip even though analyzer was clean and 1408 tests passed.
-// The reason it slipped through: the other screen tests pump on a deliberately
-// huge surface (1080x4000) "so all sections lay out without overflow" — which
-// is exactly why they can never catch an overflow. A 4000px-tall canvas has
-// room no real phone has.
+// test/widgets/dark_mode_test.dart proves the HcPalette resolver flips and a
+// couple of shared widgets adapt — but nothing pumped every SCREEN under the
+// dark theme. A dark-mode-only crash (null token, brightness-dependent layout,
+// hardcoded light asset) would ship invisibly. This file pumps each screen
+// from test/screens/overflow_smoke_test.dart ONCE at 375x667 wrapped in
+// HousepitalTheme.darkTheme and asserts no exception (crash or RenderFlex
+// overflow) was thrown.
 //
-// This file does the opposite: it pumps each screen at REAL phone sizes and
-// fails if Flutter reports ANY RenderFlex overflow. Flutter reports overflow
-// via FlutterError.onError during paint, which flutter_test surfaces through
-// tester.takeException() — so the assertion is simply "no exception after a
-// pump at a phone-sized surface".
-//
-// Critically, screens are pumped WITH demo data present (vitals, active
-// services, orders, medications, …), because the overflowing layouts are
-// gated behind populated state — the exact path the isolated widget tests
-// never exercised.
-//
-// NOTE on the Ahem test font: widget tests render with "Ahem", whose every
-// glyph is a full em-square — much wider/taller than the real Archivo font
-// (bundled TTF asset, not loaded by the test binding). So this suite
-// over-reports vs. real devices but doubles as a worst-case large-text guard.
-// Every fix applied here is correct on real devices AND helps large Dynamic
-// Type — never a distortion just to satisfy Ahem.
+// Host setup (test providers, demo data seeding, runAsync pump, timer
+// draining) is copied from overflow_smoke_test.dart — its helpers are private
+// to that file, so they are duplicated here verbatim apart from the dark
+// theme. Runtime is kept sane: ONE size, dark only (light x3 sizes is the
+// overflow suite's job).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:housepital_patient/config/theme.dart';
 import 'package:housepital_patient/data/care_packages.dart';
 import 'package:housepital_patient/data/demo_data.dart';
 import 'package:housepital_patient/models/article.dart';
@@ -95,15 +85,13 @@ import 'package:housepital_patient/utils/permissions.dart';
 import '../_mocks/fake_auth_api_service.dart';
 import '../_mocks/fake_firebase_service.dart';
 
-// Real phone logical sizes (devicePixelRatio pinned to 1.0 so physical ==
-// logical). Smallest first — the iPhone SE is where vertical strips overflow.
-const Map<String, Size> _phoneSizes = {
-  'small  320x568 (SE)': Size(320, 568),
-  'std    375x667 (8)': Size(375, 667),
-  'large  414x896 (11)': Size(414, 896),
-};
+// One representative phone size — the std 375x667 (iPhone 8). The overflow
+// suite already sweeps 320/375/414 in light mode; this suite's job is the
+// dark-mode-only failure class, so one size keeps runtime sane.
+const Size _size = Size(375, 667);
 
 // ── Test providers: seed demo data synchronously, neutralise I/O loaders ─────
+// (Copied from overflow_smoke_test.dart.)
 
 class _TestAppProvider extends AppProvider {
   _TestAppProvider() : super(ApiService());
@@ -116,7 +104,6 @@ class _TestAppProvider extends AppProvider {
   Deployment? get activeDeployment => DemoData.icuDeployment;
   @override
   bool get isDashboardLoading => false;
-  // The two getters that gate the overflowing My Care sections:
   @override
   VitalReading? get latestVitals => DemoData.vitalsHistory.last;
   @override
@@ -143,7 +130,6 @@ class _TestMyCareProvider extends MyCareProvider {
   String? get error => null;
   @override
   bool get isStale => false;
-  // Service-detail path (service_detail_screen):
   @override
   ServiceDetail? get selectedServiceDetail => DemoData.icuServiceDetail;
   @override
@@ -203,14 +189,11 @@ class _TestBlogProvider extends BlogProvider {
   Future<void> loadArticles({String? category}) async {}
 }
 
-/// OrdersProvider that seeds the demo orders synchronously (the real one loads
-/// from SharedPreferences asynchronously, leaving an empty list during a pump).
 class _TestOrdersProvider extends OrdersProvider {
   @override
   List<Map<String, dynamic>> get orders => DemoData.orders;
 }
 
-// AssistantProvider built with the stub service so no network / Firebase.
 AssistantProvider _assistantProvider() {
   final executor = AssistantExecutor(
     api: ApiService(),
@@ -236,7 +219,6 @@ AuthProvider _authProvider() => AuthProvider(
       FakeAuthApiService(),
     );
 
-// A demo ServiceItem in the equipment category (instant booking).
 ServiceItem _equipmentService() => ServiceItem(
       id: 'equip-oxygen-concentrator',
       name: 'Oxygen Concentrator (5L)',
@@ -251,7 +233,6 @@ ServiceItem _equipmentService() => ServiceItem(
       iconName: 'medical_services',
     );
 
-// A demo ServiceItem that requires an assessment (manpower).
 ServiceItem _assessmentService() => ServiceItem(
       id: 'visit-physio-assessment',
       name: 'Physiotherapy Assessment',
@@ -263,7 +244,6 @@ ServiceItem _assessmentService() => ServiceItem(
       durationMinutes: 45,
     );
 
-// A demo ServiceItem booked on a schedule (diagnostics, instant).
 ServiceItem _bookingService() => ServiceItem(
       id: 'diag-blood-test',
       name: 'Complete Blood Count (CBC)',
@@ -300,8 +280,6 @@ Widget _myCareHost(AppProvider app, MyCareProvider myCare) => _wrap(
       ),
     );
 
-/// Generic host wiring every global provider a screen might read, so any of
-/// the const/no-arg screens can be dropped in as [child].
 Widget _appHost(Widget child) => _wrap(
       MultiProvider(
         providers: [
@@ -324,28 +302,25 @@ Widget _appHost(Widget child) => _wrap(
       ),
     );
 
-// disableAnimations:true keeps animated screens deterministic under pump.
-// (The Home banner auto-scroll timer this originally guarded against has been
-// removed — the banner is manual swipe + dots only.)
+/// Identical to overflow_smoke_test's _wrap except the MaterialApp is forced
+/// onto the app's REAL dark theme (`theme:` is what MaterialApp uses when no
+/// darkTheme/themeMode pair is given — same approach as dark_mode_test.dart).
 Widget _wrap(Widget home) => MediaQuery(
       data: const MediaQueryData(disableAnimations: true),
       child: MaterialApp(
+        theme: HousepitalTheme.darkTheme,
         localizationsDelegates: const [AppLocalizations.delegate],
         supportedLocales: const [Locale('en')],
         home: home,
       ),
     );
 
-/// Pumps [build] at [size] and returns the first overflow/layout exception (or
-/// null). Mirrors the runAsync+pump pattern used by the other screen tests so
-/// the async AppLocalizations delegate and real timers behave.
+/// Pumps [build] at 375x667 and returns the first exception (or null).
+/// Same runAsync + teardown-inside-runAsync pattern as the overflow suite.
 Future<Object?> _exceptionAt(
-    WidgetTester tester, Widget Function() build, Size size) async {
-  // Set the SharedPreferences mock BEFORE building, because the providers'
-  // constructors call SharedPreferences.getInstance — building eagerly in the
-  // caller would run that before the mock exists (order-dependent crash).
+    WidgetTester tester, Widget Function() build) async {
   SharedPreferences.setMockInitialValues({});
-  tester.view.physicalSize = size;
+  tester.view.physicalSize = _size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -355,13 +330,8 @@ Future<Object?> _exceptionAt(
     await tester.pumpWidget(build());
     await Future<void>.delayed(const Duration(milliseconds: 100));
     ex = tester.takeException();
-    // Tear the tree down INSIDE runAsync so dispose() runs (cancelling any
-    // periodic timer a screen started in initState, e.g. the VideoConsultation
-    // call-duration ticker). Then drain any remaining one-shot timers (e.g. the
-    // 2s auto-connect Future.delayed) — once the tree is gone they fire as
-    // no-ops because `mounted` is false, so nothing reschedules. This keeps
-    // flutter_test's "Timer still pending" invariant happy without masking a
-    // real layout overflow (already captured above).
+    // Tear down inside runAsync so dispose() cancels periodic timers, then
+    // drain remaining one-shot timers (see overflow_smoke_test.dart).
     await tester.pumpWidget(const SizedBox.shrink());
     await Future<void>.delayed(const Duration(seconds: 3));
   });
@@ -372,138 +342,130 @@ Future<Object?> _exceptionAt(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  _phoneSizes.forEach((label, size) {
-    // ── Original two (Home + My Care) ─────────────────────────────────────
-    testWidgets('Home lays out without overflow — $label', (tester) async {
-      final ex =
-          await _exceptionAt(tester, () => _homeHost(_TestAppProvider()), size);
-      expect(ex, isNull,
-          reason: 'Home overflowed at $size — a RenderFlex exceeded its box.');
-    });
-
-    testWidgets('My Care (with vitals) lays out without overflow — $label',
-        (tester) async {
-      final ex = await _exceptionAt(tester,
-          () => _myCareHost(_TestAppProvider(), _TestMyCareProvider()), size);
-      expect(ex, isNull,
-          reason: 'My Care overflowed at $size — likely the Today\'s Vitals '
-              'strip (fixed-height row vs. taller pill content).');
-    });
-
-    // ── Const / no-arg screens ────────────────────────────────────────────
-    void noArg(String name, Widget Function() screen) {
-      testWidgets('$name lays out without overflow — $label', (tester) async {
-        final ex = await _exceptionAt(tester, () => _appHost(screen()), size);
-        expect(ex, isNull, reason: '$name overflowed at $size.');
-      });
-    }
-
-    noArg('BillingScreen', () => const BillingScreen());
-    noArg('TransactionLogScreen', () => const TransactionLogScreen());
-    noArg('CartScreen', () => const CartScreen());
-    noArg('MyOrdersScreen', () => const MyOrdersScreen(initialTab: 0));
-    noArg('SettingsScreen', () => const SettingsScreen());
-    noArg('PatientProfileScreen', () => const PatientProfileScreen());
-    noArg('FamilyMembersScreen', () => const FamilyMembersScreen());
-    noArg('AddPatientScreen', () => const AddPatientScreen());
-    noArg('NotificationPreferencesScreen',
-        () => const NotificationPreferencesScreen());
-    noArg('HelpFaqScreen', () => const HelpFaqScreen());
-    noArg('AboutScreen', () => const AboutScreen());
-    noArg('SOSScreen', () => const SOSScreen());
-    noArg('NotificationsScreen', () => const NotificationsScreen());
-    noArg('DocumentRepositoryScreen', () => const DocumentRepositoryScreen());
-    noArg('UniversalSearchScreen', () => const UniversalSearchScreen());
-    noArg('MedicationsScreen', () => const MedicationsScreen());
-    noArg('MedicationScheduleScreen', () => const MedicationScheduleScreen());
-    noArg('RaiseConcernScreen', () => const RaiseConcernScreen());
-    noArg('PaymentMethodsScreen', () => const PaymentMethodsScreen());
-    noArg('ServiceCatalogScreen', () => const ServiceCatalogScreen());
-
-    // AssistantScreen + Auth screens need their own providers.
-    testWidgets('AssistantScreen lays out without overflow — $label',
-        (tester) async {
-      final ex = await _exceptionAt(
-        tester,
-        () => _wrap(
-          ChangeNotifierProvider<AssistantProvider>.value(
-            value: _assistantProvider(),
-            child: const AssistantScreen(),
-          ),
-        ),
-        size,
-      );
-      expect(ex, isNull, reason: 'AssistantScreen overflowed at $size.');
-    });
-
-    testWidgets('OnboardingScreen lays out without overflow — $label',
-        (tester) async {
-      final ex = await _exceptionAt(
-        tester,
-        () => _wrap(
-          ChangeNotifierProvider<AuthProvider>.value(
-            value: _authProvider(),
-            child: const OnboardingScreen(),
-          ),
-        ),
-        size,
-      );
-      expect(ex, isNull, reason: 'OnboardingScreen overflowed at $size.');
-    });
-
-    testWidgets('OtpScreen lays out without overflow — $label', (tester) async {
-      final ex = await _exceptionAt(
-        tester,
-        () => _wrap(
-          ChangeNotifierProvider<AuthProvider>.value(
-            value: _authProvider(),
-            child: const OtpScreen(),
-          ),
-        ),
-        size,
-      );
-      expect(ex, isNull, reason: 'OtpScreen overflowed at $size.');
-    });
-
-    // ── Arg-taking screens ────────────────────────────────────────────────
-    void argScreen(String name, Widget Function() screen) {
-      testWidgets('$name lays out without overflow — $label', (tester) async {
-        final ex = await _exceptionAt(tester, () => _appHost(screen()), size);
-        expect(ex, isNull, reason: '$name overflowed at $size.');
-      });
-    }
-
-    argScreen('ServiceDetailScreen',
-        () => ServiceDetailScreen(service: DemoData.activeServices[0]));
-    argScreen('PackageDetailScreen',
-        () => PackageDetailScreen(package: carePackages[0]));
-    argScreen('ServiceBookingScreen',
-        () => ServiceBookingScreen(service: _bookingService()));
-    argScreen('EquipmentDetailScreen',
-        () => EquipmentDetailScreen(service: _equipmentService()));
-    argScreen('AssessmentRequestScreen',
-        () => AssessmentRequestScreen(service: _assessmentService()));
-    argScreen('VitalsScreen', () => const VitalsScreen(initialVital: null));
-    argScreen('DailyReportScreen',
-        () => DailyReportScreen(reportId: DemoData.todayReport.id));
-    argScreen('StaffProfileScreen',
-        () => const StaffProfileScreen(staffId: 'staff_sunita'));
-    argScreen('InvoiceDetailScreen',
-        () => const InvoiceDetailScreen(invoiceId: 'inv_001'));
-    argScreen('ReportHistoryScreen',
-        () => const ReportHistoryScreen(deploymentId: 'dep_icu_001'));
-    argScreen('AttendanceHistoryScreen',
-        () => const AttendanceHistoryScreen(deploymentId: 'dep_icu_001'));
-    // NOTE: StaffOtpVerificationScreen is intentionally NOT covered here.
-    // Its initState() calls FirebaseFirestore.instance (via _storeOtp /
-    // _listenForVerification), which throws "No Firebase App" in a widget test
-    // — there is no device-correct UI fix for that, and initialising real
-    // Firebase from a test is out of scope. Layout overflow on this screen
-    // cannot be exercised without a Firebase mock the harness doesn't provide.
-    argScreen(
-        'VideoConsultationScreen',
-        () => const VideoConsultationScreen(
-              doctorName: 'Dr. Anjali Sharma',
-            ));
+  testWidgets('Home renders in DARK mode without crash/overflow',
+      (tester) async {
+    final ex = await _exceptionAt(tester, () => _homeHost(_TestAppProvider()));
+    expect(ex, isNull, reason: 'Home threw under darkTheme at $_size.');
   });
+
+  testWidgets('My Care (with vitals) renders in DARK mode without crash',
+      (tester) async {
+    final ex = await _exceptionAt(
+        tester, () => _myCareHost(_TestAppProvider(), _TestMyCareProvider()));
+    expect(ex, isNull, reason: 'My Care threw under darkTheme at $_size.');
+  });
+
+  // ── Const / no-arg screens ──────────────────────────────────────────────
+  void noArg(String name, Widget Function() screen) {
+    testWidgets('$name renders in DARK mode without crash/overflow',
+        (tester) async {
+      final ex = await _exceptionAt(tester, () => _appHost(screen()));
+      expect(ex, isNull, reason: '$name threw under darkTheme at $_size.');
+    });
+  }
+
+  noArg('BillingScreen', () => const BillingScreen());
+  noArg('TransactionLogScreen', () => const TransactionLogScreen());
+  noArg('CartScreen', () => const CartScreen());
+  noArg('MyOrdersScreen', () => const MyOrdersScreen(initialTab: 0));
+  noArg('SettingsScreen', () => const SettingsScreen());
+  noArg('PatientProfileScreen', () => const PatientProfileScreen());
+  noArg('FamilyMembersScreen', () => const FamilyMembersScreen());
+  noArg('AddPatientScreen', () => const AddPatientScreen());
+  noArg('NotificationPreferencesScreen',
+      () => const NotificationPreferencesScreen());
+  noArg('HelpFaqScreen', () => const HelpFaqScreen());
+  noArg('AboutScreen', () => const AboutScreen());
+  noArg('SOSScreen', () => const SOSScreen());
+  noArg('NotificationsScreen', () => const NotificationsScreen());
+  noArg('DocumentRepositoryScreen', () => const DocumentRepositoryScreen());
+  noArg('UniversalSearchScreen', () => const UniversalSearchScreen());
+  noArg('MedicationsScreen', () => const MedicationsScreen());
+  noArg('MedicationScheduleScreen', () => const MedicationScheduleScreen());
+  noArg('RaiseConcernScreen', () => const RaiseConcernScreen());
+  noArg('PaymentMethodsScreen', () => const PaymentMethodsScreen());
+  noArg('ServiceCatalogScreen', () => const ServiceCatalogScreen());
+
+  // AssistantScreen + Auth screens need their own providers.
+  testWidgets('AssistantScreen renders in DARK mode without crash',
+      (tester) async {
+    final ex = await _exceptionAt(
+      tester,
+      () => _wrap(
+        ChangeNotifierProvider<AssistantProvider>.value(
+          value: _assistantProvider(),
+          child: const AssistantScreen(),
+        ),
+      ),
+    );
+    expect(ex, isNull,
+        reason: 'AssistantScreen threw under darkTheme at $_size.');
+  });
+
+  testWidgets('OnboardingScreen renders in DARK mode without crash',
+      (tester) async {
+    final ex = await _exceptionAt(
+      tester,
+      () => _wrap(
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: _authProvider(),
+          child: const OnboardingScreen(),
+        ),
+      ),
+    );
+    expect(ex, isNull,
+        reason: 'OnboardingScreen threw under darkTheme at $_size.');
+  });
+
+  testWidgets('OtpScreen renders in DARK mode without crash', (tester) async {
+    final ex = await _exceptionAt(
+      tester,
+      () => _wrap(
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: _authProvider(),
+          child: const OtpScreen(),
+        ),
+      ),
+    );
+    expect(ex, isNull, reason: 'OtpScreen threw under darkTheme at $_size.');
+  });
+
+  // ── Arg-taking screens ──────────────────────────────────────────────────
+  void argScreen(String name, Widget Function() screen) {
+    testWidgets('$name renders in DARK mode without crash/overflow',
+        (tester) async {
+      final ex = await _exceptionAt(tester, () => _appHost(screen()));
+      expect(ex, isNull, reason: '$name threw under darkTheme at $_size.');
+    });
+  }
+
+  argScreen('ServiceDetailScreen',
+      () => ServiceDetailScreen(service: DemoData.activeServices[0]));
+  argScreen('PackageDetailScreen',
+      () => PackageDetailScreen(package: carePackages[0]));
+  argScreen('ServiceBookingScreen',
+      () => ServiceBookingScreen(service: _bookingService()));
+  argScreen('EquipmentDetailScreen',
+      () => EquipmentDetailScreen(service: _equipmentService()));
+  argScreen('AssessmentRequestScreen',
+      () => AssessmentRequestScreen(service: _assessmentService()));
+  argScreen('VitalsScreen', () => const VitalsScreen(initialVital: null));
+  argScreen('DailyReportScreen',
+      () => DailyReportScreen(reportId: DemoData.todayReport.id));
+  argScreen('StaffProfileScreen',
+      () => const StaffProfileScreen(staffId: 'staff_sunita'));
+  argScreen('InvoiceDetailScreen',
+      () => const InvoiceDetailScreen(invoiceId: 'inv_001'));
+  argScreen('ReportHistoryScreen',
+      () => const ReportHistoryScreen(deploymentId: 'dep_icu_001'));
+  argScreen('AttendanceHistoryScreen',
+      () => const AttendanceHistoryScreen(deploymentId: 'dep_icu_001'));
+  // StaffOtpVerificationScreen intentionally NOT covered — its initState hits
+  // FirebaseFirestore.instance with no try/catch (same exclusion + rationale
+  // as overflow_smoke_test.dart).
+  argScreen(
+      'VideoConsultationScreen',
+      () => const VideoConsultationScreen(
+            doctorName: 'Dr. Anjali Sharma',
+          ));
 }
