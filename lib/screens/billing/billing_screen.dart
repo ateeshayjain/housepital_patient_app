@@ -16,6 +16,7 @@ import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
 class BillingScreen extends StatefulWidget {
@@ -81,12 +82,14 @@ class _BillingScreenState extends State<BillingScreen> {
     }
 
     final result = <Map<String, dynamic>>[];
+    // Neutral categorical ramp — these are categories, not statuses, so they
+    // must not borrow status colors (amber would falsely read as a warning).
     if (serviceSpend > 0) {
       result.add({
         'category': 'Services',
         'amount': serviceSpend,
         'icon': Icons.medical_services,
-        'color': context.hc.info,
+        'color': context.hc.orange,
       });
     }
     if (equipmentSpend > 0) {
@@ -94,7 +97,7 @@ class _BillingScreenState extends State<BillingScreen> {
         'category': 'Equipment',
         'amount': equipmentSpend,
         'icon': Icons.inventory_2,
-        'color': context.hc.warning,
+        'color': context.hc.grey,
       });
     }
     return result;
@@ -190,19 +193,10 @@ class _BillingScreenState extends State<BillingScreen> {
             const SizedBox(height: 12),
 
             if (filtered.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      Icon(Icons.receipt_long_outlined,
-                          size: 48, color: context.hc.greyLight),
-                      const SizedBox(height: 12),
-                      Text(l.t('no_data'),
-                          style: TextStyle(color: context.hc.greyLight)),
-                    ],
-                  ),
-                ),
+              HousepitalEmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: l.t('billing_empty_title'),
+                body: l.t('billing_empty_body'),
               )
             else
               ...filtered.map((order) => _buildOrderCard(order, l)),
@@ -376,11 +370,12 @@ class _BillingScreenState extends State<BillingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Spend Summary',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        Text('By category',
-            style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
+        const SectionHeader(title: 'Spend Summary'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text('By category',
+              style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
+        ),
         const SizedBox(height: 12),
 
         // Stacked bar

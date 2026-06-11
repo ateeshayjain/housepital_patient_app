@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
@@ -20,6 +21,11 @@ import '../../widgets/glass.dart';
 import '../main_shell.dart';
 import '../services/service_catalog_screen.dart';
 
+// WhatsApp brand green — a third-party brand color with no Housepital token.
+// Allowlisted in scripts/check_design_consistency.sh; named here so the one
+// sanctioned literal isn't re-typed ad hoc.
+const Color _whatsAppGreen = Color(0xFF25D366);
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -30,24 +36,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _dutyTimer;
 
-  // Banner carousel
+  // Banner carousel — manual swipe + dots ONLY. The timer-driven auto-advance
+  // was removed (audit round 2): self-moving UI fights the calm-clinical tone,
+  // and the banner is already demoted to a promo surface at the page bottom.
   final PageController _bannerController = PageController();
-  Timer? _bannerTimer;
   int _currentBannerPage = 0;
-  // audit M-18: hoisted from `% 3` literal so adding/removing slides in
-  // `_buildHeroBanner` automatically updates auto-scroll wrap-around.
-  // Defaults to 1 (safe modulo) and is overwritten on the first build.
-  int _slideCount = 1;
 
-  // audit batch 4 (Agent L): tracks AnimatedScale press state for cards that
-  // implement Apple's 0.98 press feedback (P5 — feedback latency under 100ms).
+  // audit batch 4 (Agent L): tracks AnimatedScale press state for NON-card
+  // tappables (hero call card, quick-action tiles) that implement Apple's
+  // 0.98 press feedback. Section cards use HousepitalCard, which carries its
+  // own 0.97/120ms press scale.
   final Map<String, double> _pressedScale = {};
-
-  // audit batch 4 (Agent L): guard so we only attempt to start the banner
-  // auto-scroll once. We defer the start to didChangeDependencies because that
-  // is the first lifecycle hook where MediaQuery is available — required for
-  // the reduced-motion (P8) check.
-  bool _bannerAutoScrollStarted = false;
 
   @override
   void initState() {
@@ -64,43 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     });
     _startDutyTimer();
-    // audit batch 4 (Agent L): banner auto-scroll start moved to
-    // didChangeDependencies so MediaQuery.disableAnimations is available.
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_bannerAutoScrollStarted) {
-      _bannerAutoScrollStarted = true;
-      // audit batch 4 (Agent L): WCAG 2.3.3 / Apple P8 — honor the user's
-      // "Reduce Motion" / "Reduce Animations" OS setting. When disabled,
-      // skip the timer entirely so the carousel stays on the slide the user
-      // last saw and the dot indicator stops shifting on its own.
-      if (!MediaQuery.of(context).disableAnimations) {
-        _startBannerAutoScroll();
-      }
-    }
   }
 
   void _startDutyTimer() {
     _dutyTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       // Tick to refresh widgets that depend on elapsed duty time.
       if (mounted) setState(() {});
-    });
-  }
-
-  void _startBannerAutoScroll() {
-    _bannerTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || !_bannerController.hasClients) return;
-      // audit M-18: derive wrap-around from actual slide count (set by
-      // `_buildHeroBanner` on each build) instead of the hardcoded `% 3`.
-      final nextPage = (_currentBannerPage + 1) % _slideCount;
-      _bannerController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
     });
   }
 
@@ -117,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _dutyTimer?.cancel();
-    _bannerTimer?.cancel();
     _bannerController.dispose();
     super.dispose();
   }
@@ -128,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final app = context.watch<AppProvider>();
     final role = app.currentUserRole;
     final isPatientSelf = role == UserRole.patientSelf;
-    final canBook = canUserPerform(role, UserAction.book) ||
+    final canBook =
+        canUserPerform(role, UserAction.book) ||
         canUserPerform(role, UserAction.requestBooking);
 
     return Scaffold(
@@ -142,7 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom + 16),
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -154,22 +123,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: LoadingWidget(),
                   )
                 else ...[
+                  // Inter-SECTION rhythm (audit round 2): the old 4px SizedBox
+                  // shims were too tight. Every section card is now a
+                  // HousepitalCard whose themed Card margin contributes 8px
+                  // above and below, so the explicit shims are GONE rather
+                  // than doubled — each section boundary gets a consistent
+                  // ≥8px gap without inflating the compact top stack.
+
                   // Patient-self always sees the big call card up top — that's
                   // the one action available to them.
                   if (isPatientSelf) _buildCallCaregiverCard(context, app),
 
                   // 1. Your Health Team
-                  _sectionLabel('Your Health Team',
-                      onSeeAll: () =>
-                          Navigator.pushNamed(context, '/care-team')),
+                  _sectionLabel(
+                    'Your Health Team',
+                    onSeeAll: () => Navigator.pushNamed(context, '/care-team'),
+                  ),
                   _buildHealthTeamCard(context, l, app),
-                  const SizedBox(height: 4),
 
                   // 2. Current Services
                   if (app.activeDeployment != null) ...[
-                    _sectionLabel('Current Services', onSeeAll: () => MainShell.switchToTab(1)),
+                    _sectionLabel(
+                      'Current Services',
+                      onSeeAll: () => MainShell.switchToTab(1),
+                    ),
                     _buildActiveServicesQuickView(context, l, app),
-                    const SizedBox(height: 4),
                   ],
 
                   // Vitals intentionally NOT shown on Home — they live on the
@@ -178,34 +156,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // 3a. Medications snippet (only renders if active meds exist)
                   _buildMedicationsSnippet(context),
-                  const SizedBox(height: 4),
 
                   // 4. Book Services — hidden from view-only roles.
                   if (canBook) ...[
-                    _sectionLabel('Book Services', onSeeAll: () => MainShell.switchToTab(2)),
+                    _sectionLabel(
+                      'Book Services',
+                      onSeeAll: () => MainShell.switchToTab(2),
+                    ),
                     _buildQuickActionsGrid(context, l),
-                    const SizedBox(height: 4),
 
                     // 4b. Dai Maa sub-brand entry
                     _buildDaiMaaEntry(context),
-                    const SizedBox(height: 4),
                   ],
 
                   // 4c. Care Guides entry — available to ALL roles (reading
                   // health education isn't a "booking" action).
                   _buildCareGuidesEntry(context),
-                  const SizedBox(height: 4),
 
                   // 4d. Care Calendar entry — schedule/adherence/visits at a
                   // glance, available to all roles (read-only surface).
                   _buildCareCalendarEntry(context),
-                  const SizedBox(height: 4),
 
                   // 5. Today's Report
                   if (app.todayReport != null) ...[
-                    _sectionLabel("Today's Report", onSeeAll: () => Navigator.pushNamed(context, '/report-detail', arguments: app.todayReport)),
+                    _sectionLabel(
+                      "Today's Report",
+                      onSeeAll: () => Navigator.pushNamed(
+                        context,
+                        '/report-detail',
+                        arguments: app.todayReport,
+                      ),
+                    ),
                     _buildReportSnippet(context, app),
-                    const SizedBox(height: 4),
                   ],
 
                   // 6. Payments — only show to roles that can actually pay.
@@ -278,8 +260,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       shape: BoxShape.circle,
                     ),
                     // Dark ink on orange — white on orange fails AA (~2.3:1).
-                    child: const Icon(Icons.phone_in_talk,
-                        color: HousepitalColors.onOrange, size: 32),
+                    child: const Icon(
+                      Icons.phone_in_talk,
+                      color: HousepitalColors.onOrange,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -364,9 +349,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Icon(Icons.person_outline, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (tooltip != null) ...[
             const SizedBox(width: 4),
             Icon(Icons.info_outline, size: 12, color: color),
@@ -381,7 +371,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------------------------------------------------------------------------
   // Header
   // ---------------------------------------------------------------------------
-  Widget _buildHeader(BuildContext context, AppLocalizations l, AppProvider app) {
+  Widget _buildHeader(
+    BuildContext context,
+    AppLocalizations l,
+    AppProvider app,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
       child: Row(
@@ -404,7 +398,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 2),
                 if (app.currentPatient != null && app.patients.length > 1)
                   Semantics(
-                    label: 'Switch patient. Current: ${app.currentPatient!.name}',
+                    label:
+                        'Switch patient. Current: ${app.currentPatient!.name}',
                     button: true,
                     // audit batch 4 (Agent L): WCAG 2.5.5 / Apple P4 — chip is
                     // visually 14pt text + 20pt icon (~28pt total), short of
@@ -421,16 +416,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                l.t('dashboard_care',
-                                    {'name': app.currentPatient!.name}),
+                                l.t('dashboard_care', {
+                                  'name': app.currentPatient!.name,
+                                }),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: context.hc.grey,
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              Icon(Icons.arrow_drop_down,
-                                  color: context.hc.grey, size: 20),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: context.hc.grey,
+                                size: 20,
+                              ),
                             ],
                           ),
                         ),
@@ -450,13 +449,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Consumer<CartProvider>(
             builder: (_, cart, _) => Semantics(
-              label: 'Cart${cart.itemCount > 0 ? ", ${cart.itemCount} items" : ""}',
+              label:
+                  'Cart${cart.itemCount > 0 ? ", ${cart.itemCount} items" : ""}',
               button: true,
               child: IconButton(
                 icon: Badge(
                   isLabelVisible: cart.itemCount > 0,
-                  label: Text('${cart.itemCount}',
-                      style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                    '${cart.itemCount}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
                   backgroundColor: HousepitalColors.orange,
                   child: const Icon(Icons.shopping_cart_outlined),
                 ),
@@ -473,14 +475,54 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           // SOS — emergency action lives in the persistent header so it's
-          // always one tap away (never buried in a scrollable grid).
+          // always one tap away (never buried in a scrollable grid). Rendered
+          // as a distinct red pill (not a fourth identical icon) so the
+          // emergency affordance reads instantly; red is reserved for SOS.
           Semantics(
-            label: 'SOS emergency',
+            label: 'SOS — emergency help',
             button: true,
-            child: IconButton(
-              icon: Icon(Icons.emergency, color: context.hc.error),
-              tooltip: 'SOS',
-              onPressed: () => Navigator.pushNamed(context, '/sos'),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: () {
+                HapticFeedback.heavyImpact();
+                Navigator.pushNamed(context, '/sos');
+              },
+              // 44pt minimum hit target around the compact visual pill.
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: ShapeDecoration(
+                      color: context.hc.error,
+                      shape: const StadiumBorder(),
+                    ),
+                    // Icon + label are decorative for assistive tech — the
+                    // explicit Semantics label above announces the action.
+                    child: const ExcludeSemantics(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.emergency, color: Colors.white, size: 16),
+                          SizedBox(width: 4),
+                          Text(
+                            'SOS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -496,21 +538,24 @@ class _HomeScreenState extends State<HomeScreen> {
       _BannerSlide(
         title: 'Hospital-like expertise.\nHome-like care.',
         subtitle: 'Trusted by 5,000+ families in Delhi NCR',
-        gradientColors: [const Color(0xFFFF8C00), const Color(0xFFFF6B35)],
+        gradientColors: const [
+          HeroGradient.orangeStart,
+          HeroGradient.orangeEnd,
+        ],
         icon: Icons.home_filled,
         imagePath: 'assets/images/branding/hero_care.jpg',
       ),
       _BannerSlide(
         title: '24/7 ICU Setup\nat Home',
         subtitle: 'Critical care nursing & medical equipment',
-        gradientColors: [context.hc.info, const Color(0xFF42A5F5)],
+        gradientColors: [context.hc.info, HeroGradient.blueEnd],
         icon: Icons.monitor_heart,
         imagePath: 'assets/images/branding/hero_nurse.jpg',
       ),
       _BannerSlide(
         title: 'Free Health\nAssessment',
         subtitle: 'Book now — no obligations',
-        gradientColors: [context.hc.success, const Color(0xFF66BB6A)],
+        gradientColors: [context.hc.success, HeroGradient.greenEnd],
         icon: Icons.health_and_safety,
         ctaText: 'Book Now',
         onCtaTap: () {
@@ -520,9 +565,6 @@ class _HomeScreenState extends State<HomeScreen> {
         imagePath: 'assets/images/branding/hero_family.jpg',
       ),
     ];
-    // audit M-18: stash the count so the auto-scroll timer wraps on the real
-    // slide count rather than a hardcoded `3`.
-    _slideCount = slides.length;
 
     return Column(
       children: [
@@ -544,97 +586,101 @@ class _HomeScreenState extends State<HomeScreen> {
                   label:
                       'Promotional banner ${index + 1} of ${slides.length}. ${slide.title.replaceAll('\n', ' ')}. ${slide.subtitle}',
                   child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: slide.imagePath != null
-                        ? DecorationImage(
-                            image: AssetImage(slide.imagePath!),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withValues(alpha: 0.45),
-                              BlendMode.darken,
-                            ),
-                          )
-                        : null,
-                    gradient: slide.imagePath == null
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: slide.gradientColors,
-                          )
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: slide.gradientColors.first.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                slide.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  height: 1.2,
-                                ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      image: slide.imagePath != null
+                          ? DecorationImage(
+                              image: AssetImage(slide.imagePath!),
+                              fit: BoxFit.cover,
+                              colorFilter: ColorFilter.mode(
+                                Colors.black.withValues(alpha: 0.45),
+                                BlendMode.darken,
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                slide.subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                ),
-                              ),
-                              if (slide.ctaText != null) ...[
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: slide.onCtaTap,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      slide.ctaText!,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: slide.gradientColors.first,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+                            )
+                          : null,
+                      gradient: slide.imagePath == null
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: slide.gradientColors,
+                            )
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: slide.gradientColors.first.withValues(
+                            alpha: 0.3,
                           ),
-                        ),
-                        Icon(
-                          slide.icon,
-                          size: 56,
-                          color: Colors.white.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  slide.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  slide.subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                                if (slide.ctaText != null) ...[
+                                  const SizedBox(height: 10),
+                                  GestureDetector(
+                                    onTap: slide.onCtaTap,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        slide.ctaText!,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: slide.gradientColors.first,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            slide.icon,
+                            size: 56,
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
                 ),
               );
             },
@@ -699,132 +745,161 @@ class _HomeScreenState extends State<HomeScreen> {
   // Health Team Card
   // ---------------------------------------------------------------------------
   Widget _buildHealthTeamCard(
-      BuildContext context, AppLocalizations l, AppProvider app) {
+    BuildContext context,
+    AppLocalizations l,
+    AppProvider app,
+  ) {
     final deployment = app.activeDeployment;
     final patient = app.currentPatient;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.hc.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.hc.divider),
-        ),
-        child: Padding(
-          // Header removed — the "Your Health Team" section label above the
-          // card already names it (other sections follow the same pattern).
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (deployment != null) ...[
-                // FIRST option: the team GROUP CHAT — one tap reaches every
-                // member (manager, nurse, doctor) so queries resolve in one
-                // place. Whole row taps into the group thread.
-                InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () =>
-                      Navigator.pushNamed(context, '/chat', arguments: {
-                    'patientId':
-                        app.currentPatient?.id ?? 'pat_demo_rajesh',
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: HousepitalCard(
+        // Header removed — the "Your Health Team" section label above the
+        // card already names it (other sections follow the same pattern).
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (deployment != null) ...[
+              // FIRST option: the team GROUP CHAT — one tap reaches every
+              // member (manager, nurse, doctor) so queries resolve in one
+              // place. Whole row taps into the group thread.
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  '/chat',
+                  arguments: {
+                    'patientId': app.currentPatient?.id ?? 'pat_demo_rajesh',
                     'coordinatorName': 'Care Team',
-                  }),
-                  child: Row(
-                    children: [
-                      const AppIconTile(
-                          icon: Icons.groups, color: HousepitalColors.orange),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Care Team Group Chat',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.black,
-                                )),
-                            Text('All queries in one place',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.hc.greyLight,
-                                )),
-                          ],
-                        ),
-                      ),
-                      Semantics(
-                        label: 'Call Housepital care team',
-                        button: true,
-                        child: IconButton(
-                          icon: const Icon(Icons.phone, size: 20),
-                          color: context.hc.success,
-                          constraints: const BoxConstraints(
-                              minWidth: 44, minHeight: 44),
-                          onPressed: () => launchUrl(Uri.parse(
-                              'tel:${AppConstants.supportPhone}')),
-                        ),
-                      ),
-                      Semantics(
-                        label: 'Open care team group chat',
-                        button: true,
-                        child: IconButton(
-                          icon: const Icon(Icons.forum, size: 20),
-                          color: HousepitalColors.orange,
-                          constraints: const BoxConstraints(
-                              minWidth: 44, minHeight: 44),
-                          onPressed: () => Navigator.pushNamed(
-                              context, '/chat', arguments: {
-                            'patientId': app.currentPatient?.id ??
-                                'pat_demo_rajesh',
-                            'coordinatorName': 'Care Team',
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
+                  },
                 ),
-                const SizedBox(height: 6),
-                _TeamMemberRow(
-                  role: deployment.staffRole ?? 'Staff',
-                  name: deployment.staffName ?? 'Assigned',
-                  icon: Icons.medical_services,
-                  color: HousepitalColors.serviceNursing,
-                  phone: AppConstants.supportPhone,
-                ),
-                if (patient?.doctorName != null &&
-                    patient!.doctorName!.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  _TeamMemberRow(
-                    role: 'Doctor',
-                    name: patient.doctorName!,
-                    icon: Icons.medical_information,
-                    color: HousepitalColors.servicePhysio,
-                    phone: patient.doctorPhone,
-                  ),
-                ],
-              ] else
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: context.hc.greyLight, size: 18),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Your care team will appear here once services are active',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: context.hc.greyLight,
+                child: Row(
+                  children: [
+                    const AppIconTile(
+                      icon: Icons.groups,
+                      color: HousepitalColors.orange,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Care Team Group Chat',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: context.hc.black,
+                            ),
+                          ),
+                          Text(
+                            'All queries in one place',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.hc.greyLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Care Team pattern (care_team_screen._MemberRow):
+                    // filled-orange square call + outlined square chat.
+                    Semantics(
+                      label: 'Call Housepital care team',
+                      button: true,
+                      child: IconButton(
+                        onPressed: () => launchUrl(
+                          Uri.parse('tel:${AppConstants.supportPhone}'),
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: HousepitalColors.orange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+                        icon: const Icon(
+                          Icons.phone,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                    Semantics(
+                      label: 'Open care team group chat',
+                      button: true,
+                      child: IconButton(
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          '/chat',
+                          arguments: {
+                            'patientId':
+                                app.currentPatient?.id ?? 'pat_demo_rajesh',
+                            'coordinatorName': 'Care Team',
+                          },
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: context.hc.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: context.hc.divider),
+                          ),
+                        ),
+                        icon: Icon(
+                          Icons.chat_bubble_outline,
+                          size: 20,
+                          color: context.hc.black,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+              const SizedBox(height: 6),
+              _TeamMemberRow(
+                role: deployment.staffRole ?? 'Staff',
+                name: deployment.staffName ?? 'Assigned',
+                icon: Icons.medical_services,
+                color: HousepitalColors.serviceNursing,
+                phone: AppConstants.supportPhone,
+              ),
+              if (patient?.doctorName != null &&
+                  patient!.doctorName!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                _TeamMemberRow(
+                  role: 'Doctor',
+                  name: patient.doctorName!,
+                  icon: Icons.medical_information,
+                  color: HousepitalColors.servicePhysio,
+                  phone: patient.doctorPhone,
+                ),
+              ],
+            ] else
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: context.hc.greyLight,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Your care team will appear here once services are active',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: context.hc.greyLight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -834,7 +909,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Active Services Quick View
   // ---------------------------------------------------------------------------
   Widget _buildActiveServicesQuickView(
-      BuildContext context, AppLocalizations l, AppProvider app) {
+    BuildContext context,
+    AppLocalizations l,
+    AppProvider app,
+  ) {
     final deployment = app.activeDeployment;
     if (deployment == null) return const SizedBox.shrink();
 
@@ -844,8 +922,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final daysRemaining = deployment.endDate?.difference(DateTime.now()).inDays;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-      child: GestureDetector(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: HousepitalCard(
         // Tapping the current service opens THAT service's detail page
         // (was: a jarring jump to the My Care tab). Falls back to the tab
         // only if the service list hasn't loaded yet.
@@ -865,29 +943,25 @@ class _HomeScreenState extends State<HomeScreen> {
             MainShell.switchToTab(1);
           }
         },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: context.hc.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.hc.divider),
-          ),
-          child: Row(
-            children: [
-              AppIconTile(
-                  icon: Icons.medical_services, color: context.hc.success),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Lead with the SERVICE (what the tap opens), not the
-                    // staff role — 'Critical Care Nurse' here while the
-                    // detail said 'ICU Setup at Home' read as a mismatch.
-                    Builder(builder: (context) {
-                      final services =
-                          context.watch<MyCareProvider>().activeServices;
+        child: Row(
+          children: [
+            AppIconTile(
+              icon: Icons.medical_services,
+              color: context.hc.success,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Lead with the SERVICE (what the tap opens), not the
+                  // staff role — 'Critical Care Nurse' here while the
+                  // detail said 'ICU Setup at Home' read as a mismatch.
+                  Builder(
+                    builder: (context) {
+                      final services = context
+                          .watch<MyCareProvider>()
+                          .activeServices;
                       String title = deployment.staffRole ?? 'Care Service';
                       for (final s in services) {
                         if (s.deploymentIds.contains(deployment.id)) {
@@ -900,42 +974,48 @@ class _HomeScreenState extends State<HomeScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       );
-                    }),
-                    Text(
-                      '${deployment.staffName ?? 'Assigned'} · ${deployment.staffRole ?? 'Staff'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: context.hc.greyLight),
-                    ),
-                  ],
-                ),
+                    },
+                  ),
+                  Text(
+                    '${deployment.staffName ?? 'Assigned'} · ${deployment.staffRole ?? 'Staff'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+                  ),
+                ],
               ),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
-                ),
+            ),
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 6),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              status == 'checked_in' ? 'On Duty' : 'Waiting',
+              style: TextStyle(
+                fontSize: 12,
+                color: statusColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (daysRemaining != null) ...[
+              const SizedBox(width: 8),
               Text(
-                status == 'checked_in' ? 'On Duty' : 'Waiting',
-                style: TextStyle(fontSize: 12, color: statusColor, fontWeight: FontWeight.w500),
+                '${daysRemaining}d left',
+                style: TextStyle(fontSize: 11, color: context.hc.greyLight),
               ),
-              if (daysRemaining != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '${daysRemaining}d left',
-                  style: TextStyle(fontSize: 11, color: context.hc.greyLight),
-                ),
-              ],
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
             ],
-          ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
+          ],
         ),
       ),
     );
@@ -945,55 +1025,41 @@ class _HomeScreenState extends State<HomeScreen> {
   // Care Guides entry — slim full-width row (kept out of Book Services)
   // ---------------------------------------------------------------------------
   Widget _buildCareGuidesEntry(BuildContext context) {
-    const tileId = 'care_guides_entry';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Semantics(
         button: true,
         label: 'Care Guides — health tips and education',
-        child: AnimatedScale(
-          scale: _pressedScale[tileId] ?? 1.0,
-          duration: const Duration(milliseconds: 100),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => Navigator.pushNamed(context, '/articles'),
-              onTapDown: (_) => _onCardPressDown(tileId),
-              onTapUp: (_) => _onCardPressUpOrCancel(tileId),
-              onTapCancel: () => _onCardPressUpOrCancel(tileId),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.hc.divider),
-                ),
-                child: Row(
+        child: HousepitalCard(
+          padding: const EdgeInsets.all(12),
+          onTap: () => Navigator.pushNamed(context, '/articles'),
+          child: Row(
+            children: [
+              const AppIconTile(
+                icon: Icons.menu_book,
+                color: HousepitalColors.serviceCarePackage,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppIconTile(
-                        icon: Icons.menu_book,
-                        color: HousepitalColors.serviceCarePackage),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Care Guides',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w600)),
-                          Text('Health tips & education for your family',
-                              style: TextStyle(
-                                  fontSize: 12, color: context.hc.grey)),
-                        ],
+                    const Text(
+                      'Care Guides',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Icon(Icons.chevron_right,
-                        color: context.hc.grey),
+                    Text(
+                      'Health tips & education for your family',
+                      style: TextStyle(fontSize: 12, color: context.hc.grey),
+                    ),
                   ],
                 ),
               ),
-            ),
+              Icon(Icons.chevron_right, color: context.hc.grey),
+            ],
           ),
         ),
       ),
@@ -1004,55 +1070,41 @@ class _HomeScreenState extends State<HomeScreen> {
   // Care Calendar entry — slim full-width row (mirrors Care Guides entry)
   // ---------------------------------------------------------------------------
   Widget _buildCareCalendarEntry(BuildContext context) {
-    const tileId = 'care_calendar_entry';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Semantics(
         button: true,
         label: 'Care Calendar — schedule, adherence and visits',
-        child: AnimatedScale(
-          scale: _pressedScale[tileId] ?? 1.0,
-          duration: const Duration(milliseconds: 100),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => Navigator.pushNamed(context, '/care-calendar'),
-              onTapDown: (_) => _onCardPressDown(tileId),
-              onTapUp: (_) => _onCardPressUpOrCancel(tileId),
-              onTapCancel: () => _onCardPressUpOrCancel(tileId),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.hc.divider),
-                ),
-                child: Row(
+        child: HousepitalCard(
+          padding: const EdgeInsets.all(12),
+          onTap: () => Navigator.pushNamed(context, '/care-calendar'),
+          child: Row(
+            children: [
+              const AppIconTile(
+                icon: Icons.calendar_month,
+                color: HousepitalColors.orange,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppIconTile(
-                        icon: Icons.calendar_month,
-                        color: HousepitalColors.orange),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Care Calendar',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w600)),
-                          Text('Schedule, adherence & visits',
-                              style: TextStyle(
-                                  fontSize: 12, color: context.hc.grey)),
-                        ],
+                    const Text(
+                      'Care Calendar',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Icon(Icons.chevron_right,
-                        color: context.hc.grey),
+                    Text(
+                      'Schedule, adherence & visits',
+                      style: TextStyle(fontSize: 12, color: context.hc.grey),
+                    ),
                   ],
                 ),
               ),
-            ),
+              Icon(Icons.chevron_right, color: context.hc.grey),
+            ],
           ),
         ),
       ),
@@ -1067,8 +1119,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // from activeDeployment.staffRole), flip "Book X" → "My X" so they're
     // not prompted to re-book a service they're already receiving.
     final activeRole =
-        context.read<AppProvider>().activeDeployment?.staffRole?.toLowerCase() ??
-            '';
+        context
+            .read<AppProvider>()
+            .activeDeployment
+            ?.staffRole
+            ?.toLowerCase() ??
+        '';
 
     final browseActions = <_QuickAction>[
       if (!activeRole.contains('nurse') && !activeRole.contains('icu'))
@@ -1088,7 +1144,8 @@ class _HomeScreenState extends State<HomeScreen> {
           color: HousepitalColors.serviceNursing,
           onTap: () => MainShell.switchToTab(1),
         ),
-      if (!activeRole.contains('caretaker') && !activeRole.contains('attendant'))
+      if (!activeRole.contains('caretaker') &&
+          !activeRole.contains('attendant'))
         _QuickAction(
           icon: Icons.person_pin,
           label: 'Book Caretaker',
@@ -1156,80 +1213,80 @@ class _HomeScreenState extends State<HomeScreen> {
     // Care Guides in its own entry card below.
     final allActions = browseActions;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
-      // 3 columns filling the row edge-to-edge; 6 service tiles → compact 2×3.
-      // mainAxisExtent fixes each cell's HEIGHT in absolute px (instead of a
-      // width-derived aspect ratio). A fixed aspect ratio made cells too short
-      // on narrow phones (the Column overflowed ~12px on a 320px screen) while
-      // leaving gaps on wide ones; a fixed 88px height fits the icon + 2-line
-      // label on every width with no overflow and no gap.
-      child: GridView.builder(
-        // Explicit zero padding: nested scrollables otherwise absorb the
-        // ambient bottom inset (the glass nav height under extendBody) as
-        // internal padding — which rendered as a blank band inside this card.
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        primary: false,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 4,
-          crossAxisSpacing: 8,
-          mainAxisExtent: 88,
-        ),
-        itemCount: allActions.length,
-        itemBuilder: (context, index) {
-          final action = allActions[index];
-          final tileId = 'quick_${action.label}';
-          return Semantics(
-            button: true,
-            label: action.label,
-            child: AnimatedScale(
-              scale: _pressedScale[tileId] ?? 1.0,
-              duration: const Duration(milliseconds: 100),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: action.onTap,
-                  onTapDown: (_) => _onCardPressDown(tileId),
-                  onTapUp: (_) => _onCardPressUpOrCancel(tileId),
-                  onTapCancel: () => _onCardPressUpOrCancel(tileId),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AppIconTile(
-                          icon: action.icon, color: action.color, size: 24),
-                      const SizedBox(height: 4),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Text(
-                          action.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: HousepitalCard(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        // 3 columns filling the row edge-to-edge; 6 service tiles → compact 2×3.
+        // mainAxisExtent fixes each cell's HEIGHT in absolute px (instead of a
+        // width-derived aspect ratio). A fixed aspect ratio made cells too short
+        // on narrow phones (the Column overflowed ~12px on a 320px screen) while
+        // leaving gaps on wide ones; a fixed 88px height fits the icon + 2-line
+        // label on every width with no overflow and no gap.
+        child: GridView.builder(
+          // Explicit zero padding: nested scrollables otherwise absorb the
+          // ambient bottom inset (the glass nav height under extendBody) as
+          // internal padding — which rendered as a blank band inside this card.
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          primary: false,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 88,
+          ),
+          itemCount: allActions.length,
+          itemBuilder: (context, index) {
+            final action = allActions[index];
+            final tileId = 'quick_${action.label}';
+            return Semantics(
+              button: true,
+              label: action.label,
+              child: AnimatedScale(
+                scale: _pressedScale[tileId] ?? 1.0,
+                duration: const Duration(milliseconds: 100),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: action.onTap,
+                    onTapDown: (_) => _onCardPressDown(tileId),
+                    onTapUp: (_) => _onCardPressUpOrCancel(tileId),
+                    onTapCancel: () => _onCardPressUpOrCancel(tileId),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppIconTile(
+                          icon: action.icon,
+                          color: action.color,
+                          size: 24,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Text(
+                            action.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: context.hc.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1290,15 +1347,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         'Mother & baby care — a Housepital company',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
@@ -1322,8 +1378,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.open_in_new,
-                                color: DaiMaaColors.plum, size: 14),
+                            const Icon(
+                              Icons.open_in_new,
+                              color: DaiMaaColors.plum,
+                              size: 14,
+                            ),
                           ],
                         ),
                       ),
@@ -1361,36 +1420,63 @@ class _HomeScreenState extends State<HomeScreen> {
     final r = app.todayReport!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
+      child: HousepitalCard(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.hc.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.hc.divider),
+        // Same destination as the section's "See All" — the chevron promised
+        // a tap, so the card honours it.
+        onTap: () => Navigator.pushNamed(
+          context,
+          '/report-detail',
+          arguments: app.todayReport,
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 40, height: 40,
-              child: Stack(alignment: Alignment.center, children: [
-                CircularProgressIndicator(
-                  value: r.totalTasks > 0 ? r.completedTasks / r.totalTasks : 0,
-                  backgroundColor: context.hc.greyLighter,
-                  color: context.hc.success,
-                  strokeWidth: 3,
-                ),
-                Text('${r.completedTasks}/${r.totalTasks}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-              ]),
+              width: 40,
+              height: 40,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: r.totalTasks > 0
+                        ? r.completedTasks / r.totalTasks
+                        : 0,
+                    backgroundColor: context.hc.greyLighter,
+                    color: context.hc.success,
+                    strokeWidth: 3,
+                  ),
+                  Text(
+                    '${r.completedTasks}/${r.totalTasks}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${r.completedTasks} of ${r.totalTasks} tasks done', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(
+                    '${r.completedTasks} of ${r.totalTasks} tasks done',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   if (r.staffNotes != null)
-                    Text(r.staffNotes!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
+                    Text(
+                      r.staffNotes!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.hc.greyLight,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1411,140 +1497,165 @@ class _HomeScreenState extends State<HomeScreen> {
     final dueDate = app.dueDate;
     final isOverdue = dueDate != null && dueDate.isBefore(DateTime.now());
     final earlyPayDiscount = (amountDue * 0.01).round(); // 1% off
-    final earlyPayAmount = amountDue - earlyPayDiscount;
 
     if (amountDue <= 0) {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('Payments',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-          ),
-
-          // Overdue card (red)
-          if (isOverdue)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: context.hc.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.hc.error.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber, color: context.hc.error, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Overdue Payment',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.hc.error)),
-                        // audit batch 4 (Agent L): drop the duplicate ₹ —
-                        // DateHelper.formatCurrency already prepends the
-                        // symbol, so the previous string rendered as "₹₹3,000".
-                        Text('${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
-                            style: TextStyle(fontSize: 12, color: context.hc.grey)),
-                      ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Shared SectionHeader (16/w600) — matches every other Home section.
+        const SectionHeader(title: 'Payments'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Overdue card (red) — error-tinted by design, so it stays a
+              // styled Container (HousepitalCard is the neutral surface card).
+              if (isOverdue)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.hc.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: context.hc.error.withValues(alpha: 0.3),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () => MainShell.switchToTab(3),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.hc.error,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: const Text('Pay Now', style: TextStyle(fontSize: 12)),
-                  ),
-                ],
-              ),
-            ),
-
-          // Upcoming payment card (orange) with early pay discount
-          if (!isOverdue)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: context.hc.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.hc.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.calendar_today, color: HousepitalColors.orange, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Upcoming Payment',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                            if (dueDate != null)
-                              Text('Due on ${DateHelper.formatDate(dueDate)}',
-                                  style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: context.hc.error,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Overdue Payment',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: context.hc.error,
+                                  ),
+                                ),
+                                // audit batch 4 (Agent L): drop the duplicate
+                                // ₹ — DateHelper.formatCurrency already
+                                // prepends the symbol.
+                                Text(
+                                  '${DateHelper.formatCurrency(amountDue)} was due on ${DateHelper.formatDate(dueDate)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.hc.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => MainShell.switchToTab(3),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.hc.error,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                            child: const Text(
+                              'Pay Now',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(DateHelper.formatCurrency(amountDue),
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.orangeText)),
+                      const SizedBox(height: 8),
+                      // Reassurance — firm ask, calm tone: lateness never
+                      // reads as a threat to the patient's care.
+                      Text(
+                        'Your care continues uninterrupted.',
+                        style: TextStyle(fontSize: 12, color: context.hc.grey),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  // Early pay incentive
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.hc.successLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.savings, color: context.hc.success, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Pay early & save ${DateHelper.formatCurrency(earlyPayDiscount)}!',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.success)),
-                              Text('Pay ${DateHelper.formatCurrency(earlyPayAmount)} instead of ${DateHelper.formatCurrency(amountDue)} (1% off)',
-                                  style: TextStyle(fontSize: 11, color: context.hc.grey)),
-                            ],
+                ),
+
+              // Upcoming payment card — whole card opens the Billing tab.
+              if (!isOverdue)
+                HousepitalCard(
+                  onTap: () => MainShell.switchToTab(3),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            color: HousepitalColors.orange,
+                            size: 20,
                           ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => MainShell.switchToTab(3),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.hc.success,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Upcoming Payment',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                if (dueDate != null)
+                                  Text(
+                                    'Due on ${DateHelper.formatDate(dueDate)}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.hc.greyLight,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          child: const Text('Pay Early', style: TextStyle(fontSize: 12)),
+                          Text(
+                            DateHelper.formatCurrency(amountDue),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.orangeText,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Early-pay note — one quiet line, no shouting, no
+                      // green savings box.
+                      if (dueDate != null && earlyPayDiscount > 0) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Pay by ${DateHelper.formatDate(dueDate)} to save ${DateHelper.formatCurrency(earlyPayDiscount)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.hc.grey,
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-        ],
-      ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1563,8 +1674,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final parts = timeStr.split(':');
         final hour = int.tryParse(parts[0]) ?? 0;
         final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
-        final candidate =
-            DateTime(now.year, now.month, now.day, hour, minute);
+        final candidate = DateTime(now.year, now.month, now.day, hour, minute);
         if (candidate.isAfter(now) &&
             (nextTime == null || candidate.isBefore(nextTime))) {
           nextTime = candidate;
@@ -1575,46 +1685,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final subtitle = (nextTime != null && nextName != null)
         ? 'Next: $nextName at ${_formatTime(nextTime)}'
-        : 'No more doses scheduled today';
+        : 'All done for today';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
+      child: HousepitalCard(
+        padding: const EdgeInsets.all(12),
         onTap: () => Navigator.pushNamed(context, '/medications'),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: context.hc.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.hc.divider),
-          ),
-          child: Row(
-            children: [
-              // Standard home icon tile (matches all other Home sections).
-              const AppIconTile(
-                  icon: Icons.medication, color: HousepitalColors.orange),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${active.length} active medication${active.length == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+        child: Row(
+          children: [
+            // Standard home icon tile (matches all other Home sections).
+            const AppIconTile(
+              icon: Icons.medication,
+              color: HousepitalColors.orange,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${active.length} active medication${active.length == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                          fontSize: 11, color: context.hc.greyLight),
-                    ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 11, color: context.hc.greyLight),
+                  ),
+                ],
               ),
-              Icon(Icons.chevron_right,
-                  color: context.hc.greyLight, size: 18),
-            ],
-          ),
+            ),
+            Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
+          ],
         ),
       ),
     );
@@ -1642,15 +1747,17 @@ class _HomeScreenState extends State<HomeScreen> {
         opacity: 0.85,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Switch Patient',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w600)),
-          ),
-          ...app.patients.map((patient) => ListTile(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Switch Patient',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ),
+            ...app.patients.map(
+              (patient) => ListTile(
                 leading: CircleAvatar(
                   backgroundColor: context.hc.orangeLight,
                   child: Text(
@@ -1660,16 +1767,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 title: Text(patient.name),
                 trailing: patient.id == app.currentPatient?.id
-                    ? const Icon(Icons.check,
-                        color: HousepitalColors.orange)
+                    ? const Icon(Icons.check, color: HousepitalColors.orange)
                     : null,
                 onTap: () {
                   app.switchPatient(patient);
                   Navigator.pop(context);
                 },
-              )),
-          const SizedBox(height: 16),
-        ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
@@ -1757,36 +1864,46 @@ class _TeamMemberRow extends StatelessWidget {
               ),
               Text(
                 role,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.hc.greyLight,
-                ),
+                style: TextStyle(fontSize: 12, color: context.hc.greyLight),
               ),
             ],
           ),
         ),
         if (phone != null && phone!.isNotEmpty) ...[
+          // Care Team pattern (care_team_screen._MemberRow): filled-orange
+          // square call button + outlined square chat button.
           Semantics(
             label: 'Call $role',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.phone, size: 20),
-              color: context.hc.success,
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+              style: IconButton.styleFrom(
+                backgroundColor: HousepitalColors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.phone, color: Colors.white, size: 20),
             ),
           ),
+          const SizedBox(width: 4),
           Semantics(
             label: 'WhatsApp $role',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.chat, size: 20),
-              color: const Color(0xFF25D366),
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               onPressed: () => launchUrl(
                 Uri.parse('https://wa.me/91$phone'),
                 mode: LaunchMode.externalApplication,
               ),
+              style: IconButton.styleFrom(
+                backgroundColor: context.hc.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: context.hc.divider),
+                ),
+              ),
+              // WhatsApp brand green on the glyph signals which app opens.
+              icon: const Icon(Icons.chat, size: 20, color: _whatsAppGreen),
             ),
           ),
         ],
@@ -1794,4 +1911,3 @@ class _TeamMemberRow extends StatelessWidget {
     );
   }
 }
-

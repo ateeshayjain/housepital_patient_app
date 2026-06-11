@@ -76,90 +76,92 @@ class CareTeamScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Care Team')),
+      // Horizontal padding lives on each child (not the ListView) so the
+      // canonical SectionHeader — which carries its own 16px horizontal
+      // padding — aligns flush with the cards instead of double-indenting.
       body: ListView(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
-          left: 16,
-          right: 16,
           bottom: 24 + MediaQuery.of(context).padding.bottom,
         ),
         children: [
           // Group chat FIRST: one tap reaches the whole team — queries get
           // resolved in one place; individual message/call options follow.
-          HousepitalCard(
-            onTap: () => Navigator.pushNamed(context, '/chat', arguments: {
-              'patientId': patientId,
-              'coordinatorName': 'Care Team',
-            }),
-            child: Row(
-              children: [
-                const AppIconTile(
-                    icon: Icons.groups, color: HousepitalColors.orange),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Care Team Group Chat',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.black)),
-                      const SizedBox(height: 2),
-                      Text('One place for all your queries',
-                          style: TextStyle(
-                              fontSize: 12, color: context.hc.greyLight)),
-                    ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HousepitalCard(
+              onTap: () => Navigator.pushNamed(context, '/chat', arguments: {
+                'patientId': patientId,
+                'coordinatorName': 'Care Team',
+              }),
+              child: Row(
+                children: [
+                  const AppIconTile(
+                      icon: Icons.groups, color: HousepitalColors.orange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Care Team Group Chat',
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: context.hc.black)),
+                        const SizedBox(height: 2),
+                        Text('One place for all your queries',
+                            style: TextStyle(
+                                fontSize: 12, color: context.hc.greyLight)),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Semantics(
-                  label: 'Open care team group chat',
-                  button: true,
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/chat', arguments: {
-                      'patientId': patientId,
-                      'coordinatorName': 'Care Team',
-                    }),
-                    icon: const Icon(Icons.forum, size: 18),
-                    label: const Text('Chat'),
+                  const SizedBox(width: 8),
+                  Semantics(
+                    label: 'Open care team group chat',
+                    button: true,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/chat', arguments: {
+                        'patientId': patientId,
+                        'coordinatorName': 'Care Team',
+                      }),
+                      icon: const Icon(Icons.forum, size: 18),
+                      label: const Text('Chat'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 4),
           ...members.map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: _MemberRow(member: m, patientId: patientId),
               )),
           const SizedBox(height: 8),
-          const _AmbulanceCard(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: _AmbulanceCard(),
+          ),
 
           // ── Past staff — read-only history (no call/chat: they are no
-          // longer deployed with this patient). SectionHeader-style label;
-          // the ListView already pads 16 horizontally, so only pad vertically.
+          // longer deployed with this patient). Canonical SectionHeader; it
+          // carries its own 16px horizontal padding, which is why the ListView
+          // pads children individually instead of globally.
+          const SizedBox(height: 12),
+          const SectionHeader(title: 'Past staff'),
           Padding(
-            padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-            child: Text(
-              'Past staff',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: context.hc.black,
-              ),
-            ),
-          ),
-          HousepitalCard(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                for (var i = 0; i < DemoData.pastStaff.length; i++) ...[
-                  if (i > 0) const Divider(height: 16),
-                  _PastStaffRow(staff: DemoData.pastStaff[i]),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: HousepitalCard(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  for (var i = 0; i < DemoData.pastStaff.length; i++) ...[
+                    if (i > 0) const Divider(height: 16),
+                    _PastStaffRow(staff: DemoData.pastStaff[i]),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],
@@ -323,12 +325,17 @@ class _AmbulanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Deliberately distinct error-tinted fill + border (this card SHOULD
+    // stand apart from the white cards) — but it shares the canonical
+    // squircle-16 continuous-corner shape of every top-level card.
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: context.hc.errorLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.error),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: context.hc.error),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -11,10 +11,10 @@ import '../../providers/cart_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../services/handover_report_service.dart';
 import '../../config/app_colors.dart';
-import '../../config/theme.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
 class MedicationsScreen extends StatefulWidget {
@@ -95,25 +95,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
               },
             )
           : medProv.activeMedications.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.medication_outlined,
-                      size: 64,
-                      color: context.hc.greyLight,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No medications added yet',
-                      style: TextStyle(fontSize: 16, color: context.hc.grey),
-                    ),
-                  ],
-                ),
-              ),
+          ? HousepitalEmptyState(
+              icon: Icons.medication_outlined,
+              title: l.t('meds_empty_title'),
+              body: l.t('meds_empty_body'),
             )
           : RefreshIndicator(
               onRefresh: () async {
@@ -331,20 +316,20 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         ],
       );
     }
-    return SizedBox(
-      height: 36,
-      child: OutlinedButton.icon(
-        onPressed: () => _onRefillTap(med),
-        icon: const Icon(Icons.local_pharmacy, size: 16),
-        label: const Text(
-          'Request refill',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.hc.orangeText,
-          side: BorderSide(color: HousepitalColors.orange),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-        ),
+    // Tonal stadium pill (matches doctor_advice_card's add/book grammar):
+    // small visual, padded Material tap target keeps the area ≥ 44pt.
+    return FilledButton.tonalIcon(
+      onPressed: () => _onRefillTap(med),
+      icon: const Icon(Icons.local_pharmacy, size: 16),
+      label: const Text('Request refill'),
+      style: FilledButton.styleFrom(
+        backgroundColor: context.hc.orangeLight,
+        foregroundColor: context.hc.orangeText,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       ),
     );
   }

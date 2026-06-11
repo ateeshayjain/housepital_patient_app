@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/assistant_models.dart';
 import '../../providers/assistant_provider.dart';
+import '../../widgets/glass.dart';
 import 'assistant_executor.dart' show CallAction;
 
 /// Full-screen Hinglish assistant: chat bubbles, a hard-confirm card for
@@ -72,14 +73,19 @@ class _AssistantScreenState extends State<AssistantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // House chrome: GlassAppBar (this was the app's last solid-orange bar) —
+    // orange now lives only on the send/mic accents and user bubbles.
+    // Pushed screen, so the standard contract applies: back + [search, home].
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sahayak'),
-        backgroundColor: HousepitalColors.orange,
-        foregroundColor: Colors.white,
-      ),
+      extendBodyBehindAppBar: true,
+      appBar: const GlassAppBar(title: Text('Sahayak')),
       body: Consumer<AssistantProvider>(
         builder: (context, provider, _) {
+          // Chat-style glass idiom: the message list scrolls under the glass,
+          // so ITS top padding clears the bar (MediaQuery resolved from this
+          // builder context, below the Scaffold).
+          final topPad =
+              MediaQuery.of(context).padding.top + kToolbarHeight + 8;
           return Column(
             children: [
               Expanded(
@@ -87,7 +93,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
                     ? const _EmptyState()
                     : ListView.builder(
                         controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.fromLTRB(16, topPad, 16, 16),
                         itemCount: provider.messages.length,
                         itemBuilder: (context, i) =>
                             _Bubble(message: provider.messages[i]),

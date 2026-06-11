@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../config/app_colors.dart';
 import '../../models/article.dart';
 import '../../providers/blog_provider.dart';
+import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 import 'article_category_style.dart';
 
@@ -75,11 +76,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 _FeaturedArticleCard(article: visible.first),
                 const SizedBox(height: 16),
               ],
+              // HousepitalCard carries the card theme's vertical-8 margin,
+              // so no explicit separator is needed between list cards.
               for (final article
-                  in showFeatured ? visible.skip(1) : visible) ...[
+                  in showFeatured ? visible.skip(1) : visible)
                 _ArticleCard(article: article),
-                const SizedBox(height: 12),
-              ],
             ],
           );
         },
@@ -336,89 +337,80 @@ class _ArticleCard extends StatelessWidget {
       button: true,
       label: '${article.title}. ${article.category}. '
           '${article.readMinutes} minute read.',
-      child: Material(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () =>
-              Navigator.pushNamed(context, '/article', arguments: article.id),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.hc.divider),
+      // Canonical top-level list card: HousepitalCard (squircle 16, press
+      // 0.97) — the featured hero above stays custom by design.
+      child: HousepitalCard(
+        padding: const EdgeInsets.all(12),
+        onTap: () =>
+            Navigator.pushNamed(context, '/article', arguments: article.id),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Accent "cover" tile — gives every card identity without a
+            // photo: subtle tint fill + large category icon.
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: style.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(style.icon, size: 30, color: style.accent),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Accent "cover" tile — gives every card identity without a
-                // photo: subtle tint fill + large category icon.
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: style.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    article.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                      color: context.hc.black,
+                    ),
                   ),
-                  child: Icon(style.icon, size: 30, color: style.accent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        article.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
-                          color: context.hc.black,
-                        ),
+                  if (article.summary.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      article.summary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: context.hc.greyLight,
                       ),
-                      if (article.summary.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          article.summary,
-                          maxLines: 2,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _CategoryChip(
+                        label: article.category,
+                        accent: style.accent,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          '· ${article.readMinutes} min read',
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            height: 1.4,
                             color: context.hc.greyLight,
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _CategoryChip(
-                            label: article.category,
-                            accent: style.accent,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              '· ${article.readMinutes} min read',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: context.hc.greyLight,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

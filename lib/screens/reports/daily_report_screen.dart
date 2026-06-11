@@ -168,14 +168,38 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                           _report!.staffNotes!.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         SectionHeader(title: l.t('staff_notes')),
-                        HousepitalCard(
-                          child: Text(
-                            _report!.staffNotes!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: context.hc.grey,
-                              fontStyle: FontStyle.italic,
+                        // THE sentence remote families open the app for —
+                        // promoted to its own emphasized block: full note
+                        // (NEVER truncated on this screen), regular 14px in
+                        // hc.black, on a softly orange-tinted squircle with a
+                        // quote mark. Not italic grey small print.
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: ShapeDecoration(
+                            color: context.hc.orangeLight
+                                .withValues(alpha: 0.55),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.format_quote,
+                                  size: 20, color: context.hc.orangeText),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _report!.staffNotes!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.45,
+                                    color: context.hc.black,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -223,6 +247,16 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         : frac >= 0.5
             ? context.hc.warning
             : context.hc.error;
+    final dayLabel = allDone
+        ? 'Good day'
+        : frac >= 0.5
+            ? 'Watch'
+            : 'Difficult day';
+    final dayIcon = allDone
+        ? Icons.check_circle
+        : frac >= 0.5
+            ? Icons.warning_amber_rounded
+            : Icons.error;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -297,10 +331,14 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
                       const Icon(Icons.schedule,
                           size: 13, color: Colors.white70),
                       const SizedBox(width: 4),
-                      Text(
-                        'Submitted ${DateHelper.formatTime(r.submittedAt!)}',
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                      Expanded(
+                        child: Text(
+                          'Submitted ${DateHelper.formatTime(r.submittedAt!)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
@@ -308,13 +346,31 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               ],
             ),
           ),
-          // a tiny accent reflecting overall health of the day
+          // Day-health at a glance: a labeled StatusBadge-style chip (icon +
+          // text on a white stadium so the status hue reads on the orange
+          // gradient) — never a bare color dot.
           Container(
-            width: 10,
-            height: 10,
             margin: const EdgeInsets.only(left: 8),
-            decoration:
-                BoxDecoration(color: ringColor, shape: BoxShape.circle),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: const ShapeDecoration(
+              color: Colors.white,
+              shape: StadiumBorder(),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(dayIcon, size: 14, color: ringColor),
+                const SizedBox(width: 4),
+                Text(
+                  dayLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: ringColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -338,14 +394,11 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         sectionStatus = l.t('pending');
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
+    // Canonical top-level section card: HousepitalCard (squircle 16, theme
+    // vertical-8 margin) — zero inner padding so the status accent stripe
+    // still runs edge-to-edge down the left side.
+    return HousepitalCard(
+      padding: EdgeInsets.zero,
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -497,13 +550,10 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       }
     }
 
-    return Container(
+    // Canonical top-level section card: HousepitalCard, not a hand-rolled
+    // radius-12 bordered Container.
+    return HousepitalCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

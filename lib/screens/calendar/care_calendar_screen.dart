@@ -19,6 +19,7 @@ import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
 /// Order matches the segmented control: [Day | Week | Month].
@@ -732,17 +733,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
 
   Widget _emptyCard() {
     return _padCard(
-      HousepitalCard(
-        child: Row(
-          children: [
-            Icon(Icons.event_available, size: 22, color: context.hc.greyLight),
-            const SizedBox(width: 12),
-            Text(
-              'Nothing scheduled',
-              style: TextStyle(fontSize: 14, color: context.hc.grey),
-            ),
-          ],
-        ),
+      const HousepitalEmptyState.compact(
+        icon: Icons.event_available,
+        title: 'A free day',
+        body: 'No doses, visits or duties scheduled.',
       ),
     );
   }

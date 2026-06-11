@@ -226,42 +226,38 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
+            // Canonical top-level card: HousepitalCard (squircle 16, press
+            // 0.97) with onTap — no more hand-rolled radius-12 Container in a
+            // bare GestureDetector.
+            child: HousepitalCard(
+              padding: const EdgeInsets.all(12),
               onTap: () => Navigator.pushNamed(context, '/medications'),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.hc.divider),
-                ),
-                child: Row(
-                  children: [
-                    const AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Live count + names from MedicationProvider — same
-                          // source as the Home medications snippet (no more
-                          // hardcoded "5 active medications" demo copy).
-                          Text(
-                              activeMeds.isEmpty
-                                  ? 'No active medications'
-                                  : '${activeMeds.length} active medication${activeMeds.length == 1 ? '' : 's'}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                          if (activeMeds.isNotEmpty)
-                            Text(activeMeds.map((m) => m.name).join(', '),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
-                        ],
-                      ),
+              child: Row(
+                children: [
+                  const AppIconTile(icon: Icons.medication, color: HousepitalColors.orange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Live count + names from MedicationProvider — same
+                        // source as the Home medications snippet (no more
+                        // hardcoded "5 active medications" demo copy).
+                        Text(
+                            activeMeds.isEmpty
+                                ? 'No active medications'
+                                : '${activeMeds.length} active medication${activeMeds.length == 1 ? '' : 's'}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        if (activeMeds.isNotEmpty)
+                          Text(activeMeds.map((m) => m.name).join(', '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
+                      ],
                     ),
-                    Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
-                  ],
-                ),
+                  ),
+                  Icon(Icons.chevron_right, color: context.hc.greyLight, size: 18),
+                ],
               ),
             ),
           ),
@@ -344,54 +340,61 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               : context.hc.error;
     }
 
+    // Flat radius-12 bordered SUB-tile by canon (small pill inside the strip,
+    // not a top-level card) — but tappable surfaces use Material + InkWell,
+    // never a bare GestureDetector, so taps get ripple feedback.
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(context, '/vitals'),
-        child: Container(
-          width: 90,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: context.hc.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.hc.divider),
-          ),
-          // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1, so
-          // there's zero visual change on-device. Only when text would exceed
-          // the box (very large Dynamic Type / the Ahem test font) does it
-          // shrink to fit instead of painting an overflow stripe.
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
+      child: Material(
+        color: context.hc.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => Navigator.pushNamed(context, '/vitals'),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 90,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.hc.divider),
+            ),
+            // FittedBox(scaleDown): real font fits the 90x88 pill at scale 1,
+            // so there's zero visual change on-device. Only when text would
+            // exceed the box (very large Dynamic Type / the Ahem test font)
+            // does it shrink to fit instead of painting an overflow stripe.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(label,
-                        style: TextStyle(
-                            fontSize: 11, color: context.hc.greyLight)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
-                Text(unit,
-                    style: TextStyle(
-                        fontSize: 11, color: context.hc.greyLight)),
-              ],
+                      const SizedBox(width: 4),
+                      Text(label,
+                          style: TextStyle(
+                              fontSize: 11, color: context.hc.greyLight)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w700)),
+                  Text(unit,
+                      style: TextStyle(
+                          fontSize: 11, color: context.hc.greyLight)),
+                ],
+              ),
             ),
           ),
         ),
@@ -422,7 +425,9 @@ class _DoctorHandoverCardState extends State<_DoctorHandoverCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Couldn't build the report. Please try again.")),
+              content: Text(
+                  "Couldn't build the report. Please try again, or ask your "
+                  'Health Manager to send it to you.')),
         );
       }
     } finally {
@@ -612,13 +617,10 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
     // ellipsised), the 5 stars left-aligned on line 2. Tapping a star still
     // rates the day (SnackBar for 4–5 stars, "what went wrong" sheet for
     // 1–3), so the post-tap feedback already explains the interaction.
-    return Container(
+    // Canonical top-level card: HousepitalCard (squircle 16) instead of a
+    // hand-rolled radius-12 bordered Container.
+    return HousepitalCard(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-      decoration: BoxDecoration(
-        color: context.hc.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.hc.divider),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

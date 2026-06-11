@@ -324,8 +324,9 @@ Widget _appHost(Widget child) => _wrap(
       ),
     );
 
-// disableAnimations:true stops the Home banner auto-scroll Timer.periodic from
-// starting, keeping the pump deterministic.
+// disableAnimations:true keeps animated screens deterministic under pump.
+// (The Home banner auto-scroll timer this originally guarded against has been
+// removed — the banner is manual swipe + dots only.)
 Widget _wrap(Widget home) => MediaQuery(
       data: const MediaQueryData(disableAnimations: true),
       child: MaterialApp(

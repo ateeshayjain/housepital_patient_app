@@ -10,6 +10,7 @@ import '../../services/invoice_pdf_service.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -389,7 +390,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                 _actionButton(
                   quotePending ? 'Pro forma' : 'Invoice',
                   Icons.download,
-                  context.hc.orangeText,
                   () => InvoicePdfService().shareInvoice(order),
                 ),
                 if (_isActiveStatus(status) &&
@@ -399,8 +399,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   _actionButton(
                     'Cancel',
                     Icons.cancel_outlined,
-                    context.hc.error,
                     () => _showCancelDialog(orderId),
+                    destructive: true,
                   ),
               ],
             ),
@@ -410,19 +410,39 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     );
   }
 
-  Widget _actionButton(
-      String label, IconData icon, Color color, VoidCallback onTap) {
-    return SizedBox(
-      height: 32,
-      child: TextButton.icon(
+  /// Compact tonal pill for secondary actions (matches doctor_advice_card's
+  /// pill grammar): small visual, but the padded Material tap target keeps
+  /// the interactive area ≥ 44pt.
+  ButtonStyle _pillStyle(BuildContext context) => FilledButton.styleFrom(
+        backgroundColor: context.hc.orangeLight,
+        foregroundColor: context.hc.orangeText,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      );
+
+  /// Secondary actions render as tonal pills; destructive actions stay as
+  /// plain TextButtons in the error color.
+  Widget _actionButton(String label, IconData icon, VoidCallback onTap,
+      {bool destructive = false}) {
+    if (destructive) {
+      return TextButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 16),
         label: Text(label, style: const TextStyle(fontSize: 13)),
         style: TextButton.styleFrom(
-          foregroundColor: color,
+          foregroundColor: context.hc.error,
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
-      ),
+      );
+    }
+    return FilledButton.tonalIcon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: _pillStyle(context),
     );
   }
 
@@ -547,42 +567,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   }
 
   Widget _buildOrdersEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: context.hc.greyLight,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No orders yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: context.hc.greyLight,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Book a service or add equipment to your cart to get started.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: context.hc.greyLight,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.popUntil(context, (route) => route.isFirst),
-            icon: const Icon(Icons.add),
-            label: const Text('Book a Service'),
-          ),
-        ],
-      ),
+    return HousepitalEmptyState(
+      icon: Icons.receipt_long_outlined,
+      title: 'Nothing ordered yet',
+      body: 'When you book a service or equipment, your care team tracks '
+          'every order and delivery here.',
+      ctaLabel: 'Book a service',
+      onCta: () => Navigator.popUntil(context, (route) => route.isFirst),
     );
   }
 
@@ -690,14 +681,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             if (isPending) ...[
               const SizedBox(height: 8),
               const Divider(height: 1),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              const SizedBox(height: 8),
+              // Wrap keeps 320px widths overflow-free now that the secondary
+              // action renders as a (wider) tonal pill.
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  TextButton.icon(
+                  FilledButton.tonalIcon(
                     onPressed: () => _editAssessment(serviceId, serviceName),
                     icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Edit request',
-                        style: TextStyle(fontSize: 13)),
+                    label: const Text('Edit request'),
+                    style: _pillStyle(context),
                   ),
                   TextButton.icon(
                     onPressed: () => _cancelAssessment(assessmentId),
@@ -780,45 +777,13 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
   }
 
   Widget _buildAssessmentsEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.assignment_outlined,
-            size: 64,
-            color: context.hc.greyLight,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No pending requests',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: context.hc.greyLight,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Request an assessment for nursing, caretaker, or other manpower services.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: context.hc.greyLight,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.popUntil(context, (route) => route.isFirst),
-            icon: const Icon(Icons.add),
-            label: const Text('Request Assessment'),
-          ),
-        ],
-      ),
+    return HousepitalEmptyState(
+      icon: Icons.assignment_outlined,
+      title: 'No pending requests',
+      body: 'Request an assessment for nursing, caretaker, or other '
+          'manpower services.',
+      ctaLabel: 'Request assessment',
+      onCta: () => Navigator.popUntil(context, (route) => route.isFirst),
     );
   }
 }

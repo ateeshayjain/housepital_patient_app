@@ -23,10 +23,12 @@ class ActiveServiceCard extends StatelessWidget {
         ? 'Session ${service.consumedDays}/${service.totalDays}'
         : 'Day ${service.consumedDays}/${service.totalDays}';
 
-    // Compact single-block card: slim color accent + one info row + thin
-    // progress bar. ~45% shorter than the old gradient-header version, and the
-    // "Latest vital" stat is intentionally dropped (vitals live in the
-    // dedicated Today's Vitals section \u2014 no cross-card duplication).
+    // Compact single-block card: slim color accent + one info row + progress
+    // bar. Still markedly shorter than the old gradient-header version, but
+    // rebalanced after over-compaction: flagship-weight title (14.5),
+    // readable meta (12), 5px progress bar. The "Latest vital" stat remains
+    // intentionally dropped (vitals live in the dedicated Today's Vitals
+    // section \u2014 no cross-card duplication).
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -49,7 +51,7 @@ class ActiveServiceCard extends StatelessWidget {
                             child: Text(
                               service.name,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 13.5),
+                                  fontWeight: FontWeight.w700, fontSize: 14.5),
                             ),
                           ),
                           Text(progressLabel,
@@ -76,7 +78,7 @@ class ActiveServiceCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: allPresent
                                         ? context.hc.success
@@ -94,7 +96,7 @@ class ActiveServiceCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 12,
                                       color: context.hc.grey)),
                             ),
                           ],
@@ -102,10 +104,10 @@ class ActiveServiceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(2.5),
                         child: LinearProgressIndicator(
                           value: service.progressFraction,
-                          minHeight: 3,
+                          minHeight: 5,
                           backgroundColor: context.hc.greyLighter,
                           valueColor: AlwaysStoppedAnimation(color),
                         ),
