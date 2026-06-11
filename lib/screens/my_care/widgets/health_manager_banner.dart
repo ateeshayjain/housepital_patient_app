@@ -12,9 +12,12 @@ class HealthManagerBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // My Care's ONE solid-orange ribbon (one per screen, like Home's hero
-    // call-caregiver card and Billing's balance card). Text/icons on the
-    // orange fill use onOrange — white on orange fails AA (~2.3:1).
+    // call-caregiver card and Billing's balance card). Everything ON the
+    // orange fill is white (owner decision) — including the avatar disc and
+    // call/chat tiles, which are translucent WHITE, never hc.surface (that
+    // token is near-black in dark mode and read as black boxes on device).
     final onOrange = context.hc.onOrange;
+    const tileFill = Colors.white24;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -28,8 +31,7 @@ class HealthManagerBanner extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            // Surface disc so the avatar reads on the orange fill.
-            backgroundColor: context.hc.surface,
+            backgroundColor: tileFill,
             backgroundImage: manager.photoUrl != null
                 ? NetworkImage(manager.photoUrl!)
                 : null,
@@ -37,7 +39,7 @@ class HealthManagerBanner extends StatelessWidget {
                 ? Text(
                     manager.name.split(' ').map((n) => n[0]).take(2).join(),
                     style: TextStyle(
-                        color: context.hc.orangeText,
+                        color: onOrange,
                         fontWeight: FontWeight.w700,
                         fontSize: 16),
                   )
@@ -68,11 +70,11 @@ class HealthManagerBanner extends StatelessWidget {
             onPressed: () =>
                 launchUrl(Uri.parse('tel:${manager.phone}')),
             style: IconButton.styleFrom(
-              backgroundColor: context.hc.surface,
+              backgroundColor: tileFill,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            icon: Icon(Icons.phone, color: context.hc.orangeText, size: 20),
+            icon: Icon(Icons.phone, color: onOrange, size: 20),
           ),
           const SizedBox(width: 8),
           IconButton(
@@ -84,13 +86,12 @@ class HealthManagerBanner extends StatelessWidget {
               });
             },
             style: IconButton.styleFrom(
-              backgroundColor: context.hc.surface,
+              backgroundColor: tileFill,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            icon: Icon(Icons.chat_bubble_outline,
-                size: 20, color: context.hc.orangeText),
+            icon: Icon(Icons.chat_bubble_outline, size: 20, color: onOrange),
           ),
         ],
       ),
