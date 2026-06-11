@@ -162,7 +162,6 @@ void main() {
             'Complete summary: history, medicines, vitals, visits & reports'),
         findsOneWidget);
     expect(find.text('Share'), findsOneWidget);
-    expect(find.byIcon(Icons.ios_share), findsOneWidget);
   });
 
   testWidgets(

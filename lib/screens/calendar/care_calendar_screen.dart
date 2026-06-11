@@ -8,6 +8,7 @@
 // "Today" is simply DateTime.now().
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,7 @@ import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/day_part_header.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
@@ -220,7 +222,14 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 ),
               ],
               const SizedBox(height: 12),
-              ..._detailSections(),
+              // Day-detail transition: switching days used to jump-cut the
+              // detail sections. Now the column cross-fades with a slight
+              // upward settle (220ms easeOut), keyed by the selected date,
+              // inside AnimatedSize so height changes glide too. Same-day
+              // updates (e.g. marking a dose) keep the same key and rebuild
+              // in place — no spurious transition. The detail stays in this
+              // ListView, so scroll position is untouched.
+              _animatedDetail(context),
             ],
           );
         },
@@ -602,6 +611,47 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
 
   // ── Selected-day detail ─────────────────────────────────────────────────
 
+  /// Wraps [_detailSections] in the day-switch transition (see build()).
+  /// Honors reduced motion: Duration.zero renders the new day immediately.
+  Widget _animatedDetail(BuildContext context) {
+    final duration = MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 220);
+    return AnimatedSize(
+      duration: duration,
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeOut,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.02),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        // Top-aligned stack (default centers) so the outgoing day doesn't
+        // float while the incoming one settles.
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.topCenter,
+          children: [...previousChildren, ?currentChild],
+        ),
+        child: Column(
+          key: ValueKey<DateTime>(_selected),
+          // ListView stretched these children; a Column defaults to center —
+          // stretch keeps every card at full width during and after the swap.
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _detailSections(),
+        ),
+      ),
+    );
+  }
+
   List<Widget> _detailSections() {
     final events = eventsFor(_selected);
     final isPast = _selected.isBefore(_today);
@@ -945,21 +995,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 (g) => [
                   Padding(
                     padding: const EdgeInsets.only(top: 8, bottom: 4),
-                    child: Row(
-                      children: [
-                        Icon(g.icon, size: 16, color: context.hc.greyLight),
-                        const SizedBox(width: 6),
-                        Text(
-                          g.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: context.hc.greyLight,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: DayPartHeader(g.part),
                   ),
                   ...g.doses.map(
                     (d) => Padding(
@@ -1035,14 +1071,22 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                   ),
                 ),
               ),
-              Text(
-                '$takenCount/${doses.length} taken',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: takenCount == doses.length && doses.isNotEmpty
-                      ? context.hc.success
-                      : context.hc.grey,
+              // Quick cross-fade (150ms) so the count visibly ticks when a
+              // dose is marked, rather than snapping between frames.
+              AnimatedSwitcher(
+                duration: MediaQuery.of(context).disableAnimations
+                    ? Duration.zero
+                    : const Duration(milliseconds: 150),
+                child: Text(
+                  '$takenCount/${doses.length} taken',
+                  key: ValueKey(takenCount),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: takenCount == doses.length && doses.isNotEmpty
+                        ? context.hc.success
+                        : context.hc.grey,
+                  ),
                 ),
               ),
             ],
@@ -1054,21 +1098,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
             (g) => [
               Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(g.icon, size: 16, color: context.hc.greyLight),
-                    const SizedBox(width: 6),
-                    Text(
-                      g.label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                        color: context.hc.greyLight,
-                      ),
-                    ),
-                  ],
-                ),
+                child: DayPartHeader(g.part),
               ),
               ...g.doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
             ],
@@ -1081,7 +1111,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   /// Partition sorted (slot, med) pairs into Morning (<12:00),
   /// Afternoon (12:00–16:59) and Evening (17:00+) groups; empty groups
   /// are omitted.
-  List<({String label, IconData icon, List<(String, MedicationFull)> doses})>
+  List<({DayPart part, List<(String, MedicationFull)> doses})>
   _doseGroups(List<(String, MedicationFull)> doses) {
     int hourOf(String slot) => int.tryParse(slot.split(':').first) ?? 0;
     final morning = doses.where((d) => hourOf(d.$1) < 12).toList();
@@ -1090,12 +1120,9 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         .toList();
     final evening = doses.where((d) => hourOf(d.$1) >= 17).toList();
     return [
-      if (morning.isNotEmpty)
-        (label: 'MORNING', icon: Icons.wb_sunny_outlined, doses: morning),
-      if (afternoon.isNotEmpty)
-        (label: 'AFTERNOON', icon: Icons.light_mode_outlined, doses: afternoon),
-      if (evening.isNotEmpty)
-        (label: 'EVENING', icon: Icons.nights_stay_outlined, doses: evening),
+      if (morning.isNotEmpty) (part: DayPart.morning, doses: morning),
+      if (afternoon.isNotEmpty) (part: DayPart.afternoon, doses: afternoon),
+      if (evening.isNotEmpty) (part: DayPart.evening, doses: evening),
     ];
   }
 
@@ -1129,29 +1156,53 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          if (taken)
-            StatusBadge(
-              text: 'Taken',
-              color: context.hc.success,
-              icon: Icons.check,
-            )
-          else
-            // Compact pill, compliant tap target (doctor_advice_card
-            // pattern): the visual stays small but the padded Material tap
-            // target keeps the interactive area ≥ 44pt.
-            TextButton(
-              onPressed: () => medProv.markDoseTakenToday(med.id, slot),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                minimumSize: const Size(0, 32),
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.padded,
-              ),
-              child: const Text(
-                'Mark taken',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          // Mark-taken micro-ceremony: the button → badge swap gets a calm
+          // 200ms scale+fade instead of a frameless rebuild. Keyed on the
+          // taken-state so the switcher only fires on the actual transition.
+          AnimatedSwitcher(
+            duration: MediaQuery.of(context).disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeOut,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.9, end: 1).animate(animation),
+                child: child,
               ),
             ),
+            child: taken
+                ? StatusBadge(
+                    key: const ValueKey('dose-taken'),
+                    text: 'Taken',
+                    color: context.hc.success,
+                    icon: Icons.check,
+                  )
+                // Compact pill, compliant tap target (doctor_advice_card
+                // pattern): the visual stays small but the padded Material
+                // tap target keeps the interactive area ≥ 44pt.
+                : TextButton(
+                    key: const ValueKey('dose-mark'),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      medProv.markDoseTakenToday(med.id, slot);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.padded,
+                    ),
+                    child: const Text(
+                      'Mark taken',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
     );

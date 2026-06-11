@@ -10,6 +10,7 @@ import '../../services/handover_report_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
 import '../../utils/vital_classifier.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 import '../../screens/main_shell.dart';
@@ -165,25 +166,17 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
               child: HousepitalCard(
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: app.todayReport!.totalTasks > 0
-                                ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
-                                : 0,
-                            backgroundColor: context.hc.greyLighter,
-                            color: context.hc.success,
-                            strokeWidth: 4,
-                          ),
-                          Text(
-                            '${app.todayReport!.completedTasks}/${app.todayReport!.totalTasks}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                    CarePulseRing(
+                      value: app.todayReport!.totalTasks > 0
+                          ? app.todayReport!.completedTasks / app.todayReport!.totalTasks
+                          : 0,
+                      size: 48,
+                      strokeWidth: 4,
+                      semanticLabel:
+                          '${app.todayReport!.completedTasks} of ${app.todayReport!.totalTasks} tasks completed',
+                      center: Text(
+                        '${app.todayReport!.completedTasks}/${app.todayReport!.totalTasks}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -440,7 +433,45 @@ class _DoctorHandoverCardState extends State<_DoctorHandoverCard> {
     return HousepitalCard(
       child: Row(
         children: [
-          AppIconTile(icon: Icons.ios_share, color: context.hc.info),
+          // Mini page thumbnail — an instantly readable "document" glyph that
+          // teases the PDF artifact this flagship card produces (decorative;
+          // hc.white = surface in light, elevated surface in dark).
+          ExcludeSemantics(
+            child: Container(
+              width: 40,
+              height: 52,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: context.hc.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: context.hc.divider),
+              ),
+              child: Row(
+                children: [
+                  // 3px orange left rule — the report's brand spine.
+                  Container(width: 3, color: context.hc.orange),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 5,
+                        children: [
+                          for (final w in const [24.0, 18.0, 21.0])
+                            Container(
+                              width: w,
+                              height: 2,
+                              color: context.hc.greyLight,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

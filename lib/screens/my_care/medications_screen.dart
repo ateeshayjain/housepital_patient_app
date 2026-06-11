@@ -13,6 +13,7 @@ import '../../services/handover_report_service.dart';
 import '../../config/app_colors.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
@@ -152,31 +153,18 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       onTap: () => Navigator.pushNamed(context, '/care-calendar'),
       child: Row(
         children: [
-          // 56px adherence ring with the percentage centred inside.
-          SizedBox(
-            width: 56,
-            height: 56,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    value: pct / 100,
-                    strokeWidth: 6,
-                    color: context.hc.success,
-                    backgroundColor: context.hc.greyLighter,
-                  ),
-                ),
-                Text(
-                  '$pct%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          // 56px Care Pulse adherence ring with the percentage centred inside.
+          CarePulseRing(
+            value: pct / 100,
+            size: 56,
+            strokeWidth: 6,
+            semanticLabel: '$pct percent weekly adherence',
+            center: Text(
+              '$pct%',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 16),

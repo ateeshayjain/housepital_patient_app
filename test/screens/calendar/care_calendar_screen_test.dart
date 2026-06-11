@@ -113,9 +113,10 @@ void main() {
     expect(find.text('Mark present'), findsWidgets); // per-staff action
     expect(find.text("Today's doses"), findsOneWidget);
     expect(find.text('Mark taken'), findsWidgets);
-    // Doses are grouped by time of day (demo meds span 07:00–22:00 slots).
-    expect(find.text('MORNING'), findsOneWidget);
-    expect(find.text('EVENING'), findsOneWidget);
+    // Doses are grouped by time of day (demo meds span 07:00–22:00 slots)
+    // via the shared DayPartHeader motif.
+    expect(find.text('Morning · Subah'), findsOneWidget);
+    expect(find.text('Evening · Raat'), findsOneWidget);
   });
 
   testWidgets('Tapping the future day with the doctor visit shows Follow-up', (
@@ -153,7 +154,7 @@ void main() {
     await tester.tap(find.textContaining('doses scheduled'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Amlodipine'), findsWidgets);
-    expect(find.text('MORNING'), findsOneWidget);
+    expect(find.text('Morning · Subah'), findsOneWidget);
   });
 
   testWidgets('Mark taken flips a dose to Taken via MedicationProvider', (

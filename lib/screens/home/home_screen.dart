@@ -16,6 +16,7 @@ import '../../providers/my_care_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 import '../main_shell.dart';
@@ -1431,28 +1432,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: r.totalTasks > 0
-                        ? r.completedTasks / r.totalTasks
-                        : 0,
-                    backgroundColor: context.hc.greyLighter,
-                    color: context.hc.success,
-                    strokeWidth: 3,
-                  ),
-                  Text(
-                    '${r.completedTasks}/${r.totalTasks}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+            CarePulseRing(
+              value: r.totalTasks > 0
+                  ? r.completedTasks / r.totalTasks
+                  : 0,
+              size: 40,
+              strokeWidth: 3,
+              semanticLabel:
+                  '${r.completedTasks} of ${r.totalTasks} tasks done',
+              center: Text(
+                '${r.completedTasks}/${r.totalTasks}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(width: 12),

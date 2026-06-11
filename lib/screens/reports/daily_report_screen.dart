@@ -5,7 +5,9 @@ import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/day_part_header.dart';
 import '../../widgets/glass.dart';
 
 class DailyReportScreen extends StatefulWidget {
@@ -272,29 +274,23 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 56,
-            height: 56,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    value: frac,
-                    strokeWidth: 5,
-                    backgroundColor: Colors.white.withValues(alpha: 0.3),
-                    valueColor: const AlwaysStoppedAnimation(Colors.white),
-                  ),
-                ),
-                Text('${r.completedTasks}/${r.totalTasks}',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14)),
-              ],
-            ),
+          // Care Pulse ring on the orange hero: the brand orange→green arc
+          // can't hold contrast on an orange fill, so this site keeps its
+          // white-on-orange palette via the explicit color overrides (the
+          // capped ends + calm sweep are still the signature).
+          CarePulseRing(
+            value: frac,
+            size: 56,
+            strokeWidth: 5,
+            trackColor: Colors.white.withValues(alpha: 0.3),
+            color: Colors.white,
+            semanticLabel:
+                '${r.completedTasks} of ${r.totalTasks} tasks done',
+            center: Text('${r.completedTasks}/${r.totalTasks}',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -512,42 +508,18 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
     final takenCount = meds.where((m) => m.taken).length;
     final totalCount = meds.length;
 
-    // Group by timing
-    final timings = ['morning', 'afternoon', 'evening', 'night'];
-    final grouped = <String, List<MedicationEntry>>{};
-    for (final timing in timings) {
-      final items = meds.where((m) => m.timing == timing).toList();
-      if (items.isNotEmpty) grouped[timing] = items;
-    }
-
-    String timingLabel(String timing) {
-      switch (timing) {
-        case 'morning':
-          return 'Morning';
-        case 'afternoon':
-          return 'Afternoon';
-        case 'evening':
-          return 'Evening';
-        case 'night':
-          return 'Night';
-        default:
-          return timing;
-      }
-    }
-
-    IconData timingIcon(String timing) {
-      switch (timing) {
-        case 'morning':
-          return Icons.wb_sunny;
-        case 'afternoon':
-          return Icons.wb_cloudy;
-        case 'evening':
-          return Icons.wb_twilight;
-        case 'night':
-          return Icons.nightlight_round;
-        default:
-          return Icons.schedule;
-      }
+    // Group by timing into the app-wide three-part day motif (DayPartHeader).
+    // 'night' folds into evening — the motif's evening label is already
+    // 'Evening · Raat', so a separate Night group would duplicate it.
+    DayPart partOf(String timing) => switch (timing) {
+          'morning' => DayPart.morning,
+          'afternoon' => DayPart.afternoon,
+          _ => DayPart.evening, // 'evening', 'night', unknown
+        };
+    final grouped = <DayPart, List<MedicationEntry>>{};
+    for (final part in DayPart.values) {
+      final items = meds.where((m) => partOf(m.timing) == part).toList();
+      if (items.isNotEmpty) grouped[part] = items;
     }
 
     // Canonical top-level section card: HousepitalCard, not a hand-rolled
@@ -598,21 +570,7 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
         ...grouped.entries.map((entry) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(timingIcon(entry.key),
-                        size: 16, color: context.hc.greyLight),
-                    const SizedBox(width: 6),
-                    Text(
-                      timingLabel(entry.key),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.grey,
-                      ),
-                    ),
-                  ],
-                ),
+                DayPartHeader(entry.key),
                 const SizedBox(height: 6),
                 ...entry.value.map((med) => Padding(
                       padding: const EdgeInsets.only(left: 22, bottom: 8),
