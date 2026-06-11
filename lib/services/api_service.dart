@@ -242,6 +242,24 @@ class ApiService implements IApiService {
         .toList();
   }
 
+  @override
+  Future<void> submitVitalReading(
+      String patientId, VitalReading reading) async {
+    await _post('/patients/$patientId/vitals', body: {
+      'id': reading.id,
+      'patient_id': reading.patientId,
+      'recorded_at': reading.recordedAt.toIso8601String(),
+      if (reading.systolic != null) 'systolic': reading.systolic,
+      if (reading.diastolic != null) 'diastolic': reading.diastolic,
+      if (reading.pulse != null) 'pulse': reading.pulse,
+      if (reading.spo2 != null) 'spo2': reading.spo2,
+      if (reading.temperature != null) 'temperature': reading.temperature,
+      if (reading.sugar != null) 'sugar': reading.sugar,
+      if (reading.sugarType != null) 'sugar_type': reading.sugarType,
+      if (reading.notes != null) 'notes': reading.notes,
+    });
+  }
+
   // ==================== DAILY REPORTS ====================
 
   @override

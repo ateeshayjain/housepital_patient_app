@@ -2,6 +2,7 @@
 //
 // Widget tests for the Medications screen quick actions:
 //  • weekly adherence header card (pct · doses line + day dots)
+//  • single-tap "Log dose" pill → "Logged ✓" done state + header tick
 //  • low-stock "Request refill" button → session "Refill requested ✓" state
 //
 // Provider pattern copied from test/screens/overflow_smoke_test.dart.
@@ -94,6 +95,25 @@ Future<void> _pump(WidgetTester tester, MedicationProvider medProv) async {
   await tester.pump();
 }
 
+/// Expected header values: past 6 days seeded (adherencePercentFor), TODAY is
+/// live provider state — [todayTaken] doses logged via the quick action.
+({int weekTaken, int weekTotal, int pct}) _expectedHeader({int todayTaken = 0}) {
+  final perDay = dosesPerDay();
+  final weekTotal = perDay * 7;
+  final today = dateOnly(DateTime.now());
+  var weekTaken = todayTaken.clamp(0, perDay);
+  for (var i = 1; i <= 6; i++) {
+    weekTaken +=
+        (perDay * adherencePercentFor(today.subtract(Duration(days: i))) / 100)
+            .round();
+  }
+  return (
+    weekTaken: weekTaken,
+    weekTotal: weekTotal,
+    pct: (weekTaken * 100 / weekTotal).round(),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -102,18 +122,86 @@ void main() {
       (tester) async {
     await _pump(tester, _TestMedicationProvider());
 
-    final pct = weeklyAdherencePercent();
-    final weekTotal = dosesPerDay() * 7;
-    final weekTaken = (weekTotal * pct / 100).round();
+    final h = _expectedHeader();
     expect(find.text("This week's adherence"), findsOneWidget);
     // The percentage now lives INSIDE the 56px progress ring…
-    expect(find.text('$pct%'), findsOneWidget);
+    expect(find.text('${h.pct}%'), findsOneWidget);
     // …with a determinate CarePulseRing (the signature ring) at pct/100.
     final ring = tester.widgetList<CarePulseRing>(find.byType(CarePulseRing));
     expect(
-        ring.where((r) => (r.value - pct / 100).abs() < 0.001), isNotEmpty);
+        ring.where((r) => (r.value - h.pct / 100).abs() < 0.001), isNotEmpty);
     // Dose count is its own line now.
-    expect(find.text('$weekTaken of $weekTotal doses'), findsOneWidget);
+    expect(find.text('${h.weekTaken} of ${h.weekTotal} doses'), findsOneWidget);
+  });
+
+  // ── Single-tap dose logging (owner request) ────────────────────────────
+
+  testWidgets('every scheduled med card shows a Log dose pill',
+      (tester) async {
+    await _pump(tester, _TestMedicationProvider());
+
+    // All 5 demo meds are active with time slots.
+    expect(find.text('Log dose'), findsNWidgets(5));
+    expect(find.text('Logged ✓'), findsNothing);
+  });
+
+  testWidgets(
+      'tapping Log dose logs the dose, morphs to Logged ✓ and ticks the '
+      'adherence header', (tester) async {
+    final medProv = _TestMedicationProvider();
+    await _pump(tester, medProv);
+
+    final before = _expectedHeader();
+    expect(find.text('${before.weekTaken} of ${before.weekTotal} doses'),
+        findsOneWidget);
+
+    // First card is Amlodipine (single 08:00 slot) — one tap, no dialog,
+    // no navigation.
+    await tester.tap(find.text('Log dose').first);
+    await tester.pumpAndSettle();
+
+    expect(medProv.dosesMarkedTakenToday, 1);
+    expect(medProv.isSlotLoggedToday('med_amlodipine', '08:00'), isTrue);
+    // Single-slot med → pill morphs to the done state.
+    expect(find.text('Logged ✓'), findsOneWidget);
+    expect(find.text('Log dose'), findsNWidgets(4));
+    // Still on the medications screen (no navigation happened).
+    expect(find.text("This week's adherence"), findsOneWidget);
+    // Adherence header dose line ticks (today's component is provider state).
+    final after = _expectedHeader(todayTaken: 1);
+    expect(find.text('${after.weekTaken} of ${after.weekTotal} doses'),
+        findsOneWidget);
+  });
+
+  testWidgets(
+      'multi-slot med shows logged count and keeps the pill until all '
+      'slots are logged', (tester) async {
+    final medProv = _TestMedicationProvider();
+    await _pump(tester, medProv);
+
+    // Metformin has 08:00 + 21:00 slots.
+    medProv.logNextDoseToday('med_metformin');
+    await tester.pumpAndSettle();
+    expect(find.text('1/2 logged today'), findsOneWidget);
+    expect(find.text('Log dose'), findsNWidgets(5)); // pill stays
+
+    medProv.logNextDoseToday('med_metformin');
+    await tester.pumpAndSettle();
+    expect(find.text('Logged ✓'), findsOneWidget);
+    expect(find.text('Log dose'), findsNWidgets(4));
+  });
+
+  testWidgets('Log dose pill exposes a per-med button semantics label',
+      (tester) async {
+    await _pump(tester, _TestMedicationProvider());
+    final handle = tester.ensureSemantics();
+    await tester.pump();
+
+    // The per-med label merges into the card's tap-target node alongside the
+    // card's own text, so match as a pattern rather than the exact string.
+    expect(find.bySemanticsLabel(RegExp('Log dose for Amlodipine')),
+        findsOneWidget);
+    handle.dispose();
   });
 
   testWidgets('tapping the adherence header opens the Care Calendar',

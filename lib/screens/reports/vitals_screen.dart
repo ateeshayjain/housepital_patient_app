@@ -1,11 +1,17 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/validators.dart';
+import '../../utils/vital_classifier.dart';
 import '../../widgets/glass.dart';
 
 class VitalsScreen extends StatefulWidget {
@@ -38,10 +44,13 @@ class _VitalsScreenState extends State<VitalsScreen>
     _generateMockData();
   }
 
+  int get _periodDays =>
+      _period == '7d' ? 7 : _period == '30d' ? 30 : _period == '90d' ? 90 : 180;
+
   void _generateMockData() {
     final rng = Random(42);
     final now = DateTime.now();
-    int days = _period == '7d' ? 7 : _period == '30d' ? 30 : _period == '90d' ? 90 : 180;
+    final days = _periodDays;
 
     _vitals = List.generate(days, (i) {
       final date = now.subtract(Duration(days: days - 1 - i));
@@ -66,11 +75,62 @@ class _VitalsScreenState extends State<VitalsScreen>
     super.dispose();
   }
 
+  /// Opens the manual-entry sheet pre-selected to the active vital tab.
+  /// Shows the confirmation SnackBar after a successful save.
+  Future<void> _showAddReadingSheet(BuildContext context) async {
+    // The sheet lives in its own route — re-provide AppProvider so it can
+    // save regardless of where the provider sits in the tree.
+    final app = context.read<AppProvider>();
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => ChangeNotifierProvider<AppProvider>.value(
+        value: app,
+        child: _AddVitalReadingSheet(
+            initialVitalKey: _vitalKeys[_tabController.index]),
+      ),
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(this.context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(this.context)!.t('reading_saved'))),
+      );
+    }
+  }
+
+  /// Mock baseline + manually entered readings (provider) for the selected
+  /// period, oldest first — a reading saved from the entry sheet appears on
+  /// the chart, stat cards, and 'Latest reading' immediately.
+  List<VitalReading> _mergedVitals(List<VitalReading> manual) {
+    final cutoff = DateTime.now().subtract(Duration(days: _periodDays));
+    final merged = [
+      ..._vitals,
+      ...manual.where((r) => r.recordedAt.isAfter(cutoff)),
+    ];
+    merged.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    return merged;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final vitals = _mergedVitals(context.watch<AppProvider>().vitalsHistory);
 
     return Scaffold(
+      // No assistant FAB on this pushed route (it lives on MainShell's
+      // scaffold), so the add-reading action gets the canonical extended FAB:
+      // orange fill, onOrange (white) icon + label per the owner decision.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddReadingSheet(context),
+        backgroundColor: HousepitalColors.orange,
+        foregroundColor: context.hc.onOrange,
+        icon: const Icon(Icons.add),
+        label: Text(l.t('add_reading')),
+      ),
       appBar: GlassAppBar(
         title: Text(l.t('todays_vitals')),
         bottom: TabBar(
@@ -107,11 +167,11 @@ class _VitalsScreenState extends State<VitalsScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildChartPage('systolic', 'diastolic', 'mmHg', 'Blood Pressure'),
-                _buildChartPage('temperature', null, '\u00B0F', 'Temperature'),
-                _buildChartPage('spo2', null, '%', 'SpO2'),
-                _buildChartPage('sugar', null, 'mg/dl', 'Blood Sugar'),
-                _buildChartPage('pulse', null, 'bpm', 'Pulse'),
+                _buildChartPage(vitals, 'systolic', 'diastolic', 'mmHg', 'Blood Pressure'),
+                _buildChartPage(vitals, 'temperature', null, '\u00B0F', 'Temperature'),
+                _buildChartPage(vitals, 'spo2', null, '%', 'SpO2'),
+                _buildChartPage(vitals, 'sugar', null, 'mg/dl', 'Blood Sugar'),
+                _buildChartPage(vitals, 'pulse', null, 'bpm', 'Pulse'),
               ],
             ),
           ),
@@ -144,8 +204,9 @@ class _VitalsScreenState extends State<VitalsScreen>
     );
   }
 
-  Widget _buildChartPage(String primaryKey, String? secondaryKey, String unit, String title) {
-    if (_vitals.isEmpty) {
+  Widget _buildChartPage(List<VitalReading> vitals, String primaryKey,
+      String? secondaryKey, String unit, String title) {
+    if (vitals.isEmpty) {
       return const Center(child: Text('No data available'));
     }
 
@@ -153,9 +214,12 @@ class _VitalsScreenState extends State<VitalsScreen>
     final spots = <FlSpot>[];
     final secondarySpots = <FlSpot>[];
     final values = <double>[];
+    // Newest reading that actually has this vital (manual entries may carry
+    // only one vital, so `vitals.last` is not always the right hero source).
+    VitalReading? latestReading;
 
-    for (int i = 0; i < _vitals.length; i++) {
-      final v = _vitals[i];
+    for (int i = 0; i < vitals.length; i++) {
+      final v = vitals[i];
       double? value;
       double? secValue;
 
@@ -181,13 +245,16 @@ class _VitalsScreenState extends State<VitalsScreen>
       if (value != null) {
         spots.add(FlSpot(i.toDouble(), value));
         values.add(value);
+        latestReading = v;
       }
       if (secValue != null) {
         secondarySpots.add(FlSpot(i.toDouble(), secValue));
       }
     }
 
-    if (spots.isEmpty) return const Center(child: Text('No data'));
+    if (spots.isEmpty || latestReading == null) {
+      return const Center(child: Text('No data'));
+    }
 
     final avg = values.reduce((a, b) => a + b) / values.length;
     final latest = values.last;
@@ -217,7 +284,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                       children: [
                         Text(
                           primaryKey == 'systolic'
-                              ? '${_vitals.last.systolic?.toInt()}/${_vitals.last.diastolic?.toInt()}'
+                              ? '${latestReading.systolic?.toInt()}/${latestReading.diastolic?.toInt()}'
                               : latest.toStringAsFixed(
                                   primaryKey == 'temperature' ? 1 : 0),
                           style: TextStyle(
@@ -251,7 +318,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                             fontSize: 12, color: context.hc.greyLight),
                       ),
                       Text(
-                        DateHelper.formatDate(_vitals.last.recordedAt),
+                        DateHelper.formatDate(latestReading.recordedAt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -295,14 +362,14 @@ class _VitalsScreenState extends State<VitalsScreen>
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 28,
-                        interval: _vitals.length > 7 ? (_vitals.length / 5).ceilToDouble() : 1,
+                        interval: vitals.length > 7 ? (vitals.length / 5).ceilToDouble() : 1,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
-                          if (idx >= 0 && idx < _vitals.length) {
+                          if (idx >= 0 && idx < vitals.length) {
                             return Padding(
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
-                                DateHelper.formatDateShort(_vitals[idx].recordedAt),
+                                DateHelper.formatDateShort(vitals[idx].recordedAt),
                                 style: TextStyle(fontSize: 12, color: context.hc.greyLight),
                               ),
                             );
@@ -322,7 +389,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                       color: chartColor,
                       barWidth: 2.5,
                       dotData: FlDotData(
-                        show: _vitals.length <= 14,
+                        show: vitals.length <= 14,
                         getDotPainter: (spot, percent, barData, index) {
                           return FlDotCirclePainter(
                             radius: 3,
@@ -343,7 +410,7 @@ class _VitalsScreenState extends State<VitalsScreen>
                         isCurved: true,
                         color: context.hc.info,
                         barWidth: 2,
-                        dotData: FlDotData(show: _vitals.length <= 14),
+                        dotData: FlDotData(show: vitals.length <= 14),
                       ),
                   ],
                   lineTouchData: LineTouchData(
@@ -355,8 +422,8 @@ class _VitalsScreenState extends State<VitalsScreen>
                         return spots.map((spot) {
                           final idx = spot.spotIndex;
                           String dateStr = '';
-                          if (idx >= 0 && idx < _vitals.length) {
-                            dateStr = '\n${DateHelper.formatDateShort(_vitals[idx].recordedAt)}';
+                          if (idx >= 0 && idx < vitals.length) {
+                            dateStr = '\n${DateHelper.formatDateShort(vitals[idx].recordedAt)}';
                           }
                           return LineTooltipItem(
                             '${spot.y.toStringAsFixed(1)}$dateStr',
@@ -400,7 +467,8 @@ class _VitalsScreenState extends State<VitalsScreen>
           // Insights
           _buildInsights(primaryKey, values),
 
-          const SizedBox(height: 24),
+          // Clearance so the extended FAB never covers the last insight row.
+          const SizedBox(height: 88),
         ],
       ),
     );
@@ -526,6 +594,270 @@ class _VitalsScreenState extends State<VitalsScreen>
         Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
         Text(label, style: TextStyle(fontSize: 13, color: context.hc.greyLight)),
+      ],
+    );
+  }
+}
+
+/// Spec for one numeric input of the manual-entry sheet.
+class _VitalFieldSpec {
+  const _VitalFieldSpec(this.labelKey, this.min, this.max,
+      {this.decimal = false});
+  final String labelKey; // i18n key, e.g. 'systolic_mmhg'
+  final double min;
+  final double max;
+  final bool decimal; // temperature allows one decimal place
+}
+
+/// Manual vitals entry sheet (owner request: "Add option to add vitals
+/// here"). Pre-selected to the chart tab that was active when opened; the
+/// type can still be switched via chips. Saves through
+/// [AppProvider.addVitalReading] and pops `true` so the caller shows the
+/// confirmation SnackBar.
+class _AddVitalReadingSheet extends StatefulWidget {
+  const _AddVitalReadingSheet({required this.initialVitalKey});
+
+  final String initialVitalKey;
+
+  @override
+  State<_AddVitalReadingSheet> createState() => _AddVitalReadingSheetState();
+}
+
+class _AddVitalReadingSheetState extends State<_AddVitalReadingSheet> {
+  // Clinical entry bounds per vital (values outside are treated as typos).
+  static const Map<String, List<_VitalFieldSpec>> _fields = {
+    'bp': [
+      _VitalFieldSpec('systolic_mmhg', 60, 260),
+      _VitalFieldSpec('diastolic_mmhg', 30, 200),
+    ],
+    'temperature': [_VitalFieldSpec('temperature_f', 90, 110, decimal: true)],
+    'spo2': [_VitalFieldSpec('spo2_percent', 50, 100)],
+    'sugar': [_VitalFieldSpec('sugar_mgdl', 30, 600)],
+    'pulse': [_VitalFieldSpec('pulse_bpm', 20, 250)],
+  };
+
+  // Same short labels as the chart tabs.
+  static const Map<String, String> _typeLabels = {
+    'bp': 'BP',
+    'temperature': 'Temp',
+    'spo2': 'SpO2',
+    'sugar': 'Sugar',
+    'pulse': 'Pulse',
+  };
+
+  late String _vitalKey;
+  final TextEditingController _primary = TextEditingController();
+  final TextEditingController _secondary = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _vitalKey =
+        _fields.containsKey(widget.initialVitalKey) ? widget.initialVitalKey : 'bp';
+    // Re-evaluate Save enablement (and the live status row) on every change.
+    _primary.addListener(_onChanged);
+    _secondary.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _primary.dispose();
+    _secondary.dispose();
+    super.dispose();
+  }
+
+  void _onChanged() => setState(() {});
+
+  List<_VitalFieldSpec> get _specs => _fields[_vitalKey]!;
+
+  String? _validate(int index, String? text) => Validators.numberInRange(text,
+      min: _specs[index].min, max: _specs[index].max);
+
+  bool get _isValid {
+    if (_validate(0, _primary.text) != null) return false;
+    if (_specs.length > 1 && _validate(1, _secondary.text) != null) {
+      return false;
+    }
+    return true;
+  }
+
+  /// vital_classifier.dart status ('green'/'yellow'/'red') of the current
+  /// valid input — a dangerous entry shows its warning state right in the
+  /// sheet (and, once saved, wherever latest-vitals status is rendered).
+  String? get _status {
+    if (!_isValid) return null;
+    final value = double.parse(_primary.text.trim());
+    return classifyVital(
+        _vitalKey == 'bp' ? 'bp_systolic' : _vitalKey, value);
+  }
+
+  void _save() {
+    final app = context.read<AppProvider>();
+    final now = DateTime.now();
+    final primary = double.parse(_primary.text.trim());
+    final secondary =
+        _specs.length > 1 ? double.parse(_secondary.text.trim()) : null;
+    final reading = VitalReading(
+      id: 'manual_${now.microsecondsSinceEpoch}',
+      patientId: app.currentPatient?.id ?? 'pat_demo_rajesh',
+      recordedAt: now,
+      systolic: _vitalKey == 'bp' ? primary : null,
+      diastolic: _vitalKey == 'bp' ? secondary : null,
+      temperature: _vitalKey == 'temperature' ? primary : null,
+      spo2: _vitalKey == 'spo2' ? primary : null,
+      sugar: _vitalKey == 'sugar' ? primary : null,
+      sugarType: _vitalKey == 'sugar' ? 'random' : null,
+      pulse: _vitalKey == 'pulse' ? primary : null,
+    );
+    // Local state + notifyListeners happen synchronously inside; the API
+    // post that follows is fire-and-forget with tolerated failure (demo).
+    unawaited(app.addVitalReading(reading));
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final status = _status;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.t('add_reading'),
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: context.hc.black),
+          ),
+          const SizedBox(height: 12),
+          // Vital type selector — pre-selected to the active chart tab.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final key in _fields.keys) ...[
+                  _typeChip(key),
+                  if (key != _fields.keys.last) const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_specs.length == 1)
+            _field(0, _primary, l)
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _field(0, _primary, l)),
+                const SizedBox(width: 12),
+                Expanded(child: _field(1, _secondary, l)),
+              ],
+            ),
+          if (status != null) ...[
+            const SizedBox(height: 12),
+            _statusRow(status, l),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isValid ? _save : null,
+              child: Text(l.t('save_reading')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _typeChip(String key) {
+    final isSelected = _vitalKey == key;
+    return ChoiceChip(
+      label: Text(_typeLabels[key]!),
+      selected: isSelected,
+      onSelected: (_) => setState(() {
+        if (_vitalKey == key) return;
+        _vitalKey = key;
+        _primary.clear();
+        _secondary.clear();
+      }),
+      selectedColor: context.hc.orangeLight,
+      checkmarkColor: context.hc.orangeText,
+      labelStyle: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: isSelected ? context.hc.orangeText : context.hc.grey,
+      ),
+      side: BorderSide(
+        color: isSelected ? HousepitalColors.orange : context.hc.divider,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+
+  // House form styling: label above, ~50pt input (theme contentPadding),
+  // validator below via autovalidate.
+  Widget _field(int index, TextEditingController controller,
+      AppLocalizations l) {
+    final spec = _specs[index];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l.t(spec.labelKey),
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: context.hc.grey),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.numberWithOptions(decimal: spec.decimal),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+                spec.decimal ? RegExp(r'[0-9.]') : RegExp(r'[0-9]')),
+            LengthLimitingTextInputFormatter(spec.decimal ? 5 : 3),
+          ],
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) => _validate(index, value),
+        ),
+      ],
+    );
+  }
+
+  Widget _statusRow(String status, AppLocalizations l) {
+    final Color color;
+    final String label;
+    if (status == 'red') {
+      color = context.hc.error;
+      label = l.t('vital_status_alert');
+    } else if (status == 'yellow') {
+      color = context.hc.warning;
+      label = l.t('vital_status_borderline');
+    } else {
+      color = context.hc.success;
+      label = l.t('vital_status_normal');
+    }
+    return Row(
+      children: [
+        Icon(status == 'green' ? Icons.check_circle : Icons.warning_amber_rounded,
+            size: 18, color: color),
+        const SizedBox(width: 8),
+        Text(label,
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w600, color: color)),
       ],
     );
   }

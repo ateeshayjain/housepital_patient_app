@@ -150,6 +150,9 @@
   "given_at": "Given {time}",
   "by_staff": "by {name}",
   "scheduled": "Scheduled",
+  "log_dose": "Log dose",
+  "logged_done": "Logged ✓",
+  "logged_today_count": "{n}/{m} logged today",
   "missed_yesterday": "Missed Yesterday",
   "view_reason": "View reason",
   "delete": "Delete",
@@ -304,5 +307,17 @@
   "billing_empty_title": "No bills yet",
   "billing_empty_body": "When your services begin, every invoice and payment will live here.",
   "meds_empty_title": "No medicines yet",
-  "meds_empty_body": "Add medicines or let your supervisor sync the prescription — reminders and adherence tracking start here."
+  "meds_empty_body": "Add medicines or let your supervisor sync the prescription — reminders and adherence tracking start here.",
+  "add_reading": "Add reading",
+  "save_reading": "Save reading",
+  "reading_saved": "Reading saved",
+  "systolic_mmhg": "Systolic (mmHg)",
+  "diastolic_mmhg": "Diastolic (mmHg)",
+  "temperature_f": "Temperature (°F)",
+  "spo2_percent": "SpO2 (%)",
+  "sugar_mgdl": "Blood Sugar (mg/dL)",
+  "pulse_bpm": "Pulse (bpm)",
+  "vital_status_normal": "Normal",
+  "vital_status_borderline": "Borderline",
+  "vital_status_alert": "Needs attention"
 }

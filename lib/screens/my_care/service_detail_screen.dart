@@ -4,6 +4,8 @@ import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../models/my_care_models.dart';
 import '../../providers/my_care_provider.dart';
+import '../../providers/orders_provider.dart';
+import '../../services/invoice_pdf_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
@@ -39,9 +41,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final myCare = context.watch<MyCareProvider>();
-    final color = HousepitalColors.serviceColor(widget.service.serviceCategory);
 
     return Scaffold(
+      // Liquid Glass: content glides under the translucent app bar; the hero
+      // ribbon itself starts below the bar via the scrollable's top padding.
+      extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         title: Text(widget.service.name),
       ),
@@ -66,12 +70,18 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 24),
+                    // top: clear the glass app bar so the ribbon starts
+                    // below it; bottom: clear the home indicator.
+                    padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top +
+                            kToolbarHeight +
+                            8,
+                        bottom: 24 + MediaQuery.of(context).padding.bottom),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header with progress
-                        _buildHeader(color),
+                        _buildHeader(),
 
                         // Staff on duty
                         if (widget.service.showStaff &&
@@ -122,6 +132,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
                         // Billing summary for this service
                         _buildServiceBilling(l),
+
+                        // Invoice download + full service history
+                        _buildRecordsActions(),
                       ],
                     ),
                   ),
@@ -129,17 +142,19 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     );
   }
 
-  Widget _buildHeader(Color color) {
+  Widget _buildHeader() {
+    // This screen's ONE solid-orange hero ribbon — inset squircle-16, not a
+    // full-bleed rectangle (the edge-to-edge banner butted against the glass
+    // app bar and read as a stray alert strip). Brand orange, NOT the
+    // service-category colour: care_package red made an ICU page read as an
+    // emergency alert — red is reserved for SOS/error meaning.
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
-      // Brand hero (orange), NOT the service-category colour: care_package
-      // red made an ICU page read as an emergency alert — red is reserved
-      // for SOS/error meaning. Category colour stays for small accents only.
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [HousepitalColors.orange, HousepitalColors.orangeDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      decoration: ShapeDecoration(
+        color: context.hc.orange,
+        shape: const RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
       child: Column(
@@ -147,13 +162,19 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         children: [
           Text(
             widget.service.name,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: context.hc.onOrange,
+                fontSize: 20,
+                fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
+          // White-on-orange copy stays bold + ≥14px (owner decision).
           Text(
             'Started ${DateHelper.formatDate(widget.service.startDate)}',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
+            style: TextStyle(
+                color: context.hc.onOrange.withValues(alpha: 0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Row(
@@ -166,8 +187,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                       : 'Day ${widget.service.consumedDays} of ${widget.service.totalDays}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: context.hc.onOrange,
                       fontSize: 16,
                       fontWeight: FontWeight.w600),
                 ),
@@ -181,8 +202,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
                     style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13),
+                        color: context.hc.onOrange.withValues(alpha: 0.9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
             ],
@@ -193,7 +215,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             child: LinearProgressIndicator(
               value: widget.service.progressFraction,
               minHeight: 6,
-              backgroundColor: Colors.white.withValues(alpha: 0.3),
+              backgroundColor: Colors.white24,
               valueColor: const AlwaysStoppedAnimation(Colors.white),
             ),
           ),
@@ -214,20 +236,27 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          // Standard card surface — green is a STATUS accent (badge/time),
-          // not a fill colour; only the replacement flag keeps a warning tint.
+          // Standard card surface — green is reserved for good-STATUS only,
+          // so avatars are the brand orange-tinted initials tile and the
+          // shift duration is plain text; the single green presence is the
+          // tiny checked-in status dot. Replacement keeps a warning tint.
           ...detail.staffOnDuty.map((staff) => Card(
                 color:
                     staff.isReplacement ? context.hc.warningLight : null,
                 child: ListTile(
+                  // AppIconTile-style initials: orange @0.12 fill + orangeText
+                  // (same grammar as the Home patient-switcher avatars).
                   leading: CircleAvatar(
                     backgroundColor: staff.isReplacement
-                        ? context.hc.warning
-                        : context.hc.success,
+                        ? context.hc.warning.withValues(alpha: 0.12)
+                        : context.hc.orange.withValues(alpha: 0.12),
                     child: Text(
                       staff.name.split(' ').map((n) => n[0]).take(2).join(),
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: staff.isReplacement
+                              ? context.hc.warning
+                              : context.hc.orangeText,
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                   title: Row(
@@ -250,8 +279,33 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         ),
                     ],
                   ),
-                  subtitle: Text(
-                    '${staff.role} (${staff.shiftType})${staff.checkInTime != null ? ' · Checked in ${DateHelper.formatTime(staff.checkInTime!)}' : ''}',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${staff.role} (${staff.shiftType})',
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      if (staff.checkInTime != null)
+                        Row(
+                          children: [
+                            // Literal checked-in STATUS — the one green dot.
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: context.hc.success),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Checked in ${DateHelper.formatTime(staff.checkInTime!)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                   trailing: staff.checkInTime != null
                       ? Column(
@@ -262,13 +316,11 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: staff.isReplacement
-                                      ? context.hc.warning
-                                      : context.hc.success),
+                                  color: context.hc.black),
                             ),
                             Text('on shift',
                                 style: TextStyle(
-                                    fontSize: 11, color: context.hc.greyLight)),
+                                    fontSize: 11, color: context.hc.grey)),
                           ],
                         )
                       : null,
@@ -367,30 +419,135 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               style:
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
+          // Two equal-height tonal pills ('Schedule' not 'Today's Schedule'
+          // so both stay single-line at 320px) — the outlined buttons used
+          // to wrap to different heights and look mismatched.
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/medication-schedule'),
-                  icon: const Icon(Icons.schedule),
-                  label: Text(l.t('medication_schedule')),
-                ),
+              _actionPill(
+                label: 'Schedule',
+                icon: Icons.schedule,
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/medication-schedule'),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/medications'),
-                  icon: const Icon(Icons.medication),
-                  label: Text(l.t('medications')),
-                ),
+              _actionPill(
+                label: 'Medications',
+                icon: Icons.medication,
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/medications'),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  /// Tonal stadium pill (doctor_advice_card grammar) at a fixed 44pt height
+  /// so paired actions always render the same size. FittedBox(scaleDown)
+  /// guards single-line labels at 320px.
+  ButtonStyle _pillStyle(BuildContext context) => FilledButton.styleFrom(
+        backgroundColor: context.hc.orangeLight,
+        foregroundColor: context.hc.orangeText,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: const Size(0, 44),
+        tapTargetSize: MaterialTapTargetSize.padded,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      );
+
+  Widget _actionPill({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: SizedBox(
+        height: 44,
+        child: FilledButton.tonalIcon(
+          onPressed: onPressed,
+          style: _pillStyle(context),
+          icon: Icon(icon, size: 16),
+          label: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(label, maxLines: 1),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Owner ask: download the invoice and the full service history from this
+  /// screen directly, instead of hunting through Orders / 7-day attendance.
+  Widget _buildRecordsActions() {
+    final order = _findInvoiceOrder(context.watch<OrdersProvider>().orders);
+    final hasHistory = widget.service.deploymentIds.isNotEmpty;
+    // No matching order AND no deployment → nothing to offer; hide the row.
+    if (order == null && !hasHistory) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        children: [
+          // Hidden (not disabled) when no order matches — an Invoice pill
+          // that errors would be worse than no pill.
+          if (order != null)
+            _actionPill(
+              label: 'Invoice (PDF)',
+              icon: Icons.download,
+              onPressed: () => _shareInvoice(order),
+            ),
+          if (order != null && hasHistory) const SizedBox(width: 8),
+          if (hasHistory)
+            _actionPill(
+              label: 'Service history',
+              icon: Icons.history,
+              onPressed: () => Navigator.pushNamed(
+                  context, '/attendance-history',
+                  arguments: widget.service.deploymentIds.first),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Best-effort match between this service and an order: an order whose
+  /// item names overlap the service name wins; otherwise fall back to the
+  /// first order that contains a service-type item. Null → no invoice pill.
+  Map<String, dynamic>? _findInvoiceOrder(List<Map<String, dynamic>> orders) {
+    final serviceName = widget.service.name.toLowerCase();
+    for (final order in orders) {
+      final items = (order['items'] as List?) ?? const [];
+      for (final item in items) {
+        final itemName =
+            ((item as Map)['name'] as String? ?? '').toLowerCase();
+        if (itemName.isEmpty) continue;
+        if (itemName.contains(serviceName) ||
+            serviceName.contains(itemName)) {
+          return order;
+        }
+      }
+    }
+    for (final order in orders) {
+      final items = (order['items'] as List?) ?? const [];
+      if (items.any((i) => (i as Map)['isService'] == true)) return order;
+    }
+    return null;
+  }
+
+  Future<void> _shareInvoice(Map<String, dynamic> order) async {
+    try {
+      await InvoicePdfService().shareInvoice(order);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not generate the invoice — try again.'),
+          backgroundColor: context.hc.error,
+        ),
+      );
+    }
   }
 
   Widget _buildServiceBilling(AppLocalizations l) {

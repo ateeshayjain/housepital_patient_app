@@ -44,6 +44,10 @@ abstract class IApiService {
   Future<List<VitalReading>> getVitalsHistory(String patientId,
       {String period});
 
+  /// Posts a manually entered vital reading. Callers tolerate failure
+  /// (demo mode keeps the reading locally in [AppProvider]).
+  Future<void> submitVitalReading(String patientId, VitalReading reading);
+
   // ── Reports ───────────────────────────────────────────────
   Future<DailyReport?> getTodayReport(String patientId);
   Future<List<DailyReport>> getReportHistory(String patientId, {int page});

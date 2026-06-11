@@ -150,6 +150,9 @@
   "given_at": "{time} पर दी गई",
   "by_staff": "{name} द्वारा",
   "scheduled": "निर्धारित",
+  "log_dose": "खुराक दर्ज करें",
+  "logged_done": "दर्ज हो गई ✓",
+  "logged_today_count": "आज {m} में से {n} दर्ज",
   "missed_yesterday": "कल छूट गई",
   "view_reason": "कारण देखें",
   "delete": "हटाएं",
@@ -304,5 +307,17 @@
   "billing_empty_title": "अभी कोई बिल नहीं",
   "billing_empty_body": "जब आपकी सेवाएं शुरू होंगी, हर इनवॉइस और भुगतान यहीं मिलेगा।",
   "meds_empty_title": "अभी कोई दवाई नहीं",
-  "meds_empty_body": "दवाइयां जोड़ें या अपने सुपरवाइज़र से प्रिस्क्रिप्शन सिंक करवाएं — रिमाइंडर और अनुपालन ट्रैकिंग यहीं से शुरू होती है।"
+  "meds_empty_body": "दवाइयां जोड़ें या अपने सुपरवाइज़र से प्रिस्क्रिप्शन सिंक करवाएं — रिमाइंडर और अनुपालन ट्रैकिंग यहीं से शुरू होती है।",
+  "add_reading": "रीडिंग जोड़ें",
+  "save_reading": "रीडिंग सहेजें",
+  "reading_saved": "रीडिंग सहेज ली गई",
+  "systolic_mmhg": "सिस्टोलिक (mmHg)",
+  "diastolic_mmhg": "डायस्टोलिक (mmHg)",
+  "temperature_f": "तापमान (°F)",
+  "spo2_percent": "SpO2 (%)",
+  "sugar_mgdl": "ब्लड शुगर (mg/dL)",
+  "pulse_bpm": "पल्स (bpm)",
+  "vital_status_normal": "सामान्य",
+  "vital_status_borderline": "सीमा पर",
+  "vital_status_alert": "ध्यान देने की ज़रूरत"
 }

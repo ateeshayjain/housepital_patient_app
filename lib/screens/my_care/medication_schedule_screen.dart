@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
@@ -175,13 +176,13 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          ...slot.medications.map((sm) => _medItem(sm)),
+          ...slot.medications.map((sm) => _medItem(sm, slot.time)),
         ],
       ),
     );
   }
 
-  Widget _medItem(ScheduledMedication sm) {
+  Widget _medItem(ScheduledMedication sm, String slotTime) {
     final isGiven = sm.log?.wasGiven ?? false;
     final isMissed = sm.log?.wasMissed ?? false;
 
@@ -239,25 +240,85 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
               ],
             ),
           ),
-          if (isGiven && sm.log != null)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                    'Given ${DateHelper.formatTime(sm.log!.actualTime ?? sm.log!.scheduledTime)}',
-                    style: TextStyle(
-                        fontSize: 11, color: context.hc.success)),
-                if (sm.log!.staffName != null)
-                  Text('by ${sm.log!.staffName}',
-                      style: TextStyle(
-                          fontSize: 11, color: context.hc.greyLight)),
-              ],
-            )
-          else if (!isGiven && !isMissed)
-            Text(l.t('scheduled'),
-                style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
+          _medTrailing(sm, slotTime),
         ],
       ),
+    );
+  }
+
+  /// Trailing affordance for a dose row. Pending (no log) doses get the
+  /// single-tap "Log dose" tonal pill (Care Calendar mark-taken grammar);
+  /// the pill → "Given" swap shares the calendar's 200ms scale+fade
+  /// ceremony. Given doses show who/when; missed doses show nothing extra.
+  Widget _medTrailing(ScheduledMedication sm, String slotTime) {
+    final isGiven = sm.log?.wasGiven ?? false;
+    final isMissed = sm.log?.wasMissed ?? false;
+    final med = sm.medication;
+
+    final Widget child;
+    if (isGiven && sm.log != null) {
+      child = Column(
+        key: ValueKey('given-${med.id}-$slotTime'),
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+              'Given ${DateHelper.formatTime(sm.log!.actualTime ?? sm.log!.scheduledTime)}',
+              style: TextStyle(fontSize: 11, color: context.hc.success)),
+          if (sm.log!.staffName != null)
+            Text('by ${sm.log!.staffName}',
+                style: TextStyle(fontSize: 11, color: context.hc.greyLight)),
+        ],
+      );
+    } else if (isMissed) {
+      // Missed — row icon/colour already says it; no trailing (as before).
+      child = SizedBox.shrink(key: ValueKey('missed-${med.id}-$slotTime'));
+    } else if (sm.log != null) {
+      // Skipped — already resolved by staff; keep the plain label.
+      child = Text(l.t('scheduled'),
+          key: ValueKey('resolved-${med.id}-$slotTime'),
+          style: TextStyle(fontSize: 11, color: context.hc.greyLight));
+    } else {
+      // Pending — tonal stadium pill (doctor_advice_card _pillStyle
+      // grammar): small visual, padded tap target keeps the area ≥ 44pt.
+      child = Semantics(
+        key: ValueKey('log-${med.id}-$slotTime'),
+        label: 'Log dose for ${med.name}',
+        button: true,
+        child: FilledButton.tonalIcon(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            context.read<MedicationProvider>().logDoseToday(med.id, slotTime);
+          },
+          icon: const Icon(Icons.check, size: 16),
+          label: Text(l.t('log_dose')),
+          style: FilledButton.styleFrom(
+            backgroundColor: context.hc.orangeLight,
+            foregroundColor: context.hc.orangeText,
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            minimumSize: const Size(0, 32),
+            tapTargetSize: MaterialTapTargetSize.padded,
+            textStyle:
+                const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: MediaQuery.of(context).disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeOut,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1).animate(animation),
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 

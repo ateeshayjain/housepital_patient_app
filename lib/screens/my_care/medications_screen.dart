@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show HapticFeedback, rootBundle;
 import 'package:provider/provider.dart';
 import '../../models/care_event.dart';
 import '../../models/medication_models.dart';
@@ -125,16 +125,25 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     );
   }
 
-  // ── Weekly adherence header (deterministic demo calc) ──────────────────
+  // ── Weekly adherence header ─────────────────────────────────────────────
   // Visual: a 56px progress ring with the % inside (left) + the week's dose
-  // count and a labelled 7-day dot row (right). Same data as the old
-  // text-only version — tapping the card still opens the Care Calendar.
+  // count and a labelled 7-day dot row (right). Past 6 days keep the seeded
+  // demo calc; TODAY is live MedicationProvider state so the single-tap
+  // "Log dose" action visibly moves the ring, the dose line and today's dot.
+  // Tapping the card still opens the Care Calendar.
   Widget _adherenceHeader(BuildContext context) {
-    final pct = weeklyAdherencePercent();
+    final medProv = context.watch<MedicationProvider>();
     final perDay = dosesPerDay();
     final weekTotal = perDay * 7;
-    final weekTaken = (weekTotal * pct / 100).round();
     final today = dateOnly(DateTime.now());
+    var weekTaken = 0;
+    for (var i = 1; i <= 6; i++) {
+      final day = today.subtract(Duration(days: i));
+      weekTaken += (perDay * adherencePercentFor(day) / 100).round();
+    }
+    final todayTaken = medProv.dosesMarkedTakenToday.clamp(0, perDay);
+    weekTaken += todayTaken;
+    final pct = weekTotal == 0 ? 0 : (weekTaken * 100 / weekTotal).round();
     // Weekday initials/names indexed by DateTime.weekday - 1 (Mon=1 … Sun=7).
     const dayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const dayNames = [
@@ -189,7 +198,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                 Row(
                   children: List.generate(7, (i) {
                     final day = today.subtract(Duration(days: 6 - i));
-                    final full = adherencePercentFor(day) >= 90;
+                    // Today's dot is live provider state; past days seeded.
+                    final full = i == 6
+                        ? perDay > 0 && todayTaken >= perDay
+                        : adherencePercentFor(day) >= 90;
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
                       child: Column(
@@ -225,6 +237,105 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ── Single-tap dose logging (owner request) ─────────────────────────────
+  // One tap on the pill logs today's next pending dose for the med — no
+  // navigation, no dialog. Pill → "Logged ✓" morph uses the same 200ms
+  // scale+fade mark-taken ceremony as the Care Calendar dose rows.
+  Widget _logDoseAction(
+    BuildContext context,
+    MedicationFull med,
+    AppLocalizations l,
+    MedicationProvider medProv,
+  ) {
+    if (med.timeSlots.isEmpty) return const SizedBox.shrink();
+    final pending = medProv.nextPendingSlotToday(med.id);
+    final total = med.timeSlots.length;
+    final logged = med.timeSlots
+        .where((s) => medProv.isSlotLoggedToday(med.id, s))
+        .length;
+
+    final Widget child;
+    if (pending == null) {
+      // All of today's doses logged — done state instead of the pill.
+      child = Semantics(
+        key: ValueKey('dose-logged-${med.id}'),
+        label: 'All doses logged today for ${med.name}',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle, size: 16, color: context.hc.success),
+            const SizedBox(width: 6),
+            Text(
+              l.t('logged_done'),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: context.hc.success,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Tonal stadium pill (doctor_advice_card _pillStyle grammar): small
+      // visual, padded Material tap target keeps the area ≥ 44pt. Keyed on
+      // the pending slot so multi-dose meds re-fire the morph on each log.
+      child = Row(
+        key: ValueKey('dose-pending-${med.id}-$pending'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Semantics(
+            label: 'Log dose for ${med.name}',
+            button: true,
+            child: FilledButton.tonalIcon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                medProv.logNextDoseToday(med.id);
+              },
+              icon: const Icon(Icons.check, size: 16),
+              label: Text(l.t('log_dose')),
+              style: FilledButton.styleFrom(
+                backgroundColor: context.hc.orangeLight,
+                foregroundColor: context.hc.orangeText,
+                shape: const StadiumBorder(),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.padded,
+                textStyle:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          if (logged > 0) ...[
+            const SizedBox(width: 8),
+            Text(
+              l.t('logged_today_count',
+                  {'n': '$logged', 'm': '$total'}),
+              style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: MediaQuery.of(context).disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeOut,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1).animate(animation),
+          child: child,
+        ),
+      ),
+      child: child,
     );
   }
 
@@ -453,6 +564,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       ),
                   ],
                 ),
+              ],
+              if (med.timeSlots.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _logDoseAction(context, med, l, medProv),
               ],
               if (med.isLowStock) ...[
                 const SizedBox(height: 8),

@@ -34,6 +34,11 @@ class AppProvider extends ChangeNotifier {
   DailyReport? _todayReport;
   bool _isDashboardLoading = false;
 
+  // Manually entered vital readings (owner request: "Add option to add
+  // vitals" on Today's Vitals). In-memory only — demo mode tolerates a
+  // failed API post and keeps the reading locally; never written to storage.
+  final List<VitalReading> _vitalsHistory = [];
+
   // Language
   Locale _locale = const Locale('en');
 
@@ -64,6 +69,9 @@ class AppProvider extends ChangeNotifier {
   Attendance? get todayAttendance => _todayAttendance;
   VitalReading? get latestVitals => _latestVitals;
   DailyReport? get todayReport => _todayReport;
+
+  /// Manually entered vital readings, oldest first (in-memory).
+  List<VitalReading> get vitalsHistory => List.unmodifiable(_vitalsHistory);
   bool get isDashboardLoading => _isDashboardLoading;
   Locale get locale => _locale;
   String? get profilePhotoPath => _profilePhotoPath;
@@ -222,6 +230,30 @@ class AppProvider extends ChangeNotifier {
       final demoDueRaw = demoBilling['due_date'];
       _dueDate = demoDueRaw is String ? DateTime.tryParse(demoDueRaw) : null;
       _lastUpdatedText = 'Demo data';
+    }
+  }
+
+  /// Appends a manually entered vital reading to the in-memory history,
+  /// promotes it to [latestVitals] when it is the newest entry (today's
+  /// reading extends the history — the model stores one row per reading),
+  /// and notifies listeners immediately so the chart/stat cards update.
+  ///
+  /// The API post is attempted afterwards with tolerated failure (demo
+  /// mode): on error the reading stays local and a warning is logged.
+  Future<void> addVitalReading(VitalReading reading) async {
+    _vitalsHistory.add(reading);
+    _vitalsHistory.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    final latest = _latestVitals;
+    if (latest == null || !reading.recordedAt.isBefore(latest.recordedAt)) {
+      _latestVitals = reading;
+    }
+    notifyListeners();
+
+    try {
+      await _apiService.submitVitalReading(reading.patientId, reading);
+    } catch (e) {
+      Log.warn('Vitals API unavailable — reading kept locally (demo mode)',
+          error: e, tag: 'AppProvider');
     }
   }
 

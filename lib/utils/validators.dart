@@ -82,6 +82,29 @@ class Validators {
     return null;
   }
 
+  /// Numeric value within an inclusive [min]..[max] range — used by the
+  /// manual vitals entry sheet (BP/Temp/SpO2/Sugar/Pulse). Same contract as
+  /// the other validators: `null` when valid, error string when not.
+  static String? numberInRange(
+    String? value, {
+    required double min,
+    required double max,
+    bool required = true,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return required ? 'Required' : null;
+    }
+    final n = double.tryParse(value.trim());
+    if (n == null) return 'Must be a number';
+    if (n < min || n > max) {
+      return 'Enter ${_fmtNum(min)}–${_fmtNum(max)}';
+    }
+    return null;
+  }
+
+  static String _fmtNum(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
   /// Description / long-form text: required + maxLength cap.
   ///
   /// Audit F finding: `raise_concern` accepted unbounded body (~10MB DoS

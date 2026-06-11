@@ -59,6 +59,81 @@ class MedicationProvider extends ChangeNotifier {
     return _takenDoseKeys.where((k) => k.endsWith(suffix)).length;
   }
 
+  // ── Single-tap dose logging (Medications list / Today's Schedule) ──────
+  // Owner request: one tap on a med card logs today's next pending dose —
+  // no navigation, no dialog. Reuses the Care Calendar's mark-taken pathway
+  // (_takenDoseKeys) and ALSO records a session-local MedicationLog so the
+  // Today's Schedule rows flip to "Given". Same offline demo-mode behaviour
+  // as markDoseTakenToday: IApiService has no patient-side dose-log endpoint
+  // (MedicationLogs are staff-administered, read-only from this app), so the
+  // record is kept session-local — there is no API call to attempt or fail.
+
+  /// True when [timeSlot] of [medicationId] is already resolved today —
+  /// either via a quick action this session, or by an existing backend log
+  /// for that slot (any status: a staff-administered/skipped/missed entry
+  /// means the slot is no longer "pending").
+  bool isSlotLoggedToday(String medicationId, String timeSlot) {
+    if (isDoseTakenToday(medicationId, timeSlot)) return true;
+    final parts = timeSlot.split(':');
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    // _todayLogs holds today's logs by contract; match slot like
+    // _buildSchedule does (hour + minute).
+    return _todayLogs.any((l) =>
+        l.medicationId == medicationId &&
+        l.scheduledTime.hour == hour &&
+        l.scheduledTime.minute == minute);
+  }
+
+  /// Earliest time slot of [medicationId] not yet logged today, or null when
+  /// every slot is logged (or the med is unknown / has no slots).
+  String? nextPendingSlotToday(String medicationId) {
+    // Public getter (not the private field) so test doubles that override
+    // `medications` keep working.
+    final med = medications.cast<MedicationFull?>().firstWhere(
+          (m) => m!.id == medicationId,
+          orElse: () => null,
+        );
+    if (med == null) return null;
+    final slots = [...med.timeSlots]..sort();
+    for (final slot in slots) {
+      if (!isSlotLoggedToday(medicationId, slot)) return slot;
+    }
+    return null;
+  }
+
+  /// Marks [timeSlot] of [medicationId] as taken today (patient quick
+  /// action). Updates _todayLogs + _schedule and notifies via
+  /// [markDoseTakenToday]. Returns false (no-op) when the slot is already
+  /// logged today.
+  bool logDoseToday(String medicationId, String timeSlot) {
+    if (isSlotLoggedToday(medicationId, timeSlot)) return false;
+    final now = DateTime.now();
+    final parts = timeSlot.split(':');
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    _todayLogs.add(MedicationLog(
+      id: 'patient_log_${medicationId}_$timeSlot',
+      medicationId: medicationId,
+      scheduledTime: DateTime(now.year, now.month, now.day, hour, minute),
+      actualTime: now,
+      status: 'administered',
+      notes: 'Logged by patient (quick action)',
+    ));
+    _schedule = _buildSchedule();
+    markDoseTakenToday(medicationId, timeSlot); // notifies listeners
+    return true;
+  }
+
+  /// Single-tap logging for the Medications list: records the NEXT pending
+  /// dose slot today for [medicationId]. Returns false when all of today's
+  /// doses are already logged (no-op).
+  bool logNextDoseToday(String medicationId) {
+    final slot = nextPendingSlotToday(medicationId);
+    if (slot == null) return false;
+    return logDoseToday(medicationId, slot);
+  }
+
   // ── Refill requests (session state) ────────────────────────────────────
   final Set<String> _refillRequestedIds = {};
 
