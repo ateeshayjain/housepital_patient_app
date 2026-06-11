@@ -145,6 +145,10 @@ class _BillingScreenState extends State<BillingScreen> {
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         showHome: true, // owner: home button on every screen (only the Home tab omits it)
+        // Owner (field round 4): no cart on Billing, and Transaction History
+        // is icon-only — the labeled button crowded the bar until the title
+        // truncated to 'Bi…'.
+        showCart: false,
         // Bar title fades in only after the in-body large title scrolls
         // under the bar (iOS large-title style).
         title: AnimatedOpacity(
@@ -155,11 +159,10 @@ class _BillingScreenState extends State<BillingScreen> {
           child: Text(l.t('billing_title')),
         ),
         actions: [
-          TextButton.icon(
+          IconButton(
+            tooltip: l.t('transaction_history'),
             onPressed: () => Navigator.pushNamed(context, '/transactions'),
-            icon: Icon(Icons.receipt_long, size: 18, color: context.hc.orangeText),
-            label: Text(l.t('transaction_history'),
-                style: TextStyle(color: context.hc.orangeText, fontSize: 13)),
+            icon: const Icon(Icons.receipt_long),
           ),
         ],
       ),
@@ -528,11 +531,21 @@ class _BillingScreenState extends State<BillingScreen> {
 
     Color statusColor;
     switch (status) {
+      // Delivered/completed are GOOD outcomes — green (field report:
+      // 'Why is delivered highlighted in red?'; it was falling through to
+      // the warning default).
       case 'completed':
+      case 'delivered':
+      case 'in_progress':
         statusColor = context.hc.success;
         break;
       case 'cancelled':
         statusColor = context.hc.error;
+        break;
+      case 'confirmed':
+      case 'assigned':
+      case 'dispatched':
+        statusColor = context.hc.info;
         break;
       default:
         statusColor = context.hc.warning;

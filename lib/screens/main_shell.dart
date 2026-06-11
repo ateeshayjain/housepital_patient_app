@@ -1,10 +1,10 @@
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../config/app_colors.dart';
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
+import 'calendar/care_calendar_screen.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -29,10 +29,14 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
+  // Calendar inserted at index 3 (owner field request: 'add a tab for
+  // calendar view'). Indices 1 (My Care) and 2 (Services) are referenced
+  // from home_screen's switchToTab calls — do not reorder those.
   final _screens = [
     const HomeScreen(),
     const MyCareScreen(),
     ServiceCatalogScreen(key: ServiceCatalogScreen.catalogKey),
+    const CareCalendarScreen(),
     const BillingScreen(),
     const SettingsScreen(),
   ];
@@ -55,36 +59,16 @@ class MainShellState extends State<MainShell> {
         children: _screens,
       ),
       floatingActionButton: const AssistantFab(),
-      // Calm pass: DETACHED floating pill — the nav hovers as a fully rounded
-      // capsule instead of hugging the screen edge. It stays in the
-      // bottomNavigationBar slot so Scaffold keeps reporting the slot's full
-      // height (pill + margins) as the body's bottom MediaQuery inset — every
-      // screen that pads its scrollable with `MediaQuery.padding.bottom + N`
-      // clears the pill automatically.
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          // Float above the home indicator; min 8 on devices without one.
-          math.max(MediaQuery.of(context).padding.bottom, 8.0),
-        ),
-        // Owner decision (field report): the pill is SOLID BRAND ORANGE for
-        // visibility — white selected items, translucent-white unselected
-        // (white-on-orange rule; glass version read as washed out on device).
-        child: Material(
-          color: context.hc.orange,
-          shape: const StadiumBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: MediaQuery.removePadding(
-            // The outer Padding already clears the safe area — without this
-            // the bar would add the home-indicator inset a second time.
-            context: context,
-            removeBottom: true,
-            child: Padding(
-              // 56 (bar) + 2×4 = ~64 content height, items optically centered.
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: BottomNavigationBar(
+      // Owner decision (field round 5): FIXED full-width bar like the Dai Maa
+      // app — anchored to the bottom edge, no floating margins (the detached
+      // pill covered content and read as hovering clutter). Stays SOLID BRAND
+      // ORANGE with white items (white-on-orange rule). The bar pads itself
+      // for the home indicator via the Scaffold slot's own safe-area handling.
+      bottomNavigationBar: Material(
+        color: context.hc.orange,
+        child: SafeArea(
+          top: false,
+          child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         // Transparent + flat: the orange Material provides the surface.
@@ -109,6 +93,11 @@ class MainShellState extends State<MainShell> {
             activeIcon: const Icon(Icons.medical_services),
             label: l.t('tab_services'),
           ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month_outlined),
+            activeIcon: Icon(Icons.calendar_month),
+            label: 'Calendar',
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.payment_outlined),
             activeIcon: const Icon(Icons.payment),
@@ -120,8 +109,6 @@ class MainShellState extends State<MainShell> {
             label: l.t('tab_more'),
           ),
         ],
-              ),
-            ),
           ),
         ),
       ),

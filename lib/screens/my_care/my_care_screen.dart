@@ -151,7 +151,19 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           if (myCare.healthManager != null)
             HealthManagerBanner(manager: myCare.healthManager!),
 
-          // 2. Active Services
+          // 2. Doctor Handover Report — flagship; owner moved it to the TOP
+          // of My Care (field request 2026-06-11). Role-gated: the handover
+          // PDF is the patient's full medical history — only patient/family
+          // may export it; hidden entirely (not disabled) for staff roles.
+          if (canUserPerform(app.currentUserRole, UserAction.shareHandover)) ...[
+            const SectionHeader(title: 'Share with your doctor'),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _DoctorHandoverCard(),
+            ),
+          ],
+
+          // 3. Active Services
           SectionHeader(title: l.t('active_services')),
           ...myCare.activeServices.map((service) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
@@ -293,23 +305,16 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ),
           ),
 
-          // 7. Doctor Handover Report — flagship share-with-your-doctor card.
-          // audit R2: role-gated. The handover PDF is the patient's full
-          // medical history — only the patient/family may export it, so the
-          // card is hidden entirely (not disabled) for staff-type roles.
-          if (canUserPerform(app.currentUserRole, UserAction.shareHandover)) ...[
-            const SectionHeader(title: 'Share with your doctor'),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: _DoctorHandoverCard(),
-            ),
-          ],
-
           // 8. Daily Care Rating — rating belongs at the END of the journey,
           // after the day's care summary (last content card before padding).
+          // Full-bleed like every sibling section (field report: the card
+          // wasn't spanning the screen width).
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: _DailyCareRatingCard(),
+            child: SizedBox(
+              width: double.infinity,
+              child: _DailyCareRatingCard(),
+            ),
           ),
 
           // Billing intentionally NOT shown here — it lives in the Billing tab

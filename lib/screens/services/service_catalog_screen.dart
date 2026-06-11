@@ -6,7 +6,6 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
-import '../../providers/cart_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/glass.dart';
@@ -129,40 +128,9 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       // own under-scroll pass; glass material applies without it.
       appBar: GlassAppBar(
         showHome: true, // owner: home button on every screen (only the Home tab omits it)
-        actions: [
-          Consumer<CartProvider>(
-            builder: (ctx, cart, _) {
-              final count = cart.itemCount;
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.shopping_cart_outlined),
-                    onPressed: () => Navigator.pushNamed(ctx, '/cart'),
-                  ),
-                  if (count > 0)
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: context.hc.error,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$count',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
+        // No custom cart here — the GlassAppBar contract already places the
+        // badged cart rightmost (field report: 'why are there 2 carts?' —
+        // this screen's hand-rolled one predated the contract cart).
         bottom: PreferredSize(
           preferredSize:
               Size.fromHeight(tabBar.preferredSize.height + largeTitleHeight),

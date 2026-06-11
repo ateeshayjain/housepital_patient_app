@@ -30,6 +30,7 @@ import 'package:housepital_patient/providers/cart_provider.dart';
 import 'package:housepital_patient/providers/medication_provider.dart';
 import 'package:housepital_patient/providers/my_care_provider.dart';
 import 'package:housepital_patient/providers/orders_provider.dart';
+import 'package:housepital_patient/providers/reminders_provider.dart';
 import 'package:housepital_patient/providers/theme_provider.dart';
 import 'package:housepital_patient/screens/home/home_screen.dart';
 import 'package:housepital_patient/screens/main_shell.dart';
@@ -147,6 +148,9 @@ Widget _host() => MultiProvider(
         ChangeNotifierProvider<OrdersProvider>.value(
             value: _TestOrdersProvider()),
         ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
+        // Calendar root tab (index 3) builds eagerly in the IndexedStack.
+        ChangeNotifierProvider<RemindersProvider>(
+            create: (_) => RemindersProvider()),
         ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
         ChangeNotifierProvider<AuthProvider>.value(
             value: AuthProvider(FakeFirebaseService(), FakeAuthApiService())),
@@ -181,14 +185,14 @@ Future<void> _pump(WidgetTester tester, Size size) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('bottom nav is a detached floating pill (margins + radius 32)',
+  testWidgets('bottom nav is a FIXED full-width solid-orange bar',
       (tester) async {
     const size = Size(390, 844);
     await _pump(tester, size);
 
-    // The bar lives inside a fully-rounded SOLID ORANGE capsule (owner
-    // decision: orange for visibility; glass read as washed out on device).
-    final pill = tester.widget<Material>(
+    // Owner (field round 5): fixed edge-to-edge bar like the Dai Maa app —
+    // no floating margins; still solid brand orange with white items.
+    final bar = tester.widget<Material>(
       find
           .ancestor(
             of: find.byType(BottomNavigationBar),
@@ -196,78 +200,80 @@ void main() {
           )
           .first,
     );
-    expect(pill.shape, isA<StadiumBorder>(),
-        reason: 'Pill must be fully rounded (stadium), not edge-to-edge.');
-    expect(pill.color, HousepitalColors.orange,
-        reason: 'Pill is solid brand orange.');
+    expect(bar.color, HousepitalColors.orange,
+        reason: 'Bar is solid brand orange.');
 
-    // Detached: 16px side margins and ≥8px clearance to the screen edge
-    // (test env has no home indicator, so the min-8 floor applies).
     final barRect = tester.getRect(find.byType(BottomNavigationBar));
-    expect(barRect.left, 16.0);
-    expect(barRect.right, size.width - 16.0);
-    expect(size.height - barRect.bottom, greaterThanOrEqualTo(8.0),
-        reason: 'Pill must float clear of the bottom edge.');
+    expect(barRect.left, 0.0, reason: 'Fixed bar spans the full width.');
+    expect(barRect.right, size.width);
+    expect(barRect.bottom, size.height,
+        reason: 'Fixed bar is anchored to the bottom edge '
+            '(no home indicator in the test env).');
   });
 
   testWidgets(
-      'body still receives the pill footprint as its bottom MediaQuery inset',
+      'body still receives the bar footprint as its bottom MediaQuery inset',
       (tester) async {
     await _pump(tester, const Size(390, 844));
 
     // Screens pad scrollables with MediaQuery.padding.bottom + N — with the
-    // pill in the bottomNavigationBar slot the Scaffold reports the slot's
-    // full height (4 + 56 + 4 content + 8 margin = 72) so nothing important
-    // hides under the floating capsule.
+    // bar in the bottomNavigationBar slot the Scaffold reports the slot
+    // height so nothing important hides under the fixed bar.
     final homeContext = tester.element(find.byType(HomeScreen));
     expect(MediaQuery.of(homeContext).padding.bottom,
-        greaterThanOrEqualTo(72.0));
+        greaterThanOrEqualTo(56.0));
   });
 
-  testWidgets('five tabs unchanged; tapping a pill item switches tabs',
+  testWidgets('six tabs incl. Calendar; tapping an item switches tabs',
       (tester) async {
     await _pump(tester, const Size(390, 844));
 
     final bar = tester
         .widget<BottomNavigationBar>(find.byType(BottomNavigationBar));
-    expect(bar.items, hasLength(5));
+    expect(bar.items, hasLength(6));
 
-    Finder pillLabel(String text) => find.descendant(
+    Finder barLabel(String text) => find.descendant(
         of: find.byType(BottomNavigationBar), matching: find.text(text));
-    for (final label in ['Home', 'My Care', 'Services', 'Billing', 'More']) {
-      expect(pillLabel(label), findsOneWidget);
+    for (final label in [
+      'Home',
+      'My Care',
+      'Services',
+      'Calendar',
+      'Billing',
+      'More'
+    ]) {
+      expect(barLabel(label), findsOneWidget);
     }
 
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
         0);
-    await tester.tap(pillLabel('My Care'));
+    await tester.tap(barLabel('My Care'));
     await tester.pump();
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
         1);
+    // Calendar is index 3 (Home/MyCare/Services indices are referenced from
+    // home_screen switchToTab calls and must not shift).
+    await tester.tap(barLabel('Calendar'));
+    await tester.pump();
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
+        3);
   });
 
-  testWidgets('assistant FAB floats above the pill without colliding',
+  testWidgets('assistant FAB floats above the bar without colliding',
       (tester) async {
     await _pump(tester, const Size(390, 844));
 
     final fabRect = tester.getRect(find.byType(AssistantFab));
-    final pillRect = tester.getRect(
-      find
-          .ancestor(
-            of: find.byType(BottomNavigationBar),
-            matching: find.byType(Material),
-          )
-          .first,
-    );
-    expect(fabRect.overlaps(pillRect), isFalse,
-        reason: 'Assistant FAB must not collide with the floating pill.');
-    expect(fabRect.bottom, lessThanOrEqualTo(pillRect.top));
+    final barRect = tester.getRect(find.byType(BottomNavigationBar));
+    expect(fabRect.overlaps(barRect), isFalse,
+        reason: 'Assistant FAB must not collide with the fixed bar.');
+    expect(fabRect.bottom, lessThanOrEqualTo(barRect.top));
   });
 
-  testWidgets('shell lays out without overflow at 320x568 with the pill',
+  testWidgets('shell lays out without overflow at 320x568 with six tabs',
       (tester) async {
     await _pump(tester, const Size(320, 568));
     expect(tester.takeException(), isNull,
-        reason: 'Floating pill must not introduce overflow at SE width.');
+        reason: 'Fixed six-tab bar must not introduce overflow at SE width.');
   });
 }

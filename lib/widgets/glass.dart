@@ -54,27 +54,33 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Owner layout (field round 4, decrowding): HOME lives on the LEFT —
+    // it takes the leading slot on root screens (no back button there);
+    // on pushed screens back keeps the leading slot and home sits first in
+    // the trailing group. CART is always RIGHTMOST.
+    final canPop = automaticallyImplyLeading && Navigator.canPop(context);
+    final homeButton = IconButton(
+      icon: const Icon(Icons.home_outlined),
+      tooltip: 'Home',
+      onPressed: () {
+        Navigator.popUntil(context, (route) => route.isFirst);
+        MainShell.switchToTab(0);
+      },
+    );
     return GlassSurface(
       child: AppBar(
+        leading: (!canPop && showHome) ? homeButton : null,
         title: title,
         actions: [
           ...?actions,
-          if (showCart) const _CartAction(),
+          if (canPop && showHome) homeButton,
           if (showSearch)
             IconButton(
               icon: const Icon(Icons.search),
               tooltip: 'Search',
               onPressed: () => Navigator.pushNamed(context, '/search'),
             ),
-          if (showHome)
-            IconButton(
-              icon: const Icon(Icons.home_outlined),
-              tooltip: 'Home',
-              onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
-                MainShell.switchToTab(0);
-              },
-            ),
+          if (showCart) const _CartAction(),
         ],
         automaticallyImplyLeading: automaticallyImplyLeading,
         bottom: bottom,

@@ -1616,14 +1616,20 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
           ),
           const SizedBox(height: 8),
           // Doses grouped by time of day — matches how patients think about
-          // medication routines (subah / dopahar / raat).
+          // medication routines (subah / dopahar / raat). Hairline separators
+          // between dose rows (owner field report: the list ran together).
           ..._doseGroups(doses).expand(
             (g) => [
               Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
                 child: DayPartHeader(g.part),
               ),
-              ...g.doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
+              for (var i = 0; i < g.doses.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                      height: 1, thickness: 0.5, color: context.hc.divider),
+                _doseRow(medProv, g.doses[i].$1, g.doses[i].$2),
+              ],
             ],
           ),
         ],
