@@ -491,6 +491,106 @@ void main() {
     });
   });
 
+  // ── Single-tap dose logging (logNextDoseToday / logDoseToday) ────────────
+
+  group('MedicationProvider — single-tap dose logging', () {
+    setUp(() async {
+      mock.medicationsResult = [
+        _makeMedication(id: 'm1', timeSlots: ['08:00', '20:00']),
+      ];
+      await provider.loadMedications('patient1');
+    });
+
+    test('logNextDoseToday logs the next pending slot (earliest first)', () {
+      expect(provider.nextPendingSlotToday('m1'), '08:00');
+
+      final result = provider.logNextDoseToday('m1');
+
+      expect(result, isTrue);
+      expect(provider.isDoseTakenToday('m1', '08:00'), isTrue);
+      expect(provider.isSlotLoggedToday('m1', '08:00'), isTrue);
+      expect(provider.isSlotLoggedToday('m1', '20:00'), isFalse);
+      // Session-local log recorded so Today's Schedule rows flip too.
+      expect(provider.todayLogs, hasLength(1));
+      expect(provider.todayLogs.single.medicationId, 'm1');
+      expect(provider.todayLogs.single.wasGiven, isTrue);
+      expect(provider.todayLogs.single.scheduledTime.hour, 8);
+    });
+
+    test('second call logs the following slot', () {
+      provider.logNextDoseToday('m1');
+
+      final result = provider.logNextDoseToday('m1');
+
+      expect(result, isTrue);
+      expect(provider.isDoseTakenToday('m1', '20:00'), isTrue);
+      expect(provider.nextPendingSlotToday('m1'), isNull);
+      expect(provider.todayLogs, hasLength(2));
+    });
+
+    test('all slots logged: returns false and is a no-op', () {
+      provider.logNextDoseToday('m1');
+      provider.logNextDoseToday('m1');
+
+      final result = provider.logNextDoseToday('m1');
+
+      expect(result, isFalse);
+      expect(provider.todayLogs, hasLength(2));
+      expect(provider.dosesMarkedTakenToday, 2);
+    });
+
+    test('unknown medication id returns false', () {
+      expect(provider.logNextDoseToday('nope'), isFalse);
+      expect(provider.todayLogs, isEmpty);
+    });
+
+    test('staff-administered log counts as logged: next pending skips it',
+        () async {
+      final today = DateTime.now();
+      mock.medicationLogsResult = [
+        _makeLog(
+          medicationId: 'm1',
+          scheduledTime: DateTime(today.year, today.month, today.day, 8, 0),
+        ),
+      ];
+      await provider.loadTodaySchedule('patient1');
+
+      expect(provider.isSlotLoggedToday('m1', '08:00'), isTrue);
+      expect(provider.nextPendingSlotToday('m1'), '20:00');
+      expect(provider.logNextDoseToday('m1'), isTrue);
+      expect(provider.isDoseTakenToday('m1', '20:00'), isTrue);
+    });
+
+    test('logDoseToday updates the built schedule (slot shows wasGiven)',
+        () async {
+      mock.medicationLogsResult = [];
+      await provider.loadTodaySchedule('patient1');
+      final before = provider.schedule.firstWhere((s) => s.time == '08:00');
+      expect(before.medications.first.log, isNull);
+
+      provider.logDoseToday('m1', '08:00');
+
+      final morning = provider.schedule.firstWhere((s) => s.time == '08:00');
+      expect(morning.medications.first.log?.wasGiven, isTrue);
+    });
+
+    test('logDoseToday same slot twice: second returns false (no duplicate)',
+        () {
+      expect(provider.logDoseToday('m1', '08:00'), isTrue);
+      expect(provider.logDoseToday('m1', '08:00'), isFalse);
+      expect(provider.todayLogs, hasLength(1));
+    });
+
+    test('notifies listeners when a dose is logged', () {
+      var notifications = 0;
+      provider.addListener(() => notifications++);
+
+      provider.logNextDoseToday('m1');
+
+      expect(notifications, greaterThan(0));
+    });
+  });
+
   // ── Loading/saving state edge cases ──────────────────────────────────────
 
   group('MedicationProvider — loading and saving state', () {

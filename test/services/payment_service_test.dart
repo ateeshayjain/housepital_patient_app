@@ -215,24 +215,46 @@ void main() {
   tearDown(clearChannel);
 
   // ----------------------------------------------------------
-  // Assert behaviour — runs in BOTH configs (no skip).
-  // This documents the M-10 / PR #10 brand-key fix.
+  // Demo-payments contract — runs in BOTH configs (no skip).
+  // Contract change 2026-06-11 (field bug): a placeholder key no longer
+  // asserts in the constructor; instead PaymentService.isDemoPayments is
+  // true and openCheckout SIMULATES success locally (real Razorpay rejects
+  // placeholder keys with "Unexpected Error" on device). The CI dummy key
+  // is intentionally NOT a placeholder so these tests exercise real paths.
   // ----------------------------------------------------------
-  group('PaymentService — razorpay key guard', () {
-    test('placeholder key triggers debug assertion (M-10/PR-10 contract)', () {
-      // Detect: if the build's compile-time const happens to BE the
-      // placeholder, the constructor must throw an AssertionError.
-      if (AppConstants.razorpayKey == 'rzp_test_XXXXXXXXXX') {
-        expect(
-          () => PaymentService(apiService: _FakeApiService()),
-          throwsA(isA<AssertionError>()),
-        );
-      } else {
-        // A real key (test or live) is configured — constructor must succeed.
-        final svc = PaymentService(apiService: _FakeApiService());
-        expect(svc, isNotNull);
-        svc.dispose();
+  group('PaymentService — demo payments contract', () {
+    test('constructor never throws; isDemoPayments reflects the key', () {
+      final svc = PaymentService(apiService: _FakeApiService());
+      expect(svc, isNotNull);
+      expect(
+        PaymentService.isDemoPayments,
+        AppConstants.razorpayKey == 'rzp_test_XXXXXXXXXX' ||
+            AppConstants.razorpayKey == 'rzp_test_dummy',
+      );
+      svc.dispose();
+    });
+
+    test('demo key: openCheckout simulates success without touching Razorpay',
+        () async {
+      if (!PaymentService.isDemoPayments) {
+        markTestSkipped('real-ish key configured — real checkout path '
+            'covered by the openCheckout groups');
+        return;
       }
+      final svc = PaymentService(apiService: _FakeApiService());
+      var succeeded = false;
+      String? failure;
+      svc.openCheckout(
+        amount: 10000,
+        description: 'demo',
+        onSuccess: () => succeeded = true,
+        onFailure: (m) => failure = m,
+      );
+      // Simulation completes on a short timer.
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+      expect(succeeded, isTrue);
+      expect(failure, isNull);
+      svc.dispose();
     });
   });
 

@@ -269,10 +269,15 @@ class _BillingScreenState extends State<BillingScreen> {
                         onFailure: (message) {
                           paymentService.dispose();
                           if (context.mounted) {
+                            // Razorpay messages already start with "Payment
+                            // Failed - …" — don't double the prefix.
+                            final lower = message.toLowerCase();
+                            final text = lower.contains('payment failed')
+                                ? message
+                                : '${l.t('payment_failed')}: $message';
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    Text('${l.t('payment_failed')}: $message'),
+                                content: Text(text),
                                 backgroundColor: context.hc.error,
                               ),
                             );

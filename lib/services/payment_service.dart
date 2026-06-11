@@ -35,15 +35,29 @@ class PaymentService {
   // Key sourced from constants — move to env config before production.
   static const _testKey = AppConstants.razorpayKey;
 
+  /// Placeholder keys used for dev/CI/demo builds. With one of these, real
+  /// Razorpay checkout cannot open (the SDK rejects the key with "Unexpected
+  /// Error" — seen on-device 2026-06-11), so [openCheckout] simulates the
+  /// payment locally instead, keeping the full purchase flow demoable.
+  /// A real `rzp_test_*`/`rzp_live_*` key passed via
+  /// `--dart-define=RAZORPAY_KEY=...` at build time enables real checkout.
+  // NOTE: the CI key 'rzp_test_ci_dummy_key' is deliberately NOT here — its
+  // whole purpose is to un-skip tests that exercise the REAL checkout path.
+  static const Set<String> _placeholderKeys = {
+    'rzp_test_XXXXXXXXXX',
+    'rzp_test_dummy',
+  };
+
+  /// True when this build has no real Razorpay key.
+  static bool get isDemoPayments => _placeholderKeys.contains(_testKey);
+
   VoidCallback? _onSuccessCallback;
   void Function(String)? _onFailureCallback;
 
   PaymentService({IApiService? apiService})
       : _apiService = apiService ?? ApiService() {
-    assert(
-      AppConstants.razorpayKey != 'rzp_test_XXXXXXXXXX',
-      'Razorpay key not configured. Set RAZORPAY_KEY env var.',
-    );
+    // No assert on a placeholder key: demo builds intentionally run without
+    // a real key (openCheckout simulates payment on that path).
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handleError);
@@ -92,6 +106,20 @@ class PaymentService {
   }) {
     _onSuccessCallback = onSuccess;
     _onFailureCallback = onFailure;
+
+    // Demo builds: the placeholder key can't open real checkout — simulate a
+    // successful payment locally (mirrors the rest of the app's demo-mode
+    // behaviour; verification is skippedDemo on this path anyway).
+    if (isDemoPayments) {
+      Log.warn(
+          'DEMO payment simulated (placeholder Razorpay key — pass a real '
+          'key via --dart-define=RAZORPAY_KEY to enable real checkout)',
+          tag: 'PaymentService');
+      Future.delayed(const Duration(milliseconds: 800), () {
+        _onSuccessCallback?.call();
+      });
+      return;
+    }
 
     final options = <String, dynamic>{
       'key': _testKey,
