@@ -1239,15 +1239,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       // Non-diagnostic preparation notes (existing behavior)
       if (!isDiag && !_isVisitService && s.preparationNotes != null) ...[
         const SizedBox(height: 16),
-        Text('What to Prepare',
+        Text('Good to know',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: context.hc.black)),
         const SizedBox(height: 8),
-        Text(s.preparationNotes!,
-            style: TextStyle(
-                fontSize: 14, color: context.hc.grey)),
+        ..._prepNoteBlocks(context, s.preparationNotes!),
       ],
 
       // Prescription / Notes / Online Assessment section
@@ -2688,4 +2686,46 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       ),
     );
   }
+}
+
+/// Renders multi-line preparation notes as separate readable blocks instead
+/// of one wall of text. Lines shaped like 'Label: rest' get a bold lead-in;
+/// every newline-separated line becomes its own paragraph with breathing
+/// room (field report: the psychiatrist notes rendered as an unformatted
+/// blob).
+List<Widget> _prepNoteBlocks(BuildContext context, String notes) {
+  final lines = notes
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
+  return [
+    for (final line in lines)
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Builder(builder: (context) {
+          final colon = line.indexOf(': ');
+          // Bold lead-in only for short labels ('Fees', 'Helps with', …) —
+          // a colon deep into the sentence is punctuation, not a label.
+          if (colon > 0 && colon <= 24) {
+            return Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 14, color: context.hc.grey),
+                children: [
+                  TextSpan(
+                    text: line.substring(0, colon + 1),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: context.hc.black),
+                  ),
+                  TextSpan(text: line.substring(colon + 1)),
+                ],
+              ),
+            );
+          }
+          return Text(line,
+              style: TextStyle(fontSize: 14, color: context.hc.grey));
+        }),
+      ),
+  ];
 }

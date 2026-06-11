@@ -205,16 +205,17 @@ final List<ServiceItem> consultationServices = [
     iconName: 'stethoscope',
   ),
   // Content from the Mental Health SM creative (2026-06): "Because talking
-  // is important." — Dr. Archit Aggarwal, MBBS, MD (Psychiatry). Fees per
-  // creative: initial ₹1,000 (15 min) / therapy ₹1,500 (40 min) / monthly
-  // pack ₹9,500 (8 sessions). 100% online, Mon–Fri 6–8 PM.
+  // is important." Fees per creative: initial ₹1,000 (15 min) / therapy
+  // ₹1,500 (40 min) / monthly pack ₹9,500 (8 sessions). 100% online,
+  // Mon–Fri 6–8 PM. No staff names in catalog copy (owner rule) — the
+  // assigned professional is introduced at confirmation.
   ServiceItem(
     id: 'con-psychiatrist', name: 'Psychiatrist Consultation',
     category: 'consultation', bookingType: 'scheduled',
     description:
-        'Because talking is important. Dr. Archit Aggarwal (MBBS, MD '
-        'Psychiatry) — consultant psychiatrist & psychotherapist. 100% '
-        'online, private and judgment-free.',
+        'Because talking is important. Consultant psychiatrist & '
+        'psychotherapist (MBBS, MD Psychiatry) — 100% online, private '
+        'and judgment-free.',
     basePriceMin: 1000, basePriceMax: 1500,
     durationMinutes: 40, leadTimeHours: 24, iconName: 'psychology',
     preparationNotes:
@@ -230,16 +231,16 @@ final List<ServiceItem> consultationServices = [
         'Online · Mon–Fri · 6:00–8:00 PM.',
   ),
   // Content from the Clinical Dietetics SM creatives (2026-06): The Nourish
-  // Programme (30/60/90-day) + Senior Clinical Dietitian Rhitika Sharma on
+  // Programme (30/60/90-day) + the senior clinical dietitian on
   // call (complimentary with every Housepital package).
   ServiceItem(
     id: 'con-diet', name: 'Diet & Nutrition — The Nourish Programme',
     category: 'consultation', bookingType: 'scheduled',
     description:
-        'Clinical dietetics by Rhitika Sharma, Senior Clinical Dietitian '
-        '(12+ yrs oncology, transplant & critical care). Weight loss, '
-        'diabetes & lifestyle care — one nutrition plan, built bedside, '
-        'reviewed every week.',
+        'Clinical dietetics by a senior clinical dietitian (12+ yrs '
+        'oncology, transplant & critical care). Weight loss, diabetes & '
+        'lifestyle care — one nutrition plan, built bedside, reviewed '
+        'every week.',
     basePriceMin: 3000, basePriceMax: 6000,
     durationMinutes: 45, leadTimeHours: 24, iconName: 'restaurant',
     preparationNotes:
