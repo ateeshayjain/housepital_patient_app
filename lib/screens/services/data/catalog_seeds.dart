@@ -204,11 +204,60 @@ final List<ServiceItem> consultationServices = [
     basePriceMin: 3500, basePriceMax: 5000, durationMinutes: 30, leadTimeHours: 4,
     iconName: 'stethoscope',
   ),
+  // Content from the Mental Health SM creative (2026-06): "Because talking
+  // is important." — Dr. Archit Aggarwal, MBBS, MD (Psychiatry). Fees per
+  // creative: initial ₹1,000 (15 min) / therapy ₹1,500 (40 min) / monthly
+  // pack ₹9,500 (8 sessions). 100% online, Mon–Fri 6–8 PM.
   ServiceItem(
     id: 'con-psychiatrist', name: 'Psychiatrist Consultation',
     category: 'consultation', bookingType: 'scheduled',
-    description: 'Licensed psychiatrist for mental health assessment, medication management & therapy referrals.',
-    basePriceMin: 1500, durationMinutes: 45, leadTimeHours: 24, iconName: 'psychology',
+    description:
+        'Because talking is important. Dr. Archit Aggarwal (MBBS, MD '
+        'Psychiatry) — consultant psychiatrist & psychotherapist. 100% '
+        'online, private and judgment-free.',
+    basePriceMin: 1000, basePriceMax: 1500,
+    durationMinutes: 40, leadTimeHours: 24, iconName: 'psychology',
+    preparationNotes:
+        'Helps with: depression & bipolar, anxiety & OCD, schizophrenia & '
+        'psychosis, de-addiction (incl. gaming), child psychiatry & IQ, '
+        'dementia & elderly care, eating disorders, ADHD, grief, sleep '
+        'issues & migraine.\n'
+        'Therapy & assessment: CBT, DBT, grief, marital, family, '
+        'occupational, IQ assessment. Also trained in rTMS & ECT — '
+        'advanced, specialist-supervised care.\n'
+        'Fees: initial consult ₹1,000 (15-min assessment) · therapy session '
+        '₹1,500 (40 min) · monthly pack ₹9,500 (8 sessions).\n'
+        'Online · Mon–Fri · 6:00–8:00 PM.',
+  ),
+  // Content from the Clinical Dietetics SM creatives (2026-06): The Nourish
+  // Programme (30/60/90-day) + Senior Clinical Dietitian Rhitika Sharma on
+  // call (complimentary with every Housepital package).
+  ServiceItem(
+    id: 'con-diet', name: 'Diet & Nutrition — The Nourish Programme',
+    category: 'consultation', bookingType: 'scheduled',
+    description:
+        'Clinical dietetics by Rhitika Sharma, Senior Clinical Dietitian '
+        '(12+ yrs oncology, transplant & critical care). Weight loss, '
+        'diabetes & lifestyle care — one nutrition plan, built bedside, '
+        'reviewed every week.',
+    basePriceMin: 3000, basePriceMax: 6000,
+    durationMinutes: 45, leadTimeHours: 24, iconName: 'restaurant',
+    preparationNotes:
+        'The Nourish Programme: 30-day quick reset ₹3,000 · 60-day '
+        '(most popular) ₹4,500 · 90-day best results ₹6,000. Every plan '
+        'includes daily WhatsApp support, a weekly plan and recipes.\n'
+        'Specialities: oncology nutrition (chemo, radiation, recovery), '
+        'diabetes & cardiac (insulin-aware meal plans), post-surgical '
+        'healing & protein protocols, renal & liver (transplant-grade '
+        'plans), gut healing (functional medicine), geriatric care '
+        '(sarcopenia, swallowing).\n'
+        'About: M.Sc. Nutrition & Dietetics, double-certified cancer '
+        'nutritionist, liver-transplant nutrition certified, IAPEN India '
+        'Oncology Core Committee, published author. Trained at Medanta, '
+        'Sir HN Reliance, AIMS & internationally (Stanford, Duke, '
+        'Univ. of Colorado).\n'
+        'Senior Clinical Dietitian on call is COMPLIMENTARY with every '
+        'Housepital package.',
   ),
   ServiceItem(
     id: 'con-grief', name: 'Grief Counselling',
@@ -279,6 +328,7 @@ final List<ServiceItem> visitServices = [
 /// Icon mapping used by card widgets to resolve `ServiceItem.iconName`.
 const catalogIconMap = <String, IconData>{
   'medical_services': Icons.medical_services,
+  'restaurant': Icons.restaurant,
   'fitness_center': Icons.fitness_center,
   'bedtime': Icons.bedtime,
   'science': Icons.science,

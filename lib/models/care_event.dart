@@ -10,7 +10,11 @@ import '../data/demo_data.dart';
 
 /// Category of a calendar event. Order matters: it's the render order of the
 /// per-day dots and of the detail sections.
-enum CareEventType { meds, staff, visit, test, renewal }
+///
+/// `reminder` is the user-authored category (quick-add '+' on the calendar —
+/// see RemindersProvider); it renders last so seeded care events keep their
+/// long-standing dot order.
+enum CareEventType { meds, staff, visit, test, renewal, reminder }
 
 class CareEvent {
   final DateTime date;

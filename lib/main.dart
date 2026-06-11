@@ -18,6 +18,7 @@ import 'providers/auth_provider.dart';
 import 'providers/billing_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/orders_provider.dart';
+import 'providers/reminders_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/api_service.dart';
 import 'services/firebase_service.dart';
@@ -201,6 +202,10 @@ void main() async {
           ),
           ChangeNotifierProvider(
             create: (_) => OrdersProvider(),
+          ),
+          // Care Calendar quick-add reminders (SharedPreferences-persisted).
+          ChangeNotifierProvider(
+            create: (_) => RemindersProvider()..load(),
           ),
           ChangeNotifierProvider(
             create: (_) => MyCareProvider(apiService),

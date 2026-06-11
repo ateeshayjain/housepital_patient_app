@@ -3,9 +3,17 @@
 // CARE CALENDAR — one place to see staff attendance, medicine adherence and
 // upcoming visits/tests/renewals, day by day.
 //
-// All event data comes from the pure `eventsFor()` aggregator in
+// All seeded event data comes from the pure `eventsFor()` aggregator in
 // lib/models/care_event.dart (deterministic, demo-seeded — no Random()).
-// "Today" is simply DateTime.now().
+// User-authored quick-add reminders (the '+' app-bar action) merge in via
+// RemindersProvider, so dots, week-card previews and day detail all share one
+// event pipeline. "Today" is simply DateTime.now().
+//
+// Layout (owner's reference scheduler):
+//  • Day | Week | Month | Year segmented control.
+//  • Week  = vertical list of 7 day cards with event preview lines.
+//  • Month = 7-col grid with category dots + legend + selected-day detail.
+//  • Year  = 12 mini-month cards (3-col); tapping one opens that month.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,13 +27,14 @@ import '../../models/care_event.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
+import '../../providers/reminders_provider.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/day_part_header.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
 
-/// Order matches the segmented control: [Day | Week | Month].
-enum _CalView { day, week, month }
+/// Order matches the segmented control: [Day | Week | Month | Year].
+enum _CalView { day, week, month, year }
 
 class CareCalendarScreen extends StatefulWidget {
   const CareCalendarScreen({super.key});
@@ -72,6 +81,13 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  /// Seeded demo events + the user's quick-add reminders for [date] — the ONE
+  /// merged list every view (dots, previews, mini-months, detail) reads.
+  List<CareEvent> _mergedEventsFor(DateTime date) => [
+    ...eventsFor(date),
+    ...context.read<RemindersProvider>().eventsOn(date),
+  ];
+
   Color _typeColor(CareEventType t) {
     switch (t) {
       case CareEventType.meds:
@@ -85,6 +101,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         return context.hc.warning;
       case CareEventType.renewal:
         return context.hc.warning;
+      // User-authored reminders/to-dos: neutral grey — they sit alongside the
+      // clinical categories without claiming a status color.
+      case CareEventType.reminder:
+        return context.hc.grey;
     }
   }
 
@@ -100,6 +120,8 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         return Icons.science;
       case CareEventType.renewal:
         return Icons.autorenew;
+      case CareEventType.reminder:
+        return Icons.alarm;
     }
   }
 
@@ -110,6 +132,12 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       // Day selection may change below — collapse the future-doses card.
       _futureMedsExpanded = false;
       switch (_view) {
+        case _CalView.year:
+          _visibleMonth = DateTime(
+            _visibleMonth.year + delta,
+            _visibleMonth.month,
+            1,
+          );
         case _CalView.month:
           _visibleMonth = DateTime(
             _visibleMonth.year,
@@ -159,11 +187,24 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       // Glass idiom: content glides under the translucent app bar (matches
       // Care Team / My Care / Billing).
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(title: Text('Care Calendar')),
+      appBar: GlassAppBar(
+        title: const Text('Care Calendar'),
+        // Nav contract: custom actions come before search/home.
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Add reminder',
+            onPressed: _openAddReminderSheet,
+          ),
+        ],
+      ),
       // Builder: resolve MediaQuery from a context BELOW the Scaffold so the
       // scroll padding sees the body's actual insets.
       body: Builder(
         builder: (context) {
+          // Subscribe once: any reminder add/delete re-renders dots, previews
+          // and detail (children below read via context.read).
+          context.watch<RemindersProvider>();
           // At narrow widths (≤320 class) the 7-column grid needs slimmer
           // gutters so day cells stay near the 44pt tap-target minimum.
           final narrow = MediaQuery.of(context).size.width < 360;
@@ -194,47 +235,95 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _headerRow(),
               ),
-              if (_view == _CalView.month) ...[
-                // Weekday header shares the grid's gutter so columns align.
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
-                  child: _weekdayHeaderRow(),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
-                  child: _monthGrid(),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _legend(),
-                ),
-              ] else if (_view == _CalView.week) ...[
-                const SizedBox(height: 8),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
-                  child: _weekStrip(),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _legend(),
-                ),
-              ],
-              const SizedBox(height: 12),
-              // Day-detail transition: switching days used to jump-cut the
-              // detail sections. Now the column cross-fades with a slight
-              // upward settle (220ms easeOut), keyed by the selected date,
-              // inside AnimatedSize so height changes glide too. Same-day
-              // updates (e.g. marking a dose) keep the same key and rebuild
-              // in place — no spurious transition. The detail stays in this
-              // ListView, so scroll position is untouched.
-              _animatedDetail(context),
+              _animatedViewBody(context, gridHPad),
             ],
           );
         },
       ),
     );
+  }
+
+  /// View-switch transition: same fade + slight upward settle as the
+  /// day-detail switcher, keyed by the active view. Honors reduced motion.
+  Widget _animatedViewBody(BuildContext context, double gridHPad) {
+    final duration = MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 220);
+    return AnimatedSize(
+      duration: duration,
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: duration,
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeOut,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.02),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          alignment: Alignment.topCenter,
+          children: [...previousChildren, ?currentChild],
+        ),
+        child: Column(
+          key: ValueKey<_CalView>(_view),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _viewChildren(gridHPad),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _viewChildren(double gridHPad) {
+    switch (_view) {
+      case _CalView.month:
+        return [
+          // Weekday header shares the grid's gutter so columns align.
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: gridHPad),
+            child: _weekdayHeaderRow(),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: gridHPad),
+            child: _monthGrid(),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _legend(),
+          ),
+          const SizedBox(height: 12),
+          _animatedDetail(context),
+        ];
+      case _CalView.week:
+        // Reference layout: the 7 day cards REPLACE the old strip + detail —
+        // tapping a card opens Day view for that date.
+        return [
+          const SizedBox(height: 4),
+          ..._weekDayCards(),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _legend(),
+          ),
+        ];
+      case _CalView.day:
+        return [const SizedBox(height: 12), _animatedDetail(context)];
+      case _CalView.year:
+        return [
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _yearGrid(),
+          ),
+        ];
+    }
   }
 
   // ── Segmented control (hand-rolled pill) ────────────────────────────────
@@ -254,6 +343,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
             _CalView.day => 'Day',
             _CalView.week => 'Week',
             _CalView.month => 'Month',
+            _CalView.year => 'Year',
           };
           return Expanded(
             child: Semantics(
@@ -299,12 +389,14 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     );
   }
 
-  // ── Month header row ────────────────────────────────────────────────────
+  // ── Header row (title + ‹ Today ›) ──────────────────────────────────────
 
   Widget _headerRow() {
-    final title = DateFormat(
-      'MMMM yyyy',
-    ).format(_view == _CalView.month ? _visibleMonth : _selected);
+    final title = switch (_view) {
+      _CalView.year => '${_visibleMonth.year}',
+      _CalView.month => DateFormat('MMMM yyyy').format(_visibleMonth),
+      _ => DateFormat('MMMM yyyy').format(_selected),
+    };
     return Row(
       children: [
         Expanded(
@@ -412,6 +504,8 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         return 'test';
       case CareEventType.renewal:
         return 'renewal';
+      case CareEventType.reminder:
+        return 'reminder';
     }
   }
 
@@ -420,7 +514,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     final isSelected = _sameDay(date, _selected);
     // All distinct categories for the day (Semantics names every one);
     // the visual shows up to 3 dots, in CareEventType order.
-    final allTypes = eventsFor(date).map((e) => e.type).toSet().toList();
+    final allTypes = _mergedEventsFor(date).map((e) => e.type).toSet().toList();
     final types = allTypes.take(3).toList();
 
     final Color numberColor;
@@ -516,34 +610,400 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     );
   }
 
-  // ── Week strip ──────────────────────────────────────────────────────────
+  // ── Week view: vertical list of 7 day cards ─────────────────────────────
 
-  Widget _weekStrip() {
+  List<Widget> _weekDayCards() {
     final monday = DateTime(
       _selected.year,
       _selected.month,
       _selected.day - (_selected.weekday - 1),
     );
-    return Row(
-      children: List.generate(7, (i) {
-        final date = DateTime(monday.year, monday.month, monday.day + i);
-        return Expanded(
+    return List.generate(7, (i) {
+      final date = DateTime(monday.year, monday.month, monday.day + i);
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: _weekDayCard(date),
+      );
+    });
+  }
+
+  /// One reference-layout day card: weekday + big date number on the left,
+  /// up to 4 event preview lines (dot + title) on the right, '+N more' when
+  /// overflowing, an em-dash when the day is empty. Today's card carries a
+  /// subtle orange tint + orange date number. Tapping opens Day view.
+  Widget _weekDayCard(DateTime date) {
+    final events = _mergedEventsFor(date);
+    final isToday = _sameDay(date, _today);
+    final extra = events.length - 4;
+
+    Widget card = HousepitalCard(
+      onTap: () {
+        _selectDay(date);
+        setState(() => _view = _CalView.day);
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 48,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DateFormat('EEE').format(date),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isToday ? context.hc.orangeText : context.hc.grey,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: isToday ? context.hc.orangeText : context.hc.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: events.isEmpty
+                // Em-dash placeholder: a calm "nothing here" (reference).
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      '—',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: context.hc.greyLight,
+                      ),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...events.take(4).map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _typeColor(e.type),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  e.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: context.hc.black,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (extra > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2, left: 14),
+                          child: Text(
+                            '+$extra more',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: context.hc.greyLight,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+
+    if (isToday) {
+      // Subtle orange tint: override the card surface via the theme so the
+      // canonical HousepitalCard (squircle, press-scale) stays untouched.
+      final theme = Theme.of(context);
+      card = Theme(
+        data: theme.copyWith(
+          cardTheme: theme.cardTheme.copyWith(color: context.hc.orangeLight),
+        ),
+        child: card,
+      );
+    }
+
+    return KeyedSubtree(
+      key: ValueKey('week-card-${date.year}-${date.month}-${date.day}'),
+      child: Semantics(
+        button: true,
+        label:
+            '${DateFormat('EEEE MMMM d').format(date)}'
+            '${isToday ? ', today' : ''}'
+            ', ${events.isEmpty ? 'no events' : events.length == 1 ? '1 event' : '${events.length} events'}',
+        child: card,
+      ),
+    );
+  }
+
+  // ── Year view: 12 mini-month cards ──────────────────────────────────────
+
+  Widget _yearGrid() {
+    final year = _visibleMonth.year;
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        // Fixed extent (not aspect ratio) so the 6 fixed-height number rows
+        // never vertically overflow at any width / text scale baseline.
+        mainAxisExtent: 148,
+      ),
+      itemCount: 12,
+      itemBuilder: (context, i) => _miniMonth(DateTime(year, i + 1, 1)),
+    );
+  }
+
+  /// One mini-month card. The tiny day numbers (~9.5px) are the ONE approved
+  /// exception to the 11px text floor: they are excluded from semantics and
+  /// the whole card speaks as 'June, 3 days with events' instead.
+  Widget _miniMonth(DateTime month) {
+    final lead = month.weekday - 1; // Monday-first, matches the month grid.
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final eventDays = <int>{};
+    for (var d = 1; d <= daysInMonth; d++) {
+      if (_mergedEventsFor(DateTime(month.year, month.month, d)).isNotEmpty) {
+        eventDays.add(d);
+      }
+    }
+    final isCurrentMonth =
+        month.year == _today.year && month.month == _today.month;
+
+    final rows = List<Widget>.generate(6, (week) {
+      return SizedBox(
+        height: 14,
+        child: Row(
+          children: List.generate(7, (col) {
+            final dayNum = week * 7 + col - lead + 1;
+            if (dayNum < 1 || dayNum > daysInMonth) {
+              return const Expanded(child: SizedBox());
+            }
+            final isToday = isCurrentMonth && dayNum == _today.day;
+            final hasEvent = eventDays.contains(dayNum);
+            final text = Text(
+              '$dayNum',
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: hasEvent || isToday
+                    ? FontWeight.w700
+                    : FontWeight.w400,
+                color: isToday
+                    ? context.hc.onOrange
+                    : hasEvent
+                    ? context.hc.orangeText
+                    : context.hc.grey,
+              ),
+            );
+            return Expanded(
+              child: Center(
+                child: isToday
+                    ? Container(
+                        width: 13,
+                        height: 13,
+                        decoration: const BoxDecoration(
+                          color: HousepitalColors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: FittedBox(fit: BoxFit.scaleDown, child: text),
+                      )
+                    : FittedBox(fit: BoxFit.scaleDown, child: text),
+              ),
+            );
+          }),
+        ),
+      );
+    });
+
+    return Semantics(
+      button: true,
+      label:
+          '${DateFormat('MMMM').format(month)}, '
+          '${eventDays.length} ${eventDays.length == 1 ? 'day' : 'days'} with events',
+      child: KeyedSubtree(
+        key: ValueKey('year-month-${month.month}'),
+        child: HousepitalCard(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+          onTap: () => setState(() {
+            _view = _CalView.month;
+            _visibleMonth = DateTime(month.year, month.month, 1);
+          }),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _weekdayLetters[i],
+                DateFormat('MMMM').format(month),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.greyLight,
+                  fontWeight: FontWeight.w700,
+                  color: isCurrentMonth
+                      ? context.hc.orangeText
+                      : context.hc.black,
                 ),
               ),
               const SizedBox(height: 4),
-              _dayCell(date, dimmed: false),
+              ExcludeSemantics(child: Column(children: rows)),
             ],
           ),
-        );
-      }),
+        ),
+      ),
+    );
+  }
+
+  // ── Quick-add reminder (bottom sheet) ───────────────────────────────────
+
+  void _openAddReminderSheet() {
+    final titleCtrl = TextEditingController();
+    var date = _selected;
+    TimeOfDay? time;
+    var category = ReminderCategory.reminder;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final hc = sheetContext.hc;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Add reminder',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: hc.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    hintText: 'e.g. Buy BP monitor batteries',
+                  ),
+                  onChanged: (_) => setSheetState(() {}),
+                ),
+                const SizedBox(height: 4),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.event, color: hc.orangeText),
+                  title: Text(DateFormat('EEE, d MMM yyyy').format(date)),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: sheetContext,
+                      initialDate: date,
+                      firstDate: _today.subtract(const Duration(days: 365)),
+                      lastDate: _today.add(const Duration(days: 365 * 3)),
+                    );
+                    if (picked != null) {
+                      setSheetState(() => date = dateOnly(picked));
+                    }
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.schedule, color: hc.orangeText),
+                  title: Text(
+                    time == null ? 'Add time (optional)' : time!.format(sheetContext),
+                    style: time == null ? TextStyle(color: hc.grey) : null,
+                  ),
+                  trailing: time == null
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close),
+                          tooltip: 'Clear time',
+                          color: hc.greyLight,
+                          onPressed: () => setSheetState(() => time = null),
+                        ),
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: sheetContext,
+                      initialTime: time ?? TimeOfDay.now(),
+                    );
+                    if (picked != null) setSheetState(() => time = picked);
+                  },
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: ReminderCategory.values.map((c) {
+                    return ChoiceChip(
+                      label: Text(reminderCategoryLabel(c)),
+                      selected: category == c,
+                      onSelected: (_) => setSheetState(() => category = c),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: titleCtrl.text.trim().isEmpty
+                        ? null
+                        : () {
+                            final t = time;
+                            context.read<RemindersProvider>().add(
+                              title: titleCtrl.text.trim(),
+                              date: date,
+                              time: t == null
+                                  ? null
+                                  : '${t.hour.toString().padLeft(2, '0')}:'
+                                        '${t.minute.toString().padLeft(2, '0')}',
+                              category: category,
+                            );
+                            Navigator.pop(sheetContext);
+                            // Land the user on the day they just filled.
+                            _selectDay(date);
+                          },
+                    child: const Text('Save reminder'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -556,6 +1016,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       CareEventType.visit: 'Visit',
       CareEventType.test: 'Test',
       CareEventType.renewal: 'Renewal',
+      CareEventType.reminder: 'Reminder',
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,10 +1115,11 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
 
   List<Widget> _detailSections() {
     final events = eventsFor(_selected);
+    final reminders = context.read<RemindersProvider>().remindersOn(_selected);
     final isPast = _selected.isBefore(_today);
     final isToday = _sameDay(_selected, _today);
 
-    if (events.isEmpty) return [_emptyCard()];
+    if (events.isEmpty && reminders.isEmpty) return [_emptyCard()];
 
     final widgets = <Widget>[];
 
@@ -691,6 +1153,14 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       widgets.add(const SectionHeader(title: 'Visits, tests & renewals'));
       for (final e in upcoming) {
         widgets.add(_padCard(_upcomingCard(e)));
+      }
+    }
+
+    // User-authored quick-add reminders for this day, each with a delete.
+    if (reminders.isNotEmpty) {
+      widgets.add(const SectionHeader(title: 'Reminders & to-dos'));
+      for (final r in reminders) {
+        widgets.add(_padCard(_reminderCard(r)));
       }
     }
 
@@ -787,6 +1257,60 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         icon: Icons.event_available,
         title: 'A free day',
         body: 'No doses, visits or duties scheduled.',
+      ),
+    );
+  }
+
+  /// One quick-add reminder row in the day detail, with a trailing delete.
+  Widget _reminderCard(ReminderItem r) {
+    final isVisit = r.category == ReminderCategory.visit;
+    final color = isVisit ? context.hc.info : context.hc.grey;
+    final icon = switch (r.category) {
+      ReminderCategory.reminder => Icons.alarm,
+      ReminderCategory.visit => Icons.medical_services,
+      ReminderCategory.todo => Icons.task_alt,
+    };
+    final subtitle = r.formattedTime == null
+        ? reminderCategoryLabel(r.category)
+        : '${r.formattedTime} · ${reminderCategoryLabel(r.category)}';
+    return HousepitalCard(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      child: Row(
+        children: [
+          AppIconTile(icon: icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: context.hc.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'Delete reminder',
+            color: context.hc.greyLight,
+            onPressed: () =>
+                context.read<RemindersProvider>().delete(r.id),
+          ),
+        ],
       ),
     );
   }
@@ -942,7 +1466,6 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     );
   }
 
-  /// FUTURE day — scheduled dose count only.
   /// FUTURE day — tappable: expands to the full scheduled-dose breakdown
   /// (grouped Morning/Afternoon/Evening) so "6 doses scheduled" is never a
   /// dead-end summary.

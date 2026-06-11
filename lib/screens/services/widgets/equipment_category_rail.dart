@@ -16,13 +16,97 @@ const Set<String> _genericUseCases = {
   'Housekeeping & Pantry',
 };
 
+/// Name-keyword override: maps well-known product names to their clinical
+/// rail bucket, regardless of the catalog's hand-entered `use_case`.
+///
+/// Product names are far more reliable than `use_case` — the shipped catalog
+/// tags every wheelchair/walker/crutch as 'Orthopaedic' and parks AMBU bags
+/// under 'General Care'. Checked BEFORE the use_case fold in
+/// [railCategoryForItem]. Returns null when no keyword matches.
+String? _railCategoryFromName(String name) {
+  final n = name.toLowerCase();
+  bool has(String k) => n.contains(k);
+
+  // Exception first: a 'walker boot' is an orthopaedic cast boot, not a
+  // mobility walker — it must not be caught by the 'walker' keyword below.
+  if (has('walker boot')) return 'Orthopaedic';
+
+  // Mobility aids + patient beds/furniture.
+  if (has('wheelchair') ||
+      has('walker') ||
+      has('walking stick') ||
+      has('crutch') ||
+      has('cane') ||
+      has('commode') ||
+      has('hospital bed') ||
+      has('mattress') ||
+      has('backrest')) {
+    return 'Mobility & Patient Comfort';
+  }
+
+  // Respiratory therapy & oxygen.
+  if (has('bipap') ||
+      has('bi-pap') ||
+      has('cpap') ||
+      has('c-pap') ||
+      has('vpap') ||
+      has('oxygen') ||
+      has('o2 cylinder') ||
+      has('ventilat') || // Ventilator / Ventilation System
+      has('nebuli') || // Nebulizer / Nebulization Mask
+      has('ambu bag') ||
+      has('steamer') ||
+      has('air filter')) {
+    return 'Respiratory';
+  }
+
+  // Cardiac & vascular monitoring.
+  if (has('pulse oximeter') ||
+      has('ecg') ||
+      has('bp monitor') ||
+      has('bp cuff') ||
+      has('bp instrument') ||
+      has('bp appratus')) {
+    return 'Cardiac & Vascular';
+  }
+
+  // Wound care & post-surgical.
+  if (has('dressing') || has('suction')) {
+    return 'Post-Surgical & Wound Care';
+  }
+
+  // Hygiene & sanitation consumables.
+  if (has('diaper') ||
+      has('underpad') ||
+      has('seat raiser') ||
+      has('toilet seat') ||
+      has('bed pan') ||
+      has('bedpan') ||
+      has('n95') ||
+      has('3 ply mask')) {
+    return 'Hygiene & Sanitation';
+  }
+
+  // Ortho supports — generic terms last so the buckets above win first.
+  if (has('brace') || has('splint') || has('collar') || has('belt')) {
+    return 'Orthopaedic';
+  }
+
+  return null;
+}
+
 /// Pure function: maps an [EquipmentItem] to its rail category key.
 ///
-/// The bundled catalog's `use_case` field already provides a sensible
-/// clinical grouping (Orthopaedic, Respiratory, Cardiac & Vascular, …), so
-/// the rail is driven directly by `useCase`; only the generic long-tail
-/// buckets are folded into [kEquipmentRailOther].
+/// Resolution order:
+/// 1. Name-keyword override ([_railCategoryFromName]) — product names are
+///    more reliable than the catalog's hand-entered `use_case`.
+/// 2. The catalog's `use_case` clinical grouping (Orthopaedic, Respiratory,
+///    Cardiac & Vascular, …).
+/// 3. Generic long-tail use-cases (and missing ones) fold into
+///    [kEquipmentRailOther].
 String railCategoryForItem(EquipmentItem item) {
+  final byName = _railCategoryFromName(item.name);
+  if (byName != null) return byName;
   final uc = item.useCase?.trim();
   if (uc == null || uc.isEmpty) return kEquipmentRailOther;
   if (_genericUseCases.contains(uc)) return kEquipmentRailOther;
@@ -93,9 +177,14 @@ IconData railIconFor(String category) {
   }
 }
 
-/// Blinkit-style left category rail: ~72px wide, vertically scrollable list
-/// of small rounded icon tiles with 2-line labels. The selected entry gets an
-/// orange accent bar, tinted tile and bold label.
+/// Rail width. 80px (up from 72) lets 'Respiratory' render on a single
+/// unbroken line at the full 11px label size on device.
+const double kEquipmentRailWidth = 80;
+
+/// Blinkit-style left category rail: 80px wide, vertically scrollable list
+/// of small rounded icon tiles with centred labels (single-word labels stay
+/// on one line and scale down instead of wrapping mid-word). The selected
+/// entry gets an orange accent bar, tinted tile and bold label.
 class EquipmentCategoryRail extends StatelessWidget {
   final List<String> categories;
   final String selected;
@@ -111,11 +200,17 @@ class EquipmentCategoryRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
+      width: kEquipmentRailWidth,
       decoration: BoxDecoration(
         border: Border(right: BorderSide(color: context.hc.divider)),
       ),
       child: ListView.builder(
+        // Vertical rhythm: the first icon tile top-aligns with the Sale/Rental
+        // chip pills next to it. Pill top = 4 (spacer) + 2 (44px chip strip
+        // centred in the 48px controls row) + 6 (32px pill centred in 44) =
+        // 12; rail tile top = 4 (this padding) + 8 (entry padding) = 12.
+        // Bottom: same extendBody clearance as the product grid, so the last
+        // tile ('Hygiene'/'Other') clears the glass bottom nav.
         padding: EdgeInsets.only(
             top: 4, bottom: 24 + MediaQuery.of(context).padding.bottom),
         itemCount: categories.length,
@@ -146,18 +241,29 @@ class _RailEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = railLabelFor(category);
+    final isSingleWord = !label.contains(' ');
+    final labelStyle = TextStyle(
+      fontSize: 11,
+      height: 1.1,
+      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+      color: isSelected ? context.hc.orangeText : context.hc.grey,
+    );
     return Semantics(
       button: true,
       selected: isSelected,
-      label: '${railLabelFor(category)} category',
+      label: '$label category',
       child: InkWell(
         onTap: onTap,
         child: Stack(
           children: [
             Padding(
+              // One shared horizontal inset for tile + label; both are
+              // centred on the rail's vertical axis by the Column below.
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     width: 44,
@@ -177,21 +283,29 @@ class _RailEntry extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    railLabelFor(category),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      height: 1.1,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected
-                          ? context.hc.orangeText
-                          : context.hc.grey,
+                  // Single-word labels ('Respiratory', 'Hygiene') must never
+                  // wrap mid-word ('Respirator / y'): force one line and let
+                  // FittedBox scale down on the rare width that needs it.
+                  // Multi-word labels ('Ortho Support') wrap naturally onto
+                  // two lines at full size.
+                  if (isSingleWord)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: labelStyle,
+                      ),
+                    )
+                  else
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: labelStyle,
                     ),
-                  ),
                 ],
               ),
             ),
