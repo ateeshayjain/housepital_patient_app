@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:housepital_patient/config/theme.dart';
 import 'package:housepital_patient/data/demo_data.dart';
 import 'package:housepital_patient/models/care_event.dart';
 import 'package:housepital_patient/models/medication_models.dart';
@@ -224,6 +225,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('${today.year}'), findsOneWidget);
+
+    // C5 calm pass: the selected thumb is a NEUTRAL grey wash (primary-text
+    // token at 8%), never orange — view switching is not an action.
+    final thumb = tester.widget<AnimatedContainer>(
+      find
+          .ancestor(
+            of: find.text('Year'),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first,
+    );
+    expect(
+      (thumb.decoration as BoxDecoration?)?.color,
+      HousepitalColors.black.withValues(alpha: 0.08),
+      reason: 'Segmented thumb must be the neutral grey token, not orange.',
+    );
 
     // 'Today' + chevrons keep working after view switches.
     await tester.tap(find.text('Month'));

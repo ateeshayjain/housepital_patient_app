@@ -89,13 +89,46 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
+    // C3 calm pass: confident large display title. The catalog has no
+    // screen-level scroll view (the tabs own their scrolling), so the large
+    // title lives in the bar's `bottom`, above the TabBar, and the toolbar
+    // row carries only the actions — iOS large-title style without a
+    // scroll-state dance.
+    final tabBar = TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: HousepitalColors.orange,
+      unselectedLabelColor: context.hc.greyLight,
+      labelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      indicatorColor: HousepitalColors.orange,
+      indicatorWeight: 3,
+      dividerColor: context.hc.divider,
+      tabs: const [
+        Tab(text: 'Manpower'),
+        Tab(text: 'Equipment'),
+        Tab(text: 'Consultations'),
+        Tab(text: 'Visits'),
+        Tab(text: 'Diagnostics'),
+        Tab(text: 'Lab Tests'),
+        Tab(text: 'Packages'),
+      ],
+    );
+    const largeTitleHeight = 44.0;
+
     return Scaffold(
       // Root tab: search yes (consistency), Home no (bottom nav has it).
       // No extendBodyBehindAppBar here — the TabBar + 6 tab bodies need their
       // own under-scroll pass; glass material applies without it.
       appBar: GlassAppBar(
         showHome: false,
-        title: Text(l.t('book_services')),
         actions: [
           Consumer<CartProvider>(
             builder: (ctx, cart, _) {
@@ -130,32 +163,40 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          labelColor: HousepitalColors.orange,
-          unselectedLabelColor: context.hc.greyLight,
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        bottom: PreferredSize(
+          preferredSize:
+              Size.fromHeight(tabBar.preferredSize.height + largeTitleHeight),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: largeTitleHeight,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    // FittedBox(scaleDown): the real font fits every phone
+                    // width at scale 1; only worst-case fonts (huge Dynamic
+                    // Type / the Ahem test font) shrink instead of clipping.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        l.t('book_services'),
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: context.hc.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              tabBar,
+            ],
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          indicatorColor: HousepitalColors.orange,
-          indicatorWeight: 3,
-          dividerColor: context.hc.divider,
-          tabs: const [
-            Tab(text: 'Manpower'),
-            Tab(text: 'Equipment'),
-            Tab(text: 'Consultations'),
-            Tab(text: 'Visits'),
-            Tab(text: 'Diagnostics'),
-            Tab(text: 'Lab Tests'),
-            Tab(text: 'Packages'),
-          ],
         ),
       ),
       body: TabBarView(

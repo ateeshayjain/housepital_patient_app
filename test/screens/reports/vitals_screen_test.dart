@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:housepital_patient/config/theme.dart';
 import 'package:housepital_patient/models/models.dart';
 import 'package:housepital_patient/providers/app_provider.dart';
 import 'package:housepital_patient/screens/reports/vitals_screen.dart';
@@ -113,6 +114,30 @@ void main() {
 
     // Let the SnackBar's auto-dismiss timer expire (no pending timers).
     await tester.pump(const Duration(seconds: 5));
+  });
+
+  testWidgets('period chips use a neutral selected state (C5 — not orange)',
+      (tester) async {
+    final app = AppProvider(_FakeApi());
+    await _pump(tester, app);
+
+    ChoiceChip chipFor(String label) =>
+        tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+
+    // 7 Days is the default selection: neutral grey fill, dark w700 label —
+    // these are VIEW filters, so no orange anywhere in the selected state.
+    expect(chipFor('7 Days').selected, isTrue);
+    expect(chipFor('7 Days').selectedColor, HousepitalColors.greyLighter);
+    expect(chipFor('7 Days').checkmarkColor, HousepitalColors.black);
+    expect(chipFor('7 Days').labelStyle?.color, HousepitalColors.black);
+    expect(chipFor('7 Days').labelStyle?.fontWeight, FontWeight.w700);
+
+    // Selection moves with the same neutral treatment.
+    await tester.tap(find.text('30 Days'));
+    await tester.pump();
+    expect(chipFor('7 Days').selected, isFalse);
+    expect(chipFor('30 Days').selected, isTrue);
+    expect(chipFor('30 Days').selectedColor, HousepitalColors.greyLighter);
   });
 
   testWidgets('invalid input blocks save (out-of-range systolic)',

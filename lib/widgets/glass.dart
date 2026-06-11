@@ -101,8 +101,9 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    // Dark fill matches the calm-pass card family (#1C1C1E on true black).
     final fill = dark
-        ? const Color(0xFF1F1F1F).withValues(alpha: opacity)
+        ? const Color(0xFF1C1C1E).withValues(alpha: opacity)
         : Colors.white.withValues(alpha: opacity);
     // Top edge highlight sells the "pane of glass" read.
     final edge = dark

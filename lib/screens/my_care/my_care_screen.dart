@@ -27,16 +27,30 @@ class MyCareScreen extends StatefulWidget {
 }
 
 class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver {
+  // C3 calm pass (iOS large-title pattern): the display title lives in the
+  // body; the GlassAppBar title only fades in once the body title has
+  // scrolled under the bar.
+  final ScrollController _scrollController = ScrollController();
+  bool _showBarTitle = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scrollController.addListener(_onScroll);
     Future.microtask(() => _loadData());
+  }
+
+  void _onScroll() {
+    final show =
+        _scrollController.hasClients && _scrollController.offset > 28;
+    if (show != _showBarTitle) setState(() => _showBarTitle = show);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -69,7 +83,16 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         showHome: false,
-        title: Text(l.t('tab_my_care')),
+        // Bar title is hidden while the in-body large title is at rest, and
+        // fades in on scroll. Loading/error/empty states have no in-body
+        // title, so the bar title stays visible there.
+        title: AnimatedOpacity(
+          opacity: (!myCare.hasActiveServices || _showBarTitle) ? 1.0 : 0.0,
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 150),
+          child: Text(l.t('tab_my_care')),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: RefreshIndicator(
@@ -101,6 +124,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
     }
 
     return SingleChildScrollView(
+      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       // top: clear the glass app bar; bottom: clear the glass nav.
       padding: EdgeInsets.only(
@@ -109,6 +133,20 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 0. Large display title (C3 calm pass) — confident in-body
+          // large-title header; the bar title takes over once scrolled.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              l.t('tab_my_care'),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: context.hc.black,
+              ),
+            ),
+          ),
+
           // 1. Health Manager Banner
           if (myCare.healthManager != null)
             HealthManagerBanner(manager: myCare.healthManager!),

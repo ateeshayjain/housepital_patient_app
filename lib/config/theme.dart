@@ -9,16 +9,20 @@ import 'package:flutter/material.dart';
 /// Surface is intentionally #1A1A1A (true-dark) rather than pure black to
 /// avoid OLED smear and to give cards a visible elevation.
 class HousepitalColorsDark {
-  // Surfaces
-  static const Color surface = Color(0xFF1A1A1A);          // page bg
-  static const Color surfaceElevated = Color(0xFF242424);  // cards / sheets
-  static const Color surfaceHigh = Color(0xFF2C2C2C);      // app bar, inputs
-  static const Color divider = Color(0xFF2F2F2F);
+  // Surfaces — CALM PASS (owner decision 2026-06-11): true-black stage with
+  // iOS-style TONAL elevation (systemGray6-family card tones). Depth comes
+  // from tone steps, not hairline borders — the reference look the owner
+  // chose. Orange pops harder on #000 than on dark grey.
+  static const Color surface = Color(0xFF000000);          // page bg (true black)
+  static const Color surfaceElevated = Color(0xFF1C1C1E);  // cards / sheets (iOS systemGray6)
+  static const Color surfaceHigh = Color(0xFF2C2C2E);      // sheets-over-cards, inputs
+  static const Color divider = Color(0xFF2A2A2C);          // rare — prefer tone over strokes
 
-  // Text (verified vs surface #1A1A1A)
-  static const Color textPrimary = Color(0xFFF2F2F2);   // 14.9:1 — AAA
-  static const Color textSecondary = Color(0xFFB0B0B0); // 8.0:1  — AAA
-  static const Color textDisabled = Color(0xFF7A7A7A);  // 4.5:1  — AA
+  // Text (contrast vs the CARD tone #1C1C1E, the common reading surface;
+  // ratios are higher still on the black page bg)
+  static const Color textPrimary = Color(0xFFF2F2F2);   // ~14:1 — AAA
+  static const Color textSecondary = Color(0xFFB0B0B0); // ~7.4:1 — AAA
+  static const Color textDisabled = Color(0xFF7A7A7A);  // ~4.2:1 on card / 5.4:1 on bg
 
   // Brand orange — same hue, but verify how it's used in dark.
   // #F39314 vs surface #1A1A1A → 6.32:1 — AA for normal text / AAA for large.
@@ -442,10 +446,10 @@ class HousepitalTheme {
         color: HousepitalColorsDark.surfaceElevated,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        // Continuous corners (squircle) matching the light theme.
+        // CALM PASS: no border — on true black the #1C1C1E card tone IS the
+        // elevation (iOS tonal depth). Continuous corners match light.
         shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: HousepitalColorsDark.divider),
         ),
         margin: const EdgeInsets.symmetric(vertical: 8),
       ),

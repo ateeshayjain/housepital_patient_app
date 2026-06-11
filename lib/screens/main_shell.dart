@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../utils/app_localizations.dart';
@@ -53,8 +55,31 @@ class MainShellState extends State<MainShell> {
         children: _screens,
       ),
       floatingActionButton: const AssistantFab(),
-      bottomNavigationBar: GlassSurface(
-        child: BottomNavigationBar(
+      // Calm pass: DETACHED floating pill — the nav hovers as a fully rounded
+      // capsule instead of hugging the screen edge. It stays in the
+      // bottomNavigationBar slot so Scaffold keeps reporting the slot's full
+      // height (pill + margins) as the body's bottom MediaQuery inset — every
+      // screen that pads its scrollable with `MediaQuery.padding.bottom + N`
+      // clears the pill automatically.
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          // Float above the home indicator; min 8 on devices without one.
+          math.max(MediaQuery.of(context).padding.bottom, 8.0),
+        ),
+        child: GlassSurface(
+          borderRadius: BorderRadius.circular(32),
+          child: MediaQuery.removePadding(
+            // The outer Padding already clears the safe area — without this
+            // the bar would add the home-indicator inset a second time.
+            context: context,
+            removeBottom: true,
+            child: Padding(
+              // 56 (bar) + 2×4 = ~64 content height, items optically centered.
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         // Transparent + flat: the GlassSurface provides the material.
@@ -87,6 +112,9 @@ class MainShellState extends State<MainShell> {
             label: l.t('tab_more'),
           ),
         ],
+              ),
+            ),
+          ),
         ),
       ),
     );

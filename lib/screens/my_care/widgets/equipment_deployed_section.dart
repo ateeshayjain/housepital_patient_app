@@ -29,9 +29,12 @@ class EquipmentDeployedSection extends StatelessWidget {
           const SizedBox(height: 8),
           ...equipment.map((eq) => Card(
                 child: ListTile(
+                  // Calm pass: one orange accent — the green serviceEquipment
+                  // tile was decorative identity color (the StatusBadge on the
+                  // right already carries the semantic green/grey).
                   leading: const AppIconTile(
                       icon: Icons.medical_services_outlined,
-                      color: HousepitalColors.serviceEquipment),
+                      color: HousepitalColors.orange),
                   title: Text(eq.name,
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(

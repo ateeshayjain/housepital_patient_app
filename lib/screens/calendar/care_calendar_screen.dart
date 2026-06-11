@@ -357,15 +357,15 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                   curve: Curves.easeOut,
                   decoration: selected
                       ? BoxDecoration(
-                          color: context.hc.surface,
+                          // C5 calm pass: NEUTRAL grey thumb (iOS segmented-
+                          // control style) — view switching is not an action,
+                          // so no orange and no floating shadow. hc.black is
+                          // the primary-text token (dark ink in light, near-
+                          // white in dark), so an 8% wash reads as a soft
+                          // tonal thumb on the greyLighter track in BOTH
+                          // modes (lighter than surfaceHigh in dark).
+                          color: context.hc.black.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(18),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
                         )
                       : null,
                   child: Center(

@@ -78,6 +78,30 @@ circle=$(grep -rnA2 'CircleAvatar(' "$SCAN_DIR" $EXCLUDE --include='*.dart' \
 report "CircleAvatar wrapping an Icon is banned — use AppIconTile" \
   "$circle"
 
+# 7. Service-type identity colors (calm pass, owner-approved): the per-service
+#    rainbow (serviceNursing teal/orange, servicePhysio blue, …) was DECORATIVE
+#    identity color and is retired from screens. Screens stay near-monochrome
+#    with ONE orange accent; color is reserved for meaning (green = good
+#    status, red = SOS/error, amber = warning, blue = info). Genuinely
+#    CATEGORICAL uses (legend dots, category icon maps where the hue encodes a
+#    category the user actively distinguishes) may be allowlisted by file with
+#    a comment explaining why.
+# Allowlist:
+#  article_category_style.dart  — article-category legend map (categorical:
+#                                 hue distinguishes content categories)
+#  universal_search_screen.dart — search result-type icon map (categorical:
+#                                 hue distinguishes result types in one list)
+#  staff_role_card.dart         — catalog seed role-card icon map (categorical
+#                                 catalog tiles, pending its own calm review)
+#  doctor_advice_card.dart      — advice-type icon map (categorical, pending
+#                                 its own calm review)
+SERVICE_COLOR_ALLOW='article_category_style\.dart|universal_search_screen\.dart|staff_role_card\.dart|doctor_advice_card\.dart'
+svc=$(grep -rnE 'HousepitalColors\.(serviceColor|serviceCarePackage|serviceNursing|serviceCaretaker|serviceJapaNanny|servicePhysio|serviceEquipment)' \
+        "$SCAN_DIR" $EXCLUDE --include='*.dart' \
+        | grep -viE "$SERVICE_COLOR_ALLOW")
+report "Service-type colors are retired in screens (calm pass) — use the one orange accent (HousepitalColors.orange / context.hc.orange); genuinely categorical uses go on the allowlist with a comment" \
+  "$svc"
+
 echo ""
 if [ "$fail" -ne 0 ]; then
   echo "════════════════════════════════════════════════════════════"

@@ -180,6 +180,11 @@ class _VitalsScreenState extends State<VitalsScreen>
     );
   }
 
+  /// C5 calm pass: the 7/30/90/All chips are VIEW filters, not actions —
+  /// neutral grey selected state (iOS segmented-control style); orange stays
+  /// reserved for actions. greyLighter = surfaceHigh in dark, soft grey in
+  /// light; explicit backgroundColor keeps the unselected chip a plain
+  /// surface (the dark ChipTheme default is an orange tint).
   Widget _periodChip(String value, String label) {
     final isSelected = _period == value;
     return ChoiceChip(
@@ -189,15 +194,16 @@ class _VitalsScreenState extends State<VitalsScreen>
         setState(() => _period = value);
         _generateMockData();
       },
-      selectedColor: context.hc.orangeLight,
-      checkmarkColor: context.hc.orangeText,
+      backgroundColor: context.hc.white,
+      selectedColor: context.hc.greyLighter,
+      checkmarkColor: context.hc.black,
       labelStyle: TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: isSelected ? context.hc.orangeText : context.hc.grey,
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected ? context.hc.black : context.hc.grey,
       ),
       side: BorderSide(
-        color: isSelected ? HousepitalColors.orange : context.hc.divider,
+        color: isSelected ? context.hc.greyLight : context.hc.divider,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

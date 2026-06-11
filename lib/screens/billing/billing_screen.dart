@@ -29,6 +29,30 @@ class BillingScreen extends StatefulWidget {
 class _BillingScreenState extends State<BillingScreen> {
   String _filter = 'all';
 
+  // C3 calm pass (iOS large-title pattern): the display title lives in the
+  // body; the GlassAppBar title only fades in once the body title has
+  // scrolled under the bar.
+  final ScrollController _scrollController = ScrollController();
+  bool _showBarTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final show =
+        _scrollController.hasClients && _scrollController.offset > 28;
+    if (show != _showBarTitle) setState(() => _showBarTitle = show);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   List<Map<String, dynamic>> _filteredOrders(List<Map<String, dynamic>> orders) {
     if (_filter == 'all') return orders;
     return orders.where((o) => o['status'] == _filter).toList();
@@ -121,7 +145,15 @@ class _BillingScreenState extends State<BillingScreen> {
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         showHome: false,
-        title: Text(l.t('billing_title')),
+        // Bar title fades in only after the in-body large title scrolls
+        // under the bar (iOS large-title style).
+        title: AnimatedOpacity(
+          opacity: _showBarTitle ? 1.0 : 0.0,
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 150),
+          child: Text(l.t('billing_title')),
+        ),
         actions: [
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, '/transactions'),
@@ -132,6 +164,7 @@ class _BillingScreenState extends State<BillingScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: EdgeInsets.fromLTRB(
             16,
             MediaQuery.of(context).padding.top + kToolbarHeight + 16,
@@ -140,6 +173,20 @@ class _BillingScreenState extends State<BillingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Large display title (C3 calm pass) — confident in-body
+            // large-title header; the bar title takes over once scrolled.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                l.t('billing_title'),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: context.hc.black,
+                ),
+              ),
+            ),
+
             // Balance card
             _buildBalanceCard(l, totalDue, overdue, canPay: canPay),
             const SizedBox(height: 16),

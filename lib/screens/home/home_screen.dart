@@ -726,9 +726,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               'Hi $firstName!',
               overflow: TextOverflow.ellipsis,
+              // C3 calm pass: the greeting IS Home's display title — same
+              // confident 28/w800 large-title voice as the other root tabs.
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
                 // Greeting reads as primary text — the accent color is
                 // reserved for actionable elements.
                 color: context.hc.black,
@@ -859,11 +861,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 6),
+              // Calm pass: per-role tile colors retired — every team tile
+              // shares the one orange accent.
               _TeamMemberRow(
                 role: deployment.staffRole ?? 'Staff',
                 name: deployment.staffName ?? 'Assigned',
                 icon: Icons.medical_services,
-                color: HousepitalColors.serviceNursing,
                 phone: AppConstants.supportPhone,
               ),
               if (patient?.doctorName != null &&
@@ -873,7 +876,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   role: 'Doctor',
                   name: patient.doctorName!,
                   icon: Icons.medical_information,
-                  color: HousepitalColors.servicePhysio,
                   phone: patient.doctorPhone,
                 ),
               ],
@@ -946,9 +948,12 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         child: Row(
           children: [
-            AppIconTile(
+            // Calm pass: tile is the standard orange accent — "is the staff
+            // on duty?" is carried by the semantic status dot on the right,
+            // not by tinting the identity icon green.
+            const AppIconTile(
               icon: Icons.medical_services,
-              color: context.hc.success,
+              color: HousepitalColors.orange,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1038,7 +1043,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const AppIconTile(
                 icon: Icons.menu_book,
-                color: HousepitalColors.serviceCarePackage,
+                color: HousepitalColors.orange,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1132,7 +1137,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _QuickAction(
           icon: Icons.medical_services,
           label: 'Book Nurse',
-          color: HousepitalColors.serviceNursing,
           onTap: () {
             MainShell.switchToTab(2);
             ServiceCatalogScreen.switchToSubTab(0);
@@ -1142,7 +1146,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _QuickAction(
           icon: Icons.medical_services,
           label: 'My Nurse',
-          color: HousepitalColors.serviceNursing,
           onTap: () => MainShell.switchToTab(1),
         ),
       if (!activeRole.contains('caretaker') &&
@@ -1150,7 +1153,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _QuickAction(
           icon: Icons.person_pin,
           label: 'Book Caretaker',
-          color: HousepitalColors.serviceCaretaker,
           onTap: () {
             MainShell.switchToTab(2);
             ServiceCatalogScreen.switchToSubTab(0);
@@ -1160,14 +1162,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _QuickAction(
           icon: Icons.person_pin,
           label: 'My Caretaker',
-          color: HousepitalColors.serviceCaretaker,
           onTap: () => MainShell.switchToTab(1),
         ),
       if (!activeRole.contains('physio'))
         _QuickAction(
           icon: Icons.self_improvement,
           label: 'Physiotherapy',
-          color: HousepitalColors.servicePhysio,
           onTap: () {
             MainShell.switchToTab(2);
             ServiceCatalogScreen.switchToSubTab(0);
@@ -1177,13 +1177,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _QuickAction(
           icon: Icons.self_improvement,
           label: 'My Physio',
-          color: HousepitalColors.servicePhysio,
           onTap: () => MainShell.switchToTab(1),
         ),
       _QuickAction(
         icon: Icons.local_shipping,
         label: 'Equipment',
-        color: HousepitalColors.serviceEquipment,
         onTap: () {
           MainShell.switchToTab(2);
           ServiceCatalogScreen.switchToSubTab(1);
@@ -1192,7 +1190,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _QuickAction(
         icon: Icons.science,
         label: 'Lab Tests',
-        color: HousepitalColors.servicePhysio,
         onTap: () {
           MainShell.switchToTab(2);
           ServiceCatalogScreen.switchToSubTab(5);
@@ -1201,7 +1198,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _QuickAction(
         icon: Icons.medical_information,
         label: 'Doctor Visit',
-        color: HousepitalColors.serviceCarePackage,
         onTap: () {
           MainShell.switchToTab(2);
           ServiceCatalogScreen.switchToSubTab(2);
@@ -1260,9 +1256,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Calm pass: one accent — every quick-action tile is
+                        // orange (the old per-service rainbow was decorative).
                         AppIconTile(
                           icon: action.icon,
-                          color: action.color,
+                          color: HousepitalColors.orange,
                           size: 24,
                         ),
                         const SizedBox(height: 4),
@@ -1805,13 +1803,11 @@ class _BannerSlide {
 class _QuickAction {
   final IconData icon;
   final String label;
-  final Color color;
   final VoidCallback onTap;
 
   _QuickAction({
     required this.icon,
     required this.label,
-    required this.color,
     required this.onTap,
   });
 }
@@ -1823,14 +1819,12 @@ class _TeamMemberRow extends StatelessWidget {
   final String role;
   final String name;
   final IconData icon;
-  final Color color;
   final String? phone;
 
   const _TeamMemberRow({
     required this.role,
     required this.name,
     required this.icon,
-    required this.color,
     this.phone,
   });
 
@@ -1840,8 +1834,9 @@ class _TeamMemberRow extends StatelessWidget {
       children: [
         // Standard home icon tile — rounded square, tinted bg, 22pt icon.
         // (Matches Current Services / Medications / Care Guides for a single
-        // consistent icon system across the Home screen.)
-        AppIconTile(icon: icon, color: color),
+        // consistent icon system across the Home screen.) One accent: always
+        // orange — per-role identity colors are retired.
+        AppIconTile(icon: icon, color: HousepitalColors.orange),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -30,20 +30,22 @@ class CareTeamScreen extends StatelessWidget {
     final patientId = app.currentPatient?.id ?? 'pat_demo_rajesh';
     final supervisor = DemoData.supervisor;
 
+    // Calm pass: member tiles all share the one orange accent — the old
+    // per-role colors (info-blue supervisor, physio-blue doctor, nursing
+    // orange-red staff) were identity-decorative. The error-themed Ambulance
+    // card below is the only deliberate exception (semantic emergency red).
     final members = <_CareTeamMember>[
       _CareTeamMember(
         name: myCare.healthManager?.name ?? 'Housepital Care Team',
         role: 'Health Manager',
         phone: AppConstants.supportPhone,
         icon: Icons.support_agent,
-        color: HousepitalColors.orange,
       ),
       _CareTeamMember(
         name: supervisor.name,
         role: supervisor.role,
         phone: supervisor.phone,
         icon: Icons.admin_panel_settings,
-        color: context.hc.info,
       ),
       if (patient.doctorName != null && patient.doctorName!.isNotEmpty)
         _CareTeamMember(
@@ -51,7 +53,6 @@ class CareTeamScreen extends StatelessWidget {
           role: 'Doctor',
           phone: patient.doctorPhone ?? AppConstants.supportPhone,
           icon: Icons.medical_information,
-          color: HousepitalColors.servicePhysio,
         ),
       // On-duty staff — one row per active service with staff deployed.
       // ActiveService carries only staff counts; when the globally loaded
@@ -68,7 +69,6 @@ class CareTeamScreen extends StatelessWidget {
               : 'On-duty staff',
           phone: AppConstants.supportPhone,
           icon: Icons.medical_services,
-          color: HousepitalColors.serviceNursing,
         );
       }),
     ];
@@ -227,14 +227,12 @@ class _CareTeamMember {
   final String role;
   final String phone;
   final IconData icon;
-  final Color color;
 
   const _CareTeamMember({
     required this.name,
     required this.role,
     required this.phone,
     required this.icon,
-    required this.color,
   });
 }
 
@@ -250,7 +248,8 @@ class _MemberRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          AppIconTile(icon: member.icon, color: member.color),
+          // One accent: every member tile is orange (no per-role colors).
+          AppIconTile(icon: member.icon, color: HousepitalColors.orange),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:housepital_patient/config/theme.dart';
 import 'package:housepital_patient/models/my_care_models.dart';
 import 'package:housepital_patient/screens/my_care/widgets/health_manager_banner.dart';
 import 'package:housepital_patient/screens/my_care/widgets/active_service_card.dart';
@@ -300,6 +301,59 @@ void main() {
         find.byType(LinearProgressIndicator),
       );
       expect(indicator.value, closeTo(1.0, 1e-6));
+    });
+
+    testWidgets(
+        'progress bar is the one orange accent for EVERY service type '
+        '(calm pass: per-category colors retired)', (tester) async {
+      for (final category in [
+        'care_package',
+        'nursing',
+        'caretaker',
+        'physiotherapy',
+        'equipment_rental',
+        'japa',
+      ]) {
+        final service = _makeActiveService(serviceCategory: category);
+
+        await tester.pumpWidget(
+          _host(ActiveServiceCard(service: service, onTap: () {})),
+        );
+
+        final indicator = tester.widget<LinearProgressIndicator>(
+          find.byType(LinearProgressIndicator),
+        );
+        expect(
+          indicator.valueColor?.value,
+          HousepitalColors.orange,
+          reason: 'progress fill must be orange for "$category"',
+        );
+        expect(
+          indicator.backgroundColor,
+          HousepitalColors.orangeLight,
+          reason: 'progress track must be orangeLight for "$category"',
+        );
+      }
+    });
+
+    testWidgets('no per-category accent stripe is rendered (calm pass)',
+        (tester) async {
+      final service = _makeActiveService(serviceCategory: 'physiotherapy');
+
+      await tester.pumpWidget(
+        _host(ActiveServiceCard(service: service, onTap: () {})),
+      );
+
+      // The old 4px stripe was a bare Container(width: 4, color: <service
+      // color>). No Container inside the card may carry a service-type color.
+      final containers =
+          tester.widgetList<Container>(find.byType(Container)).toList();
+      for (final c in containers) {
+        expect(
+          c.color,
+          isNot(HousepitalColors.serviceColor(service.serviceCategory)),
+        );
+      }
     });
 
     testWidgets('shows Staff Today label and partial count when hasStaff',
