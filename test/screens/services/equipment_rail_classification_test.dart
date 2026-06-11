@@ -59,7 +59,7 @@ void main() {
       'BP Monitor Automatic': 'Cardiac & Vascular',
       'Pulse Oximeter': 'Cardiac & Vascular',
       // Wound care
-      'Suction Machine': 'Post-Surgical & Wound Care',
+      'Suction Machine': 'Respiratory', // airway suction (owner correction)
       // Hygiene
       'Urine Bed Pan': 'Hygiene & Sanitation',
       'SEAT RAISER 4 INCHES': 'Hygiene & Sanitation',

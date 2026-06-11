@@ -53,10 +53,39 @@ class AssistantProvider extends ChangeNotifier {
   bool _isListening = false;
   bool get isListening => _isListening;
 
+  // Typed confirmation: when an action is pending, a short "haan / yes /
+  // confirm" must execute it (the Confirm button is not the only path), and
+  // a "nahi / cancel" must cancel it. Matched only against the WHOLE short
+  // message so a fresh request ("nahi, doctor bulao") is not swallowed.
+  static final RegExp _yesWords = RegExp(
+      r'^(haa?n?|hanji|ji|ji haan|yes|yep|yeah|y|ok|okay|theek(\s+hai)?|thik(\s+hai)?|confirm(\s+karo)?|kar\s+do|karo|bhej\s+do|bhejo|done|sure|pakka)[.!]*$');
+  static final RegExp _noWords = RegExp(
+      r'^(nahi+n?|na|no|nope|cancel|mat\s+(karo|bhejo)|rehne\s+do|rahne\s+do|ruko|stop)[.!]*$');
+
   /// Handle a typed (or transcribed) user message end-to-end.
   Future<void> sendText(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+
+    // A pending confirm answered in words — execute or cancel, don't re-parse.
+    if (_pendingConfirmation != null) {
+      final lower = trimmed.toLowerCase();
+      if (_yesWords.hasMatch(lower)) {
+        _messages.add(AssistantMessage.user(trimmed));
+        notifyListeners();
+        await confirmPending();
+        return;
+      }
+      if (_noWords.hasMatch(lower)) {
+        _messages.add(AssistantMessage.user(trimmed));
+        _pendingConfirmation = null;
+        const msg = 'Theek hai — cancel kar diya.';
+        _messages.add(AssistantMessage.assistant(msg));
+        notifyListeners();
+        await _voice.speak(msg);
+        return;
+      }
+    }
 
     _messages.add(AssistantMessage.user(trimmed));
     _pendingConfirmation = null;

@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/cart_provider.dart';
 import '../screens/main_shell.dart';
 
 /// Liquid-Glass-style material primitives (Flutter approximation).
@@ -17,17 +19,22 @@ import '../screens/main_shell.dart';
 ///
 /// NAVIGATION CONSISTENCY CONTRACT (so tabs/controls never "dance"):
 ///  • leading  — back button, automatic on every pushed route.
-///  • trailing — [custom actions…, search, home] in that fixed order.
+///  • trailing — [custom actions…, cart, search, home] in that fixed order.
 ///  • [showSearch] is on by default everywhere (universal search, top-right).
-///  • [showHome] is on by default for PUSHED screens (jump straight back to
-///    the Home tab); set it false on the root tab screens, where the bottom
-///    nav already provides Home.
+///  • [showCart] is on by default everywhere (owner: 'show cart in top
+///    right'); badge shows the live item count when a CartProvider is in
+///    scope. Turn OFF inside the purchase funnel (cart/checkout/payment)
+///    where it would loop into itself.
+///  • [showHome] is on by default for PUSHED screens AND non-Home root tabs
+///    (owner: 'proper home button on every screen'); set it false only on
+///    the Home tab itself.
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
   final List<Widget>? actions;
   final bool automaticallyImplyLeading;
   final PreferredSizeWidget? bottom;
   final bool showSearch;
+  final bool showCart;
   final bool showHome;
 
   const GlassAppBar({
@@ -37,6 +44,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.automaticallyImplyLeading = true,
     this.bottom,
     this.showSearch = true,
+    this.showCart = true,
     this.showHome = true,
   });
 
@@ -51,6 +59,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         title: title,
         actions: [
           ...?actions,
+          if (showCart) const _CartAction(),
           if (showSearch)
             IconButton(
               icon: const Icon(Icons.search),
@@ -73,6 +82,32 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+      ),
+    );
+  }
+}
+
+/// Cart action with a live item-count badge. Degrades gracefully when no
+/// CartProvider is in scope (e.g. isolated widget tests): plain icon, no
+/// badge — never throws.
+class _CartAction extends StatelessWidget {
+  const _CartAction();
+
+  @override
+  Widget build(BuildContext context) {
+    int count = 0;
+    try {
+      count = Provider.of<CartProvider>(context).itemCount;
+    } catch (_) {
+      // No CartProvider above this bar — badge-less icon.
+    }
+    return IconButton(
+      tooltip: 'Cart',
+      onPressed: () => Navigator.pushNamed(context, '/cart'),
+      icon: Badge(
+        isLabelVisible: count > 0,
+        label: Text('$count'),
+        child: const Icon(Icons.shopping_cart_outlined),
       ),
     );
   }

@@ -116,6 +116,25 @@ class AssistantService {
       );
     }
 
+    // Add an equipment item to the cart: "add a nebulizer to my cart",
+    // "wheelchair cart mein daal do". Requires BOTH a cart mention and an
+    // add-verb so "cart kholo / cart dikhao" still routes to navigate below.
+    if (RegExp(r'cart').hasMatch(t) &&
+        RegExp(r'\badd\b|daal|\bdaal\b|\bdal\b|dalo|rakho|rakh do|kharid|\bbuy\b|le lo|lelo')
+            .hasMatch(t)) {
+      final query = _extractItemQuery(t);
+      if (query.isNotEmpty) {
+        return AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': query},
+          replyText: 'Cart mein add kar raha hoon…',
+        );
+      }
+      // "cart mein daal do" with no item named — ask, don't guess.
+      return AssistantResponse.degraded(
+          'Kaunsa item cart mein daalna hai? Jaise: "nebulizer cart mein daal do".');
+    }
+
     // Book / request a new service.
     if (RegExp(r'book|chahiye|naya|new (nurse|caretaker|physio)|service')
         .hasMatch(t)) {
@@ -179,6 +198,21 @@ class AssistantService {
     }
 
     return AssistantResponse.degraded(_unmatchedMessage);
+  }
+
+  /// Strips add-to-cart filler words (English + Hinglish) so only the item
+  /// keywords remain: "add a nebulizer to my cart" → "nebulizer".
+  String _extractItemQuery(String t) {
+    const stop = {
+      'add', 'a', 'an', 'the', 'to', 'my', 'in', 'into', 'cart', 'mein',
+      'me', 'please', 'plz', 'daal', 'dal', 'dalo', 'do', 'kar', 'karo',
+      'rakho', 'rakh', 'de', 'ek', 'one', 'buy', 'kharid', 'kharido', 'lo',
+      'le', 'lelo', 'aur', 'and', 'order', 'bhai', 'ji', 'mere', 'liye',
+    };
+    final words = t
+        .split(RegExp(r'[^a-z0-9]+'))
+        .where((w) => w.isNotEmpty && !stop.contains(w));
+    return words.join(' ');
   }
 
   /// Extracts a service category from Hinglish text, or null if none found.

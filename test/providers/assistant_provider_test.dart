@@ -1,12 +1,16 @@
 // test/providers/assistant_provider_test.dart
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:housepital_patient/models/models.dart';
 import 'package:housepital_patient/models/assistant_models.dart';
+import 'package:housepital_patient/providers/cart_provider.dart';
+import 'package:housepital_patient/providers/orders_provider.dart';
 import 'package:housepital_patient/services/assistant_service.dart';
 import 'package:housepital_patient/services/i_api_service.dart';
 import 'package:housepital_patient/services/voice_service.dart';
 import 'package:housepital_patient/screens/assistant/assistant_executor.dart';
+import 'package:housepital_patient/screens/assistant/assistant_local_actions.dart';
 import 'package:housepital_patient/providers/assistant_provider.dart';
 import 'package:housepital_patient/utils/permissions.dart';
 
@@ -57,11 +61,15 @@ class _FakeApi implements IApiService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late _FakeService service;
   late _FakeVoice voice;
   late _FakeApi api;
 
-  AssistantProvider makeProvider({String role = UserRole.primaryContact}) {
+  AssistantProvider makeProvider({
+    String role = UserRole.primaryContact,
+    AssistantLocalActions? local,
+  }) {
     final executor = AssistantExecutor(
       api: api,
       role: role,
@@ -70,6 +78,7 @@ void main() {
         'health_manager':
             const AssistantContact(name: 'Sunita Devi', phone: '9876500000'),
       },
+      local: local,
     );
     return AssistantProvider(
       service: service,
@@ -204,5 +213,106 @@ void main() {
     expect(voice.listenCalls, 1);
     await p.stopVoice();
     expect(voice.stopCalls, 1);
+  });
+
+  // ── Typed confirmation: "haan/yes" must execute, "nahi" must cancel ──────
+
+  group('typed confirmation of a pending action', () {
+    test('typed "haan" confirms a pending call (Confirm button not required)',
+        () async {
+      service.next = const AssistantResponse(
+        action: AssistantAction.placeCall,
+        params: {'target': 'health_manager'},
+        replyText: 'confirm?',
+      );
+      final p = makeProvider();
+      String? dialed;
+      p.onPlaceCall = (phone) => dialed = phone;
+
+      await p.sendText('health manager ko call karo');
+      expect(p.pendingConfirmation, isNotNull);
+
+      await p.sendText('haan');
+      expect(dialed, '9876500000');
+      expect(p.pendingConfirmation, isNull);
+    });
+
+    test('typed "yes" confirms a pending booking → OrdersProvider gains the '
+        'local quote-pending request (demo mode)', () async {
+      SharedPreferences.setMockInitialValues({});
+      final cart = CartProvider();
+      final orders = OrdersProvider();
+      await Future<void>.delayed(Duration.zero);
+      final initialCount = orders.orders.length;
+
+      service.next = const AssistantResponse(
+        action: AssistantAction.bookService,
+        params: {'service_category': 'doctor'},
+        replyText: 'doctor ke liye request bhej dun? Confirm karein.',
+      );
+      final p = makeProvider(
+        local: AssistantLocalActions(
+          cart: cart,
+          orders: orders,
+          loadCatalog: () async => const [],
+        ),
+      );
+
+      await p.sendText('book a doctor consultation');
+      expect(p.pendingConfirmation, isA<SubmitAction>());
+
+      await p.sendText('yes');
+      expect(p.pendingConfirmation, isNull);
+      // The request was recorded locally — never "bhej nahi paya".
+      expect(orders.orders.length, initialCount + 1);
+      expect(OrdersProvider.isQuotePending(orders.orders.first), isTrue);
+      expect(p.messages.last.text, isNot(contains('bhej nahi paya')));
+    });
+
+    test('typed "nahi" cancels the pending action without executing',
+        () async {
+      service.next = const AssistantResponse(
+        action: AssistantAction.placeCall,
+        params: {'target': 'health_manager'},
+        replyText: 'confirm?',
+      );
+      final p = makeProvider();
+      String? dialed;
+      p.onPlaceCall = (phone) => dialed = phone;
+
+      await p.sendText('call karo');
+      expect(p.pendingConfirmation, isNotNull);
+
+      await p.sendText('nahi');
+      expect(dialed, isNull);
+      expect(p.pendingConfirmation, isNull);
+      expect(p.messages.last.isUser, isFalse);
+      expect(p.messages.last.text.toLowerCase(), contains('cancel'));
+    });
+
+    test('unrelated text while pending → treated as a new request, pending '
+        'cleared (old behavior preserved)', () async {
+      service.next = const AssistantResponse(
+        action: AssistantAction.placeCall,
+        params: {'target': 'health_manager'},
+        replyText: 'confirm?',
+      );
+      final p = makeProvider();
+      String? dialed;
+      p.onPlaceCall = (phone) => dialed = phone;
+
+      await p.sendText('call karo');
+      expect(p.pendingConfirmation, isNotNull);
+
+      service.next = const AssistantResponse(
+        action: AssistantAction.getBilling,
+        params: {},
+        replyText: 'checking',
+      );
+      await p.sendText('nahi yaar pehle bill batao');
+      expect(dialed, isNull);
+      expect(p.pendingConfirmation, isNull);
+      expect(p.messages.last.text, contains('5000'));
+    });
   });
 }

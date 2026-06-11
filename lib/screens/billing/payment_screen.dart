@@ -272,7 +272,11 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l.t('payment'))),
+      appBar: GlassAppBar(
+        // Purchase funnel — cart icon would loop into itself.
+        showCart: false,
+        title: Text(l.t('payment')),
+      ),
       body: _isProcessing
           ? const LoadingWidget(message: 'Processing payment...')
           : SingleChildScrollView(

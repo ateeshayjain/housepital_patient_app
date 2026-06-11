@@ -97,6 +97,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: GlassAppBar(
+        showCart: false, // purchase funnel — cart icon would loop into itself
         title: Consumer<CartProvider>(
           builder: (_, cart, _) => Text(
             cart.isEmpty ? 'My Cart' : 'My Cart (${cart.itemCount} items)',

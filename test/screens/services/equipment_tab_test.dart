@@ -8,6 +8,8 @@
 // 320px width (iPhone SE) so the rail + grid combination is also guarded
 // against narrow-screen overflow.
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -189,6 +191,171 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+  });
+
+  // Round-2 owner field report ("the left menu is still not fixed"):
+  // the rail read as floating disconnected blobs because (a) the Stack's
+  // default topStart alignment left-aligned short-label tiles ('All' centre
+  // x=28 vs 39.5 for wide-label entries — per-item horizontal jitter) and
+  // (b) the spacing was airy/irregular. These tests pin the Blinkit-style
+  // geometry to exact numbers so it can't regress: 44px tile, 4px tile→label
+  // gap, 14px between items, one shared vertical axis, accent bar spanning
+  // exactly the tile, and the last entry fully clear of the floating orange
+  // pill nav after scrolling to the end (real iPhone bottom inset simulated).
+  group('rail density, axis & pill-nav clearance (375x667, inset 34)', () {
+    // 9 distinct rail groups so the rail is guaranteed to scroll at 667px.
+    final tallCatalog = <EquipmentItem>[
+      ..._fakeCatalog,
+      _item('m1', 'Manual Hospital Bed', 'Mobility & Patient Comfort'),
+      _item('w1', 'Dressing Kit', 'Post-Surgical & Wound Care'),
+      _item('d1', 'Thermometer', 'Diagnostics & Monitoring'),
+      _item('n1', 'TENS Unit', 'Neurological & Physiotherapy'),
+    ];
+
+    Future<void> pumpShell(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(375, 667);
+      tester.view.devicePixelRatio = 1.0;
+      // iPhone home-indicator inset — the floating pill nav floats above it.
+      tester.view.padding = FakeViewPadding(bottom: 34);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+
+      // Mirrors the real shell: MainShell Scaffold (extendBody + floating
+      // pill in the bottomNavigationBar slot) hosting the inner catalog
+      // Scaffold (app bar, no bottom nav) whose body is the Equipment tab.
+      await tester.pumpWidget(MaterialApp(
+        theme: HousepitalTheme.lightTheme,
+        home: Builder(builder: (context) {
+          return Scaffold(
+            extendBody: true,
+            body: Scaffold(
+              appBar: AppBar(title: const Text('Services')),
+              body: EquipmentTab(initialItems: tallCatalog),
+            ),
+            bottomNavigationBar: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16,
+                  math.max(MediaQuery.of(context).padding.bottom, 8.0)),
+              child: const SizedBox(key: Key('nav-pill'), height: 64),
+            ),
+          );
+        }),
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    Finder railTiles(Finder rail) => find.descendant(
+          of: rail,
+          matching: find.byWidgetPredicate((w) =>
+              w is Container &&
+              w.constraints ==
+                  BoxConstraints.tightFor(
+                      width: kEquipmentRailTileSize,
+                      height: kEquipmentRailTileSize)),
+        );
+
+    testWidgets('tiles share one vertical axis with tight, even spacing',
+        (tester) async {
+      await pumpShell(tester);
+
+      final rail = find.byType(EquipmentCategoryRail);
+      final tiles = railTiles(rail);
+      final labels = find.descendant(of: rail, matching: find.byType(Text));
+      final tileCount = tiles.evaluate().length;
+      expect(tileCount, greaterThanOrEqualTo(5));
+      expect(labels.evaluate().length, tileCount,
+          reason: 'every tile pairs with exactly one label');
+
+      final railCenterX = tester.getRect(rail).center.dx;
+      for (var i = 0; i < tileCount; i++) {
+        final tile = tester.getRect(tiles.at(i));
+        final label = tester.getRect(labels.at(i));
+
+        // AXIS: every tile + label optically centred on the rail column —
+        // the selected accent bar overlays and must never push tiles off.
+        expect(tile.center.dx, moreOrLessEquals(railCenterX, epsilon: 1.0),
+            reason: 'tile $i off the rail axis');
+        expect(label.center.dx, moreOrLessEquals(railCenterX, epsilon: 1.0),
+            reason: 'label $i off the rail axis');
+
+        // DENSITY: 44px tile, label directly beneath with a 4px gap.
+        expect(tile.height,
+            moreOrLessEquals(kEquipmentRailTileSize, epsilon: 0.01));
+        expect(label.top - tile.bottom,
+            moreOrLessEquals(kEquipmentRailTileLabelGap, epsilon: 0.01),
+            reason: 'label $i must sit directly beneath its tile');
+
+        // RHYTHM: exactly 14px between items (label bottom → next tile top).
+        if (i + 1 < tileCount) {
+          final nextTile = tester.getRect(tiles.at(i + 1));
+          expect(nextTile.top - label.bottom,
+              moreOrLessEquals(2 * kEquipmentRailEntryVPad, epsilon: 0.01),
+              reason: 'gap between item $i and ${i + 1} must be 14px');
+        }
+      }
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('selected accent bar spans exactly the tile extent',
+        (tester) async {
+      await pumpShell(tester);
+
+      final rail = find.byType(EquipmentCategoryRail);
+      final bar = find.descendant(
+        of: rail,
+        matching: find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.constraints ==
+                BoxConstraints.tightFor(
+                    width: 3, height: kEquipmentRailTileSize)),
+      );
+      expect(bar, findsOneWidget, reason: 'one accent bar on the selection');
+
+      // 'All' is selected on first build — its tile is the first one.
+      final barRect = tester.getRect(bar);
+      final tileRect = tester.getRect(railTiles(rail).first);
+      expect(barRect.top, moreOrLessEquals(tileRect.top, epsilon: 0.01),
+          reason: 'accent bar top must align with the tile top');
+      expect(barRect.bottom, moreOrLessEquals(tileRect.bottom, epsilon: 0.01),
+          reason: 'accent bar bottom must align with the tile bottom');
+      expect(barRect.left, moreOrLessEquals(tester.getRect(rail).left, epsilon: 1.0),
+          reason: 'accent bar hugs the rail left edge');
+    });
+
+    testWidgets(
+        'rail divider runs full content height and the last entry scrolls '
+        'fully clear of the floating pill nav', (tester) async {
+      await pumpShell(tester);
+
+      final rail = find.byType(EquipmentCategoryRail);
+      final railRect = tester.getRect(rail);
+      final pillRect = tester.getRect(find.byKey(const Key('nav-pill')));
+
+      // AXIS: the rail (and its right divider border) stretches to the very
+      // bottom of the body — no gap where the divider stops short.
+      expect(railRect.bottom, 667,
+          reason: 'rail must stretch under the extendBody pill nav');
+
+      // CLIPPING: the rail must actually need to scroll at this size…
+      final scrollable =
+          find.descendant(of: rail, matching: find.byType(Scrollable));
+      final position = tester.state<ScrollableState>(scrollable).position;
+      expect(position.maxScrollExtent, greaterThan(0),
+          reason: 'tall catalog must overflow a 667px viewport');
+
+      // …and once scrolled to the end, the last entry ('Other') must sit
+      // fully ABOVE the floating pill, not hidden underneath it.
+      position.jumpTo(position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      final lastLabel = tester.getRect(
+          find.descendant(of: rail, matching: find.text('Other')));
+      expect(lastLabel.bottom, lessThan(pillRect.top),
+          reason: "the last rail entry must clear the pill nav "
+              "(owner report: 'Hygiene hides under the bottom nav')");
+
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('rail grouping pure functions', () {

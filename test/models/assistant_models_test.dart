@@ -10,6 +10,7 @@ void main() {
       expect(AssistantAction.fromString('get_duty_days'), AssistantAction.getDutyDays);
       expect(AssistantAction.fromString('place_call'), AssistantAction.placeCall);
       expect(AssistantAction.fromString('navigate'), AssistantAction.navigate);
+      expect(AssistantAction.fromString('add_to_cart'), AssistantAction.addToCart);
     });
 
     test('unknown / null action degrades to none', () {

@@ -134,6 +134,23 @@ class MedicationProvider extends ChangeNotifier {
     return logDoseToday(medicationId, slot);
   }
 
+  /// When [timeSlot] of [medicationId] was actually logged today (patient
+  /// quick action or staff administration), or null if not logged / no
+  /// timestamped record exists. Surfaces the time on Taken badges.
+  DateTime? doseLoggedTimeToday(String medicationId, String timeSlot) {
+    final parts = timeSlot.split(':');
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    for (final l in _todayLogs) {
+      if (l.medicationId == medicationId &&
+          l.scheduledTime.hour == hour &&
+          l.scheduledTime.minute == minute) {
+        return l.actualTime;
+      }
+    }
+    return null;
+  }
+
   // ── Refill requests (session state) ────────────────────────────────────
   final Set<String> _refillRequestedIds = {};
 

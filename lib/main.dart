@@ -79,6 +79,7 @@ import 'services/medication_reminder_service.dart';
 import 'services/assistant_service.dart';
 import 'services/voice_service.dart';
 import 'screens/assistant/assistant_executor.dart';
+import 'screens/assistant/assistant_local_actions.dart';
 import 'screens/assistant/assistant_screen.dart';
 import 'providers/blog_provider.dart';
 import 'screens/articles/article_list_screen.dart';
@@ -220,7 +221,7 @@ void main() async {
           // AI Assistant — voice+text Hinglish bot. Stub-backed until the
           // backend /assistant endpoint ships; voice no-ops on web.
           ChangeNotifierProvider(
-            create: (_) {
+            create: (ctx) {
               final patientId = DemoData.patient.id;
               // Demo mode: the signed-in user is the primary contact.
               const role = UserRole.primaryContact;
@@ -248,6 +249,13 @@ void main() async {
                   patientId: patientId,
                   contacts: contacts,
                   deploymentId: DemoData.icuDeployment.id,
+                  // Demo-first action sink: real local cart adds + local
+                  // quote-pending bookings when the backend is unreachable,
+                  // so the assistant's actions WORK offline.
+                  local: AssistantLocalActions(
+                    cart: ctx.read<CartProvider>(),
+                    orders: ctx.read<OrdersProvider>(),
+                  ),
                 ),
                 voice: kIsWeb ? NoopVoiceService() : PluginVoiceService(),
                 patientId: patientId,

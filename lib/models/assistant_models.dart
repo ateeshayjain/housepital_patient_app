@@ -34,6 +34,11 @@ enum AssistantAction {
   /// params: {reason?}.
   replaceStaff,
 
+  /// Add an equipment item to the local cart (same as the catalog ADD button —
+  /// reversible, so it executes without a hard confirm). params: {query} — the
+  /// user's item keywords, matched against the equipment catalog.
+  addToCart,
+
   /// Safe fallback — unknown or unparseable action. The executor must do
   /// nothing side-effectful for this.
   none;
@@ -60,6 +65,8 @@ enum AssistantAction {
         return AssistantAction.renewService;
       case 'replace_staff':
         return AssistantAction.replaceStaff;
+      case 'add_to_cart':
+        return AssistantAction.addToCart;
       default:
         return AssistantAction.none;
     }

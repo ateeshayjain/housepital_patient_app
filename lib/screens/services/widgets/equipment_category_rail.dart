@@ -56,7 +56,11 @@ String? _railCategoryFromName(String name) {
       has('nebuli') || // Nebulizer / Nebulization Mask
       has('ambu bag') ||
       has('steamer') ||
-      has('air filter')) {
+      has('air filter') ||
+      // Suction machines clear the AIRWAY — respiratory equipment, not
+      // wound care (owner field report: "How is suction machine in wound
+      // care?").
+      has('suction')) {
     return 'Respiratory';
   }
 
@@ -71,7 +75,7 @@ String? _railCategoryFromName(String name) {
   }
 
   // Wound care & post-surgical.
-  if (has('dressing') || has('suction')) {
+  if (has('dressing')) {
     return 'Post-Surgical & Wound Care';
   }
 
@@ -181,6 +185,17 @@ IconData railIconFor(String category) {
 /// unbroken line at the full 11px label size on device.
 const double kEquipmentRailWidth = 80;
 
+/// Icon tile size (Blinkit-style compact square).
+const double kEquipmentRailTileSize = 44;
+
+/// Gap between the icon tile and its label.
+const double kEquipmentRailTileLabelGap = 4;
+
+/// Vertical padding per entry: 2×7 = 14px between consecutive items
+/// (label bottom → next tile top), the tight Blinkit rhythm the owner
+/// asked for ("rail items read as floating disconnected blobs").
+const double kEquipmentRailEntryVPad = 7;
+
 /// Blinkit-style left category rail: 80px wide, vertically scrollable list
 /// of small rounded icon tiles with centred labels (single-word labels stay
 /// on one line and scale down instead of wrapping mid-word). The selected
@@ -208,11 +223,16 @@ class EquipmentCategoryRail extends StatelessWidget {
         // Vertical rhythm: the first icon tile top-aligns with the Sale/Rental
         // chip pills next to it. Pill top = 4 (spacer) + 2 (44px chip strip
         // centred in the 48px controls row) + 6 (32px pill centred in 44) =
-        // 12; rail tile top = 4 (this padding) + 8 (entry padding) = 12.
-        // Bottom: same extendBody clearance as the product grid, so the last
-        // tile ('Hygiene'/'Other') clears the glass bottom nav.
+        // 12; rail tile top = 5 (this padding) + 7 (entry padding) = 12.
+        //
+        // Bottom: MediaQuery resolved from THIS context — the rail sits below
+        // the Scaffold body, so with MainShell's extendBody the ambient
+        // padding.bottom already includes the floating orange pill nav's full
+        // slot height (pill + margins). +16 keeps a visible breathing gap so
+        // the last entry ('Hygiene'/'Other') is fully clear of the pill when
+        // the rail is scrolled to the end.
         padding: EdgeInsets.only(
-            top: 4, bottom: 24 + MediaQuery.of(context).padding.bottom),
+            top: 5, bottom: 16 + MediaQuery.of(context).padding.bottom),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
@@ -256,18 +276,25 @@ class _RailEntry extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Stack(
+          // topCenter is load-bearing: the ListView gives each entry the full
+          // 80px rail width, but the Column is intrinsic-width — Stack's
+          // default topStart alignment LEFT-aligned it, so tiles with short
+          // labels ('All') sat visibly off the rail's vertical axis while
+          // wide-label tiles were centred (per-item horizontal jitter).
+          alignment: Alignment.topCenter,
           children: [
             Padding(
               // One shared horizontal inset for tile + label; both are
               // centred on the rail's vertical axis by the Column below.
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+              padding: const EdgeInsets.symmetric(
+                  vertical: kEquipmentRailEntryVPad, horizontal: 6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: kEquipmentRailTileSize,
+                    height: kEquipmentRailTileSize,
                     decoration: BoxDecoration(
                       color: isSelected
                           ? context.hc.orangeLight
@@ -282,7 +309,7 @@ class _RailEntry extends StatelessWidget {
                           : context.hc.grey,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: kEquipmentRailTileLabelGap),
                   // Single-word labels ('Respiratory', 'Hygiene') must never
                   // wrap mid-word ('Respirator / y'): force one line and let
                   // FittedBox scale down on the rare width that needs it.
@@ -310,13 +337,15 @@ class _RailEntry extends StatelessWidget {
               ),
             ),
             // Orange accent pill on the selected entry (Blinkit-style).
+            // Positioned so it OVERLAYS the left edge (never pushes the tile
+            // off-axis) and spans exactly the tile's vertical extent.
             if (isSelected)
               Positioned(
                 left: 0,
-                top: 12,
+                top: kEquipmentRailEntryVPad,
                 child: Container(
                   width: 3,
-                  height: 36,
+                  height: kEquipmentRailTileSize,
                   decoration: BoxDecoration(
                     color: HousepitalColors.orange,
                     borderRadius: BorderRadius.circular(2),

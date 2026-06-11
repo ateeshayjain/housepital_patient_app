@@ -144,7 +144,7 @@ class _BillingScreenState extends State<BillingScreen> {
       // Liquid Glass: content scrolls under the translucent app bar.
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
-        showHome: false,
+        showHome: true, // owner: home button on every screen (only the Home tab omits it)
         // Bar title fades in only after the in-body large title scrolls
         // under the bar (iOS large-title style).
         title: AnimatedOpacity(

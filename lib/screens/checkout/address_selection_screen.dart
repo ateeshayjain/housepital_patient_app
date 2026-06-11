@@ -262,6 +262,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: GlassAppBar(
+        showCart: false, // purchase funnel — cart icon would loop into itself
         title: const Text('Manage Addresses'),
         actions: [
           IconButton(

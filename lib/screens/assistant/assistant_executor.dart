@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/assistant_models.dart';
 import '../../services/i_api_service.dart';
 import '../../utils/permissions.dart';
+import 'assistant_local_actions.dart';
 
 /// A phone contact the assistant can offer to call.
 @immutable
@@ -119,13 +120,25 @@ class AssistantExecutor {
   /// Active deployment id — needed to request a staff replacement.
   final String? deploymentId;
 
+  /// Local (offline / demo-mode) action sink. When non-null, add-to-cart is
+  /// performed against the real local cart, and confirmed service requests
+  /// fall back to a local quote-pending order when the backend is
+  /// unreachable — the app is demo-first, so demoed actions must WORK
+  /// offline, never end in a fake "try again later".
+  final AssistantLocalActions? local;
+
   const AssistantExecutor({
     required this.api,
     required this.role,
     required this.patientId,
     required this.contacts,
     this.deploymentId,
+    this.local,
   });
+
+  /// How long to wait for the backend before falling back to the local
+  /// demo path. Keeps the thinking spinner short when offline.
+  static const Duration _apiTimeout = Duration(seconds: 4);
 
   /// Attendance statuses that count as the staff member being present.
   static const Set<String> _presentStatuses = {
@@ -157,6 +170,8 @@ class AssistantExecutor {
         return _prepareRenewService(r.params, r.replyText);
       case AssistantAction.replaceStaff:
         return _prepareReplaceStaff(r.params, r.replyText);
+      case AssistantAction.addToCart:
+        return _addToCart(r.params);
       case AssistantAction.none:
         final msg = r.replyText.isNotEmpty ? r.replyText : _genericDegrade;
         return Degraded(msg);
@@ -252,49 +267,148 @@ class AssistantExecutor {
     );
   }
 
-  /// Performs a previously-confirmed [SubmitAction]. Called by the provider
-  /// only after the user taps Confirm. Never throws — degrades to a message.
-  Future<ExecutorResult> performConfirmed(SubmitAction action) async {
+  // ── add_to_cart: a real local cart add (reversible → no hard confirm) ─────
+
+  /// Searches the equipment catalog for the user's item keywords and adds the
+  /// best match to the local cart — the SAME add the catalog ADD button does.
+  /// Honesty rules:
+  ///   - price-on-request items are NOT added with a fabricated price; the
+  ///     user is pointed at the Reserve flow.
+  ///   - no match → say so plainly, never pretend.
+  Future<ExecutorResult> _addToCart(Map<String, dynamic> params) async {
+    if (!canUserPerform(role, UserAction.book) &&
+        !canUserPerform(role, UserAction.requestBooking)) {
+      return const Blocked(_permDenied);
+    }
+    final query = (params['query'] as String?)?.trim() ?? '';
+    if (query.isEmpty) {
+      return const Degraded(
+          'Kaunsa item cart mein daalna hai? Jaise: "nebulizer cart mein daal do".');
+    }
+    final sink = local;
+    if (sink == null) {
+      // No local cart wired (shouldn't happen in the app) — be plain about it.
+      return const Degraded(
+          'Cart mein add yahan se nahi ho paa raha — Services > Equipment se add karein.');
+    }
     try {
-      switch (action.kind) {
-        case ConfirmedKind.raiseConcern:
-          await api.raiseConcern(
-            patientId: patientId,
-            category: 'general',
-            description: action.data['description'] ?? '',
-            urgency: 'medium',
-          );
+      final item = await sink.findEquipment(query);
+      if (item == null) {
+        return Degraded(
+            '"$query" equipment catalog mein nahi mila — Services > Equipment mein dekh sakte hain.');
+      }
+      final price = item.price?.toInt();
+      if (price == null || price <= 0) {
+        // Price-on-request → Reserve flow; never fabricate a price.
+        return Answer(
+            '${item.name} ka price request par confirm hota hai — Services > Equipment se Reserve karein, team price bata degi.');
+      }
+      sink.addEquipmentToCart(item);
+      return Answer(
+          '${item.name} cart mein add kar diya — ₹$price. Checkout Services > Cart se karein.');
+    } catch (e) {
+      debugPrint('AssistantExecutor: addToCart failed: $e');
+      return const Degraded(
+          'Cart mein add nahi ho paya — Services > Equipment se try karein.');
+    }
+  }
+
+  /// Performs a previously-confirmed [SubmitAction]. Called by the provider
+  /// only after the user taps Confirm (or types haan/yes). Never throws.
+  ///
+  /// Demo-first contract: bookings/renewals MUST succeed offline — when the
+  /// backend call fails, the same local quote-pending request the normal
+  /// booking flow creates is recorded via [AssistantLocalActions]. Actions
+  /// with no local equivalent (concern, replacement) reply with an honest
+  /// capability message that points at a working alternative — never a
+  /// fake "try again later".
+  Future<ExecutorResult> performConfirmed(SubmitAction action) async {
+    switch (action.kind) {
+      case ConfirmedKind.raiseConcern:
+        try {
+          await api
+              .raiseConcern(
+                patientId: patientId,
+                category: 'general',
+                description: action.data['description'] ?? '',
+                urgency: 'medium',
+              )
+              .timeout(_apiTimeout);
           return const Answer(
               'Aapka concern care team ko bhej diya gaya hai — woh jaldi sampark karenge.');
-        case ConfirmedKind.bookService:
-          await api.createAssessmentRequest(
-            patientId: patientId,
-            serviceCategory: action.data['service_category'] ?? '',
-            responses: const {'source': 'assistant'},
-          );
-          return const Answer(
-              'Service request bhej di gayi hai — care team aapko call karegi.');
-        case ConfirmedKind.renewService:
-          await api.createAssessmentRequest(
-            patientId: patientId,
-            serviceCategory: action.data['service_category'] ?? '',
-            responses: const {'source': 'assistant', 'type': 'renewal'},
-          );
-          return const Answer(
-              'Renewal request bhej di gayi hai — care team confirm karegi.');
-        case ConfirmedKind.replaceStaff:
-          await api.requestReplacement(
-            deploymentId!,
-            action.data['reason'] ?? 'Not specified',
-            const {'source': 'assistant'},
-          );
+        } catch (e) {
+          debugPrint('AssistantExecutor: raiseConcern failed: $e');
+          // No local concern store exists — be honest, point to what works.
+          return const Degraded(
+              'Concern abhi yahan se record nahi ho paya. Settings > Raise a Concern se bhej sakte hain, ya health manager ko call karne ke liye "call karo" boliye.');
+        }
+      case ConfirmedKind.bookService:
+        return _submitServiceRequest(
+          category: action.data['service_category'] ?? '',
+          renewal: false,
+        );
+      case ConfirmedKind.renewService:
+        return _submitServiceRequest(
+          category: action.data['service_category'] ?? '',
+          renewal: true,
+        );
+      case ConfirmedKind.replaceStaff:
+        try {
+          await api
+              .requestReplacement(
+                deploymentId!,
+                action.data['reason'] ?? 'Not specified',
+                const {'source': 'assistant'},
+              )
+              .timeout(_apiTimeout);
           return const Answer(
               'Replacement request bhej di gayi hai — care team jaldi arrange karegi.');
-      }
+        } catch (e) {
+          debugPrint('AssistantExecutor: replaceStaff failed: $e');
+          // No local replacement store — honest capability message.
+          return const Degraded(
+              'Replacement request abhi yahan se nahi ja paayi. Health manager ko call karke turant arrange kar sakte hain — "call karo" boliye.');
+        }
+    }
+  }
+
+  /// Books / renews a service: backend first (short timeout), then the local
+  /// demo path — a quote-pending OrdersProvider order, the same shape the
+  /// quote-first booking flow creates. No price is ever shown (manpower rule).
+  Future<ExecutorResult> _submitServiceRequest({
+    required String category,
+    required bool renewal,
+  }) async {
+    try {
+      await api
+          .createAssessmentRequest(
+            patientId: patientId,
+            serviceCategory: category,
+            responses: {
+              'source': 'assistant',
+              if (renewal) 'type': 'renewal',
+            },
+          )
+          .timeout(_apiTimeout);
+      return Answer(renewal
+          ? 'Renewal request bhej di gayi hai — care team confirm karegi.'
+          : 'Service request bhej di gayi hai — care team aapko call karegi.');
     } catch (e) {
-      debugPrint('AssistantExecutor: performConfirmed failed: $e');
+      debugPrint('AssistantExecutor: createAssessmentRequest failed: $e');
+      final sink = local;
+      if (sink != null) {
+        try {
+          final bookingNumber =
+              sink.createServiceRequest(category: category, renewal: renewal);
+          return Answer(renewal
+              ? 'Renewal request record ho gayi hai ($bookingNumber) — care team call karke price aur schedule confirm karegi. My Orders mein dekh sakte hain.'
+              : 'Request bhej di gayi hai ($bookingNumber) — care team call karke price aur schedule confirm karegi. My Orders mein dekh sakte hain.');
+        } catch (e2) {
+          debugPrint('AssistantExecutor: local booking fallback failed: $e2');
+        }
+      }
       return const Degraded(
-          'Request abhi bhej nahi paya — thodi der baad try karein.');
+          'Request abhi nahi ja paayi — Services tab se book kar sakte hain, ya health manager ko call karein.');
     }
   }
 

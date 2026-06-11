@@ -8,10 +8,14 @@
 //   - no phone on file → no dial, no crash
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:housepital_patient/models/models.dart';
 import 'package:housepital_patient/models/assistant_models.dart';
+import 'package:housepital_patient/providers/cart_provider.dart';
+import 'package:housepital_patient/providers/orders_provider.dart';
 import 'package:housepital_patient/services/i_api_service.dart';
 import 'package:housepital_patient/screens/assistant/assistant_executor.dart';
+import 'package:housepital_patient/screens/assistant/assistant_local_actions.dart';
 import 'package:housepital_patient/utils/permissions.dart';
 
 /// Minimal fake — only overrides what the executor touches.
@@ -47,6 +51,7 @@ Attendance _att(String status, DateTime date) => Attendance(
     );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late _FakeApi api;
   const patientId = 'p1';
 
@@ -59,6 +64,7 @@ void main() {
   AssistantExecutor makeExecutor({
     String role = UserRole.primaryContact,
     String? deploymentId = 'dep1',
+    AssistantLocalActions? local,
   }) =>
       AssistantExecutor(
         api: api,
@@ -66,6 +72,7 @@ void main() {
         patientId: patientId,
         contacts: contacts,
         deploymentId: deploymentId,
+        local: local,
       );
 
   setUp(() {
@@ -292,6 +299,227 @@ void main() {
         ),
       );
       expect(r, isA<Blocked>());
+    });
+  });
+
+  // ── Demo-mode local actions (field-report regressions) ────────────────────
+  // The app is demo-first: with no backend, add-to-cart must be a REAL local
+  // cart add and a confirmed booking must create the same local quote-pending
+  // order the normal flow creates — never "Request abhi bhej nahi paya".
+
+  group('add_to_cart (demo local action)', () {
+    late CartProvider cart;
+    late OrdersProvider orders;
+
+    final catalog = [
+      EquipmentItem(
+        id: 'NDK-NEBULI',
+        name: 'Nebulizer',
+        brand: 'Niscomed',
+        category: 'Equipment',
+        price: 3200,
+        mrp: 4200,
+      ),
+      EquipmentItem(
+        id: 'BPL-NEBUN10-10',
+        name: 'Nebulizer N10',
+        brand: 'BPL',
+        category: 'Equipment',
+        price: null, // price-on-request → Reserve flow
+        mrp: 3000,
+      ),
+      EquipmentItem(
+        id: 'PHL-OXYCON',
+        name: 'Oxygen Concentrator 5L',
+        brand: 'Philips',
+        category: 'Equipment',
+        price: 45000,
+      ),
+    ];
+
+    AssistantLocalActions makeLocal() => AssistantLocalActions(
+          cart: cart,
+          orders: orders,
+          loadCatalog: () async => catalog,
+        );
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      cart = CartProvider();
+      orders = OrdersProvider();
+      // Let async storage loads settle before asserting.
+      await Future<void>.delayed(Duration.zero);
+    });
+
+    test('nebulizer query → REAL cart add + Answer with name, price, cart path',
+        () async {
+      final r = await makeExecutor(local: makeLocal()).execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': 'nebulizer'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Answer>());
+      final text = (r as Answer).text;
+      expect(text, contains('Nebulizer'));
+      expect(text, contains('3200'));
+      expect(text.toLowerCase(), contains('cart'));
+      // CartProvider actually gained the item — same as the catalog ADD.
+      expect(cart.items, hasLength(1));
+      expect(cart.items.first.equipmentId, 'NDK-NEBULI');
+      expect(cart.items.first.unitPrice, 3200);
+    });
+
+    test('priced match is preferred over a price-on-request variant', () async {
+      // "Nebulizer" (₹3200) and "Nebulizer N10" (no price) both match;
+      // the priced item must win so a real cart add happens.
+      final r = await makeExecutor(local: makeLocal()).execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': 'nebulizer'},
+          replyText: '',
+        ),
+      );
+      expect((r as Answer).text, isNot(contains('N10')));
+    });
+
+    test('price-on-request item → honest Reserve guidance, NOT added',
+        () async {
+      final r = await makeExecutor(local: makeLocal()).execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': 'nebulizer n10'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Answer>());
+      expect((r as Answer).text, contains('Reserve'));
+      expect(cart.items, isEmpty); // never add with a fabricated price
+    });
+
+    test('no catalog match → plain "not found" message, cart untouched',
+        () async {
+      final r = await makeExecutor(local: makeLocal()).execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': 'quantum flux capacitor'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Degraded>());
+      expect(cart.items, isEmpty);
+    });
+
+    test('empty query → asks which item, no crash', () async {
+      final r = await makeExecutor(local: makeLocal()).execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Degraded>());
+    });
+
+    test('no local sink wired → safe capability message, no crash', () async {
+      final r = await makeExecutor().execute(
+        const AssistantResponse(
+          action: AssistantAction.addToCart,
+          params: {'query': 'nebulizer'},
+          replyText: '',
+        ),
+      );
+      expect(r, isA<Degraded>());
+    });
+  });
+
+  group('book_service demo fallback (performConfirmed)', () {
+    late CartProvider cart;
+    late OrdersProvider orders;
+    late int initialOrderCount;
+
+    AssistantLocalActions makeLocal() => AssistantLocalActions(
+          cart: cart,
+          orders: orders,
+          loadCatalog: () async => const [],
+        );
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      cart = CartProvider();
+      orders = OrdersProvider();
+      await Future<void>.delayed(Duration.zero);
+      initialOrderCount = orders.orders.length;
+    });
+
+    test(
+        'doctor booking with backend down → local quote-pending order in '
+        'OrdersProvider, success reply (never "bhej nahi paya")', () async {
+      // _FakeApi.createAssessmentRequest throws (noSuchMethod) — the demo
+      // fallback must record the request locally and report success.
+      final r = await makeExecutor(local: makeLocal()).performConfirmed(
+        const SubmitAction(
+          kind: ConfirmedKind.bookService,
+          label: 'book doctor',
+          data: {'service_category': 'doctor'},
+        ),
+      );
+      expect(r, isA<Answer>());
+      final text = (r as Answer).text;
+      expect(text, isNot(contains('nahi')));
+      expect(text, contains('My Orders'));
+
+      expect(orders.orders.length, initialOrderCount + 1);
+      final order = orders.orders.first;
+      expect(OrdersProvider.isQuotePending(order), isTrue);
+      expect(order['totalAmount'], 0); // manpower rule: no price, ever
+      final items = order['items'] as List;
+      expect((items.first as Map)['name'], contains('Doctor'));
+    });
+
+    test('renewal with backend down → local quote-pending renewal request',
+        () async {
+      final r = await makeExecutor(local: makeLocal()).performConfirmed(
+        const SubmitAction(
+          kind: ConfirmedKind.renewService,
+          label: 'renew nursing',
+          data: {'service_category': 'nursing'},
+        ),
+      );
+      expect(r, isA<Answer>());
+      expect(orders.orders.length, initialOrderCount + 1);
+      expect(OrdersProvider.isQuotePending(orders.orders.first), isTrue);
+    });
+
+    test('backend down + no local sink → honest guidance, not a silent crash',
+        () async {
+      final r = await makeExecutor().performConfirmed(
+        const SubmitAction(
+          kind: ConfirmedKind.bookService,
+          label: 'book doctor',
+          data: {'service_category': 'doctor'},
+        ),
+      );
+      expect(r, isA<Degraded>());
+      expect((r as Degraded).text.toLowerCase(),
+          anyOf(contains('services'), contains('call')));
+    });
+
+    test('raise_concern with backend down → honest capability message, '
+        'points at a working path (no fake retry-later)', () async {
+      final r = await makeExecutor(local: makeLocal()).performConfirmed(
+        const SubmitAction(
+          kind: ConfirmedKind.raiseConcern,
+          label: 'concern',
+          data: {'description': 'Nurse late aayi'},
+        ),
+      );
+      expect(r, isA<Degraded>());
+      final text = (r as Degraded).text;
+      expect(text, isNot(contains('thodi der baad')));
+      expect(text.toLowerCase(),
+          anyOf(contains('concern'), contains('call')));
     });
   });
 }

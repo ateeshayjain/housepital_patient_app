@@ -237,28 +237,28 @@ final List<ServiceItem> consultationServices = [
     id: 'con-diet', name: 'Diet & Nutrition — The Nourish Programme',
     category: 'consultation', bookingType: 'scheduled',
     description:
-        'Clinical dietetics by a senior clinical dietitian (12+ yrs '
-        'oncology, transplant & critical care). Weight loss, diabetes & '
-        'lifestyle care — one nutrition plan, built bedside, reviewed '
-        'every week.',
+        'Weight loss, diabetes & lifestyle care — one clinical nutrition '
+        'plan, built bedside, reviewed every week.',
     basePriceMin: 3000, basePriceMax: 6000,
     durationMinutes: 45, leadTimeHours: 24, iconName: 'restaurant',
     preparationNotes:
-        'The Nourish Programme: 30-day quick reset ₹3,000 · 60-day '
-        '(most popular) ₹4,500 · 90-day best results ₹6,000. Every plan '
-        'includes daily WhatsApp support, a weekly plan and recipes.\n'
-        'Specialities: oncology nutrition (chemo, radiation, recovery), '
-        'diabetes & cardiac (insulin-aware meal plans), post-surgical '
-        'healing & protein protocols, renal & liver (transplant-grade '
-        'plans), gut healing (functional medicine), geriatric care '
-        '(sarcopenia, swallowing).\n'
-        'About: M.Sc. Nutrition & Dietetics, double-certified cancer '
-        'nutritionist, liver-transplant nutrition certified, IAPEN India '
-        'Oncology Core Committee, published author. Trained at Medanta, '
-        'Sir HN Reliance, AIMS & internationally (Stanford, Duke, '
-        'Univ. of Colorado).\n'
-        'Senior Clinical Dietitian on call is COMPLIMENTARY with every '
-        'Housepital package.',
+        'Plans: 30-day quick reset ₹3,000 · 60-day (most popular) ₹4,500 · '
+        '90-day best results ₹6,000.\n'
+        'Every plan includes: daily WhatsApp support, a weekly plan and '
+        'recipes.\n'
+        'Specialities: oncology nutrition, diabetes & cardiac, '
+        'post-surgical, renal & liver, gut healing, geriatric care.\n'
+        'On call: a senior clinical dietitian is complimentary with every '
+        'Housepital package.\n'
+        // 'About:' lines render under a separate 'About your specialist'
+        // section on the booking screen — never inside the notes blob.
+        'About: Senior clinical dietitian, 12+ years in oncology, '
+        'transplant & critical care.\n'
+        'About: M.Sc. Nutrition & Dietetics · double-certified cancer '
+        'nutritionist · liver-transplant nutrition certified · IAPEN India '
+        'Oncology Core Committee · published author.\n'
+        'About: Trained at Medanta, Sir HN Reliance, AIMS and '
+        'internationally (Stanford, Duke, Univ. of Colorado).',
   ),
   ServiceItem(
     id: 'con-grief', name: 'Grief Counselling',

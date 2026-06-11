@@ -1696,12 +1696,20 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
               ),
             ),
             child: taken
-                ? StatusBadge(
-                    key: const ValueKey('dose-taken'),
-                    text: 'Taken',
-                    color: context.hc.success,
-                    icon: Icons.check,
-                  )
+                ? Builder(builder: (context) {
+                    // Show WHEN it was logged (owner: 'is it logging the
+                    // time?') — every patient log carries actualTime.
+                    final at = medProv.doseLoggedTimeToday(med.id, slot);
+                    final time = at != null
+                        ? ' · ${DateFormat('h:mm a').format(at)}'
+                        : '';
+                    return StatusBadge(
+                      key: const ValueKey('dose-taken'),
+                      text: 'Taken$time',
+                      color: context.hc.success,
+                      icon: Icons.check,
+                    );
+                  })
                 // Compact pill, compliant tap target (doctor_advice_card
                 // pattern): the visual stays small but the padded Material
                 // tap target keeps the interactive area ≥ 44pt.
@@ -1709,7 +1717,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                     key: const ValueKey('dose-mark'),
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      medProv.markDoseTakenToday(med.id, slot);
+                      // logDoseToday (not bare markDoseTakenToday): records
+                      // a timestamped MedicationLog so the badge can show
+                      // the actual time.
+                      medProv.logDoseToday(med.id, slot);
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 10),

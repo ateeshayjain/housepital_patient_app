@@ -67,15 +67,19 @@ void main() {
     ));
     await _push(tester);
 
+    expect(find.byTooltip('Cart'), findsOneWidget);
     expect(find.byTooltip('Search'), findsOneWidget);
     expect(find.byTooltip('Home'), findsOneWidget);
 
-    // Fixed trailing order: custom → search → home (left to right).
+    // Fixed trailing order: custom → cart → search → home (left to right).
     final filterX = tester.getCenter(find.byIcon(Icons.tune)).dx;
+    final cartX =
+        tester.getCenter(find.byIcon(Icons.shopping_cart_outlined)).dx;
     final searchX = tester.getCenter(find.byIcon(Icons.search)).dx;
     final homeX = tester.getCenter(find.byIcon(Icons.home_outlined)).dx;
-    expect(filterX, lessThan(searchX),
-        reason: 'custom actions must precede search');
+    expect(filterX, lessThan(cartX),
+        reason: 'custom actions must precede cart');
+    expect(cartX, lessThan(searchX), reason: 'cart must precede search');
     expect(searchX, lessThan(homeX), reason: 'search must precede home');
 
     // Back button auto-implied on the pushed route.

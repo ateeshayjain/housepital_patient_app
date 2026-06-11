@@ -160,14 +160,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.service.name,
-            style: TextStyle(
-                color: context.hc.onOrange,
-                fontSize: 20,
-                fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
+          // No service name here — the glass app bar already titles the
+          // screen; repeating it large in the ribbon doubled the type scale
+          // (owner field report: 'why is the font so large vs home?').
           // White-on-orange copy stays bold + ≥14px (owner decision).
           Text(
             'Started ${DateHelper.formatDate(widget.service.startDate)}',

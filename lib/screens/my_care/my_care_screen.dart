@@ -82,7 +82,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
       // Liquid Glass: content scrolls under the translucent app bar.
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
-        showHome: false,
+        showHome: true, // owner: home button on every screen (only the Home tab omits it)
         // Bar title is hidden while the in-body large title is at rest, and
         // fades in on scroll. Loading/error/empty states have no in-body
         // title, so the bar title stays visible there.

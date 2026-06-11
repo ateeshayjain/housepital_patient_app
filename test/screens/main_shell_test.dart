@@ -36,7 +36,7 @@ import 'package:housepital_patient/screens/main_shell.dart';
 import 'package:housepital_patient/services/api_service.dart';
 import 'package:housepital_patient/utils/app_localizations.dart';
 import 'package:housepital_patient/widgets/assistant_fab.dart';
-import 'package:housepital_patient/widgets/glass.dart';
+import 'package:housepital_patient/config/theme.dart';
 
 import '../_mocks/fake_auth_api_service.dart';
 import '../_mocks/fake_firebase_service.dart';
@@ -186,17 +186,20 @@ void main() {
     const size = Size(390, 844);
     await _pump(tester, size);
 
-    // The bar lives inside a fully-rounded GlassSurface capsule.
-    final glass = tester.widget<GlassSurface>(
+    // The bar lives inside a fully-rounded SOLID ORANGE capsule (owner
+    // decision: orange for visibility; glass read as washed out on device).
+    final pill = tester.widget<Material>(
       find
           .ancestor(
             of: find.byType(BottomNavigationBar),
-            matching: find.byType(GlassSurface),
+            matching: find.byType(Material),
           )
           .first,
     );
-    expect(glass.borderRadius, BorderRadius.circular(32),
-        reason: 'Pill must be fully rounded (radius 32), not edge-to-edge.');
+    expect(pill.shape, isA<StadiumBorder>(),
+        reason: 'Pill must be fully rounded (stadium), not edge-to-edge.');
+    expect(pill.color, HousepitalColors.orange,
+        reason: 'Pill is solid brand orange.');
 
     // Detached: 16px side margins and ≥8px clearance to the screen edge
     // (test env has no home indicator, so the min-8 floor applies).
@@ -252,7 +255,7 @@ void main() {
       find
           .ancestor(
             of: find.byType(BottomNavigationBar),
-            matching: find.byType(GlassSurface),
+            matching: find.byType(Material),
           )
           .first,
     );

@@ -86,18 +86,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: GlassAppBar(
         // Root tab: bottom nav already provides Home.
-        showHome: false,
+        showHome: true, // owner: home button on every screen (only the Home tab omits it)
         title: Text(l.t('settings_title')),
       ),
       body: ListView(
         children: [
-          // User profile section with photo
-          Container(
-            padding: const EdgeInsets.all(20),
-            // Use theme card color so the section reads correctly in dark mode.
+          // User profile section with photo. The whole row opens the patient
+          // profile (field bug: 'View & Edit Profile' did nothing — there was
+          // no tap handler); the avatar keeps its own photo-picker tap.
+          Material(
             color: Theme.of(context).cardTheme.color ??
                 Theme.of(context).colorScheme.surface,
-            child: Row(
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/patient-profile'),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
               children: [
                 GestureDetector(
                   onTap: _pickProfilePhoto,
@@ -169,6 +173,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         .onSurface
                         .withValues(alpha: 0.6)),
               ],
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 8),

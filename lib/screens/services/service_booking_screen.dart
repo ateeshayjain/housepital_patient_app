@@ -1236,7 +1236,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ),
       ],
 
-      // Non-diagnostic preparation notes (existing behavior)
+      // Non-diagnostic preparation notes (existing behavior).
+      // Lines prefixed 'About:' are split into their own 'About your
+      // specialist' section (owner: credentials must not sit inside the
+      // booking notes blob).
       if (!isDiag && !_isVisitService && s.preparationNotes != null) ...[
         const SizedBox(height: 16),
         Text('Good to know',
@@ -1245,7 +1248,18 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 fontWeight: FontWeight.w600,
                 color: context.hc.black)),
         const SizedBox(height: 8),
-        ..._prepNoteBlocks(context, s.preparationNotes!),
+        ..._prepNoteBlocks(context, _splitPrepNotes(s.preparationNotes!).$1),
+        if (_splitPrepNotes(s.preparationNotes!).$2.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('About your specialist',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: context.hc.black)),
+          const SizedBox(height: 8),
+          ..._prepNoteBlocks(
+              context, _splitPrepNotes(s.preparationNotes!).$2),
+        ],
       ],
 
       // Prescription / Notes / Online Assessment section
@@ -2728,4 +2742,22 @@ List<Widget> _prepNoteBlocks(BuildContext context, String notes) {
         }),
       ),
   ];
+}
+
+/// Splits preparation notes into (general lines, about-the-specialist lines).
+/// A line starting with 'About:' moves to the second group with the prefix
+/// stripped — rendered under its own 'About your specialist' header.
+(String, String) _splitPrepNotes(String notes) {
+  final general = <String>[];
+  final about = <String>[];
+  for (final line in notes.split('\n')) {
+    final t = line.trim();
+    if (t.isEmpty) continue;
+    if (t.startsWith('About:')) {
+      about.add(t.substring('About:'.length).trim());
+    } else {
+      general.add(t);
+    }
+  }
+  return (general.join('\n'), about.join('\n'));
 }

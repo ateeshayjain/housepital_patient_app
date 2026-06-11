@@ -128,7 +128,7 @@ class ServiceCatalogScreenState extends State<ServiceCatalogScreen>
       // No extendBodyBehindAppBar here — the TabBar + 6 tab bodies need their
       // own under-scroll pass; glass material applies without it.
       appBar: GlassAppBar(
-        showHome: false,
+        showHome: true, // owner: home button on every screen (only the Home tab omits it)
         actions: [
           Consumer<CartProvider>(
             builder: (ctx, cart, _) {

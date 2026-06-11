@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../config/app_colors.dart';
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
-import '../widgets/glass.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -69,8 +69,13 @@ class MainShellState extends State<MainShell> {
           // Float above the home indicator; min 8 on devices without one.
           math.max(MediaQuery.of(context).padding.bottom, 8.0),
         ),
-        child: GlassSurface(
-          borderRadius: BorderRadius.circular(32),
+        // Owner decision (field report): the pill is SOLID BRAND ORANGE for
+        // visibility — white selected items, translucent-white unselected
+        // (white-on-orange rule; glass version read as washed out on device).
+        child: Material(
+          color: context.hc.orange,
+          shape: const StadiumBorder(),
+          clipBehavior: Clip.antiAlias,
           child: MediaQuery.removePadding(
             // The outer Padding already clears the safe area — without this
             // the bar would add the home-indicator inset a second time.
@@ -82,9 +87,12 @@ class MainShellState extends State<MainShell> {
               child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        // Transparent + flat: the GlassSurface provides the material.
+        // Transparent + flat: the orange Material provides the surface.
         backgroundColor: Colors.transparent,
         elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: context.hc.onOrange,
+        unselectedItemColor: context.hc.onOrange.withValues(alpha: 0.7),
         items: [
           BottomNavigationBarItem(
             icon: const Icon(Icons.home_outlined),

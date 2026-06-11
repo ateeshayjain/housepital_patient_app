@@ -174,11 +174,12 @@ void main() {
   ) async {
     await _pump(tester);
 
-    expect(find.text('Taken'), findsNothing);
+    expect(find.textContaining('Taken'), findsNothing);
     await tester.tap(find.text('Mark taken').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Taken'), findsOneWidget);
+    // Badge now includes the logged time: 'Taken · h:mm AM/PM'.
+    expect(find.textContaining('Taken ·'), findsOneWidget);
     expect(find.textContaining('1/'), findsWidgets); // "1/6 taken" summary
   });
 

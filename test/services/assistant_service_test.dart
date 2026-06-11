@@ -51,6 +51,44 @@ void main() {
       expect(r.action, AssistantAction.none);
       expect(r.replyText, isNotEmpty);
     });
+
+    // ── Demo-mode action intents (field-report regressions) ────────────────
+
+    test('"add a nebulizer to my cart" → add_to_cart with item query',
+        () async {
+      final r = await service.ask(_req('add a nebulizer to my cart'));
+      expect(r.action, AssistantAction.addToCart);
+      expect(r.params['query'], 'nebulizer');
+    });
+
+    test('Hinglish "oxygen concentrator cart mein daal do" → add_to_cart',
+        () async {
+      final r =
+          await service.ask(_req('oxygen concentrator cart mein daal do'));
+      expect(r.action, AssistantAction.addToCart);
+      expect(r.params['query'], 'oxygen concentrator');
+    });
+
+    test('add-to-cart with no item named → safe none, asks for the item',
+        () async {
+      final r = await service.ask(_req('cart mein daal do'));
+      expect(r.action, AssistantAction.none);
+      expect(r.replyText, isNotEmpty);
+    });
+
+    test('"cart kholo" (no add-verb) still routes to navigate /cart',
+        () async {
+      final r = await service.ask(_req('cart kholo'));
+      expect(r.action, AssistantAction.navigate);
+      expect(r.params['route'], '/cart');
+    });
+
+    test('"book a doctor consultation" → book_service with doctor category',
+        () async {
+      final r = await service.ask(_req('book a doctor consultation'));
+      expect(r.action, AssistantAction.bookService);
+      expect(r.params['service_category'], 'doctor');
+    });
   });
 
   group('AssistantService backend mode', () {
