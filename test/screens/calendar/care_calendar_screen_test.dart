@@ -134,6 +134,14 @@ void main() {
     expect(find.textContaining('Dr. Ananya Sharma'), findsWidgets);
     expect(find.text('Upcoming'), findsWidgets);
     expect(find.text('Visits, tests & renewals'), findsOneWidget);
+
+    // The "N doses scheduled" card is tappable: expands to the full
+    // scheduled-dose breakdown (no dead-end summaries).
+    expect(find.textContaining('Amlodipine'), findsNothing);
+    await tester.tap(find.textContaining('doses scheduled'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Amlodipine'), findsWidgets);
+    expect(find.text('MORNING'), findsOneWidget);
   });
 
   testWidgets('Mark taken flips a dose to Taken via MedicationProvider',

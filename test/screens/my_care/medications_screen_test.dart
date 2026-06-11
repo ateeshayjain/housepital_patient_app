@@ -62,6 +62,12 @@ class _TestMedicationProvider extends MedicationProvider {
 Widget _host(MedicationProvider medProv) => MaterialApp(
       localizationsDelegates: const [AppLocalizations.delegate],
       supportedLocales: const [Locale('en')],
+      // Stub route so the adherence-header tap → Care Calendar navigation is
+      // observable without pulling in the real calendar screen's providers.
+      routes: {
+        '/care-calendar': (_) =>
+            const Scaffold(body: Text('care-calendar-stub')),
+      },
       home: MultiProvider(
         providers: [
           ChangeNotifierProvider<AppProvider>.value(value: _TestAppProvider()),
@@ -90,7 +96,8 @@ Future<void> _pump(WidgetTester tester, MedicationProvider medProv) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('shows deterministic weekly adherence header card',
+  testWidgets(
+      'shows deterministic weekly adherence header with % ring and dose count',
       (tester) async {
     await _pump(tester, _TestMedicationProvider());
 
@@ -98,8 +105,25 @@ void main() {
     final weekTotal = dosesPerDay() * 7;
     final weekTaken = (weekTotal * pct / 100).round();
     expect(find.text("This week's adherence"), findsOneWidget);
-    expect(
-        find.text('$pct% · $weekTaken of $weekTotal doses'), findsOneWidget);
+    // The percentage now lives INSIDE the 56px progress ring…
+    expect(find.text('$pct%'), findsOneWidget);
+    // …with a determinate CircularProgressIndicator at pct/100.
+    final ring = tester.widgetList<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator));
+    expect(ring.where((r) => r.value != null && (r.value! - pct / 100).abs() < 0.001),
+        isNotEmpty);
+    // Dose count is its own line now.
+    expect(find.text('$weekTaken of $weekTotal doses'), findsOneWidget);
+  });
+
+  testWidgets('tapping the adherence header opens the Care Calendar',
+      (tester) async {
+    await _pump(tester, _TestMedicationProvider());
+
+    await tester.tap(find.text("This week's adherence"));
+    await tester.pumpAndSettle();
+
+    expect(find.text('care-calendar-stub'), findsOneWidget);
   });
 
   testWidgets(

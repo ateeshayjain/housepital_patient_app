@@ -40,6 +40,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   // (demo session state — mirrors the dose Mark-taken pattern).
   final Set<String> _staffMarked = {};
 
+  // Future-day "N doses scheduled" card expansion (reset when the selected
+  // day changes so each day starts collapsed).
+  bool _futureMedsExpanded = false;
+
   static const _weekdayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   DateTime get _today => dateOnly(DateTime.now());
@@ -95,6 +99,8 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
 
   void _step(int delta) {
     setState(() {
+      // Day selection may change below — collapse the future-doses card.
+      _futureMedsExpanded = false;
       switch (_view) {
         case _CalView.month:
           _visibleMonth =
@@ -114,6 +120,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   void _goToToday() {
     setState(() {
       _selected = _today;
+      _futureMedsExpanded = false;
       _visibleMonth = DateTime(_selected.year, _selected.month, 1);
     });
   }
@@ -121,6 +128,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   void _selectDay(DateTime date) {
     setState(() {
       _selected = dateOnly(date);
+      _futureMedsExpanded = false;
       _visibleMonth = DateTime(date.year, date.month, 1);
     });
   }
@@ -775,23 +783,91 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   }
 
   /// FUTURE day — scheduled dose count only.
+  /// FUTURE day — tappable: expands to the full scheduled-dose breakdown
+  /// (grouped Morning/Afternoon/Evening) so "6 doses scheduled" is never a
+  /// dead-end summary.
   Widget _futureMedsCard(CareEvent e) {
+    final meds =
+        context.watch<MedicationProvider>().activeMedications;
+    final doses = <(String, MedicationFull)>[
+      for (final med in meds)
+        for (final slot in med.timeSlots) (slot, med),
+    ]..sort((a, b) => a.$1.compareTo(b.$1));
+
     return HousepitalCard(
-      child: Row(
+      onTap: () =>
+          setState(() => _futureMedsExpanded = !_futureMedsExpanded),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppIconTile(
-              icon: Icons.medication, color: HousepitalColors.orange),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(e.subtitle ?? e.title,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
+          Row(
+            children: [
+              const AppIconTile(
+                  icon: Icons.medication, color: HousepitalColors.orange),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(e.subtitle ?? e.title,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+              StatusBadge(
+                text: 'Scheduled',
+                color: context.hc.info,
+                icon: Icons.schedule,
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                _futureMedsExpanded
+                    ? Icons.expand_less
+                    : Icons.expand_more,
+                size: 20,
+                color: context.hc.greyLight,
+              ),
+            ],
           ),
-          StatusBadge(
-            text: 'Scheduled',
-            color: context.hc.info,
-            icon: Icons.schedule,
-          ),
+          if (_futureMedsExpanded)
+            ..._doseGroups(doses).expand((g) => [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(g.icon, size: 16, color: context.hc.greyLight),
+                        const SizedBox(width: 6),
+                        Text(g.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                              color: context.hc.greyLight,
+                            )),
+                      ],
+                    ),
+                  ),
+                  ...g.doses.map((d) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 72,
+                              child: Text(_formatSlot(d.$1),
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.hc.greyLight)),
+                            ),
+                            Expanded(
+                              child: Text(
+                                '${d.$2.name} ${d.$2.dosage}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ]),
         ],
       ),
     );

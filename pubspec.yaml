@@ -68,6 +68,8 @@ dependencies:
   flutter_tts: ^4.2.5
   # Care Guides — markdown article bodies
   flutter_markdown: ^0.7.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:

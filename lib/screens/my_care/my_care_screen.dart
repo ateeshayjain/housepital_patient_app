@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/my_care_provider.dart';
+import '../../services/handover_report_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
@@ -260,6 +261,13 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ),
           ),
 
+          // 7. Doctor Handover Report — flagship share-with-your-doctor card.
+          const SectionHeader(title: 'Share with your doctor'),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: _DoctorHandoverCard(),
+          ),
+
           // Billing intentionally NOT shown here — it lives in the Billing tab
           // (single source of truth for invoices, dues, and payment history).
         ],
@@ -370,6 +378,88 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Doctor Handover Report card — builds + shares the flagship PDF
+// ---------------------------------------------------------------------------
+class _DoctorHandoverCard extends StatefulWidget {
+  const _DoctorHandoverCard();
+
+  @override
+  State<_DoctorHandoverCard> createState() => _DoctorHandoverCardState();
+}
+
+class _DoctorHandoverCardState extends State<_DoctorHandoverCard> {
+  bool _building = false;
+
+  Future<void> _share() async {
+    if (_building) return;
+    setState(() => _building = true);
+    try {
+      await HandoverReportService().shareHandover();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Couldn't build the report. Please try again.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _building = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HousepitalCard(
+      child: Row(
+        children: [
+          AppIconTile(icon: Icons.ios_share, color: context.hc.info),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Doctor Handover Report',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  'Complete summary: history, medicines, vitals, visits & reports',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Semantics(
+            label: 'Share doctor handover report',
+            button: true,
+            child: FilledButton.tonal(
+              onPressed: _building ? null : _share,
+              style: FilledButton.styleFrom(
+                shape: const StadiumBorder(),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: _building
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Share'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -499,29 +589,29 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
     }
 
     // Rationale: rating belongs at the END of the journey (after the day's
-    // care summary) — user-review feedback was about the card's bulk, not its
-    // position, so it stays here and is compacted to a single row. The
-    // "Tap to rate" helper line is dropped: tapping a star still rates the
-    // day (SnackBar for 4–5 stars, "what went wrong" sheet for 1–3), so the
-    // post-tap feedback already explains the interaction.
+    // care summary). User-review feedback: the previous single-row layout
+    // truncated the question to "How was t…" on narrow phones, so the card
+    // is now a tight TWO-LINE layout — full-width question on line 1 (never
+    // ellipsised), the 5 stars left-aligned on line 2. Tapping a star still
+    // rates the day (SnackBar for 4–5 stars, "what went wrong" sheet for
+    // 1–3), so the post-tap feedback already explains the interaction.
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
       decoration: BoxDecoration(
         color: context.hc.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.hc.divider),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Expanded(
-            child: Text(
-              "How was today's care?",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
+          // Line 1: full question — no maxLines/ellipsis, wraps if it must.
+          const Text(
+            "How was today's care?",
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(height: 2),
+          // Line 2: the 5 stars, left-aligned with small gaps.
           if (_ratedToday != null)
             Semantics(
               label: 'Rated $_ratedToday of 5 today',
@@ -542,22 +632,28 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
               ),
             )
           else
-            // 24px stars, but each IconButton keeps a ≥44pt tap target.
-            ...List.generate(5, (i) {
-              final stars = i + 1;
-              return Semantics(
-                label: 'Rate $stars star${stars == 1 ? '' : 's'}',
-                button: true,
-                child: IconButton(
-                  onPressed: () => _onRate(stars),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                      minWidth: 44, minHeight: 44),
-                  icon: const Icon(Icons.star_border,
-                      color: HousepitalColors.orange, size: 24),
-                ),
-              );
-            }),
+            // 24px stars; each IconButton keeps a ≥44pt tap target. No extra
+            // gap widgets: the ~48px Material tap targets around the 24px
+            // glyphs already yield a comfortable visual gap, and 5×48 = 240
+            // is exactly what fits inside the card at the 320px minimum.
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(5, (i) {
+                final stars = i + 1;
+                return Semantics(
+                  label: 'Rate $stars star${stars == 1 ? '' : 's'}',
+                  button: true,
+                  child: IconButton(
+                    onPressed: () => _onRate(stars),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                        minWidth: 44, minHeight: 44),
+                    icon: const Icon(Icons.star_border,
+                        color: HousepitalColors.orange, size: 24),
+                  ),
+                );
+              }),
+            ),
         ],
       ),
     );

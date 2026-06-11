@@ -9,6 +9,7 @@ import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/medication_provider.dart';
+import '../../services/handover_report_service.dart';
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../utils/app_localizations.dart';
@@ -46,6 +47,12 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       appBar: GlassAppBar(
         title: Text(l.t('medications')),
         actions: [
+          // Doctor Handover Report — same share as the My Care entry card.
+          IconButton(
+            tooltip: 'Share Doctor Handover Report',
+            icon: const Icon(Icons.ios_share, size: 20),
+            onPressed: () => HandoverReportService().shareHandover(),
+          ),
           TextButton.icon(
             onPressed: () => Navigator.pushNamed(context, '/medication-schedule'),
             icon: const Icon(Icons.schedule, size: 18),
@@ -121,48 +128,87 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   }
 
   // ── Weekly adherence header (deterministic demo calc) ──────────────────
-  // Tapping the card opens the Care Calendar (full history + day detail).
+  // Visual: a 56px progress ring with the % inside (left) + the week's dose
+  // count and a labelled 7-day dot row (right). Same data as the old
+  // text-only version — tapping the card still opens the Care Calendar.
   Widget _adherenceHeader(BuildContext context) {
     final pct = weeklyAdherencePercent();
     final perDay = dosesPerDay();
     final weekTotal = perDay * 7;
     final weekTaken = (weekTotal * pct / 100).round();
     final today = dateOnly(DateTime.now());
+    // Weekday initials indexed by DateTime.weekday - 1 (Mon=1 … Sun=7).
+    const dayInitials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/care-calendar'),
       child: HousepitalCard(
         child: Row(
           children: [
-            const AppIconTile(
-                icon: Icons.task_alt, color: HousepitalColors.orange),
-            const SizedBox(width: 12),
+            // 56px adherence ring with the percentage centred inside.
+            SizedBox(
+              width: 56,
+              height: 56,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: CircularProgressIndicator(
+                      value: pct / 100,
+                      strokeWidth: 6,
+                      color: context.hc.success,
+                      backgroundColor: context.hc.greyLighter,
+                    ),
+                  ),
+                  Text('$pct%',
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("This week's adherence",
-                      style: TextStyle(fontSize: 12, color: context.hc.grey)),
+                  const Text("This week's adherence",
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text('$pct% · $weekTaken of $weekTotal doses',
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700)),
+                  Text('$weekTaken of $weekTotal doses',
+                      style: TextStyle(
+                          fontSize: 12, color: context.hc.greyLight)),
                   const SizedBox(height: 8),
-                  // 7 day-dots, oldest → today. Deterministic demo state:
-                  // success = full adherence day, warning = partial.
+                  // 7-day row, oldest → today: weekday initial above a dot.
+                  // Deterministic demo state: success = full adherence day,
+                  // warning = partial (same seeded calc as Care Calendar).
                   Row(
                     children: List.generate(7, (i) {
                       final day = today.subtract(Duration(days: 6 - i));
                       final full = adherencePercentFor(day) >= 90;
-                      return Container(
-                        width: 8,
-                        height: 8,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: full
-                              ? context.hc.success
-                              : context.hc.warning,
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(dayInitials[day.weekday - 1],
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: context.hc.greyLight)),
+                            const SizedBox(height: 3),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: full
+                                    ? context.hc.success
+                                    : context.hc.warning,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }),

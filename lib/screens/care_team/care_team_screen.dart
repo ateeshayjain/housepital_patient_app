@@ -136,8 +136,86 @@ class CareTeamScreen extends StatelessWidget {
               )),
           const SizedBox(height: 8),
           const _AmbulanceCard(),
+
+          // ── Past staff — read-only history (no call/chat: they are no
+          // longer deployed with this patient). SectionHeader-style label;
+          // the ListView already pads 16 horizontally, so only pad vertically.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+            child: Text(
+              'Past staff',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: context.hc.black,
+              ),
+            ),
+          ),
+          HousepitalCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                for (var i = 0; i < DemoData.pastStaff.length; i++) ...[
+                  if (i > 0) const Divider(height: 16),
+                  _PastStaffRow(staff: DemoData.pastStaff[i]),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Read-only row for a previously deployed staff member: history icon tile,
+/// name, role · period, and the engagement note. Deliberately NO call/chat.
+class _PastStaffRow extends StatelessWidget {
+  final Map<String, String> staff;
+
+  const _PastStaffRow({required this.staff});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppIconTile(icon: Icons.history, color: context.hc.greyLight),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                staff['name'] ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: context.hc.black,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${staff['role']} · ${staff['period']}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+              ),
+              if ((staff['note'] ?? '').isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  staff['note']!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: context.hc.grey),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

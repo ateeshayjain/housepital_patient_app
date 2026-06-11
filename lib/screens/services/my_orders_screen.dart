@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
+import '../../services/invoice_pdf_service.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/common_widgets.dart';
@@ -376,26 +377,33 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
               ],
             ),
 
-            // Cancel button for active orders — only available to roles
-            // that can pay (i.e., PRIMARY_CONTACT). Other roles see no action.
-            if (_isActiveStatus(status) &&
-                canUserPerform(
-                    context.watch<AppProvider>().currentUserRole,
-                    UserAction.pay)) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
+            // Actions: downloadable invoice (always), plus Cancel for active
+            // orders when the role can pay (i.e., PRIMARY_CONTACT).
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                // Quote-pending orders get a PRO FORMA document (no amounts);
+                // priced orders get the full invoice with GST + grand total.
+                _actionButton(
+                  quotePending ? 'Pro forma' : 'Invoice',
+                  Icons.download,
+                  context.hc.orangeText,
+                  () => InvoicePdfService().shareInvoice(order),
+                ),
+                if (_isActiveStatus(status) &&
+                    canUserPerform(
+                        context.watch<AppProvider>().currentUserRole,
+                        UserAction.pay))
                   _actionButton(
                     'Cancel',
                     Icons.cancel_outlined,
                     context.hc.error,
                     () => _showCancelDialog(orderId),
                   ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ],
         ),
       ),

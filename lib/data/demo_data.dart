@@ -406,6 +406,30 @@ class DemoData {
         phone: AppConstants.supportPhone,
       );
 
+  // ── Past staff (Care Team screen — read-only history) ────────────────
+  /// Staff who previously served this patient. Display-only: no call/chat
+  /// affordances — they are no longer deployed here.
+  static List<Map<String, String>> get pastStaff => const [
+        {
+          'name': 'Roopchand',
+          'role': 'Health Attendant',
+          'period': 'Jan – Apr 2026',
+          'note': 'Post-stroke care',
+        },
+        {
+          'name': 'Meena Kumari',
+          'role': 'Caretaker (12hr)',
+          'period': 'Nov – Dec 2025',
+          'note': 'Recovery support',
+        },
+        {
+          'name': 'Arjun Yadav',
+          'role': 'Physiotherapist',
+          'period': 'Oct 2025',
+          'note': '12 sessions',
+        },
+      ];
+
   // ── Doctor Recommendations (My Care → Doctor's Advice card) ──────────
   /// What Dr. Ananya Sharma recommended at her visit 2 days ago.
   static List<DoctorRecommendation> get doctorRecommendations => const [

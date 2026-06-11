@@ -118,6 +118,20 @@ void main() {
     expect(find.text('CALL'), findsOneWidget);
   });
 
+  testWidgets('renders read-only Past staff section after the Ambulance card',
+      (tester) async {
+    await pump(tester);
+    expect(find.text('Past staff'), findsOneWidget);
+    // All three past staff entries from DemoData.pastStaff.
+    expect(find.text('Roopchand'), findsOneWidget);
+    expect(find.text('Health Attendant · Jan – Apr 2026'), findsOneWidget);
+    expect(find.text('Post-stroke care'), findsOneWidget);
+    expect(find.text('Meena Kumari'), findsOneWidget);
+    expect(find.text('Arjun Yadav'), findsOneWidget);
+    // History icon tile per past staff row.
+    expect(find.byIcon(Icons.history), findsNWidgets(3));
+  });
+
   testWidgets('every member row has call and chat buttons; ambulance has none',
       (tester) async {
     await pump(tester);
