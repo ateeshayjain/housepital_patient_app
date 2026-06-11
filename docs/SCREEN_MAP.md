@@ -13,6 +13,8 @@ Bottom Tab Bar (MainShell -- 5 tabs)
 
 Tab switching is managed via `IndexedStack` in `MainShell` for state preservation. A global key (`MainShell.shellKey`) allows programmatic tab switching from any screen via `MainShell.switchToTab(index)`.
 
+**GlassAppBar nav contract:** every screen uses `GlassAppBar` (`lib/widgets/glass.dart`) — back on the left; trailing order `[custom…, search → /search, home → pop-to-root + switchToTab(0)]`; `showSearch` defaults on; `showHome` off on root tabs.
+
 ---
 
 ## Screen Inventory
@@ -38,7 +40,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Medications          | /medications           | MedicationsScreen          | MedicationProvider             | Add, edit, delete, stock update  | PRIMARY only (write) |
 | Medication Schedule  | /medication-schedule   | MedicationScheduleScreen   | MedicationProvider.logs        | View today's schedule            | All roles   |
 | Add/Edit Medication  | /add-medication        | AddEditMedicationScreen    | MedicationProvider             | Create/update medication         | PRIMARY only |
-| Staff OTP Verify     | /staff-otp-verify      | StaffOtpVerificationScreen | API                            | Verify staff identity via OTP    | All roles   |
+| Staff OTP Verify     | /staff-otp             | StaffOtpVerificationScreen | API                            | Verify staff identity via OTP    | All roles   |
 
 **My Care Hub widgets:** HealthManagerBanner, ActiveServiceCard (per service), QuickActionsRow, VitalsTrendGrid, StaffAttendanceSection, CareReportSection, BillingSummarySection, EquipmentDeployedSection.
 
@@ -57,7 +59,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Booking History     | /booking-history     | BookingHistoryScreen     | API: GET /patients/:id/bookings | Filter, cancel, rate, re-book  | All roles    |
 | My Orders           | /my-orders           | MyOrdersScreen           | API: unified orders endpoint    | View all orders (bookings + equipment + rentals) | All roles |
 
-**Manpower price rule:** Manpower services now show prices (synced from master Excel). MRP + strikethrough pricing on equipment. Equipment tabs reorganized as Sale and Rental categories (replacing Equipment/Consumable).
+**Manpower price rule (inviolable):** manpower prices are NEVER shown — no ₹/GST anywhere in catalog, wizard, cart or orders. Booking is quote-pending ("Price confirmed on call before payment"). Needs-based tier selection via the checklist on `staff_role_card.dart`. Equipment keeps MRP + strikethrough (Blinkit-style left category rail + dense 2-col grid); price-on-request items use the Reserve flow.
 
 **Lab Tests:** 153 individual lab tests with full detail (name, price, preparation notes) in addition to the 7 lab test packages.
 
@@ -74,7 +76,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Transaction Log    | /transactions     | TransactionLogScreen  | API: /patients/:id/transactions    | View payment history       | All roles    |
 | Payment            | /payment          | PaymentScreen         | amount, description, invoice_id args | Razorpay checkout        | PRIMARY only |
 | Payment Methods    | /payment-methods  | PaymentMethodsScreen  | (static/settings)                  | View saved methods         | All roles    |
-| EMI Plans          | /emi              | EmiScreen             | BillingProvider                    | View/manage EMI installments | PRIMARY only |
+| EMI Plans          | /emi-options      | EmiScreen             | BillingProvider                    | View/manage EMI installments | PRIMARY only |
 
 ---
 
@@ -87,13 +89,33 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 
 ---
 
+### CARE CALENDAR & CARE TEAM
+
+| Screen               | Route                | Widget                      | Data Source                    | Actions                          | Permissions  |
+|----------------------|----------------------|-----------------------------|--------------------------------|----------------------------------|--------------|
+| Care Calendar        | /care-calendar       | CareCalendarScreen          | CareEvent + MedicationProvider | Day/Week/Month views; dose groups mark-taken; staff attendance mark-present | All roles |
+| Care Team Hub        | /care-team           | CareTeamScreen              | Demo/team data                 | Group chat (first), member call/chat, call ambulance, view past staff | All roles |
+
+---
+
+### ARTICLES & ASSISTANT
+
+| Screen               | Route                | Widget                      | Data Source                    | Actions                          | Permissions  |
+|----------------------|----------------------|-----------------------------|--------------------------------|----------------------------------|--------------|
+| Care Guides List     | /articles            | ArticleListScreen           | BlogProvider (demo fallback)   | Browse; featured hero; category accent filters | All roles |
+| Article Detail       | /article             | ArticleDetailScreen         | BlogProvider                   | Read markdown body, share        | All roles    |
+| AI Assistant         | /assistant           | AssistantScreen             | AssistantProvider              | Voice/text Hinglish chat; confirm-first actions | All roles (role-gated actions) |
+
+---
+
 ### ORDERS & RENTAL
 
 | Screen               | Route                | Widget                      | Data Source                    | Actions                          | Permissions  |
 |----------------------|----------------------|-----------------------------|--------------------------------|----------------------------------|--------------|
+| My Orders            | /my-orders           | MyOrdersScreen              | OrdersProvider                 | View bookings (incl. quote-pending) + equipment + rentals | All roles |
 | Order Tracking       | /order-tracking      | OrderTrackingScreen          | API: order status              | Track delivery/assignment status | All roles    |
 | Rental Agreement     | /rental-agreement    | RentalAgreementScreen        | API: rental terms              | Review terms, digital sign       | PRIMARY only |
-| Equipment Return     | /return              | ReturnScreen                 | API: return request            | Schedule return, reason          | PRIMARY only |
+| Equipment Return     | /return-equipment    | ReturnScreen                 | API: return request            | Schedule return, reason          | PRIMARY only |
 
 ---
 
@@ -108,7 +130,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Notification Prefs | /notification-preferences | NotificationPreferencesScreen | SharedPreferences       | Toggle notification types  | All roles (own prefs) |
 | Help / FAQ         | /help-faq          | HelpFaqScreen            | Static (20 FAQs)                | Search, filter by category, contact support | All roles |
 | About              | /about             | AboutScreen              | Static                          | View version, company info, links | All roles |
-| Referral           | /referral          | ReferralScreen           | API: referral code + stats      | Share referral code, view rewards | All roles |
+| Referral           | /referrals         | ReferralScreen           | API: referral code + stats      | Share referral code, view rewards | All roles |
 
 ---
 
@@ -187,14 +209,21 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | `/about`             | none                      | AboutScreen                |
 | `/video-consultation`| `Map<String, dynamic>`    | VideoConsultationScreen     |
 | `/chat`              | `String` (patientId)      | ChatScreen                 |
-| `/staff-otp-verify`  | `Map<String, dynamic>`    | StaffOtpVerificationScreen |
+| `/staff-otp`         | `Map<String, dynamic>`    | StaffOtpVerificationScreen |
 | `/order-tracking`    | `String` (orderId)        | OrderTrackingScreen        |
 | `/rental-agreement`  | `Map<String, dynamic>`    | RentalAgreementScreen      |
-| `/return`            | `Map<String, dynamic>`    | ReturnScreen               |
-| `/emi`               | `Map<String, dynamic>`    | EmiScreen                  |
+| `/return-equipment`  | `Map<String, dynamic>`    | ReturnScreen               |
+| `/emi-options`       | `Map<String, dynamic>`    | EmiScreen                  |
 | `/staff-replacement` | `String` (deploymentId)   | StaffReplacementScreen     |
-| `/referral`          | none                      | ReferralScreen             |
+| `/referrals`         | none                      | ReferralScreen             |
 | `/my-orders`         | none                      | MyOrdersScreen             |
+| `/home`              | none                      | MainShell (shellKey)       |
+| `/assistant`         | none                      | AssistantScreen            |
+| `/care-calendar`     | none                      | CareCalendarScreen         |
+| `/care-team`         | none                      | CareTeamScreen             |
+| `/articles`          | none                      | ArticleListScreen          |
+| `/article`           | `String` (articleId)      | ArticleDetailScreen        |
+| `/add-patient`       | none                      | AddPatientScreen           |
 | (default)            | none                      | MainShell                  |
 
 ---

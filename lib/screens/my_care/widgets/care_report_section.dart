@@ -44,7 +44,7 @@ class CareReportSection extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HousepitalColors.orange),
+                      color: context.hc.orangeText),
                 ),
               ),
             ],

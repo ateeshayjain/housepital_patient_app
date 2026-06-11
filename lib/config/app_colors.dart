@@ -46,6 +46,9 @@ class HcPalette {
   final Color orangeText;
   final Color orangeDark;
   final Color orangeLight;
+  // Text/icons ON an orange fill. White on orange fails AA (~2.3:1), so both
+  // modes use the same dark ink (6.3:1 on orange).
+  final Color onOrange;
 
   // Misc semantic
   final Color sos;
@@ -75,6 +78,7 @@ class HcPalette {
         orangeText = HousepitalColors.orangeText,
         orangeDark = HousepitalColors.orangeDark,
         orangeLight = HousepitalColors.orangeLight,
+        onOrange = HousepitalColors.onOrange,
         sos = HousepitalColors.sos,
         checkedIn = HousepitalColors.checkedIn,
         vitalNormal = HousepitalColors.vitalNormal,
@@ -102,6 +106,7 @@ class HcPalette {
         orangeText = HousepitalColorsDark.orange,
         orangeDark = HousepitalColorsDark.orange,
         orangeLight = HousepitalColorsDark.orangeMuted,
+        onOrange = HousepitalColorsDark.onOrange,
         sos = HousepitalColorsDark.sos,
         checkedIn = HousepitalColorsDark.success,
         vitalNormal = HousepitalColorsDark.vitalNormal,

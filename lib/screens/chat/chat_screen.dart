@@ -38,7 +38,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final _imagePicker = ImagePicker();
   late final CollectionReference _messagesRef;
   StreamSubscription? _subscription;
-  final bool _isOnline = true; // FUTURE: Replace with real presence check from Firebase Realtime Database
 
   @override
   void initState() {
@@ -189,29 +188,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: const TextStyle(fontSize: 16),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isOnline
-                              ? context.hc.success
-                              : context.hc.greyLight,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isOnline ? 'Online' : 'Offline',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _isOnline
-                              ? context.hc.success
-                              : context.hc.greyLight,
-                        ),
-                      ),
-                    ],
+                  // Honest response-time promise — we do NOT fabricate live
+                  // presence (no green dot, no "Online") for stressed families.
+                  Text(
+                    'Replies in a few minutes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.hc.greyLight,
+                    ),
                   ),
                 ],
               ),
@@ -305,7 +289,7 @@ class _ChatScreenState extends State<ChatScreen> {
         8 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.hc.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -424,7 +408,7 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 text,
                 style: TextStyle(
-                  color: isSent ? Colors.white : Colors.black87,
+                  color: isSent ? Colors.white : context.hc.black,
                   fontSize: 15,
                 ),
               ),

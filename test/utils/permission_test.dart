@@ -39,6 +39,10 @@ void main() {
     test('can raise concern', () {
       expect(canUserPerform('PRIMARY_CONTACT', 'raise_concern'), isTrue);
     });
+
+    test('can share doctor handover', () {
+      expect(canUserPerform('PRIMARY_CONTACT', 'share_handover'), isTrue);
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -59,6 +63,10 @@ void main() {
 
     test('can request booking (pending primary contact approval)', () {
       expect(canUserPerform('FAMILY_MEMBER', 'request_booking'), isTrue);
+    });
+
+    test('can share doctor handover', () {
+      expect(canUserPerform('FAMILY_MEMBER', 'share_handover'), isTrue);
     });
 
     test('CANNOT book directly', () {
@@ -84,6 +92,10 @@ void main() {
   group('PATIENT_SELF permissions', () {
     test('can view', () {
       expect(canUserPerform('PATIENT_SELF', 'view'), isTrue);
+    });
+
+    test('can share doctor handover (their own medical history)', () {
+      expect(canUserPerform('PATIENT_SELF', 'share_handover'), isTrue);
     });
 
     test('CANNOT book', () {
@@ -150,6 +162,10 @@ void main() {
     test('CANNOT rate', () {
       expect(canUserPerform('CARETAKER', 'rate'), isFalse);
     });
+
+    test('CANNOT share doctor handover (audit R2 — full medical history)', () {
+      expect(canUserPerform('CARETAKER', 'share_handover'), isFalse);
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -172,28 +188,32 @@ void main() {
   // getAllowedActions
   // ═══════════════════════════════════════════════════════════════════════════
   group('getAllowedActions', () {
-    test('PRIMARY_CONTACT has 8 actions', () {
+    test('PRIMARY_CONTACT has 9 actions', () {
       final actions = getAllowedActions('PRIMARY_CONTACT');
-      expect(actions.length, 8);
+      expect(actions.length, 9);
       expect(actions, containsAll([
         'book', 'request_booking', 'pay', 'edit_patient', 'manage_family',
-        'view', 'rate', 'raise_concern',
+        'view', 'rate', 'raise_concern', 'share_handover',
       ]));
     });
 
-    test('FAMILY_MEMBER has 4 actions', () {
+    test('FAMILY_MEMBER has 5 actions', () {
       final actions = getAllowedActions('FAMILY_MEMBER');
-      expect(actions.length, 4);
-      expect(actions,
-          containsAll(['view', 'request_booking', 'rate', 'raise_concern']));
+      expect(actions.length, 5);
+      expect(
+          actions,
+          containsAll([
+            'view', 'request_booking', 'rate', 'raise_concern',
+            'share_handover',
+          ]));
       expect(actions, isNot(contains('book')));
       expect(actions, isNot(contains('pay')));
     });
 
-    test('PATIENT_SELF has 1 action', () {
+    test('PATIENT_SELF has 2 actions (view + share_handover)', () {
       final actions = getAllowedActions('PATIENT_SELF');
-      expect(actions.length, 1);
-      expect(actions, contains('view'));
+      expect(actions.length, 2);
+      expect(actions, containsAll(['view', 'share_handover']));
     });
 
     test('CARETAKER has 2 actions (view + raise_concern)', () {
@@ -204,6 +224,7 @@ void main() {
       expect(actions, isNot(contains('request_booking')));
       expect(actions, isNot(contains('pay')));
       expect(actions, isNot(contains('rate')));
+      expect(actions, isNot(contains('share_handover')));
     });
 
     test('unknown role returns empty set', () {
@@ -265,6 +286,7 @@ void main() {
         'view',
         'rate',
         'raise_concern',
+        'share_handover',
       ];
       for (final action in allActions) {
         expect(canUserPerform('INTRUDER', action), isFalse,

@@ -183,8 +183,8 @@ class _RailEntry extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10,
-                      height: 1.15,
+                      fontSize: 11,
+                      height: 1.1,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected

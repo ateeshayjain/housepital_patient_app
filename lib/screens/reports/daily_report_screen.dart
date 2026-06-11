@@ -685,24 +685,15 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  final emojis = ['\u{1F61F}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F929}'];
-                  return GestureDetector(
-                    onTap: () =>
-                        setDialogState(() => selectedRating = index + 1),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        emojis[index],
-                        style: TextStyle(
-                          fontSize: selectedRating == index + 1 ? 36 : 28,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+              // One rating idiom app-wide: stars, not emoji. The emoji faces
+              // clashed with the calm-clinical voice and duplicated My Care's
+              // star rater. Shared StarRatingInput = 44pt targets + per-star
+              // Semantics.
+              StarRatingInput(
+                value: selectedRating,
+                onChanged: (stars) =>
+                    setDialogState(() => selectedRating = stars),
+                size: 28,
               ),
               const SizedBox(height: 16),
               TextField(

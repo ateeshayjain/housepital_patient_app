@@ -178,8 +178,6 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
               onPressed: _refresh,
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
-              style: TextButton.styleFrom(
-                  foregroundColor: HousepitalColors.orange),
             ),
           ],
         ),

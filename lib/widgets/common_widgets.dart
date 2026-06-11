@@ -509,3 +509,57 @@ class SOSButton extends StatelessWidget {
     );
   }
 }
+
+/// Canonical 5-star rating input. Extracted from My Care's daily-care rating
+/// card — the only accessible star rater in the app — so every screen that
+/// asks for a star rating shares one idiom and one accessibility contract:
+///   - each star is an IconButton with a >=44pt tap target (Apple HIG /
+///     WCAG 2.5.5), even though the glyph itself may be smaller;
+///   - each star carries its own Semantics(button: true) node labelled
+///     "`semanticPrefix` N star(s)" so screen-reader users hear exactly what
+///     a tap will set.
+///
+/// Stars at or below [value] render filled; the rest render outlined. Pass
+/// `value: 0` for a not-yet-rated state (all outlined).
+class StarRatingInput extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  /// Glyph size — the tap target stays >=44pt regardless.
+  final double size;
+
+  /// Leads each star's semantic label, e.g. "Rate" -> "Rate 3 stars".
+  final String semanticPrefix;
+
+  const StarRatingInput({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.size = 24,
+    this.semanticPrefix = 'Rate',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        final stars = i + 1;
+        return Semantics(
+          label: '$semanticPrefix $stars star${stars == 1 ? '' : 's'}',
+          button: true,
+          child: IconButton(
+            onPressed: () => onChanged(stars),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            icon: Icon(
+              stars <= value ? Icons.star : Icons.star_border,
+              color: HousepitalColors.orange,
+              size: size,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}

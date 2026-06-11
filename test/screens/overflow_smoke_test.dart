@@ -22,7 +22,7 @@
 //
 // NOTE on the Ahem test font: widget tests render with "Ahem", whose every
 // glyph is a full em-square — much wider/taller than the real Archivo font
-// (loaded via google_fonts at runtime, unavailable in tests). So this suite
+// (bundled TTF asset, not loaded by the test binding). So this suite
 // over-reports vs. real devices but doubles as a worst-case large-text guard.
 // Every fix applied here is correct on real devices AND helps large Dynamic
 // Type — never a distortion just to satisfy Ahem.

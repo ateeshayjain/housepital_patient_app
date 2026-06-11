@@ -458,7 +458,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 : TextButton(
                     onPressed: _saveProfile,
                     child: Text(l.t('save'),
-                        style: const TextStyle(color: HousepitalColors.orange)),
+                        style: TextStyle(color: context.hc.orangeText)),
                   ),
         ],
       ),
@@ -664,9 +664,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   onPressed: _addEmergencyContact,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.orange,
-                  ),
                 ),
               ],
             ),
@@ -811,9 +808,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   onPressed: _addMedication,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Add'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: HousepitalColors.orange,
-                  ),
                 ),
               ],
             ),

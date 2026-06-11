@@ -44,6 +44,11 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   // day changes so each day starts collapsed).
   bool _futureMedsExpanded = false;
 
+  // Legend teaching sentence ("A dot marks a day with events — tap to see")
+  // shows only until the first day-tap — once the user has tapped a day they
+  // have learnt the interaction (session state, no persistence needed).
+  bool _hasTappedDay = false;
+
   static const _weekdayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   DateTime get _today => dateOnly(DateTime.now());
@@ -103,15 +108,24 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       _futureMedsExpanded = false;
       switch (_view) {
         case _CalView.month:
-          _visibleMonth =
-              DateTime(_visibleMonth.year, _visibleMonth.month + delta, 1);
+          _visibleMonth = DateTime(
+            _visibleMonth.year,
+            _visibleMonth.month + delta,
+            1,
+          );
         case _CalView.week:
           _selected = DateTime(
-              _selected.year, _selected.month, _selected.day + 7 * delta);
+            _selected.year,
+            _selected.month,
+            _selected.day + 7 * delta,
+          );
           _visibleMonth = DateTime(_selected.year, _selected.month, 1);
         case _CalView.day:
-          _selected =
-              DateTime(_selected.year, _selected.month, _selected.day + delta);
+          _selected = DateTime(
+            _selected.year,
+            _selected.month,
+            _selected.day + delta,
+          );
           _visibleMonth = DateTime(_selected.year, _selected.month, 1);
       }
     });
@@ -129,6 +143,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     setState(() {
       _selected = dateOnly(date);
       _futureMedsExpanded = false;
+      _hasTappedDay = true;
       _visibleMonth = DateTime(date.year, date.month, 1);
     });
   }
@@ -138,60 +153,76 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Glass idiom: content glides under the translucent app bar (matches
+      // Care Team / My Care / Billing).
+      extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: Text('Care Calendar')),
-      body: ListView(
-        padding: EdgeInsets.only(
-            top: 8, bottom: MediaQuery.of(context).padding.bottom + 24),
-        children: [
-          // Selected day + date FIRST — the question the screen answers.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Text(
-              DateFormat('EEEE, d MMMM').format(_selected),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: context.hc.black,
+      // Builder: resolve MediaQuery from a context BELOW the Scaffold so the
+      // scroll padding sees the body's actual insets.
+      body: Builder(
+        builder: (context) {
+          // At narrow widths (≤320 class) the 7-column grid needs slimmer
+          // gutters so day cells stay near the 44pt tap-target minimum.
+          final narrow = MediaQuery.of(context).size.width < 360;
+          final gridHPad = narrow ? 8.0 : 16.0;
+          return ListView(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+            ),
+            children: [
+              // Selected day + date FIRST — the question the screen answers.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(
+                  DateFormat('EEEE, d MMMM').format(_selected),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: context.hc.black,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: _segmentedControl(),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _headerRow(),
-          ),
-          if (_view == _CalView.month) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _weekdayHeaderRow(),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _monthGrid(),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _legend(),
-            ),
-          ] else if (_view == _CalView.week) ...[
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _weekStrip(),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _legend(),
-            ),
-          ],
-          const SizedBox(height: 12),
-          ..._detailSections(),
-        ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: _segmentedControl(),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _headerRow(),
+              ),
+              if (_view == _CalView.month) ...[
+                // Weekday header shares the grid's gutter so columns align.
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
+                  child: _weekdayHeaderRow(),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
+                  child: _monthGrid(),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _legend(),
+                ),
+              ] else if (_view == _CalView.week) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: gridHPad),
+                  child: _weekStrip(),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _legend(),
+                ),
+              ],
+              const SizedBox(height: 12),
+              ..._detailSections(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -242,8 +273,9 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                       label,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: selected ? context.hc.black : context.hc.grey,
                       ),
                     ),
@@ -260,8 +292,9 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   // ── Month header row ────────────────────────────────────────────────────
 
   Widget _headerRow() {
-    final title = DateFormat('MMMM yyyy')
-        .format(_view == _CalView.month ? _visibleMonth : _selected);
+    final title = DateFormat(
+      'MMMM yyyy',
+    ).format(_view == _CalView.month ? _visibleMonth : _selected);
     return Row(
       children: [
         Expanded(
@@ -285,11 +318,12 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
         TextButton(
           onPressed: _goToToday,
           style: TextButton.styleFrom(
-            foregroundColor: context.hc.orangeText,
             padding: const EdgeInsets.symmetric(horizontal: 8),
           ),
-          child: const Text('Today',
-              style: TextStyle(fontWeight: FontWeight.w600)),
+          child: const Text(
+            'Today',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right),
@@ -306,18 +340,20 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   Widget _weekdayHeaderRow() {
     return Row(
       children: _weekdayLetters
-          .map((d) => Expanded(
-                child: Center(
-                  child: Text(
-                    d,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.greyLight,
-                    ),
+          .map(
+            (d) => Expanded(
+              child: Center(
+                child: Text(
+                  d,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: context.hc.greyLight,
                   ),
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -325,8 +361,11 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   Widget _monthGrid() {
     final first = DateTime(_visibleMonth.year, _visibleMonth.month, 1);
     final lead = first.weekday - 1; // Monday-first grid.
-    final daysInMonth =
-        DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
+    final daysInMonth = DateTime(
+      _visibleMonth.year,
+      _visibleMonth.month + 1,
+      0,
+    ).day;
     final totalCells = ((lead + daysInMonth) / 7).ceil() * 7;
 
     return GridView.builder(
@@ -339,20 +378,40 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       ),
       itemCount: totalCells,
       itemBuilder: (context, i) {
-        final date =
-            DateTime(_visibleMonth.year, _visibleMonth.month, i - lead + 1);
+        final date = DateTime(
+          _visibleMonth.year,
+          _visibleMonth.month,
+          i - lead + 1,
+        );
         final dimmed = date.month != _visibleMonth.month;
         return _dayCell(date, dimmed: dimmed);
       },
     );
   }
 
+  /// Spoken category name per event type for the day-cell Semantics label.
+  String _typeName(CareEventType t) {
+    switch (t) {
+      case CareEventType.meds:
+        return 'medicines';
+      case CareEventType.staff:
+        return 'staff';
+      case CareEventType.visit:
+        return 'doctor visit';
+      case CareEventType.test:
+        return 'test';
+      case CareEventType.renewal:
+        return 'renewal';
+    }
+  }
+
   Widget _dayCell(DateTime date, {required bool dimmed}) {
     final isToday = _sameDay(date, _today);
     final isSelected = _sameDay(date, _selected);
-    // Up to 3 dots, one per distinct category, in CareEventType order.
-    final types =
-        eventsFor(date).map((e) => e.type).toSet().take(3).toList();
+    // All distinct categories for the day (Semantics names every one);
+    // the visual shows up to 3 dots, in CareEventType order.
+    final allTypes = eventsFor(date).map((e) => e.type).toSet().toList();
+    final types = allTypes.take(3).toList();
 
     final Color numberColor;
     if (dimmed) {
@@ -361,6 +420,26 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       numberColor = context.hc.orangeText;
     } else {
       numberColor = context.hc.black;
+    }
+
+    // SELECTED day: orange rounded-square outline (today is selected by
+    // default, so it carries the outline on open). TODAY, when NOT
+    // selected, keeps a subtle persistent marker — a filled orangeLight
+    // circle behind the number — so "today" never gets lost while browsing.
+    final BoxDecoration? numberDecoration;
+    if (isSelected) {
+      numberDecoration = BoxDecoration(
+        color: context.hc.orangeLight,
+        border: Border.all(color: HousepitalColors.orange, width: 1.5),
+        borderRadius: BorderRadius.circular(9),
+      );
+    } else if (isToday && !dimmed) {
+      numberDecoration = BoxDecoration(
+        color: context.hc.orangeLight,
+        shape: BoxShape.circle,
+      );
+    } else {
+      numberDecoration = null;
     }
 
     return InkWell(
@@ -372,23 +451,19 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       child: Semantics(
         button: true,
         selected: isSelected,
-        label: DateFormat('d MMMM').format(date) +
-            (types.isEmpty ? '' : ', has events'),
+        label:
+            DateFormat('d MMMM').format(date) +
+            (isToday ? ', today' : '') +
+            (allTypes.isEmpty
+                ? ''
+                : ', has ${allTypes.map(_typeName).join(', ')}'),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               width: 30,
               height: 30,
-              decoration: BoxDecoration(
-                color: isSelected ? context.hc.orangeLight : null,
-                // SELECTED day: orange rounded-square outline (today is
-                // selected by default, so it carries the outline on open).
-                border: isSelected
-                    ? Border.all(color: HousepitalColors.orange, width: 1.5)
-                    : null,
-                borderRadius: BorderRadius.circular(9),
-              ),
+              decoration: numberDecoration,
               child: Center(
                 child: Text(
                   '${date.day}',
@@ -409,17 +484,19 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: types
-                    .map((t) => Container(
-                          width: 6,
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: dimmed
-                                ? _typeColor(t).withValues(alpha: 0.35)
-                                : _typeColor(t),
-                          ),
-                        ))
+                    .map(
+                      (t) => Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: dimmed
+                              ? _typeColor(t).withValues(alpha: 0.35)
+                              : _typeColor(t),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -432,8 +509,11 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   // ── Week strip ──────────────────────────────────────────────────────────
 
   Widget _weekStrip() {
-    final monday = DateTime(_selected.year, _selected.month,
-        _selected.day - (_selected.weekday - 1));
+    final monday = DateTime(
+      _selected.year,
+      _selected.month,
+      _selected.day - (_selected.weekday - 1),
+    );
     return Row(
       children: List.generate(7, (i) {
         final date = DateTime(monday.year, monday.month, monday.day + i);
@@ -470,19 +550,22 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '● A dot marks a day with events — tap to see',
-          style: TextStyle(fontSize: 12, color: context.hc.greyLight),
-        ),
-        const SizedBox(height: 8),
+        // Teaching copy: only until the user taps a day for the first time —
+        // after that the interaction is learnt and the line is noise.
+        if (!_hasTappedDay) ...[
+          Text(
+            '● A dot marks a day with events — tap to see',
+            style: TextStyle(fontSize: 12, color: context.hc.greyLight),
+          ),
+          const SizedBox(height: 8),
+        ],
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: CareEventType.values.map((t) {
             final color = _typeColor(t);
             return Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
@@ -493,8 +576,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration:
-                        BoxDecoration(shape: BoxShape.circle, color: color),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -544,10 +629,12 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     }
 
     final upcoming = events
-        .where((e) =>
-            e.type == CareEventType.visit ||
-            e.type == CareEventType.test ||
-            e.type == CareEventType.renewal)
+        .where(
+          (e) =>
+              e.type == CareEventType.visit ||
+              e.type == CareEventType.test ||
+              e.type == CareEventType.renewal,
+        )
         .toList();
     if (upcoming.isNotEmpty && !isPast) {
       widgets.add(const SectionHeader(title: 'Visits, tests & renewals'));
@@ -573,64 +660,75 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
       }
       if (week.isNotEmpty) {
         widgets.add(const SectionHeader(title: 'Upcoming this week'));
-        widgets.add(_padCard(HousepitalCard(
-          child: Column(
-            children: [
-              for (final (day, e) in week)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 56,
-                        child: Text(
-                          DateFormat('EEE d').format(day),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.orangeText,
+        widgets.add(
+          _padCard(
+            HousepitalCard(
+              child: Column(
+                children: [
+                  for (final (day, e) in week)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 56,
+                            child: Text(
+                              DateFormat('EEE d').format(day),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: context.hc.orangeText,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Icon(_typeIcon(e.type),
-                          size: 18, color: _typeColor(e.type)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(e.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500)),
-                            if (e.subtitle != null)
-                              Text(e.subtitle!,
+                          Icon(
+                            _typeIcon(e.type),
+                            size: 18,
+                            color: _typeColor(e.type),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  e.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (e.subtitle != null)
+                                  Text(
+                                    e.subtitle!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: context.hc.greyLight)),
-                          ],
-                        ),
+                                      color: context.hc.greyLight,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-            ],
+                    ),
+                ],
+              ),
+            ),
           ),
-        )));
+        );
       }
     }
 
     return widgets;
   }
 
-  Widget _padCard(Widget child) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: child,
-      );
+  Widget _padCard(Widget child) =>
+      Padding(padding: const EdgeInsets.fromLTRB(16, 4, 16, 8), child: child);
 
   Widget _emptyCard() {
     return _padCard(
@@ -660,9 +758,10 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
     final presentCount = isFuture
         ? 0
         : members
-            .where((m) =>
-                !isToday || _staffMarked.contains('${m.id}|$dayKey'))
-            .length;
+              .where(
+                (m) => !isToday || _staffMarked.contains('${m.id}|$dayKey'),
+              )
+              .length;
 
     return HousepitalCard(
       child: Column(
@@ -678,7 +777,9 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                       ? 'Scheduled staff'
                       : '$presentCount/${members.length} confirmed present',
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -694,42 +795,49 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(m.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w500)),
+                        Text(
+                          m.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         Text(
                           '${m.role} · ${m.shiftType} shift',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                              fontSize: 12, color: context.hc.greyLight),
+                            fontSize: 12,
+                            color: context.hc.greyLight,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
                   if (isFuture)
-                    StatusBadge(
-                        text: 'Scheduled', color: context.hc.greyLight)
+                    StatusBadge(text: 'Scheduled', color: context.hc.greyLight)
                   else if (!isToday)
                     StatusBadge(
-                        text: 'Present',
-                        color: context.hc.success,
-                        icon: Icons.check_circle)
+                      text: 'Present',
+                      color: context.hc.success,
+                      icon: Icons.check_circle,
+                    )
                   else if (marked)
                     StatusBadge(
-                        text: 'Present',
-                        color: context.hc.success,
-                        icon: Icons.check_circle)
+                      text: 'Present',
+                      color: context.hc.success,
+                      icon: Icons.check_circle,
+                    )
                   else
                     Semantics(
                       label: 'Mark ${m.name} present',
                       button: true,
                       child: TextButton(
-                        onPressed: () => setState(
-                            () => _staffMarked.add('${m.id}|$dayKey')),
+                        onPressed: () =>
+                            setState(() => _staffMarked.add('${m.id}|$dayKey')),
                         child: const Text('Mark present'),
                       ),
                     ),
@@ -752,19 +860,27 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
           Row(
             children: [
               const AppIconTile(
-                  icon: Icons.medication, color: HousepitalColors.orange),
+                icon: Icons.medication,
+                color: HousepitalColors.orange,
+              ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(e.subtitle ?? e.title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-              Text('$pct%',
-                  style: TextStyle(
+                child: Text(
+                  e.subtitle ?? e.title,
+                  style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.orangeText,
-                  )),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '$pct%',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: context.hc.orangeText,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -787,88 +903,104 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   /// (grouped Morning/Afternoon/Evening) so "6 doses scheduled" is never a
   /// dead-end summary.
   Widget _futureMedsCard(CareEvent e) {
-    final meds =
-        context.watch<MedicationProvider>().activeMedications;
+    final meds = context.watch<MedicationProvider>().activeMedications;
     final doses = <(String, MedicationFull)>[
       for (final med in meds)
         for (final slot in med.timeSlots) (slot, med),
     ]..sort((a, b) => a.$1.compareTo(b.$1));
 
-    return HousepitalCard(
-      onTap: () =>
-          setState(() => _futureMedsExpanded = !_futureMedsExpanded),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const AppIconTile(
-                  icon: Icons.medication, color: HousepitalColors.orange),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(e.subtitle ?? e.title,
+    return Semantics(
+      button: true,
+      expanded: _futureMedsExpanded,
+      child: HousepitalCard(
+        onTap: () => setState(() => _futureMedsExpanded = !_futureMedsExpanded),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const AppIconTile(
+                  icon: Icons.medication,
+                  color: HousepitalColors.orange,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    e.subtitle ?? e.title,
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-              StatusBadge(
-                text: 'Scheduled',
-                color: context.hc.info,
-                icon: Icons.schedule,
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                _futureMedsExpanded
-                    ? Icons.expand_less
-                    : Icons.expand_more,
-                size: 20,
-                color: context.hc.greyLight,
-              ),
-            ],
-          ),
-          if (_futureMedsExpanded)
-            ..._doseGroups(doses).expand((g) => [
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                StatusBadge(
+                  text: 'Scheduled',
+                  color: context.hc.info,
+                  icon: Icons.schedule,
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _futureMedsExpanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: context.hc.greyLight,
+                ),
+              ],
+            ),
+            if (_futureMedsExpanded)
+              ..._doseGroups(doses).expand(
+                (g) => [
                   Padding(
                     padding: const EdgeInsets.only(top: 8, bottom: 4),
                     child: Row(
                       children: [
                         Icon(g.icon, size: 16, color: context.hc.greyLight),
                         const SizedBox(width: 6),
-                        Text(g.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.4,
-                              color: context.hc.greyLight,
-                            )),
+                        Text(
+                          g.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: context.hc.greyLight,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  ...g.doses.map((d) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 72,
-                              child: Text(_formatSlot(d.$1),
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: context.hc.greyLight)),
-                            ),
-                            Expanded(
-                              child: Text(
-                                '${d.$2.name} ${d.$2.dosage}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500),
+                  ...g.doses.map(
+                    (d) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 72,
+                            child: Text(
+                              _formatSlot(d.$1),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: context.hc.greyLight,
                               ),
                             ),
-                          ],
-                        ),
-                      )),
-                ]),
-        ],
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${d.$2.name} ${d.$2.dosage}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -896,45 +1028,57 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
           Row(
             children: [
               const AppIconTile(
-                  icon: Icons.medication, color: HousepitalColors.orange),
+                icon: Icons.medication,
+                color: HousepitalColors.orange,
+              ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text("Today's doses",
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-              Text('$takenCount/${doses.length} taken',
-                  style: TextStyle(
-                    fontSize: 12,
+                child: Text(
+                  "Today's doses",
+                  style: const TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: takenCount == doses.length && doses.isNotEmpty
-                        ? context.hc.success
-                        : context.hc.grey,
-                  )),
+                  ),
+                ),
+              ),
+              Text(
+                '$takenCount/${doses.length} taken',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: takenCount == doses.length && doses.isNotEmpty
+                      ? context.hc.success
+                      : context.hc.grey,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           // Doses grouped by time of day — matches how patients think about
           // medication routines (subah / dopahar / raat).
-          ..._doseGroups(doses).expand((g) => [
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 4),
-                  child: Row(
-                    children: [
-                      Icon(g.icon, size: 16, color: context.hc.greyLight),
-                      const SizedBox(width: 6),
-                      Text(g.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: context.hc.greyLight,
-                          )),
-                    ],
-                  ),
+          ..._doseGroups(doses).expand(
+            (g) => [
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(g.icon, size: 16, color: context.hc.greyLight),
+                    const SizedBox(width: 6),
+                    Text(
+                      g.label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                        color: context.hc.greyLight,
+                      ),
+                    ),
+                  ],
                 ),
-                ...g.doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
-              ]),
+              ),
+              ...g.doses.map((d) => _doseRow(medProv, d.$1, d.$2)),
+            ],
+          ),
         ],
       ),
     );
@@ -944,7 +1088,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
   /// Afternoon (12:00–16:59) and Evening (17:00+) groups; empty groups
   /// are omitted.
   List<({String label, IconData icon, List<(String, MedicationFull)> doses})>
-      _doseGroups(List<(String, MedicationFull)> doses) {
+  _doseGroups(List<(String, MedicationFull)> doses) {
     int hourOf(String slot) => int.tryParse(slot.split(':').first) ?? 0;
     final morning = doses.where((d) => hourOf(d.$1) < 12).toList();
     final afternoon = doses
@@ -998,17 +1142,20 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
               icon: Icons.check,
             )
           else
-            SizedBox(
-              height: 32,
-              child: TextButton(
-                onPressed: () => medProv.markDoseTakenToday(med.id, slot),
-                style: TextButton.styleFrom(
-                  foregroundColor: context.hc.orangeText,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                ),
-                child: const Text('Mark taken',
-                    style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
+            // Compact pill, compliant tap target (doctor_advice_card
+            // pattern): the visual stays small but the padded Material tap
+            // target keeps the interactive area ≥ 44pt.
+            TextButton(
+              onPressed: () => medProv.markDoseTakenToday(med.id, slot),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                minimumSize: const Size(0, 32),
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
+              child: const Text(
+                'Mark taken',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
         ],
@@ -1027,14 +1174,19 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(e.title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(
+                  e.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (e.subtitle != null) ...[
                   const SizedBox(height: 2),
-                  Text(e.subtitle!,
-                      style:
-                          TextStyle(fontSize: 12, color: context.hc.grey)),
+                  Text(
+                    e.subtitle!,
+                    style: TextStyle(fontSize: 12, color: context.hc.grey),
+                  ),
                 ],
               ],
             ),

@@ -230,9 +230,6 @@ class _DoctorAdviceCardState extends State<DoctorAdviceCard> {
                       onPressed: _onAddAll,
                       icon: const Icon(Icons.add_shopping_cart, size: 18),
                       label: const Text('Add all to cart'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: context.hc.orangeText,
-                      ),
                     ),
                   ),
                 ],

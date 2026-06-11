@@ -41,6 +41,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  // Apple P8 / WCAG 2.3.3 (reduce motion): MediaQuery is not available in
+  // initState, so the flag is read in didChangeDependencies and the pulse is
+  // started from there.
+  bool _reduceMotion = false;
+  bool _pulseStarted = false;
+  // Tracks which step we last pulsed for, so a status advance from Firestore
+  // re-runs the (finite) pulse on the new active dot.
+  int _lastPulsedStep = 0;
+
   /// Steps for booking (visit) orders.
   static const _bookingSteps = [
     _StepInfo('Placed', 'Your booking has been placed', Icons.receipt_long),
@@ -91,14 +100,49 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
   @override
   void initState() {
     super.initState();
+    // Apple P8: no more `..repeat(reverse: true)` — an unbounded pulse is a
+    // vestibular trigger and a battery drain. The pulse is now finite (see
+    // _startPulse) and starts from didChangeDependencies, where MediaQuery's
+    // disableAnimations flag is readable.
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
     _pulseAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _listenToFirestore();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (!_pulseStarted) {
+      _pulseStarted = true;
+      _startPulse();
+    }
+  }
+
+  /// Pulses the active-step dot 3 cycles, then settles SOLID (value 1.0 →
+  /// full-alpha dot). Chosen behavior: finite attention draw on screen entry
+  /// and again whenever the active step advances — honest "look here", no
+  /// infinite motion. With Reduce Motion on, jumps straight to the settled
+  /// solid state.
+  Future<void> _startPulse() async {
+    if (_reduceMotion) {
+      _pulseController.value = 1.0;
+      return;
+    }
+    try {
+      for (var i = 0; i < 3; i++) {
+        await _pulseController.forward(from: 0).orCancel;
+        await _pulseController.reverse().orCancel;
+      }
+      await _pulseController.forward().orCancel; // settle at full alpha
+    } on TickerCanceled {
+      // Controller disposed (screen closed) or pulse restarted — expected.
+    }
   }
 
   void _listenToFirestore() {
@@ -113,6 +157,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
           _sessionData = snapshot.data() ?? {};
           _isLoading = false;
         });
+        // Re-pulse (finitely) when the active step advances so the moved dot
+        // draws the eye once, then settles.
+        if (_currentStepIndex != _lastPulsedStep) {
+          _lastPulsedStep = _currentStepIndex;
+          _startPulse();
+        }
       }, onError: (_) {
         if (!mounted) return;
         setState(() => _isLoading = false);

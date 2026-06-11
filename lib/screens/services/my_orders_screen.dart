@@ -698,9 +698,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: const Text('Edit request',
                         style: TextStyle(fontSize: 13)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: HousepitalColors.orange,
-                    ),
                   ),
                   TextButton.icon(
                     onPressed: () => _cancelAssessment(assessmentId),

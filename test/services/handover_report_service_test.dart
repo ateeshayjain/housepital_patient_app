@@ -23,4 +23,19 @@ void main() {
     final b = await HandoverReportService().buildHandoverPdf(now: now);
     expect(a.length, b.length);
   });
+
+  test('share filename uses the SAME injected date as the report body', () {
+    // audit R2: shareHandover previously called DateTime.now() a second time
+    // for the filename — the injected clock must drive both PDF and filename.
+    final fixed = DateTime(2026, 6, 10);
+    final name = HandoverReportService().handoverFilename(fixed);
+    expect(name, contains('20260610'));
+    expect(name, startsWith('housepital-handover-'));
+    expect(name, endsWith('.pdf'));
+  });
+
+  test('filename zero-pads single-digit month and day', () {
+    final name = HandoverReportService().handoverFilename(DateTime(2026, 1, 5));
+    expect(name, contains('20260105'));
+  });
 }

@@ -10,6 +10,7 @@ import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/common_widgets.dart';
 
 class EquipmentDetailScreen extends StatefulWidget {
   final ServiceItem service;
@@ -1157,7 +1158,6 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 icon: const Icon(Icons.edit, size: 16),
                 label: const Text('Write a Review'),
                 style: TextButton.styleFrom(
-                  foregroundColor: HousepitalColors.orange,
                   textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1317,23 +1317,15 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                 fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.black,
               )),
               const SizedBox(height: 16),
-              // Star selector
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (i) {
-                  final star = i + 1;
-                  return GestureDetector(
-                    onTap: () => setSheetState(() => selectedRating = star),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Icon(
-                        star <= selectedRating ? Icons.star : Icons.star_border,
-                        size: 36,
-                        color: HousepitalColors.orange,
-                      ),
-                    ),
-                  );
-                }),
+              // Star selector — shared accessible rater (44pt targets +
+              // per-star Semantics), replaces a bare GestureDetector row.
+              Center(
+                child: StarRatingInput(
+                  value: selectedRating,
+                  onChanged: (stars) =>
+                      setSheetState(() => selectedRating = stars),
+                  size: 36,
+                ),
               ),
               const SizedBox(height: 16),
               TextField(

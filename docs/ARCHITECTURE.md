@@ -14,7 +14,7 @@
 | Layer              | Technology                                        |
 |--------------------|---------------------------------------------------|
 | Frontend           | Flutter 3.x / Dart                                |
-| State Management   | Provider (ChangeNotifier) -- 7 providers           |
+| State Management   | Provider (ChangeNotifier) -- 10 providers          |
 | Backend Runtime    | Node.js + Express.js (TypeScript)                  |
 | Hosting            | Firebase Cloud Functions (asia-south1)             |
 | Relational DB      | Cloud SQL for MySQL (asia-south1)                  |
@@ -24,7 +24,8 @@
 | Push Notifications | Firebase Cloud Messaging (FCM)                     |
 | Offline Storage    | SharedPreferences (language, cart, addresses, cache)|
 | Local Notifications| flutter_local_notifications + timezone             |
-| Typography         | Google Fonts (Archivo)                             |
+| Typography         | Bundled Archivo + NotoSansDevanagari TTFs (`assets/fonts/`; google_fonts removed) |
+| PDF Generation     | `pdf` + `printing` (on-device: invoices, doctor handover) |
 | HTTP Client        | `http` package (Dart)                              |
 | Testing            | flutter_test (unit)                                |
 | i18n               | Custom AppLocalizations (EN + HI)                  |
@@ -38,20 +39,31 @@ lib/
  +-- main.dart                        # App entry, MultiProvider setup, route table
  +-- config/
  |   +-- constants.dart               # AppConstants (API URL, Razorpay key, vital ranges, SLAs)
- |   +-- theme.dart                   # HousepitalColors, HousepitalTheme (Material 3)
+ |   +-- theme.dart                   # HousepitalColors/-Dark, HousepitalTheme light + dark (Material 3)
+ |   +-- app_colors.dart              # context.hc token resolver -- HcPalette light/dark
+ |   +-- daimaa_theme.dart            # Dai Maa cross-promo banner colors
  |   +-- firebase_options.dart        # Firebase config (auto-generated)
  +-- models/
  |   +-- models.dart                  # Patient, Deployment, Attendance, VitalReading, etc.
  |   +-- my_care_models.dart          # ActiveService, HealthManager, ServiceDetail
  |   +-- medication_models.dart       # MedicationFull, MedicationLog
+ |   +-- care_event.dart              # Care Calendar events
+ |   +-- equipment_order.dart         # Orders + quote-pending bookings
+ |   +-- medical_history.dart         # Read-only medical history
+ |   +-- doctor_recommendation.dart   # Doctor recommendations -> cart
+ |   +-- article.dart                 # Care Guides articles
+ |   +-- assistant_models.dart        # Assistant actions + safe parsing
  +-- providers/
  |   +-- app_provider.dart            # AppProvider -- patient context, dashboard, language
  |   +-- auth_provider.dart           # AuthProvider -- login state, OTP flow
+ |   +-- theme_provider.dart          # ThemeProvider -- ThemeMode persisted (system/light/dark)
  |   +-- billing_provider.dart        # BillingProvider -- billing summary, invoices, EMI
  |   +-- cart_provider.dart           # CartProvider -- cart + saved-for-later
  |   +-- my_care_provider.dart        # MyCareProvider -- active services, service detail
  |   +-- medication_provider.dart     # MedicationProvider -- medication CRUD + logs
- |   +-- orders_provider.dart        # OrdersProvider -- orders + assessments, SharedPreferences persistence
+ |   +-- orders_provider.dart         # OrdersProvider -- orders + quote-pending bookings + assessments
+ |   +-- blog_provider.dart           # BlogProvider -- Care Guides articles (demo fallback)
+ |   +-- assistant_provider.dart      # AssistantProvider -- service + executor + voice orchestration
  +-- screens/
  |   +-- main_shell.dart              # Bottom nav bar (5 tabs)
  |   +-- auth/
@@ -95,6 +107,19 @@ lib/
  |   +-- rental/
  |   |   +-- rental_agreement_screen.dart # Rental terms + digital signature
  |   |   +-- return_screen.dart          # Equipment return request
+ |   +-- calendar/
+ |   |   +-- care_calendar_screen.dart   # Day/Week/Month -- doses, attendance, mark taken/present
+ |   +-- care_team/
+ |   |   +-- care_team_screen.dart       # Group chat first, member call/chat, ambulance, past staff
+ |   +-- articles/
+ |   |   +-- article_list_screen.dart    # Care Guides -- featured hero + category accents
+ |   |   +-- article_detail_screen.dart  # Markdown body
+ |   |   +-- article_category_style.dart
+ |   +-- assistant/
+ |   |   +-- assistant_screen.dart       # Sahayak voice/text chat
+ |   |   +-- assistant_executor.dart     # Confirm-first action execution
+ |   +-- checkout/
+ |   |   +-- address_selection_screen.dart
  |   +-- packages/
  |   |   +-- package_detail_screen.dart
  |   +-- reports/
@@ -124,6 +149,10 @@ lib/
  |   +-- api_service.dart             # All HTTP calls to backend
  |   +-- i_api_service.dart           # API service interface (for testing)
  |   +-- payment_service.dart         # Razorpay SDK wrapper
+ |   +-- invoice_pdf_service.dart     # On-device invoice PDF (PRO FORMA for quote orders)
+ |   +-- handover_report_service.dart # Doctor Handover PDF (role-gated export)
+ |   +-- assistant_service.dart       # AI assistant backend client + Hinglish stub
+ |   +-- voice_service.dart           # speech_to_text + flutter_tts wrapper
  |   +-- firebase_service.dart        # Firestore listeners
  |   +-- sync_service.dart            # Dashboard data sync
  |   +-- payment_reminder_service.dart
@@ -139,12 +168,47 @@ lib/
  |   +-- permissions.dart             # Role-based action gating
  |   +-- booking_state_machine.dart   # Booking status transitions
  +-- widgets/
+ |   +-- glass.dart                   # Liquid Glass chrome: GlassAppBar, GlassSurface, HousepitalCard
  |   +-- document_attach_widgets.dart
  |   +-- common_widgets.dart
  |   +-- paginated_list.dart          # Reusable paginated list widget
+ |   +-- assistant_fab.dart           # Assistant entry point on every tab
  +-- data/
      +-- care_packages.dart           # Static care package definitions
+     +-- demo_data.dart               # Demo fallbacks when api.housepital.in unreachable
+     +-- demo_articles.dart           # 28 offline Care Guides
 ```
+
+## Theming & Dark Mode
+
+- `ThemeProvider` persists `ThemeMode` (system/light/dark) to SharedPreferences;
+  `MaterialApp` reads `provider.mode` and supplies both `HousepitalTheme.lightTheme`
+  and `darkTheme`.
+- Every brightness-sensitive color resolves through `context.hc.*`
+  (`lib/config/app_colors.dart` — `HcPalette` with light and dark token sets).
+  Raw `Colors.*`, hex literals and `Colors.grey.shade*` are banned by
+  `scripts/check_design_consistency.sh` (allowlist inside the script).
+- `test/widgets/dark_mode_test.dart` guards the token contract in CI.
+
+## Liquid Glass Chrome Layer
+
+- `lib/widgets/glass.dart` is the single source of app chrome: `GlassAppBar`
+  (every screen), `GlassSurface`, and `HousepitalCard`
+  (squircle `RoundedSuperellipseBorder(16)`, press-scale 0.97 @ 120ms).
+- Glass screens pair with `extendBodyBehindAppBar` + top scroll padding
+  `MediaQuery.padding.top + kToolbarHeight`.
+- Nav contract: back on the left; trailing order `[custom…, search, home]`;
+  `showSearch` defaults on; `showHome` off on root tabs.
+
+## PDF Generation Layer
+
+- All PDFs are generated **on-device** with the `pdf` + `printing` packages —
+  no backend dependency:
+  - `invoice_pdf_service.dart` — invoices; quote-pending (manpower) orders
+    render as PRO FORMA **without amounts**.
+  - `handover_report_service.dart` — Doctor Handover report; role-gated
+    (sensitive export).
+- Both services accept an injected `DateTime` for deterministic tests.
 
 ### Backend (`/housepital-backend/`)
 
@@ -244,11 +308,14 @@ Razorpay ----webhook----> /payments/webhook (signature verified)
 | Cloud Firestore  | Real-time data (5 collections) | Active    | firestore.rules              |
 | Razorpay         | Payment gateway                | Test mode | constants.dart + razorpay.ts |
 | FCM              | Push notifications             | Active    | firebase.json                |
-| Google Fonts     | Archivo typeface               | Active    | pubspec.yaml                 |
+| Crashlytics/Perf | Crash + performance monitoring | Active (guarded: mobile-only, release-only) | main.dart |
+
+(Fonts are no longer an external dependency — Archivo + NotoSansDevanagari are
+bundled TTFs in `assets/fonts/`; google_fonts was removed.)
 
 ## State Management
 
-Seven `ChangeNotifierProvider` instances initialized in `main.dart`:
+Ten `ChangeNotifierProvider` instances initialized in `main.dart`:
 
 | Provider              | Scope                          | Key State                                      |
 |-----------------------|--------------------------------|------------------------------------------------|
@@ -258,7 +325,10 @@ Seven `ChangeNotifierProvider` instances initialized in `main.dart`:
 | `CartProvider`        | Shopping cart                  | List<CartItem> with index-based ops, SharedPreferences persistence. Flat CartItem model (no nested EquipmentItem). |
 | `MyCareProvider`      | Active services hub            | Active services list, service detail, staff      |
 | `MedicationProvider`  | Medication management          | Medication list, logs, stock, reminders          |
-| `OrdersProvider`      | Orders + assessments           | Order list, assessment list, SharedPreferences persistence |
+| `OrdersProvider`      | Orders + assessments           | Order list (incl. quote-pending manpower bookings), assessment list, SharedPreferences persistence; demo orders seeded in-memory only |
+| `ThemeProvider`       | Appearance                     | ThemeMode (system/light/dark), persisted to SharedPreferences |
+| `BlogProvider`        | Care Guides                    | Article list/detail with offline demo fallback   |
+| `AssistantProvider`   | AI assistant                   | Conversation state, action execution (confirm-first), voice |
 
 ### Auth Middleware Stack (Backend)
 

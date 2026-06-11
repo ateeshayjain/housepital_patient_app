@@ -277,8 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white.withValues(alpha: 0.25),
                       shape: BoxShape.circle,
                     ),
+                    // Dark ink on orange — white on orange fails AA (~2.3:1).
                     child: const Icon(Icons.phone_in_talk,
-                        color: Colors.white, size: 32),
+                        color: HousepitalColors.onOrange, size: 32),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -290,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: HousepitalColors.onOrange,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -298,9 +299,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           caregiverPhone != null
                               ? 'Tap to call $caregiverName · $caregiverPhone'
                               : 'No family contact saved yet',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.95),
+                            color: HousepitalColors.onOrange,
                           ),
                         ),
                       ],
@@ -681,7 +682,9 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: context.hc.orangeText,
+                // Greeting reads as primary text — the accent color is
+                // reserved for actionable elements.
+                color: context.hc.black,
               ),
             ),
           ),
@@ -1498,7 +1501,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(DateHelper.formatCurrency(amountDue),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HousepitalColors.orange)),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.orangeText)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -1652,8 +1655,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   backgroundColor: context.hc.orangeLight,
                   child: Text(
                     patient.name[0].toUpperCase(),
-                    style:
-                        const TextStyle(color: HousepitalColors.orange),
+                    style: TextStyle(color: context.hc.orangeText),
                   ),
                 ),
                 title: Text(patient.name),

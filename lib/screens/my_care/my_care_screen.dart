@@ -4,9 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/app_colors.dart';
 import '../../config/theme.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/medication_provider.dart';
 import '../../providers/my_care_provider.dart';
 import '../../services/handover_report_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
@@ -47,13 +49,12 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
   }
 
   void _loadData() {
-    final patientId = context.read<AppProvider>().currentPatient?.id;
-    if (patientId != null) {
-      context.read<MyCareProvider>().loadMyCareData(patientId);
-    } else {
-      // Patient not loaded yet — seed demo data directly
-      context.read<MyCareProvider>().loadMyCareData('pat_demo_rajesh');
-    }
+    final patientId =
+        context.read<AppProvider>().currentPatient?.id ?? 'pat_demo_rajesh';
+    context.read<MyCareProvider>().loadMyCareData(patientId);
+    // Medications summary card reads MedicationProvider (same source as the
+    // Home snippet) — make sure it's populated even if Home wasn't visited.
+    context.read<MedicationProvider>().loadMedications(patientId);
   }
 
   @override
@@ -83,6 +84,9 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
   }
 
   Widget _buildBody(MyCareProvider myCare, AppProvider app, AppLocalizations l) {
+    // Watch so the summary card live-updates when meds are added/stopped.
+    final activeMeds = context.watch<MedicationProvider>().activeMedications;
+
     if (myCare.isLoading && myCare.activeServices.isEmpty) {
       return const LoadingWidget();
     }
@@ -210,12 +214,6 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           // 4b. Doctor's Advice — recommendations from the last consultation
           const DoctorAdviceCard(),
 
-          // 4a. Daily Care Rating
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: _DailyCareRatingCard(),
-          ),
-
           // 5. Today's Staff Attendance
           if (myCare.activeServices.any((s) => s.hasStaff))
             StaffAttendanceSection(services: myCare.activeServices),
@@ -245,12 +243,19 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('5 active medications',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                          Text('Amlodipine, Metformin, Aspirin, Pantoprazole, Insulin',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
+                          // Live count + names from MedicationProvider — same
+                          // source as the Home medications snippet (no more
+                          // hardcoded "5 active medications" demo copy).
+                          Text(
+                              activeMeds.isEmpty
+                                  ? 'No active medications'
+                                  : '${activeMeds.length} active medication${activeMeds.length == 1 ? '' : 's'}',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          if (activeMeds.isNotEmpty)
+                            Text(activeMeds.map((m) => m.name).join(', '),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 12, color: context.hc.greyLight)),
                         ],
                       ),
                     ),
@@ -262,10 +267,22 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
           ),
 
           // 7. Doctor Handover Report — flagship share-with-your-doctor card.
-          const SectionHeader(title: 'Share with your doctor'),
+          // audit R2: role-gated. The handover PDF is the patient's full
+          // medical history — only the patient/family may export it, so the
+          // card is hidden entirely (not disabled) for staff-type roles.
+          if (canUserPerform(app.currentUserRole, UserAction.shareHandover)) ...[
+            const SectionHeader(title: 'Share with your doctor'),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _DoctorHandoverCard(),
+            ),
+          ],
+
+          // 8. Daily Care Rating — rating belongs at the END of the journey,
+          // after the day's care summary (last content card before padding).
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _DoctorHandoverCard(),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _DailyCareRatingCard(),
           ),
 
           // Billing intentionally NOT shown here — it lives in the Billing tab
@@ -632,28 +649,14 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
               ),
             )
           else
-            // 24px stars; each IconButton keeps a ≥44pt tap target. No extra
-            // gap widgets: the ~48px Material tap targets around the 24px
-            // glyphs already yield a comfortable visual gap, and 5×48 = 240
-            // is exactly what fits inside the card at the 320px minimum.
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(5, (i) {
-                final stars = i + 1;
-                return Semantics(
-                  label: 'Rate $stars star${stars == 1 ? '' : 's'}',
-                  button: true,
-                  child: IconButton(
-                    onPressed: () => _onRate(stars),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                        minWidth: 44, minHeight: 44),
-                    icon: const Icon(Icons.star_border,
-                        color: HousepitalColors.orange, size: 24),
-                  ),
-                );
-              }),
-            ),
+            // 24px stars; each star keeps a ≥44pt tap target. No extra gap
+            // widgets: the ~48px Material tap targets around the 24px glyphs
+            // already yield a comfortable visual gap, and 5×48 = 240 is
+            // exactly what fits inside the card at the 320px minimum.
+            // This card's accessible rater is now the shared StarRatingInput
+            // (lib/widgets/common_widgets.dart) — same Semantics + 44pt
+            // behavior, used app-wide.
+            StarRatingInput(value: 0, onChanged: _onRate),
         ],
       ),
     );

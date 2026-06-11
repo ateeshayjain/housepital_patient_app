@@ -88,13 +88,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
     // passed in (legacy callers / single-service confirmations).
     _bookingNumber = widget.bookingNumber ?? _generateLegacyFallback();
 
+    // Apple P8: celebrations stay under the 500ms ceiling — 450ms easeOutBack
+    // (was 700ms elasticOut, which both overshot the budget and wobbled).
     _checkController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 450),
     );
     _checkScale = CurvedAnimation(
       parent: _checkController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutBack,
     );
 
     _fadeController = AnimationController(
@@ -106,13 +108,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
       curve: Curves.easeIn,
     );
 
-    // Start animations
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _checkController.forward();
-      _fadeController.forward();
-    });
+    // Start is deferred to didChangeDependencies: MediaQuery (and therefore
+    // the Reduce Motion flag) is not available in initState.
 
     HapticFeedback.mediumImpact();
+  }
+
+  bool _animationsStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_animationsStarted) return;
+    _animationsStarted = true;
+    // WCAG 2.3.3 / Apple P8: with Reduce Motion on, present the final frame
+    // immediately instead of playing the celebration.
+    if (MediaQuery.of(context).disableAnimations) {
+      _checkController.value = 1.0;
+      _fadeController.value = 1.0;
+    } else {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+        _checkController.forward();
+        _fadeController.forward();
+      });
+    }
   }
 
   @override

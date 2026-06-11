@@ -60,7 +60,6 @@ dependencies:
   share_plus: ^11.0.0
   image_picker: ^1.1.2
   pin_code_fields: ^8.0.1
-  google_fonts: ^6.2.1
   # audit M-9: used to derive basename from picker XFile paths for storage keys
   path: ^1.9.0
   # AI Assistant — voice input/output

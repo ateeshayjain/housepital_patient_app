@@ -340,8 +340,8 @@ and for each key listed below, set restrictions:
 
 | Key value (truncated)               | Platform | Restriction type | Restriction details |
 |-------------------------------------|----------|------------------|---------------------|
-| `AIzaSyCmH3bfQCN4q6rjjJROf6LQzBG-8i_nTJg` | (web)    | HTTP referrer    | `*.housepital.in/*`, `housepital.in/*`, `localhost/*` (dev only) |
-| `AIzaSyBKK2NxRuvZsIGrBdpugnePy9zA7g13TLc` | (Android)| Android app      | Package `in.housepital.patient` + release signing SHA1 (`keytool -list -v -keystore housepital.jks`) |
+| `AIza…nTJg (web key — full value in lib/config/firebase_options.dart)` | (web)    | HTTP referrer    | `*.housepital.in/*`, `housepital.in/*`, `localhost/*` (dev only) |
+| `AIza…3TLc (Android key — full value in android/app/google-services.json)` | (Android)| Android app      | Package `in.housepital.patient` + release signing SHA1 (`keytool -list -v -keystore housepital.jks`) |
 | (iOS key in GoogleService-Info.plist) | (iOS)    | iOS app          | Bundle ID `in.housepital.patient` |
 
 For each key, also restrict the API surface:

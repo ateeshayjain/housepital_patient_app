@@ -4,7 +4,7 @@
 
 ### Manpower Services (Caretaker, Nursing Deployment, Japa, Nanny)
 
-**UPDATED (2026-03-24): Manpower services now show prices.** Prices are synced from master Excel (single source of truth). The previous `hide_price` rule has been reversed -- all services now display pricing. Equipment shows MRP with strikethrough + discounted price.
+**RULE (inviolable, re-confirmed 2026-06-11): Manpower service prices are NEVER shown.** Caretaker, nursing, attendant (and legacy japa/nanny) services display no price anywhere — catalog, booking wizard, cart, orders, invoices. Users who see a manpower price reject without talking to us; the price is confirmed on a call. In-app booking is fully supported as **quote-pending**: the wizard runs end-to-end with all ₹/GST suppressed and the copy "Price confirmed on call before payment"; orders carry `quoteStatus: 'pending'` and are excluded from billing sums; ₹0 is never rendered; quote invoices export as PRO FORMA without amounts. *(A 2026-03-24 note here previously claimed prices were re-shown — that was a documentation error, reverted by the M-1 fix in code. This header is the source of truth.)* Equipment is unaffected: MRP strikethrough + discounted price, with price-on-request items using the Reserve flow.
 
 - Staff salary + Commission to Housepital
 - Monthly plan: Rs 12,000 commission (Rs 5,000 non-refundable minimum)

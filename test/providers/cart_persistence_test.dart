@@ -65,8 +65,8 @@ void main() {
       final cart = CartProvider();
 
       cart.addItem(_makeEquipment());
-      // Wait for async persist to complete
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Flush the async persist without a wall-clock sleep (de-flaked)
+      await pumpEventQueue();
 
       final prefs = await SharedPreferences.getInstance();
       final cartStr = prefs.getString('housepital_cart_items');
@@ -85,7 +85,7 @@ void main() {
 
       cart.addItem(_makeEquipment());
       cart.updateQuantity(0, 5);
-      await Future.delayed(const Duration(milliseconds: 100));
+      await pumpEventQueue();
 
       final prefs = await SharedPreferences.getInstance();
       final cartStr = prefs.getString('housepital_cart_items');
@@ -99,7 +99,7 @@ void main() {
 
       cart.addItem(_makeEquipment());
       cart.clear();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await pumpEventQueue();
 
       final prefs = await SharedPreferences.getInstance();
       final cartStr = prefs.getString('housepital_cart_items');
@@ -162,7 +162,7 @@ void main() {
       final cart = CartProvider();
 
       cart.saveItemForLater(_makeEquipment(id: 'eq-saved'));
-      await Future.delayed(const Duration(milliseconds: 100));
+      await pumpEventQueue();
 
       final prefs = await SharedPreferences.getInstance();
       final savedStr = prefs.getString('housepital_saved_items');

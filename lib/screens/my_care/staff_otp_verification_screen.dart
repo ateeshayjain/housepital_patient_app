@@ -58,14 +58,16 @@ class _StaffOtpVerificationScreenState
     // Listen for verification
     _listenForVerification();
 
-    // Animation for verified checkmark
+    // Animation for verified checkmark.
+    // Apple P8: celebrations stay under the 500ms ceiling — 450ms easeOutBack
+    // (was 600ms elasticOut).
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 450),
     );
     _scaleAnimation = CurvedAnimation(
       parent: _animController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutBack,
     );
   }
 
@@ -97,7 +99,14 @@ class _StaffOtpVerificationScreenState
       final data = snapshot.data();
       if (data != null && data['verified'] == true && !_verified) {
         setState(() => _verified = true);
-        _animController.forward();
+        // WCAG 2.3.3 / Apple P8: with Reduce Motion on, show the verified
+        // checkmark at its final frame instead of animating it in. (Safe to
+        // read MediaQuery here — this stream callback only fires post-build.)
+        if (MediaQuery.of(context).disableAnimations) {
+          _animController.value = 1.0;
+        } else {
+          _animController.forward();
+        }
 
         // Auto-dismiss after 3 seconds
         Future.delayed(const Duration(seconds: 3), () {

@@ -52,13 +52,14 @@ class _TestMedicationProvider extends MedicationProvider {
 }
 
 Widget _host() => MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AppProvider>.value(value: _TestAppProvider()),
-        ChangeNotifierProvider<MedicationProvider>.value(
-            value: _TestMedicationProvider()),
-      ],
-      child: const MaterialApp(home: CareCalendarScreen()),
-    );
+  providers: [
+    ChangeNotifierProvider<AppProvider>.value(value: _TestAppProvider()),
+    ChangeNotifierProvider<MedicationProvider>.value(
+      value: _TestMedicationProvider(),
+    ),
+  ],
+  child: const MaterialApp(home: CareCalendarScreen()),
+);
 
 Future<void> _pump(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({});
@@ -78,8 +79,9 @@ void main() {
 
   final today = dateOnly(DateTime.now());
 
-  testWidgets('Month view renders grid, legend and today sections',
-      (tester) async {
+  testWidgets('Month view renders grid, legend and today sections', (
+    tester,
+  ) async {
     await _pump(tester);
 
     // App bar + month title.
@@ -92,14 +94,15 @@ void main() {
 
     // Today's cell exists in the grid.
     expect(
-      find.byKey(
-          ValueKey('cal-day-${today.year}-${today.month}-${today.day}')),
+      find.byKey(ValueKey('cal-day-${today.year}-${today.month}-${today.day}')),
       findsOneWidget,
     );
 
     // Legend line + category chips.
-    expect(find.textContaining('A dot marks a day with events'),
-        findsOneWidget);
+    expect(
+      find.textContaining('A dot marks a day with events'),
+      findsOneWidget,
+    );
     for (final chip in ['Meds', 'Staff', 'Visit', 'Test', 'Renewal']) {
       expect(find.text(chip), findsOneWidget);
     }
@@ -115,8 +118,9 @@ void main() {
     expect(find.text('EVENING'), findsOneWidget);
   });
 
-  testWidgets('Tapping the future day with the doctor visit shows Follow-up',
-      (tester) async {
+  testWidgets('Tapping the future day with the doctor visit shows Follow-up', (
+    tester,
+  ) async {
     await _pump(tester);
 
     final target = DateTime(today.year, today.month, today.day + 3);
@@ -126,9 +130,17 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await tester.tap(find.byKey(
-        ValueKey('cal-day-${target.year}-${target.month}-${target.day}')));
+    await tester.tap(
+      find.byKey(
+        ValueKey('cal-day-${target.year}-${target.month}-${target.day}'),
+      ),
+    );
     await tester.pumpAndSettle();
+
+    // The legend teaching sentence disappears after the first day-tap
+    // (the category chips stay).
+    expect(find.textContaining('A dot marks a day with events'), findsNothing);
+    expect(find.text('Meds'), findsOneWidget);
 
     expect(find.textContaining('Follow-up'), findsWidgets);
     expect(find.textContaining('Dr. Ananya Sharma'), findsWidgets);
@@ -144,8 +156,9 @@ void main() {
     expect(find.text('MORNING'), findsOneWidget);
   });
 
-  testWidgets('Mark taken flips a dose to Taken via MedicationProvider',
-      (tester) async {
+  testWidgets('Mark taken flips a dose to Taken via MedicationProvider', (
+    tester,
+  ) async {
     await _pump(tester);
 
     expect(find.text('Taken'), findsNothing);
@@ -156,19 +169,21 @@ void main() {
     expect(find.textContaining('1/'), findsWidgets); // "1/6 taken" summary
   });
 
-  testWidgets('Day/Week/Month segmented switching does not throw',
-      (tester) async {
+  testWidgets('Day/Week/Month segmented switching does not throw', (
+    tester,
+  ) async {
     await _pump(tester);
 
     await tester.tap(find.text('Week'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     // Week view shows the legend + a 7-day strip with today's cell.
-    expect(find.textContaining('A dot marks a day with events'),
-        findsOneWidget);
     expect(
-      find.byKey(
-          ValueKey('cal-day-${today.year}-${today.month}-${today.day}')),
+      find.textContaining('A dot marks a day with events'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('cal-day-${today.year}-${today.month}-${today.day}')),
       findsOneWidget,
     );
 
@@ -176,10 +191,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     // Day view: detail only, with the date title.
-    expect(find.text(DateFormat('EEEE, d MMMM').format(today)),
-        findsOneWidget);
-    expect(find.textContaining('A dot marks a day with events'),
-        findsNothing);
+    expect(find.text(DateFormat('EEEE, d MMMM').format(today)), findsOneWidget);
+    expect(find.textContaining('A dot marks a day with events'), findsNothing);
 
     await tester.tap(find.text('Month'));
     await tester.pumpAndSettle();

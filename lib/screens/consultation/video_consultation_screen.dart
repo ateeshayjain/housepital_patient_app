@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../services/video_call_service.dart';
+import '../../widgets/common_widgets.dart';
 
 /// Video Consultation screen — UI shell ready for Agora/WebRTC integration.
 ///
@@ -483,24 +484,12 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (i) {
-                        return GestureDetector(
-                          onTap: () => setState(() => _rating = i + 1),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4),
-                            child: Icon(
-                              i < _rating
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              color: HousepitalColors.orange,
-                              size: 36,
-                            ),
-                          ),
-                        );
-                      }),
+                    // Shared accessible star rater (44pt targets + per-star
+                    // Semantics) — replaces a bare GestureDetector row.
+                    StarRatingInput(
+                      value: _rating,
+                      onChanged: (stars) => setState(() => _rating = stars),
+                      size: 36,
                     ),
                   ],
                 ),

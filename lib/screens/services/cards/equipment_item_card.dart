@@ -57,12 +57,13 @@ class EquipmentItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Square image area with the ADD pill overlapping its bottom
-              // edge (the stack reserves 16px below the image so the whole
-              // button stays inside hit-test bounds).
+              // edge (the stack reserves 24px below the image so the pill's
+              // full 44pt hit area stays inside hit-test bounds without
+              // covering the brand/name text below).
               Stack(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 24),
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: Container(
@@ -95,7 +96,7 @@ class EquipmentItemCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     height: 1.2,
                     color: context.hc.greyLight,
                   ),
@@ -148,7 +149,7 @@ class EquipmentItemCard extends StatelessWidget {
                               child: Text(
                                 '${(((item.mrp! - item.price!) / item.mrp!) * 100).round()}% off',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: context.hc.success,
                                 ),
@@ -164,7 +165,7 @@ class EquipmentItemCard extends StatelessWidget {
                             child: Text(
                               'Rent ${DateHelper.formatCurrency(item.rentalPrice!.toInt())}/mo',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 color: context.hc.info,
                               ),
@@ -249,23 +250,37 @@ class EquipmentItemCard extends StatelessWidget {
       }
       return;
     }
-    final navigator = Navigator.of(context, rootNavigator: true);
     final messenger = ScaffoldMessenger.maybeOf(context);
-    context.read<CartProvider>().addItem(item, isRental: false, rentalMonths: 1);
+    final cart = context.read<CartProvider>();
+    cart.addItem(item, isRental: false, rentalMonths: 1);
+    // SnackBar supports a single action — Undo wins over View Cart here
+    // (error prevention beats navigation for a one-tap add).
     messenger
       ?..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text('${item.name} added to cart'),
           backgroundColor: context.hc.success,
-          duration: const Duration(seconds: 2),
+          duration: const Duration(seconds: 4),
           action: SnackBarAction(
-            label: 'View Cart',
+            label: 'Undo',
             textColor: Colors.white,
-            onPressed: () => navigator.pushNamed('/cart'),
+            onPressed: () => _undoAdd(cart),
           ),
         ),
       );
+  }
+
+  /// Reverts the one-tap ADD: the add either appended a new cart line or
+  /// bumped the quantity of an existing one, so undo decrements the quantity
+  /// (removing the line when it hits zero). Index is resolved at undo time —
+  /// the cart may have changed while the SnackBar was visible.
+  void _undoAdd(CartProvider cart) {
+    final index = cart.items.indexWhere(
+      (i) => i.equipmentId == item.id && !i.isRental,
+    );
+    if (index < 0) return; // already removed elsewhere
+    cart.updateQuantity(index, cart.items[index].quantity - 1);
   }
 
   void _showItemDetail(BuildContext context) async {
@@ -393,7 +408,9 @@ class EquipmentItemCard extends StatelessWidget {
 }
 
 /// Blinkit-style compact 'ADD' pill: outlined orange on a white chip, sized
-/// to sit overlapping the bottom edge of the card's image area.
+/// to sit overlapping the bottom edge of the card's image area. The visual
+/// chip stays 30px tall, but the tappable surface reserves an invisible
+/// 64×44pt hit area around it (Apple HIG minimum touch target).
 class _AddPill extends StatelessWidget {
   final String itemName;
   final VoidCallback onPressed;
@@ -406,28 +423,37 @@ class _AddPill extends StatelessWidget {
       button: true,
       label: 'Add $itemName to cart',
       child: Material(
-        color: context.hc.white,
-        elevation: 2,
-        shadowColor: Colors.black26,
-        borderRadius: BorderRadius.circular(8),
+        type: MaterialType.transparency,
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(8),
-          child: Container(
-            height: 30,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: HousepitalColors.orange, width: 1.2),
-            ),
-            child: Text(
-              'ADD',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-                color: context.hc.orangeText,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 64, minHeight: 44),
+            child: Center(
+              child: Material(
+                color: context.hc.white,
+                elevation: 2,
+                shadowColor: Colors.black26,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border:
+                        Border.all(color: HousepitalColors.orange, width: 1.2),
+                  ),
+                  child: Text(
+                    'ADD',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: context.hc.orangeText,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
