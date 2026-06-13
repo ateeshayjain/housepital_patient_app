@@ -97,7 +97,7 @@
     "faqs": "Q: Will the bed railing fit my hospital bed? A: Most bed railings are designed to fit standard hospital bed frames. Check the rail's clamp or bracket specifications against your bed frame dimensions before purchase.\nQ: Can the bed railing be folded down? A: Yes, most models feature a fold-down mechanism so the railing can be lowered when the patient needs to get in or out of bed, and raised during rest.\nQ: Is the bed railing safe for confused or restless patients? A: Bed railings can help prevent falls, but should be used with caution for agitated patients. Ensure there are no gaps where limbs could become entrapped, and follow facility safety protocols.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0498_ABS_Bed_Side_Railing.jpg"
   },
   {
     "id": "NLK-AIRBEDMA",
@@ -397,7 +397,7 @@
     "faqs": "Q: What is the difference between AutoSet and fixed-pressure CPAP? A: AutoSet automatically adjusts pressure throughout the night based on detected events, delivering only the minimum pressure needed. Fixed-pressure CPAP delivers one constant pressure. AutoSet improves comfort for patients whose pressure needs vary during sleep.\nQ: Can I travel with the AirSense 10 AutoSet? A: Yes, it has a universal power supply (100–240V) and is FAA-approved for in-flight use. You will need a plug adapter for international outlets.\nQ: Does this device track my therapy data? A: Yes, the AirSense 10 AutoSet records detailed therapy data on an SD card, including usage hours, AHI, leak rates, and pressure data. Share this with your physician at follow-up visits.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0478_ResMed_AirSense10_AutoSet_CPAP.png"
   },
   {
     "id": "RSM-AIR10EL",
@@ -1122,7 +1122,7 @@
     "faqs": "Q: What type of mattress comes with the hospital bed? A: Verify with the supplier. Standard packages typically include a medical-grade foam mattress. Air mattresses or pressure-relief mattresses are usually purchased separately.\nQ: Can the bed height be adjusted? A: Manual hospital beds typically have a crank mechanism to adjust the head section, foot section, and overall bed height. Check the specific model's adjustment range.\nQ: What is the weight capacity? A: Standard manual hospital beds typically support 150–200 kg. Check the product specifications for the exact weight limit of your model.\nQ: Can I use a regular home mattress? A: Hospital beds are designed for medical mattresses. A home mattress may not fit correctly or provide the necessary pressure-relief properties. Verify dimensions before using any non-standard mattress.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0496_Manual_Hospital_Bed_With_Mattress.jpg"
   },
   {
     "id": "BPL-BPLOXYCO-10LT",
@@ -1197,7 +1197,7 @@
     "faqs": "Q: What is included in the Tripack bundle? A: The Tripack typically includes the AirSense 10 AutoSet device, a mask, and the HumidAir humidifier with ClimateLineAir heated tubing. Verify exact contents with the supplier.\nQ: Is this the latest model? A: The AirSense 10 has been succeeded by the AirSense 11 in some markets. Both remain effective therapy devices. Check availability and compare features before purchasing.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0478_ResMed_AirSense10_AutoSet_CPAP.png"
   },
   {
     "id": "TYN-COMMCHA",
@@ -1547,7 +1547,7 @@
     "faqs": "Q: What is the DreamStation BiPAP AVAPS 30? A: It is an advanced bilevel ventilator with Average Volume-Assured Pressure Support (AVAPS), which automatically adjusts pressure to deliver a target tidal volume. The '30' refers to the maximum pressure capability.\nQ: Is this affected by the Philips recall? A: Certain DreamStation models were subject to a voluntary recall. Check the Philips recall website with your device serial number or contact the supplier to verify.\nQ: Who needs AVAPS mode? A: AVAPS is prescribed for patients with obesity hypoventilation, COPD, neuromuscular disease, or other conditions where consistent tidal volume delivery is clinically important.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0482_Philips_DreamStation_BiPAP_AVAPS.jpg"
   },
   {
     "id": "PHL-DREAUTBI",
@@ -1622,7 +1622,7 @@
     "faqs": "Q: What is the difference between DeVilbiss 5L and 10L concentrators? A: The key difference is maximum oxygen flow rate. The 10L model can deliver twice the oxygen per minute, suitable for patients with higher O2 requirements. Both operate on the same PSA (pressure swing adsorption) technology.\nQ: How reliable is DeVilbiss equipment? A: Drive DeVilbiss is a globally recognised respiratory equipment manufacturer. Their concentrators are widely used in hospitals and home healthcare.\nQ: What is the power consumption? A: A 10L concentrator typically uses 500–600 watts. Ensure stable power supply and consider a voltage stabiliser.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0481_DeVilbiss_10L_Oxygen_Concentrator.jpg"
   },
   {
     "id": "DVB-DRIOXYCO-5LT",
@@ -1697,7 +1697,7 @@
     "faqs": "Q: What is the F-20 Full Face mask? A: The ResMed AirFit F20 is a full-face CPAP/BiPAP mask covering both the nose and mouth. It is designed for patients who breathe through their mouth during sleep or require higher pressures.\nQ: How is it different from a nasal mask? A: The F20 covers both nose and mouth, ensuring effective therapy delivery even if you open your mouth during sleep. Nasal masks cover only the nose.\nQ: Is the Large size correct for me? A: Use ResMed's sizing template. The Large cushion fits wider facial structures. If unsure, try Medium first as it fits the majority of users.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0479_ResMed_AirFit_F20_Full_Face_Mask.png"
   },
   {
     "id": "RSM-F20FULFA-M",
@@ -1722,7 +1722,7 @@
     "faqs": "Q: Is Medium the most common F-20 size? A: Yes, Medium fits the majority of adult users. However, always use the ResMed sizing guide to confirm, as an incorrect fit causes leaks and discomfort.\nQ: Can I switch between mask types? A: Yes, you can try different mask styles (nasal, nasal pillow, full-face) to find the most comfortable option. Discuss with your sleep clinician.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0479_ResMed_AirFit_F20_Full_Face_Mask.png"
   },
   {
     "id": "RSM-F20FULFA-S",
@@ -1747,7 +1747,7 @@
     "faqs": "Q: When would I need a Small F-20? A: The Small cushion is designed for narrower facial structures or smaller jaw dimensions. Use ResMed's sizing template to determine if Small is appropriate.\nQ: Are the cushions interchangeable between sizes? A: Yes, you can purchase different cushion sizes (S, M, L) separately and swap them on the same F20 mask frame, allowing you to fine-tune the fit.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0479_ResMed_AirFit_F20_Full_Face_Mask.png"
   },
   {
     "id": "GEN-FIVFUNBE",
@@ -1772,7 +1772,7 @@
     "faqs": "Q: What is a five-function electric bed? A: A five-function bed allows electric adjustment of five positions: head up/down, foot up/down, and overall bed height (Trendelenburg/reverse Trendelenburg). All functions are controlled by a handset.\nQ: What is the weight capacity? A: Standard five-function beds support 150–200 kg. Check the specific model's rated capacity.\nQ: Does it come with side rails? A: Most models include collapsible side rails. Verify with the supplier whether mattress, IV pole, and other accessories are included.\nQ: Can it be used at home? A: Yes, with appropriate electrical supply. The bed typically requires a standard household power outlet. Ensure doorways and room dimensions can accommodate the bed frame.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0494_Five_Function_Electric_Bed.jpg"
   },
   {
     "id": "BPL-FIVPARAON",
@@ -1797,7 +1797,7 @@
     "faqs": "Q: What does a five-parameter monitor measure? A: A five-parameter (5-para) patient monitor typically measures: ECG, SpO2 (oxygen saturation), NIBP (non-invasive blood pressure), respiratory rate, and temperature.\nQ: Is this suitable for home ICU? A: Yes, five-para monitors are commonly used in home ICU and home healthcare settings for continuous patient monitoring. Ensure a trained caregiver is available to interpret the readings.\nQ: Does it have alarms? A: Yes, patient monitors have configurable alarm limits for each parameter to alert caregivers when readings fall outside safe ranges.",
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0499_BPL_Five_Parameter_Monitor.jpg"
   },
   {
     "id": "SKR-FIVPARAON",
@@ -1822,7 +1822,7 @@
     "faqs": "Q: How is the SKANRAY monitor different from BPL? A: Compare specific features like display size, battery life, alarm configuration, data storage, and connectivity. Both are reputable Indian medical equipment brands. Selection often depends on specific clinical requirements and local service support.\nQ: Can it be connected to a central monitoring station? A: Some models support wired or wireless connectivity to central monitoring systems. Check the specific model's networking capabilities.",
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0501_Skanray_Five_Parameter_Monitor.png"
   },
   {
     "id": "MND-FIVPARAON",
@@ -1847,7 +1847,7 @@
     "faqs": "Q: What distinguishes the Mindray five-para monitor? A: Mindray is a global medical device company. Their monitors typically feature high-resolution displays, advanced alarm management, and extensive connectivity options. Compare specific model features for your clinical needs.\nQ: Is Mindray better than BPL for monitoring? A: Both are reputable manufacturers. Mindray may offer more advanced features in premium models. Compare specific models based on your clinical requirements, budget, and local service availability.",
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0500_Mindray_Five_Parameter_Monitor.jpg"
   },
   {
     "id": "GEN-FIVPARAON",
@@ -1872,7 +1872,7 @@
     "faqs": "Q: How does the Contec monitor compare to BPL or Mindray? A: Contec offers cost-effective monitoring solutions. While adequate for basic monitoring, compare display quality, alarm sophistication, battery life, and build durability with premium brands for your specific clinical requirements.",
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0503_Five_Parameter_Monitor_Generic.jpg"
   },
   {
     "id": "RSM-FLOST25SY",
@@ -2047,7 +2047,7 @@
     "faqs": "Q: What is the Indostim DT Stimulator used for? A: The Indostim is an electrical nerve/muscle stimulation device used in physiotherapy for pain management (TENS mode), muscle strengthening (EMS mode), and rehabilitation. It delivers programmed electrical impulses through electrode pads.\nQ: Is this for home use or clinical use? A: Both. The device is portable enough for home physiotherapy when prescribed by a physiotherapist. Ensure you are trained on proper electrode placement and intensity settings.\nQ: How do I set the intensity? A: Start at the lowest setting and gradually increase until you feel a comfortable tingling or muscle contraction. Never set intensity so high that it causes pain.",
     "use_case": "Neurological & Physiotherapy",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0508_Indostim_DT_Electrical_Stimulator.jpg"
   },
   {
     "id": "TYN-KNEIMM19-L",
@@ -2072,7 +2072,7 @@
     "faqs": "Q: What does 19\" refer to in the Knee Immobilizer? A: The 19\" refers to the length of the immobilizer from the thigh to the ankle. This is the standard adult length. Different lengths are available for varying leg lengths.\nQ: How long do I need to wear the knee immobilizer? A: Duration depends on your injury and surgeon's recommendation — typically 2–6 weeks for ligament injuries and 4–8 weeks post-surgery.\nQ: Can I walk while wearing it? A: Yes, the immobilizer keeps the knee straight while allowing limited mobility with crutches or a walker. Follow your physician's weight-bearing instructions.\nQ: How do I choose between L, M, S, and XL? A: Measure the circumference of your thigh at mid-point. Large (L) fits thigh circumferences of approximately 46–52 cm. Check Tynor's sizing chart for exact measurements.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0520_Knee_Immobiliser_19_48cm.jpg"
   },
   {
     "id": "TYN-KNEIMM19-M",
@@ -2097,7 +2097,7 @@
     "faqs": "Q: How is the Medium different from the Large? A: The Medium fits a smaller thigh circumference (approximately 40–46 cm). The length and immobilization function are the same. Use Tynor's sizing chart to select the correct fit.\nQ: Can I wear it over clothing? A: The immobilizer can be worn over thin clothing, but direct skin contact provides better stabilisation and prevents slipping.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0520_Knee_Immobiliser_19_48cm.jpg"
   },
   {
     "id": "TYN-KNEIMM19-S",
@@ -2122,7 +2122,7 @@
     "faqs": "Q: Will the Small size fit a teenager? A: The Small fits thigh circumferences of approximately 34–40 cm, which may suit some teenagers. Measure and compare with Tynor's sizing chart rather than selecting by age.\nQ: How do I wash the knee immobilizer? A: Hand wash with mild soap and water. Remove all metal stays before washing. Air dry flat — do not machine wash or tumble dry.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0520_Knee_Immobiliser_19_48cm.jpg"
   },
   {
     "id": "TYN-KNEIMM19-XL",
@@ -2147,7 +2147,7 @@
     "faqs": "Q: When do I need the XL size? A: The XL fits thigh circumferences above approximately 52 cm. It provides the same 19\" length and immobilization as other sizes but accommodates larger leg dimensions.\nQ: Is the immobilizer adjustable? A: Yes, Tynor knee immobilizers have multiple Velcro straps that allow adjustment for a secure, customised fit around the leg.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0520_Knee_Immobiliser_19_48cm.jpg"
   },
   {
     "id": "RSM-LUM100VP",
@@ -2297,7 +2297,7 @@
     "faqs": "Q: What type of mattress comes with a manual hospital bed? A: Standard hospital bed mattresses are typically 4–6 inch medical-grade foam mattresses. For pressure-relief needs, consider upgrading to an alternating-pressure air mattress.\nQ: How do I maintain the mattress? A: Use a waterproof mattress cover. Clean the surface with mild disinfectant. Inspect regularly for wear, sagging, or damage. Replace if the foam no longer provides adequate support.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0497_Foam_Mattress_For_Manual_Bed.jpg"
   },
   {
     "id": "PLM-NASPRONG",
@@ -2397,7 +2397,7 @@
     "faqs": "Q: What does the 5-metre tubing provide? A: The 5-metre extension allows the patient to move around the room while connected to the oxygen concentrator, providing greater mobility than standard 2-metre cannulas.\nQ: Does longer tubing affect oxygen delivery? A: At low flow rates (1–3 LPM), 5-metre tubing delivers oxygen effectively. At higher flow rates, there may be minimal delay. Your physician's prescription accounts for tubing length.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0488_Nasal_Oxygen_Cannula_Prong.jpg"
   },
   {
     "id": "GEN-NASPRONG-5MT",
@@ -2422,7 +2422,7 @@
     "faqs": "Q: Is the generic 5-metre prong compatible with branded concentrators? A: Yes, standard connectors are universal. The 5-metre length provides mobility regardless of the concentrator brand.\nQ: Can I cut the tubing to a shorter length? A: It is not recommended to cut medical tubing as this may create uneven edges or affect the connection. Use the appropriate length for your needs.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0488_Nasal_Oxygen_Cannula_Prong.jpg"
   },
   {
     "id": "HSP-NEBMASPO",
@@ -3022,7 +3022,7 @@
     "faqs": "Q: What is the difference between a recliner bed and a hospital bed? A: A recliner bed combines the adjustability of a recliner chair with a bed-length sleeping surface. It is ideal for patients who need elevated head positioning (e.g., respiratory conditions, GERD) and cannot use a standard flat bed.\nQ: Does it require assembly? A: Check with the supplier. Some recliner beds arrive pre-assembled; others require basic setup.\nQ: What is the weight capacity? A: Verify the specific model's rated weight capacity. Standard models typically support 100–150 kg.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0495_Motorized_Recliner_Bed.jpg"
   },
   {
     "id": "KRM-RECWHECO",
@@ -3272,7 +3272,7 @@
     "faqs": "Q: What is the Stellar 100? A: The ResMed Stellar 100 is a portable life-support ventilator for invasive and non-invasive ventilation, designed for patients with chronic respiratory failure, neuromuscular disease, and other conditions requiring long-term ventilatory support.\nQ: Can this be used for invasive ventilation? A: Yes, the Stellar 100 supports both invasive (via tracheostomy) and non-invasive (via mask) ventilation modes.\nQ: Is this suitable for home use? A: Yes, when prescribed and set up by a pulmonologist. The Stellar series is designed for home and institutional ventilation.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0484_ResMed_Stellar_100_Ventilator.jpg"
   },
   {
     "id": "RSM-STE150AS",
@@ -3297,7 +3297,7 @@
     "faqs": "Q: What is the difference between Stellar 100 and 150? A: The Stellar 150 offers higher maximum pressure capability and additional ventilation modes compared to the 100. It is designed for patients requiring more aggressive ventilatory support.\nQ: What does 'G2' mean? A: G2 refers to the second generation of the Stellar 150, which may include updated algorithms, improved display, and enhanced connectivity features.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0485_ResMed_Stellar_150_Ventilator.jpg"
   },
   {
     "id": "TYN-STOKNEH-L",
@@ -3322,7 +3322,7 @@
     "faqs": "Q: What are compression stockings used for? A: Compression stockings apply graduated pressure to the legs, promoting blood flow back to the heart. They help prevent DVT, manage varicose veins, reduce leg swelling, and support post-surgical recovery.\nQ: What compression level do Tynor stockings provide? A: Check the specific model — Tynor offers Class I (mild), Class II (moderate), and Class III (firm) compression. Your physician will prescribe the appropriate class.\nQ: How do I measure for the correct size? A: For knee-high stockings, measure calf circumference at the widest point and ankle circumference. Compare with Tynor's sizing chart. Large typically fits calf circumferences of 38–46 cm.",
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0490_Tynor_Compression_Stocking_Knee_High.jpg"
   },
   {
     "id": "TYN-STOKNEH-M",
@@ -3422,7 +3422,7 @@
     "faqs": "Q: When do I need XL compression stockings? A: XL fits calf circumferences above approximately 46 cm. Using the correct size ensures the graduated compression profile is maintained throughout the stocking length.\nQ: Can I buy compression stockings without a prescription? A: Mild compression (Class I) stockings are available over-the-counter. Class II and III stockings should be used under medical guidance.",
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0490_Tynor_Compression_Stocking_Knee_High.jpg"
   },
   {
     "id": "TYN-STOTHIH-L",
@@ -3847,7 +3847,7 @@
     "faqs": "\"Q: Is there a difference between 'Infarded' and 'Infrared' thermometers? A: These refer to the same product type — infrared thermometers. The name variation is a listing difference. Verify the specific model's features and accuracy specifications.\nQ: Can I use it on objects? A: Many infrared thermometers have a surface temperature mode for measuring objects (bottles, bath water). Check if your model supports dual mode (body and surface).\"",
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0502_Dr_Trust_Infrared_Thermometer.jpg"
   },
   {
     "id": "GEN-THRFUNBE-2",
@@ -3872,7 +3872,7 @@
     "faqs": "Q: What is the difference between the rental and sale three-function beds? A: The same physical product — the distinction is commercial. Rental is for short-term recovery; sale is for long-term or permanent home care needs. Compare total cost over the expected usage period.\nQ: Can I switch from rental to purchase? A: Discuss with the supplier. Some providers offer rent-to-own arrangements where rental payments can be credited toward purchase.",
     "use_case": "Mobility & Patient Comfort",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0493_Three_Function_Electric_Bed.jpg"
   },
   {
     "id": "NLK-URIBEDPA",
@@ -4272,7 +4272,7 @@
     "faqs": "Q: When do I need an XL abdominal belt? A: XL fits waist circumferences of approximately 100–110 cm. Measure at the navel and compare with Tynor's sizing chart. Using the correct size ensures effective compression without restricting breathing.\nQ: Can I wear it during exercise? A: Yes, the belt provides core support during light activities. Avoid during strenuous exercise unless specifically recommended by your physician or physiotherapist.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0512_Abdominal_Belt.jpg"
   },
   {
     "id": "TYN-ABDOBEL-L",
@@ -4347,7 +4347,7 @@
     "faqs": "Q: What waist size does XXXL accommodate? A: XXXL fits the largest waist circumferences (approximately 120–140 cm). Verify exact measurements with Tynor's sizing chart. Ensure the belt provides adequate coverage and compression across the entire abdomen.\nQ: Is the compression level the same across all sizes? A: Yes, the compression technology is consistent. Larger sizes simply accommodate larger body dimensions while maintaining the same therapeutic compression profile.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0512_Abdominal_Belt.jpg"
   },
   {
     "id": "TYN-ABDOBIN-M",
@@ -4497,7 +4497,7 @@
     "faqs": "Q: What is the AirFit P10? A: The ResMed AirFit P10 is a nasal pillow CPAP mask — one of the quietest and lightest masks available. It features two small cushion pillows that sit at the nostrils rather than covering the nose.\nQ: Is it suitable for mouth breathers? A: No, the P10 covers only the nostrils. Mouth breathers need a chin strap addition or a full-face mask.\nQ: How often should I replace the nasal pillow cushion? A: Replace every 2 weeks for optimal seal and hygiene. The frame and headgear last longer (3–6 months).",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0480_ResMed_AirFit_P10_Nasal_Pillow_Mask.png"
   },
   {
     "id": "TYN-ANKLBIN-L",
@@ -5197,7 +5197,7 @@
     "faqs": "Q: What is a soft cervical collar? A: A soft cervical collar provides gentle support and warmth to the neck, limiting excessive movement. It is used for mild neck pain, whiplash recovery, and minor cervical strains.\nQ: How is it different from a hard collar? A: A soft collar allows some neck movement and is used for mild conditions. A hard (Philadelphia) collar provides rigid immobilisation for more serious injuries like fractures or post-surgery.\nQ: How do I choose the size? A: Measure the neck circumference. Large fits approximately 40–46 cm. Check Tynor's sizing chart.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0513_Cervical_Collar_Soft.jpg"
   },
   {
     "id": "TYN-CERCOLSO-M",
@@ -5222,7 +5222,7 @@
     "faqs": "Q: Is Medium the most prescribed size? A: Medium fits neck circumferences of approximately 34–40 cm. Proper sizing ensures effective support without restricting breathing or swallowing.\nQ: How long should I wear it? A: Typically 1–3 weeks for mild strain. Prolonged use can weaken neck muscles. Follow your physician's tapering schedule.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0513_Cervical_Collar_Soft.jpg"
   },
   {
     "id": "TYN-CERCOLSO-S",
@@ -5247,7 +5247,7 @@
     "faqs": "Q: When is the Small size appropriate? A: Small fits neck circumferences of approximately 28–34 cm, suitable for smaller adults or older adolescents.\nQ: Can I sleep with a soft cervical collar? A: Yes, if recommended by your physician. It can help maintain proper neck alignment during sleep.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0513_Cervical_Collar_Soft.jpg"
   },
   {
     "id": "TYN-CERHARCO-M",
@@ -5272,7 +5272,7 @@
     "faqs": "Q: What is a Philadelphia cervical collar? A: A Philadelphia collar is a rigid, two-piece cervical collar that provides strong immobilisation of the cervical spine. It limits flexion, extension, and rotation, used for cervical fractures, post-surgical stabilisation, and severe cervical injuries.\nQ: How do I apply it? A: Place the front piece under the chin, wrap the back piece around the neck, and secure the Velcro straps. The chin should rest comfortably in the front support.\nQ: How do I measure for size? A: Measure from the lower jaw to the top of the sternum (chin-to-chest distance). Medium fits approximately 8–10 cm. Check Tynor's sizing chart.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0514_Cervical_Orthosis_Philadelphia_Ethafoam.jpg"
   },
   {
     "id": "TYN-CERHARCO-L",
@@ -5297,7 +5297,7 @@
     "faqs": "Q: Is the Large Philadelphia collar for taller patients? A: Large fits longer neck lengths (approximately 10–12 cm chin-to-chest). Proper sizing is critical for effective immobilisation — too tall restricts breathing, too short allows movement.\nQ: Can I shower with it? A: Remove for hygiene only if medically permitted. Clean the collar with mild soap and water. Have an assistant stabilise the neck during collar removal if required by your physician.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0514_Cervical_Orthosis_Philadelphia_Ethafoam.jpg"
   },
   {
     "id": "TYN-CERHARCO-S",
@@ -5322,7 +5322,7 @@
     "faqs": "Q: When is a Small Philadelphia collar used? A: Small fits shorter neck lengths (approximately 6–8 cm), suitable for smaller adults, adolescents, or patients with short necks. Measurement is critical for rigid collars.\nQ: How long do I wear a Philadelphia collar? A: Typically 6–12 weeks for cervical fractures. Duration depends on the injury severity and healing progress as assessed by imaging.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0514_Cervical_Orthosis_Philadelphia_Ethafoam.jpg"
   },
   {
     "id": "TYN-CHEBIN-L",
@@ -5422,7 +5422,7 @@
     "faqs": "Q: When do I need an XL chest binder? A: XL fits chest circumferences above approximately 100 cm. Using the correct size ensures therapeutic compression without excessive restriction.\nQ: Can I wear it during physiotherapy? A: Yes, chest binders can be worn during breathing exercises and coughing practice to reduce pain. Your physiotherapist may adjust the tightness during sessions.",
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0505_Tynor_Chest_Binder.jpg"
   },
   {
     "id": "TYN-CLBRAVE-CH",
@@ -5447,7 +5447,7 @@
     "faqs": "Q: What is a clavicle brace? A: A clavicle brace (figure-of-eight brace) supports the clavicle (collarbone) after fractures, pulls the shoulders back to promote proper alignment, and helps correct rounded shoulder posture. The child version is sized for paediatric patients.\nQ: How long does my child need to wear it? A: Typically 3–6 weeks for clavicle fractures in children. Follow the orthopaedic surgeon's guidance as children heal faster than adults.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0515_Clavicle_Brace_with_Fastening_Tape.jpg"
   },
   {
     "id": "TYN-CLBRAFA-L",
@@ -5472,7 +5472,7 @@
     "faqs": "Q: How is the clavicle brace with fastening tape different? A: Fastening tape variants use Velcro closure for easy adjustment. Large fits shoulder circumferences of approximately 80–90 cm (measured around both shoulders).\nQ: Should I wear it over or under clothing? A: Can be worn either way. Direct skin contact provides better positioning, but a thin undershirt can prevent skin irritation from prolonged wear.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0515_Clavicle_Brace_with_Fastening_Tape.jpg"
   },
   {
     "id": "TYN-CLBRAFA-M",
@@ -5497,7 +5497,7 @@
     "faqs": "Q: Is Medium the most common clavicle brace size? A: Medium fits shoulder circumferences of approximately 70–80 cm. Measure around both shoulders at the level of the armpits.\nQ: How tight should the clavicle brace be? A: Tight enough to pull the shoulders back into proper alignment, but not so tight that it causes numbness, tingling, or restricts breathing. Adjust throughout the day as needed.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0515_Clavicle_Brace_with_Fastening_Tape.jpg"
   },
   {
     "id": "TYN-CLBRAFA-S",
@@ -5522,7 +5522,7 @@
     "faqs": "Q: When is a Small clavicle brace needed? A: Small fits shoulder circumferences of approximately 60–70 cm, suitable for smaller adults, adolescents, or petite individuals.\nQ: Can I use a clavicle brace for posture correction? A: Yes, clavicle braces are also used to correct forward shoulder posture. Wear for progressively longer periods while strengthening the back muscles through exercises.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0515_Clavicle_Brace_with_Fastening_Tape.jpg"
   },
   {
     "id": "TYN-CLBRAFA-XL",
@@ -5547,7 +5547,7 @@
     "faqs": "Q: When do I need an XL clavicle brace? A: XL fits shoulder circumferences above approximately 90 cm. Proper sizing ensures the figure-of-eight design pulls the shoulders back effectively without excess material.\nQ: Can I shower with it? A: Remove before showering. Clean the brace with mild soap and water, air dry completely before reapplying.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0515_Clavicle_Brace_with_Fastening_Tape.jpg"
   },
   {
     "id": "ADR-COCCUS",
@@ -5597,7 +5597,7 @@
     "faqs": "Q: What is an elastic wrist splint? A: A Tynor elastic wrist splint provides support and partial immobilisation to the wrist while allowing limited finger movement. It is used for carpal tunnel syndrome, wrist sprains, repetitive strain injuries, and post-fracture support.\nQ: Why are there left and right versions? A: Wrist splints have a metal or plastic stay that curves along one side of the wrist. Left and right versions ensure the stay is positioned correctly for each hand.\nQ: How do I measure for Large? A: Measure wrist circumference. Large typically fits 18–20 cm. Check Tynor's sizing chart.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAWRISP-M",
@@ -5622,7 +5622,7 @@
     "faqs": "Q: Is Medium the most common wrist splint size? A: Medium fits wrist circumferences of approximately 16–18 cm. Always measure rather than estimate for effective support and comfort.\nQ: Can I type while wearing the wrist splint? A: Limited typing is possible as the splint keeps the wrist neutral, but finger movement is preserved. This position actually helps carpal tunnel syndrome.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAWRISP-XL",
@@ -5647,7 +5647,7 @@
     "faqs": "Q: When is XL needed for a wrist splint? A: XL fits wrist circumferences above approximately 20 cm. Proper sizing ensures the metal stay aligns correctly with the wrist joint.\nQ: Can I wear the splint during sleep? A: Yes, wearing a wrist splint at night is commonly recommended for carpal tunnel syndrome as it prevents wrist flexion during sleep that compresses the median nerve.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAWRSPR-L",
@@ -5672,7 +5672,7 @@
     "faqs": "Q: Is the right-hand Large the same as the left-hand Large? A: The size is the same, but the splint is mirror-imaged. The metal stay curves along the opposite side. Always purchase the correct hand-specific version.\nQ: How do I care for the splint? A: Remove the metal stay, hand wash the fabric with mild soap, air dry flat. Replace the stay once dry.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAWRSPR-M",
@@ -5697,7 +5697,7 @@
     "faqs": "Q: Can I switch a left splint to the right hand? A: No, the metal stay and contour are designed specifically for each hand. Using the wrong hand version provides incorrect support and may worsen the condition.\nQ: How long should I wear it? A: Follow your physician's instructions. For carpal tunnel: often at night and during aggravating activities. For sprains: typically continuous wear for 2–4 weeks.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAWRSPR-XL",
@@ -5722,7 +5722,7 @@
     "faqs": "Q: When is an XL right wrist splint needed? A: XL fits larger wrist circumferences (above approximately 20 cm). Ensure you order the correct hand designation (Right) in the correct size.\nQ: Are Tynor wrist splints covered by insurance? A: Coverage depends on your insurance policy and medical prescription. Most plans cover prescribed orthopedic supports with a physician's recommendation.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0517_Elastic_Wrist_Splint.jpg"
   },
   {
     "id": "TYN-ELAKNSU-L",
@@ -5747,7 +5747,7 @@
     "faqs": "Q: What is an elastic knee support? A: An elastic knee support provides compression and warmth to the knee joint, reducing mild pain, swelling, and providing stability during activities. Unlike a knee brace with hinges, it offers basic support for mild conditions.\nQ: How do I measure for Large? A: Measure the knee circumference at the centre of the kneecap. Large fits approximately 38–42 cm.\nQ: Can I wear it during sports? A: Yes, elastic knee supports are commonly worn during sports for mild knee instability and to provide warmth and compression.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0516_Elastic_Knee_Support.jpg"
   },
   {
     "id": "TYN-ELAKNSU-M",
@@ -5772,7 +5772,7 @@
     "faqs": "Q: Is Medium the standard size for elastic knee support? A: Medium fits knee circumferences of approximately 34–38 cm. Measure at the centre of the kneecap while the knee is slightly bent.\nQ: How is this different from a knee brace? A: Elastic knee supports provide compression and basic support. Knee braces offer more rigid stabilisation with stays or hinges for more serious conditions.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0516_Elastic_Knee_Support.jpg"
   },
   {
     "id": "TYN-ELAKNSU-S",
@@ -5797,7 +5797,7 @@
     "faqs": "Q: Will the Small elastic knee support fit a teenager? A: Small fits knee circumferences of approximately 30–34 cm. Measure rather than select by age.\nQ: Does it have an open or closed patella design? A: Check the specific model. Open patella designs have a hole over the kneecap for better fit and patellar tracking. Closed designs provide uniform compression.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0516_Elastic_Knee_Support.jpg"
   },
   {
     "id": "TYN-ELAKNSU-XL",
@@ -5822,7 +5822,7 @@
     "faqs": "Q: When do I need an XL elastic knee support? A: XL fits knee circumferences above approximately 42 cm. Using the correct size ensures effective compression without restricting blood flow.\nQ: Can I wear two knee supports simultaneously? A: Wearing supports on both knees is fine if needed. Each should be independently sized to the respective knee.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0516_Elastic_Knee_Support.jpg"
   },
   {
     "id": "TYN-ELBOBRA-L",
@@ -5972,7 +5972,7 @@
     "faqs": "Q: What does the EverFlo inlet filter do? A: The inlet filter captures dust and airborne particles before they enter the oxygen concentrator, protecting internal components and maintaining oxygen purity. Clean or replace regularly for optimal concentrator performance.\nQ: Is this a generic or OEM filter? A: This is a generic replacement filter. Verify dimensions and material compatibility with the Philips EverFlo before purchase.\nQ: How often should I replace it? A: Replace every 3–6 months. Clean the external gross particle filter weekly by washing with water and drying completely.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0483_Philips_EverFlo_Inlet_Filter.jpg"
   },
   {
     "id": "PHL-EVEINLFIL",
@@ -5997,7 +5997,7 @@
     "faqs": "Q: Is the Philips-branded filter better than generic? A: Philips OEM filters guarantee compatibility and filtration specifications. Generic filters may offer adequate performance at lower cost — compare filtration rating and dimensions.\nQ: Can a dirty filter affect oxygen purity? A: Yes, a clogged or deteriorated filter reduces airflow and can decrease oxygen concentration output. Regular filter maintenance is essential.",
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0483_Philips_EverFlo_Inlet_Filter.jpg"
   },
   {
     "id": "TYN-FINCOT-L",
@@ -6297,7 +6297,7 @@
     "faqs": "Q: What is a silicone full insole? A: A Tynor silicone full insole provides comprehensive cushioning and shock absorption across the entire foot. It helps relieve foot pain, plantar fasciitis, and provides comfort during prolonged standing or walking.\nQ: How do I choose the size? A: Match the insole to your shoe size. Large fits approximately shoe sizes 8–10 (UK). Trim if needed for a precise fit.\nQ: Can I use insoles with arch support as well? A: Yes, silicone insoles can be used alongside arch supports for combined cushioning and arch correction.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0518_Insole_Full_Silicone_Pair.jpg"
   },
   {
     "id": "TYN-INSFUL-M",
@@ -6322,7 +6322,7 @@
     "faqs": "Q: Is Medium the most popular insole size? A: Medium fits approximately shoe sizes 6–8 (UK). Most insoles can be trimmed for a more customised fit.\nQ: How long do silicone insoles last? A: With regular use, silicone insoles last 6–12 months. Replace when the silicone becomes permanently compressed or cracked.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0518_Insole_Full_Silicone_Pair.jpg"
   },
   {
     "id": "TYN-INSFUL-S",
@@ -6347,7 +6347,7 @@
     "faqs": "Q: When is a Small insole appropriate? A: Small fits approximately shoe sizes 4–6 (UK). Silicone insoles can usually be trimmed slightly for a more precise fit.\nQ: Can I wash them? A: Yes, wash with mild soap and water. Air dry completely before reinserting into shoes.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0518_Insole_Full_Silicone_Pair.jpg"
   },
   {
     "id": "TYN-INSFUL-XL",
@@ -6372,7 +6372,7 @@
     "faqs": "Q: When do I need an XL insole? A: XL fits shoe sizes above approximately 10 (UK). The insole must cover the full shoe bottom for even weight distribution and cushioning.\nQ: Can I use the same insoles in different shoes? A: Yes, silicone insoles are transferable between shoes of similar size.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0518_Insole_Full_Silicone_Pair.jpg"
   },
   {
     "id": "TYN-KCAPOPPA-L",
@@ -6397,7 +6397,7 @@
     "faqs": "Q: What is an open patella knee cap? A: An open patella knee cap is a compressive knee sleeve with a hole (opening) over the kneecap. This design reduces patellar pressure, improves tracking, and provides compression around the knee joint.\nQ: How is it different from a closed patella knee cap? A: The open design reduces pressure on the kneecap itself, which is beneficial for patellofemoral syndrome, patellar tracking issues, and anterior knee pain.\nQ: How do I measure for Large? A: Measure knee circumference at the centre of the kneecap. Large fits approximately 38–42 cm.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0519_Knee_Cap_Open_Patella.jpg"
   },
   {
     "id": "TYN-KCAPOPPA-M",
@@ -6422,7 +6422,7 @@
     "faqs": "Q: Is Medium the standard open patella size? A: Medium fits knee circumferences of approximately 34–38 cm. Accurate measurement is key for effective compression and patellar alignment.\nQ: Can I wear it during all activities? A: Yes, open patella knee caps can be worn during daily activities, walking, sports, and exercise.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0519_Knee_Cap_Open_Patella.jpg"
   },
   {
     "id": "TYN-KCAPOPPA-S",
@@ -6447,7 +6447,7 @@
     "faqs": "Q: When is the Small knee cap used? A: Small fits knee circumferences of approximately 30–34 cm. Select the smallest size that fits without rolling or bunching.\nQ: Can I wear it under clothing? A: Yes, knee caps are thin enough to wear under trousers or leggings without visible bulging.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0519_Knee_Cap_Open_Patella.jpg"
   },
   {
     "id": "TYN-KCAPOPPA-XL",
@@ -6472,7 +6472,7 @@
     "faqs": "Q: When do I need an XL open patella knee cap? A: XL fits knee circumferences above approximately 42 cm. Ensure the opening aligns properly with the kneecap after application.\nQ: How long do knee caps last? A: With regular use, elastic knee caps maintain effective compression for 3–6 months. Replace when the elastic loses tension.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0519_Knee_Cap_Open_Patella.jpg"
   },
   {
     "id": "GEN-KINTAP",
@@ -6897,7 +6897,7 @@
     "faqs": "Q: When is a 22\" Medium immobiliser used? A: Medium 22\" fits average thigh circumferences (approximately 40–46 cm) in patients who are taller or where the surgeon prefers maximum-length immobilisation.\nQ: Can I choose between 14\", 19\", and 22\"? A: The length is typically prescribed by your surgeon based on the injury, surgical approach, and your leg length.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0521_Knee_Immobiliser_22_56cm.jpg"
   },
   {
     "id": "TYN-KNEIMM22-S",
@@ -6922,7 +6922,7 @@
     "faqs": "Q: When is the Small 22\" immobiliser appropriate? A: Small 22\" fits smaller thigh circumferences (approximately 34–40 cm) on taller patients. The combination of small width and long length suits slender, tall individuals.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0521_Knee_Immobiliser_22_56cm.jpg"
   },
   {
     "id": "TYN-KNEIMM22-XL",
@@ -6947,7 +6947,7 @@
     "faqs": "Q: When is the XL 22\" immobiliser used? A: When thigh circumference falls in the Extra Large range. The 22-inch length provides maximum full-leg immobilisation.\nQ: How do I size it? A: Measure thigh circumference approximately 6 inches above the kneecap and refer to the Tynor sizing chart.\nQ: Can I sleep with it on? A: Yes, it can be worn overnight for post-surgical immobilisation; loosen straps slightly for comfort.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0521_Knee_Immobiliser_22_56cm.jpg"
   },
   {
     "id": "TYN-KNEIMML-L",
@@ -6997,7 +6997,7 @@
     "faqs": "Q: What is a hinged knee support? A: A hinged knee support has bilateral metal or polycentric hinges that provide medial-lateral stability while allowing controlled flexion and extension. It is used for moderate to severe ligament injuries, post-meniscus surgery, and significant knee instability.\nQ: How is it different from a regular knee cap? A: Hinged supports provide substantially more stability through rigid side supports. Regular knee caps provide only compression.\nQ: How do I measure for Large? A: Measure knee circumference at the kneecap centre. Large fits approximately 38–42 cm.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0522_Knee_Support_Hinged_Neoprene.jpg"
   },
   {
     "id": "TYN-KNESUPH-M",
@@ -7022,7 +7022,7 @@
     "faqs": "Q: Is Medium the most common hinged knee support size? A: Medium fits knee circumferences of approximately 34–38 cm. Accurate sizing ensures the hinges align with the knee joint axis for proper biomechanical support.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0522_Knee_Support_Hinged_Neoprene.jpg"
   },
   {
     "id": "TYN-KNESUPH-S",
@@ -7047,7 +7047,7 @@
     "faqs": "Q: When is the Small hinged knee support used? A: When knee circumference falls in the Small range on the Tynor sizing chart — typically for slimmer or younger adults.\nQ: What do the hinges do? A: Bilateral metal hinges allow controlled flexion and extension while blocking harmful lateral movement.\nQ: Can I wear it during sports? A: Yes, it provides dynamic support during activities while protecting against re-injury.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0522_Knee_Support_Hinged_Neoprene.jpg"
   },
   {
     "id": "TYN-KNESUPH-XL",
@@ -7072,7 +7072,7 @@
     "faqs": "Q: When do I need an XL hinged knee support? A: XL fits knee circumferences above approximately 42 cm. Larger sizes maintain the same hinge mechanism and stability features in a wider form factor.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0522_Knee_Support_Hinged_Neoprene.jpg"
   },
   {
     "id": "TYN-LSBEL-L",
@@ -7097,7 +7097,7 @@
     "faqs": "Q: What is an LS belt? A: An LS (lumbosacral) belt provides compression and support to the lower back (lumbar and sacral region). It is used for lower back pain, disc problems, muscle strain, and post-operative lumbar support.\nQ: How do I measure for Large? A: Measure waist circumference at the navel. Large fits approximately 90–100 cm.\nQ: How long should I wear it? A: Typically during activities and while standing/sitting. Remove during sleep. Prolonged continuous use can weaken back muscles — combine with exercise as recommended.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0523_Lumbo_Sacral_Belt_Black.jpg"
   },
   {
     "id": "TYN-LSBEL-M",
@@ -7122,7 +7122,7 @@
     "faqs": "Q: Is Medium the most common LS belt size? A: Medium fits waist circumferences of approximately 80–90 cm. Proper fit ensures the belt supports the lumbar spine without riding up or down.\nQ: Can I wear it while driving? A: Yes, wearing an LS belt while driving can provide lumbar support during long drives. Adjust for comfort while seated.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0523_Lumbo_Sacral_Belt_Black.jpg"
   },
   {
     "id": "TYN-LSBEL-S",
@@ -7147,7 +7147,7 @@
     "faqs": "Q: When is a Small LS belt used? A: Small fits waist circumferences of approximately 70–80 cm. Proper sizing is essential for the belt to sit correctly at the lumbosacral junction.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0523_Lumbo_Sacral_Belt_Black.jpg"
   },
   {
     "id": "TYN-LSBEL-XL",
@@ -7172,7 +7172,7 @@
     "faqs": "Q: When do I need an XL LS belt? A: XL fits waist circumferences of approximately 100–110 cm. The belt must wrap completely around the waist with adequate Velcro overlap for secure closure.\nQ: Can I exercise while wearing it? A: Light exercise is fine. For core strengthening exercises, your physiotherapist may recommend removing the belt to activate the stabilising muscles.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0523_Lumbo_Sacral_Belt_Black.jpg"
   },
   {
     "id": "TYN-LSBEL-XXL",
@@ -7197,7 +7197,7 @@
     "faqs": "Q: When is an XXL LS belt needed? A: XXL fits waist circumferences above approximately 110 cm. Ensure adequate Velcro overlap for secure fastening.\nQ: Will an LS belt cure my back pain? A: An LS belt manages symptoms by providing support and reducing spinal load. It is not a cure. Combine with physiotherapy, exercise, and lifestyle modifications for long-term improvement.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0523_Lumbo_Sacral_Belt_Black.jpg"
   },
   {
     "id": "TYN-MALFINSPL",
@@ -7297,7 +7297,7 @@
     "faqs": "Q: What is a ROM knee brace? A: A ROM (Range of Motion) knee brace allows controlled, adjustable knee flexion and extension. It has dial or strap mechanisms to set specific angles, used post-ACL/PCL/meniscus surgery to gradually increase knee movement during rehabilitation.\nQ: How do I set the motion range? A: Your surgeon or physiotherapist will prescribe specific flexion/extension limits. Adjust the dial locks on both sides of the brace to the prescribed angles. These are progressively increased as healing allows.\nQ: Is this different from a hinged knee support? A: Yes, ROM braces have adjustable range limiters. Standard hinged supports allow full range but provide stability. ROM braces restrict range to protect healing structures.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0524_ADJUSTABLE_ROM_KNEE_BRACE.jpg"
   },
   {
     "id": "TYN-ROMKNEBR-2",
@@ -7322,7 +7322,7 @@
     "faqs": "Q: What does 'UN' mean in the ROM knee brace? A: 'UN' likely refers to Universal — designed to fit either the left or right knee. This eliminates the need for hand-specific ordering.\nQ: Is the Universal version as effective as side-specific models? A: Yes, universal ROM braces provide the same adjustable range-of-motion control. Ensure the hinge alignment matches your knee joint axis during fitting.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0524_ADJUSTABLE_ROM_KNEE_BRACE.jpg"
   },
   {
     "id": "TYN-ROMELBL",
@@ -7797,7 +7797,7 @@
     "faqs": "Q: When is an XXL compression stocking needed? A: XXL fits the largest calf circumferences (above approximately 50 cm). Proper sizing in larger sizes is critical to maintain the graduated compression profile.\nQ: Are XXL stockings harder to put on? A: Larger sizes can be more challenging. Use a stocking donning aid for easier application. Avoid rolling or bunching the fabric.",
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0490_Tynor_Compression_Stocking_Knee_High.jpg"
   },
   {
     "id": "GEN-SUCCONN",
@@ -7822,7 +7822,7 @@
     "faqs": "Q: What is a suction connector? A: A suction connector joins the suction catheter to the suction machine tubing. It provides a secure, airtight connection for effective suctioning.\nQ: Is it universal? A: Most connectors use standard sizes. Verify the diameter matches both your suction machine tubing and the catheter.",
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0506_Romsons_Suction_Connector.jpg"
   },
   {
     "id": "TYN-TAYLONBR",
@@ -7847,7 +7847,7 @@
     "faqs": "Q: What is a Taylor Long Brace? A: A Taylor brace (thoracolumbosacral orthosis / TLSO) provides rigid support to the thoracic and lumbar spine. The 'Long Special' variant covers an extended area for maximum spinal immobilisation after fractures, surgery, or severe spinal conditions.\nQ: How long do I need to wear it? A: Typically 8–16 weeks for spinal fractures. Duration is determined by imaging-confirmed healing progress and your surgeon's assessment.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0525_Taylor_s_Brace.jpg"
   },
   {
     "id": "TYN-TAYLBRA",
@@ -7872,7 +7872,7 @@
     "faqs": "Q: What is a standard Taylor's Brace? A: A Taylor's brace is a posterior spinal orthosis with lateral and posterior metal stays that limits thoracolumbar flexion. Used for compression fractures, osteoporotic fractures, and post-surgical spinal support.\nQ: Is it comfortable? A: Taylor braces are functional devices. Proper fitting and gradual wearing-in improves comfort. Padding can be added at pressure points.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0525_Taylor_s_Brace.jpg"
   },
   {
     "id": "TYN-TAYLONUN",
@@ -7897,7 +7897,7 @@
     "faqs": "Q: What does 'UNI' mean in the Taylor brace? A: Universal — designed to fit either side, without left/right specificity. The long universal version provides extended spinal coverage.\nQ: Can I adjust it myself? A: Initial fitting and adjustment should be done by an orthotist. Minor strap adjustments can be made at home once the brace is properly set up.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0525_Taylor_s_Brace.jpg"
   },
   {
     "id": "TYN-TAYSHOSPL",
@@ -7922,7 +7922,7 @@
     "faqs": "Q: What is the difference between Taylor Short and Long? A: The Short brace covers the lumbar and lower thoracic spine. The Long brace extends higher to cover more of the thoracic spine. Your surgeon will prescribe the appropriate length based on the injury location.\nQ: How do I know which one I need? A: The prescription is based on the level of the spinal injury. Upper thoracic injuries may require the long version.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0525_Taylor_s_Brace.jpg"
   },
   {
     "id": "TYN-TAYSHOUN",
@@ -7947,7 +7947,7 @@
     "faqs": "Q: Is the Short Universal brace different from the Short Special? A: Universal fits either side without hand-specificity. Special (SPL) versions may have additional features or customisation options. Verify the specific variant with the supplier.\nQ: Can I wear it under clothing? A: Taylor braces are relatively bulky. Wear a thin cotton undershirt beneath the brace for comfort, then clothing over the brace.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0525_Taylor_s_Brace.jpg"
   },
   {
     "id": "TYN-TENELB-L",
@@ -7972,7 +7972,7 @@
     "faqs": "Q: What is a tennis elbow brace? A: A counter-force brace worn below the elbow to reduce strain on the tendons at the lateral epicondyle.\nQ: When should I use a Large? A: When forearm circumference matches the Large size on the Tynor sizing chart.\nQ: Can I wear it during sports? A: Yes, it is designed for use during tennis, badminton, cricket, and other racquet or throwing sports.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0526_Tennis_Elbow_Support.jpg"
   },
   {
     "id": "TYN-TENELB-M",
@@ -7997,7 +7997,7 @@
     "faqs": "Q: What is the most common tennis elbow brace size? A: Medium fits most adults. Measure forearm circumference approximately 5 cm below the elbow crease and compare to the Tynor sizing chart.\nQ: Can I wear it all day? A: Wear during activities that aggravate symptoms; remove periodically to allow circulation.\nQ: Does it help golfer's elbow too? A: Yes, it provides counter-force relief for both lateral (tennis) and medial (golfer's) epicondylitis.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0526_Tennis_Elbow_Support.jpg"
   },
   {
     "id": "TYN-TENELB-S",
@@ -8022,7 +8022,7 @@
     "faqs": "Q: When is the Small tennis elbow brace used? A: Small fits forearm circumferences of approximately 20–24 cm. The strap should be snug enough to provide compression without restricting blood flow.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0526_Tennis_Elbow_Support.jpg"
   },
   {
     "id": "TYN-TENELB-XL",
@@ -8047,7 +8047,7 @@
     "faqs": "Q: When do I need an XL tennis elbow brace? A: XL fits forearm circumferences above approximately 32 cm. The pressure pad should still be centred over the extensor muscles regardless of strap length.",
     "use_case": "Orthopaedic",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0526_Tennis_Elbow_Support.jpg"
   },
   {
     "id": "TYN-THUSPISPUN",
@@ -8097,7 +8097,7 @@
     "faqs": "Q: What is a Velcro tourniquet? A: A Velcro tourniquet (also called a quick-release tourniquet) is used to temporarily restrict venous blood flow in the arm during blood collection or IV insertion, making veins more prominent and easier to access.\nQ: Is it reusable? A: Yes, Velcro tourniquets are reusable. Clean between patients with disinfectant wipes. Replace when the elastic loses tension or the Velcro wears out.\nQ: Is it better than a rubber strap tourniquet? A: Velcro tourniquets are easier to apply and release with one hand, more hygienic, and more comfortable for the patient than traditional rubber strap tourniquets.",
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0491_Tynor_Tourniquet_Velcro.png"
   },
   {
     "id": "TYN-TYR1.5",
@@ -8447,7 +8447,7 @@
     "faqs": null,
     "use_case": "Neurological & Physiotherapy",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0511_Exercise_Abdomen_Ball.jpg"
   },
   {
     "id": "TARIFF-BPAPPRATUSMANUAL",
@@ -8472,7 +8472,7 @@
     "faqs": null,
     "use_case": "Cardiac & Vascular",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0492_Diamond_BP_Apparatus_Manual.jpg"
   },
   {
     "id": "TARIFF-CPAPNOSEMASK",
@@ -8497,7 +8497,7 @@
     "faqs": null,
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0489_CPAP_Nasal_Mask.png"
   },
   {
     "id": "TARIFF-INFUSIONPUMP",
@@ -8522,7 +8522,7 @@
     "faqs": null,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0510_Infusion_Syringe_Pump.jpg"
   },
   {
     "id": "TARIFF-N95MASK",
@@ -8572,7 +8572,7 @@
     "faqs": null,
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0486_Nidek_BiPAP_Machine.jpg"
   },
   {
     "id": "TARIFF-O2CYLINDER50LTRS",
@@ -8597,7 +8597,7 @@
     "faqs": null,
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0487_Medical_Oxygen_Cylinder.png"
   },
   {
     "id": "TARIFF-O2CYLINDERS10LTRS",
@@ -8622,7 +8622,7 @@
     "faqs": null,
     "use_case": "Respiratory",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0487_Medical_Oxygen_Cylinder.png"
   },
   {
     "id": "TARIFF-RINGFILE2DDOUBLE",
@@ -8722,7 +8722,7 @@
     "faqs": null,
     "use_case": "Post-Surgical & Wound Care",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0507_Suction_Jar.png"
   },
   {
     "id": "TARIFF-THERABAND",
@@ -8747,7 +8747,7 @@
     "faqs": null,
     "use_case": "Neurological & Physiotherapy",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0509_Theraband_Resistance_Band.jpg"
   },
   {
     "id": "TARIFF-THERMOMETERELECTRONI",
@@ -8772,6 +8772,6 @@
     "faqs": null,
     "use_case": "Diagnostics & Monitoring",
     "rental_tiers": {},
-    "image_url": null
+    "image_url": "assets/images/products/0504_Digital_Electronic_Thermometer.jpg"
   }
 ]

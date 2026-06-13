@@ -1,7 +1,49 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../config/app_colors.dart';
 import '../config/theme.dart';
+
+/// Shared product-image renderer used by the equipment card AND the detail
+/// sheet. Picks the right loader by URL shape — `assets/…` → [Image.asset],
+/// anything else → [CachedNetworkImage] — and falls back to [fallbackIcon]
+/// on null/empty/error. Before this existed the detail sheet used
+/// CachedNetworkImage unconditionally, so every bundled asset image silently
+/// fell back to the placeholder there (only the card grid rendered them).
+class ProductImage extends StatelessWidget {
+  final String? imageUrl;
+  final IconData fallbackIcon;
+  final double iconSize;
+  final BoxFit fit;
+
+  const ProductImage({
+    super.key,
+    required this.imageUrl,
+    required this.fallbackIcon,
+    this.iconSize = 32,
+    this.fit = BoxFit.contain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl;
+    Widget icon() =>
+        Icon(fallbackIcon, color: HousepitalColors.orange, size: iconSize);
+    if (url == null || url.isEmpty) return Center(child: icon());
+    if (url.startsWith('assets/')) {
+      return Image.asset(url,
+          fit: fit,
+          semanticLabel: 'Product photo',
+          errorBuilder: (_, _, _) => icon());
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: fit,
+      placeholder: (_, _) => icon(),
+      errorWidget: (_, _, _) => icon(),
+    );
+  }
+}
 
 class HousepitalCard extends StatefulWidget {
   final Widget child;

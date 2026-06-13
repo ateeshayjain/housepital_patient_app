@@ -1,10 +1,10 @@
 // audit batch 4 (Agent K): extracted from service_catalog_screen.dart
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../config/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../utils/helpers.dart';
+import '../../../widgets/common_widgets.dart';
 import '../widgets/catalog_text_helpers.dart';
 import '../widgets/collapsible_text.dart';
 import '../widgets/quantity_button.dart';
@@ -62,18 +62,18 @@ class _EquipmentDetailSheetState extends State<EquipmentDetailSheet> {
                   color: context.hc.orangeLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: item.imageUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: item.imageUrl!,
-                          fit: BoxFit.contain,
-                          errorWidget: (_, _, _) => Icon(icon,
-                              color: HousepitalColors.orange, size: 28),
-                        ),
-                      )
-                    : Icon(icon,
-                        color: HousepitalColors.orange, size: 28),
+                // Shared renderer: handles asset paths (bundled product
+                // images) AND network URLs. Previously CachedNetworkImage was
+                // used unconditionally, so bundled asset images never showed
+                // in the sheet — only the card grid rendered them.
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: ProductImage(
+                    imageUrl: item.imageUrl,
+                    fallbackIcon: icon,
+                    iconSize: 28,
+                  ),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
