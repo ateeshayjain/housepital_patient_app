@@ -10,6 +10,7 @@ import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
+import '../services/sheets/equipment_detail_sheet.dart';
 
 /// Unified search result types.
 enum SearchResultType { equipment, manpower, consultation, diagnostic, package }
@@ -507,14 +508,25 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
   void _handleTap(SearchResult r) {
     switch (r.type) {
       case SearchResultType.equipment:
-        // Show equipment detail bottom sheet
+        // Open the equipment detail sheet RIGHT HERE. (Field bug: this used
+        // to pop with a result payload that no caller listened for — tapping
+        // a search result did nothing.)
         final item = r.data as EquipmentItem;
-        Navigator.pop(context, {'type': 'equipment', 'item': item});
+        showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (_) => EquipmentDetailSheet(
+              item: item, icon: Icons.inventory_2_outlined),
+        );
         break;
       case SearchResultType.manpower:
-        // Manpower services always require assessment first
+        // Direct booking with price (owner rule re-confirmed 2026-06-11).
         final svc = r.data as ServiceItem;
-        Navigator.pushNamed(context, '/assessment-request', arguments: svc);
+        Navigator.pushNamed(context, '/service-booking', arguments: svc);
         break;
       case SearchResultType.consultation:
         final svc = r.data as ServiceItem;

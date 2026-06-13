@@ -16,9 +16,10 @@ import '../widgets/permission_dialogs.dart';
 /// Tapping the card opens a bottom sheet with a need-based checklist
 /// ("Select what you need"): basic staff work comes pre-selected, ticking
 /// higher-level tasks live-infers the recommended staff tier, and the CTA
-/// continues into the full booking wizard (quote-pending — price confirmed
-/// on call before payment). A secondary link offers the callback/assessment
-/// path instead.
+/// continues into the full booking wizard, which shows the rate-card price
+/// (owner rule re-confirmed 2026-06-11: manpower prices are shown, direct
+/// booking with payment). A secondary link offers the OPTIONAL
+/// callback/assessment path instead.
 class StaffRoleCard extends StatelessWidget {
   final StaffRole role;
   final List<ServiceItem> services;
@@ -302,8 +303,9 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
     );
 
     if (!_gateBookingAction()) return;
-    // Book end-to-end: full wizard with quote-pending order (no upfront
-    // price — confirmed on call before payment).
+    // Book end-to-end: full wizard showing the rate-card per-day price and
+    // the normal priced checkout (Housepital calls back post-purchase to
+    // confirm requirements and assign staff).
     // Push first (context still valid), sheet auto-dismisses
     Navigator.of(
       context,

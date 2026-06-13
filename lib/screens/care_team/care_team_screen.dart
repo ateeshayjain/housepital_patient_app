@@ -134,8 +134,11 @@ class CareTeamScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
+          // No extra bottom padding — HousepitalCard's theme margin already
+          // gives 16px between adjacent cards (field report: 'a lot of space
+          // between two cards'; the extra 8 here stacked the gap to ~24px).
           ...members.map((m) => Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _MemberRow(member: m, patientId: patientId),
               )),
           const SizedBox(height: 8),

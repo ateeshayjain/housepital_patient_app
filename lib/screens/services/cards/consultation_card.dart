@@ -68,22 +68,17 @@ class ConsultationCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          // audit M-1: manpower services must never display
-                          // an upfront price — show "Price on assessment"
-                          // instead (user rule: caretaker/nursing/japa/nanny
-                          // pricing is conversation-gated).
-                          if (service.category == 'manpower')
+                          // Owner rule (Mar 2026, re-confirmed 2026-06-11):
+                          // manpower prices ARE shown like every other
+                          // category — per-day rate when the item is a
+                          // day-shift SKU. Never render ₹0: unpriced items
+                          // simply show no price line.
+                          if (service.basePriceMin != null)
                             Text(
-                              'Price on assessment',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: context.hc.orangeText,
-                              ),
-                            )
-                          else if (service.basePriceMin != null)
-                            Text(
-                              'From ${DateHelper.formatCurrency(service.basePriceMin!)}',
+                              service.category == 'manpower' &&
+                                      (service.durationMinutes ?? 0) >= 720
+                                  ? '${DateHelper.formatCurrency(service.basePriceMin!)}/day'
+                                  : 'From ${DateHelper.formatCurrency(service.basePriceMin!)}',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,

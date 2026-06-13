@@ -440,6 +440,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          // Header order matches the app-wide chrome contract (owner: uniform
+          // headers): custom (bell) → search → CART rightmost; SOS stays the
+          // sanctioned far-right exception (emergency prominence).
+          Semantics(
+            label: 'Notifications',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => Navigator.pushNamed(context, '/notifications'),
+            ),
+          ),
           Semantics(
             label: 'Search',
             button: true,
@@ -465,14 +476,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 onPressed: () => Navigator.pushNamed(context, '/cart'),
               ),
-            ),
-          ),
-          Semantics(
-            label: 'Notifications',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed: () => Navigator.pushNamed(context, '/notifications'),
             ),
           ),
           // SOS — emergency action lives in the persistent header so it's

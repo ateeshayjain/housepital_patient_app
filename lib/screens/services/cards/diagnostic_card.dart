@@ -25,9 +25,11 @@ class DiagnosticCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Semantics(
-        // audit M-1: suppress price in semantics label for manpower services.
+        // Owner rule (Mar 2026, re-confirmed 2026-06-11): prices are shown
+        // for every priced item, manpower included. Unpriced items announce
+        // no amount (never ₹0).
         label:
-            '${service.name}. ${service.category == 'manpower' ? 'Price on assessment' : (service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : "")}. Home collection available. Tap to book slot.',
+            '${service.name}. ${service.basePriceMin != null ? DateHelper.formatCurrency(service.basePriceMin!) : ""}. Home collection available. Tap to book slot.',
         button: true,
         child: Material(
           color: context.hc.white,
@@ -77,17 +79,10 @@ class DiagnosticCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // audit M-1: manpower → "Price on assessment".
-                        if (service.category == 'manpower')
-                          Text(
-                            'Price on assessment',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.orangeText,
-                            ),
-                          )
-                        else if (service.basePriceMin != null)
+                        // Prices render for every priced item (manpower
+                        // included — owner rule re-confirmed 2026-06-11).
+                        // Unpriced items show no price line (never ₹0).
+                        if (service.basePriceMin != null)
                           Text(
                             DateHelper.formatCurrency(
                                 service.basePriceMin!),

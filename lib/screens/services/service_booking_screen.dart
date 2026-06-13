@@ -104,12 +104,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   bool get _isIvVisit => widget.service.id == 'visit-iv';
   bool get _isConsultationType => widget.service.id.startsWith('con-');
 
-  /// Ongoing manpower: nurse (non-critical), caretaker, japa, nanny
-  /// These need start date (48hr advance) + period (7/30 days)
+  /// Ongoing manpower: nurse (all tiers incl. critical — directly bookable
+  /// per owner 2026-06-11), caretaker, legacy japa/nanny.
+  /// These need start date (48hr advance) + period (7/30 days).
   bool get _isOngoingManpower {
     final id = widget.service.id;
-    return id.startsWith('mp-nurse-basic') ||
-        id.startsWith('mp-nurse-adv') ||
+    return id.startsWith('mp-nurse') ||
         id.startsWith('mp-caretaker') ||
         id.startsWith('mp-japa') ||
         id.startsWith('mp-nanny');
@@ -118,11 +118,22 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   /// Physio: pick a daytime slot + period (3/7/15/30 days)
   bool get _isPhysio => widget.service.id.startsWith('mp-physio');
 
-  /// Manpower services are quote-first: prices are NEVER shown in-app
-  /// (caretaker / nursing / japa / nanny / physio / ICU staffing) — the price
-  /// is confirmed on a call before payment. The wizard still runs end-to-end
-  /// and places a quote-pending order.
-  bool get _isManpower => widget.service.category == 'manpower';
+  // Manpower (caretaker / nursing / physio / ICU staffing) pricing rule
+  // (owner, Mar 2026, re-confirmed 2026-06-11): rate-card prices ARE shown
+  // and booking is the normal priced flow with payment — Housepital calls
+  // back post-purchase to confirm requirements and assign staff. Quote-pending
+  // is reserved for items that genuinely lack a price (isQuote is price-based,
+  // never category-based), so there is no longer a category==manpower guard.
+
+  /// Quantity the unit price is multiplied by on the review step:
+  /// IV visits → sessions; ongoing manpower → service period in days
+  /// (per-day rate card); physio → number of sessions; else 1.
+  int get _priceMultiplier {
+    if (_isIvVisit) return _ivSessions;
+    if (_isOngoingManpower) return int.parse(_servicePeriod);
+    if (_isPhysio) return int.parse(_physioPeriod);
+    return 1;
+  }
 
   // Ongoing manpower state
   String _servicePeriod = '30'; // '7' or '30' days
@@ -284,11 +295,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final l = AppLocalizations.of(context)!;
     final s = widget.service;
 
-    // audit M-1 (superseded): manpower/zero-price services now run the FULL
-    // booking wizard end-to-end as a quote-first booking — every ₹/GST/total
-    // line is suppressed (never show prices for caretaker/nursing/japa/nanny)
-    // and the final CTA places a quote-pending order ("Price confirmed on
-    // call before payment") instead of going through cart/payment.
+    // Pricing contract (owner, Mar 2026 — re-confirmed 2026-06-11): priced
+    // manpower runs the NORMAL priced wizard — per-day ₹, GST, totals and
+    // the standard cart/payment flow. The quote-first machinery below is
+    // kept ONLY for items that genuinely lack a price (isQuote is
+    // price==null/0, never category=='manpower').
 
     return Scaffold(
       appBar: AppBar(
@@ -525,14 +536,24 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
             ],
-            // audit M-1: never quote an upfront price for manpower services
-            // even if a stale basePriceMin somehow reaches here — show the
-            // quote-first info row instead. Booking continues end-to-end;
-            // the price is confirmed on call before payment.
-            if (_isManpower) ...[
+            // Rate-card pricing (owner, re-confirmed 2026-06-11): every
+            // priced item shows its ₹ — ongoing manpower as a per-day rate.
+            // The quote-first info row appears ONLY when the item genuinely
+            // has no price (defensive; never render ₹0).
+            if (s.basePriceMin == null) ...[
               const SizedBox(height: 12),
               _quoteInfoRow(),
-            ] else if (s.basePriceMin != null) ...[
+            ] else if (_isOngoingManpower) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${DateHelper.formatCurrency(s.basePriceMin!)}/day',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HousepitalColors.orange,
+                ),
+              ),
+            ] else ...[
               const SizedBox(height: 8),
               Text(
                 '${DateHelper.formatCurrency(s.basePriceMin!)} - ${DateHelper.formatCurrency(s.basePriceMax ?? s.basePriceMin!)}',
@@ -1777,11 +1798,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         ],
       ),
       const SizedBox(height: 16),
-      // Price summary — NEVER for manpower (quote-first: price confirmed on
-      // call before payment).
-      if (_isManpower)
+      // Price summary — rate-card per-day price shown (owner re-confirmed
+      // 2026-06-11); quote row only when the item genuinely has no price.
+      if (widget.service.basePriceMin == null)
         _quoteInfoRow()
-      else if (widget.service.basePriceMin != null)
+      else
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2012,10 +2033,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         }).toList(),
       ),
       const SizedBox(height: 16),
-      // Price summary — NEVER for manpower (physio is manpower): quote-first.
-      if (_isManpower)
+      // Price summary — physio session prices shown (owner re-confirmed
+      // 2026-06-11); quote row only when the item genuinely has no price.
+      if (widget.service.basePriceMin == null)
         _quoteInfoRow()
-      else if (widget.service.basePriceMin != null)
+      else
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2049,12 +2071,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final app = context.read<AppProvider>();
     // For IV visits, use the dynamically determined price
     final price = _isIvVisit ? _ivPrice : s.basePriceMin;
-    // Quote-first flow: manpower NEVER shows a price; any other service with
-    // no usable price also books as a quote-pending order.
-    final isQuote = _isManpower || price == null || price == 0;
-    // For IV visits with multiple sessions, multiply
-    final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
-    final subtotal = price != null ? price * sessionMultiplier : null;
+    // Quote-pending ONLY for items that genuinely lack a price (owner rule
+    // re-confirmed 2026-06-11: manpower IS priced and directly bookable).
+    final isQuote = price == null || price == 0;
+    // Multiply the unit price by the right quantity: IV → sessions,
+    // ongoing manpower → days, physio → sessions, else 1 (_priceMultiplier).
+    final subtotal = price != null ? price * _priceMultiplier : null;
     final gst = subtotal != null ? (subtotal * 0.18).toInt() : null;
     final total = subtotal != null ? subtotal + gst! : null;
 
@@ -2402,9 +2424,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           height: 52,
           child: ElevatedButton(
             onPressed: () {
-              // Price guaranteed non-null and non-zero here
-              final sessionMultiplier = _isIvVisit ? _ivSessions : 1;
-              final subtotal = price * sessionMultiplier;
+              // Price guaranteed non-null and non-zero here. Multiply by the
+              // right quantity (IV sessions / manpower days / physio sessions)
+              // so a 30-day caretaker charges rate×30, not a single day.
+              final subtotal = price * _priceMultiplier;
               final gst = (subtotal * 0.18).toInt();
               final total = subtotal + gst;
 

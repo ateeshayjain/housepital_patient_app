@@ -4,89 +4,128 @@ import '../../../models/models.dart';
 
 /// Manpower service catalog (nurses, caretakers, physio).
 ///
-/// audit M-1 (extension): basePriceMin REMOVED from ALL manpower seeds
-/// including nurses. User memory rule covers "caretaker, nursing, japa,
-/// nanny" — original M-1 fix only stripped caretaker/japa/nanny; nurse
-/// seeds had basePriceMin retained but the category guard was hiding it
-/// in UI. Now the data layer matches the UI rule.
+/// Pricing rule (owner decision, Mar 2026 — re-confirmed 2026-06-11):
+/// manpower prices ARE SHOWN, from the official Delhi NCR rate card
+/// (per-day basePriceMin, excl. GST), and every item is directly bookable.
+/// Housepital calls back after purchase to confirm requirements and assign
+/// staff. The earlier "never show manpower prices" enforcement (audit M-1
+/// and its extension) was based on a stale memory and is reversed here.
+/// Quote-pending booking remains ONLY for items that genuinely lack a price.
 final List<ServiceItem> manpowerServices = [
   // ── Nursing Staff ──
   ServiceItem(
     id: 'mp-nurse-basic-12', name: 'Nurse (Basic) – 12 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Basic nursing care — vitals monitoring, oral medication, feeding & personal hygiene assistance.',
-    durationMinutes: 720, iconName: 'medical_services',
+    basePriceMin: 1600, durationMinutes: 720, iconName: 'medical_services',
+    preparationNotes:
+        'Monthly package: ₹40,500/mo (Nurse Basic, 12 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-nurse-basic-24', name: 'Nurse (Basic) – 24 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock basic nursing for patients needing continuous monitoring and care.',
-    durationMinutes: 1440, iconName: 'medical_services',
+    basePriceMin: 2200, durationMinutes: 1440, iconName: 'medical_services',
+    preparationNotes:
+        'Monthly package: ₹60,000/mo (Nurse Basic, 24 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-nurse-adv-12', name: 'Nurse (Advanced) – 12 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Advanced nursing — IV/IM medication, catheter care, RT feeding, sugar & BP monitoring.',
-    durationMinutes: 720, iconName: 'medical_services',
+    basePriceMin: 1800, durationMinutes: 720, iconName: 'medical_services',
+    preparationNotes:
+        'Monthly package: ₹45,000/mo (Nurse Advanced, 12 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-nurse-adv-24', name: 'Nurse (Advanced) – 24 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock advanced nursing for patients needing clinical-grade care at home.',
-    durationMinutes: 1440, iconName: 'medical_services',
+    basePriceMin: 2500, durationMinutes: 1440, iconName: 'medical_services',
+    preparationNotes:
+        'Monthly package: ₹75,000/mo (Nurse Advanced, 24 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
-  // ── Critical Nurse — ICU setup, assessment required ──
+  // ── Critical Nurse — ICU-level care, directly bookable (owner 2026-06-11);
+  // an assessment callback remains available as an optional secondary path.
   ServiceItem(
     id: 'mp-nurse-crit-12', name: 'Nurse (Critical) – 12 Hours',
-    category: 'manpower', bookingType: 'assessment',
+    category: 'manpower', bookingType: 'scheduled',
     description: 'Critical care nursing — tracheostomy care, ventilator management, suctioning, bed sore care.',
-    iconName: 'medical_services',
+    // Rate card anomaly: the 12-hr critical-nurse MONTHLY rate is not on the
+    // official card — only the per-day rate is published. Do not invent one.
+    basePriceMin: 2000, durationMinutes: 720, iconName: 'medical_services',
+    preparationNotes:
+        'We call back right after booking to confirm the ICU-at-home setup, '
+        'requirements and staff assignment.',
   ),
   ServiceItem(
     id: 'mp-nurse-crit-24', name: 'Nurse (Critical) – 24 Hours',
-    category: 'manpower', bookingType: 'assessment',
+    category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock critical care nursing for ICU-like home setups and ventilator patients.',
-    iconName: 'medical_services',
+    basePriceMin: 3000, durationMinutes: 1440, iconName: 'medical_services',
+    preparationNotes:
+        'Monthly package: ₹90,000/mo (Nurse Critical, 24 hr).\n'
+        'We call back right after booking to confirm the ICU-at-home setup, '
+        'requirements and staff assignment.',
   ),
   // ── Care-takers ──
-  // audit M-1: basePriceMin REMOVED for caretaker/japa/nanny — manpower
-  // pricing is "Price on assessment" only (user persistent memory rule:
-  // never show prices for caretaker, nursing, japa, nanny services).
   ServiceItem(
     id: 'mp-caretaker-basic-12', name: 'Caretaker (Basic) – 12 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Basic caretaker — bathing, mobility assistance, feeding, companionship & medication reminders.',
-    durationMinutes: 720, iconName: 'person',
+    basePriceMin: 800, durationMinutes: 720, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹18,000/mo (Caretaker Basic, 12 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-caretaker-basic-24', name: 'Caretaker (Basic) – 24 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock basic caretaker for daily living assistance and companionship.',
-    durationMinutes: 1440, iconName: 'person',
+    basePriceMin: 1100, durationMinutes: 1440, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹27,000/mo (Caretaker Basic, 24 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-caretaker-adv-12', name: 'Caretaker (Advanced) – 12 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Advanced caretaker with IM injection & BP monitoring skills for patients needing medical support.',
-    durationMinutes: 720, iconName: 'person',
+    basePriceMin: 1000, durationMinutes: 720, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹21,000/mo (Caretaker Advanced, 12 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-caretaker-adv-24', name: 'Caretaker (Advanced) – 24 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock advanced caretaker with medical assistance capabilities.',
-    durationMinutes: 1440, iconName: 'person',
+    basePriceMin: 1300, durationMinutes: 1440, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹30,000/mo (Caretaker Advanced, 24 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-caretaker-crit-12', name: 'Caretaker (Critical / Semi-Nurse) – 12 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Semi-nurse level caretaker for complex care needs — RT feeding, suctioning assistance.',
-    durationMinutes: 720, iconName: 'person',
+    basePriceMin: 1200, durationMinutes: 720, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹24,000/mo (Caretaker Critical, 12 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   ServiceItem(
     id: 'mp-caretaker-crit-24', name: 'Caretaker (Critical / Semi-Nurse) – 24 Hours',
     category: 'manpower', bookingType: 'scheduled',
     description: 'Round-the-clock semi-nurse caretaker for patients needing intensive daily care.',
-    durationMinutes: 1440, iconName: 'person',
+    basePriceMin: 1500, durationMinutes: 1440, iconName: 'person',
+    preparationNotes:
+        'Monthly package: ₹33,000/mo (Caretaker Critical, 24 hr).\n'
+        'We call back right after booking to confirm requirements and assign staff.',
   ),
   // ── Physiotherapy ──
   ServiceItem(
