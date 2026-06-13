@@ -191,7 +191,7 @@ class _CartScreenState extends State<CartScreen> {
               size: 80, color: context.hc.greyLight),
           const SizedBox(height: 16),
           const Text('Your cart is empty',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text('Browse services & equipment to add items',
               style: TextStyle(color: context.hc.greyLight)),
@@ -417,7 +417,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 const Text('Total',
                     style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700)),
+                        fontSize: 16, fontWeight: FontWeight.w600)),
                 Text(
                   DateHelper.formatCurrency(adjustedTotal),
                   style: TextStyle(

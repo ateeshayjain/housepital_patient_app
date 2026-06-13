@@ -262,7 +262,7 @@ class _FeaturedArticleCard extends StatelessWidget {
                         Text(
                           'FEATURED',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.4,
                             color: style.accent,

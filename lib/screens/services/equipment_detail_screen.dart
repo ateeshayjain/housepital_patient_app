@@ -1314,7 +1314,7 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Write a Review', style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.black,
+                fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.black,
               )),
               const SizedBox(height: 16),
               // Star selector — shared accessible rater (44pt targets +
@@ -1651,8 +1651,8 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
         color: context.hc.black,
         letterSpacing: -0.2,
       ),
@@ -1730,8 +1730,8 @@ class _CollapsibleSectionState extends State<_CollapsibleSection>
                     child: Text(
                       widget.title,
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: context.hc.black,
                         letterSpacing: -0.2,
                       ),

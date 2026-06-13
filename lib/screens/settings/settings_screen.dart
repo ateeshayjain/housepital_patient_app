@@ -46,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Change Profile Photo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           ListTile(
             leading: const Icon(Icons.camera_alt, color: HousepitalColors.orange),
@@ -335,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: EdgeInsets.all(16),
                 child: Text('Appearance',
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
               RadioGroup<ThemeMode>(
                 groupValue: watched.mode,
@@ -398,7 +398,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Select Language',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           ListTile(
             title: const Text('English'),

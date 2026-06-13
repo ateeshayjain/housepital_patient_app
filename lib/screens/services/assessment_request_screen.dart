@@ -319,7 +319,7 @@ class _AssessmentRequestScreenState extends State<AssessmentRequestScreen> {
               Text(
                 _getFormTitle(),
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),

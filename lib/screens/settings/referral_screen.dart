@@ -140,7 +140,7 @@ class ReferralScreen extends StatelessWidget {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Your Referrals', style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700,
+                fontSize: 16, fontWeight: FontWeight.w600,
               )),
             ),
             const SizedBox(height: 12),

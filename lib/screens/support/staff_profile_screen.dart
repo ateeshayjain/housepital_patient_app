@@ -992,7 +992,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   child: Text(
                     doc.label,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

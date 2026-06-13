@@ -385,7 +385,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
                 Expanded(
                   child: Text(doc.name,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600)),
+                          fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -549,7 +549,7 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Add Medical Document',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           ListTile(
             leading: const AppIconTile(

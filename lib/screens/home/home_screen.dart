@@ -1747,7 +1747,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'Switch Patient',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
             ...app.patients.map(

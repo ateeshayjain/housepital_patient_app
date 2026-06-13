@@ -21,7 +21,7 @@ class VitalsTrendGrid extends StatelessWidget {
         children: [
           Text(
             l.t('vitals_trend'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           GridView(

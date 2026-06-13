@@ -210,7 +210,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           Text(
                             dayInitials[day.weekday - 1],
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               color: context.hc.greyLight,
                             ),
                           ),

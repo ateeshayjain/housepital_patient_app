@@ -115,7 +115,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     Text(
                       'Add Family Member',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: context.hc.black,
                       ),
@@ -292,7 +292,8 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   Text(
                     'No family members added',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                       color: context.hc.grey,
                     ),
                   ),
@@ -369,7 +370,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                       child: Text(
                         member.name,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: context.hc.black,
                         ),

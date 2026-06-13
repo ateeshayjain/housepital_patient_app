@@ -33,7 +33,7 @@ class StaffAttendanceSection extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w700)),
+                        fontSize: 16, fontWeight: FontWeight.w600)),
               ),
               const SizedBox(width: 8),
               Text(

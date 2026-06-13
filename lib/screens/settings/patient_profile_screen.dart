@@ -182,7 +182,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Change Profile Photo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           ListTile(
             leading: const Icon(Icons.camera_alt, color: HousepitalColors.orange),

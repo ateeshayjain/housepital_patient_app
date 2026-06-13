@@ -909,8 +909,8 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 Text(
                   'Add reminder',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: hc.black,
                   ),
                 ),

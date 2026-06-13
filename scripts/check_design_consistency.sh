@@ -102,6 +102,25 @@ svc=$(grep -rnE 'HousepitalColors\.(serviceColor|serviceCarePackage|serviceNursi
 report "Service-type colors are retired in screens (calm pass) — use the one orange accent (HousepitalColors.orange / context.hc.orange); genuinely categorical uses go on the allowlist with a comment" \
   "$svc"
 
+# ── Informational: fontSize histogram (echo-only, NEVER fails) ──────────────
+# Surfaces typography drift in CI logs without gating the build. The canonical
+# scale (see the typography audit): 28/w800 display • 16/w600 SectionHeader •
+# 15/w700 card title • 14/w600 list-row • 13.5–14 body • 12 meta • 11–12
+# caption/chip • 11 floor (sole sub-11 exception: calendar year-view mini
+# digits). Sizes outside the scale (13, 17, 18, 19, 20, 21, 10) are smells to
+# review — they are reported here but do NOT change the pass/fail result.
+echo ""
+echo "ⓘ fontSize histogram (informational — does not affect pass/fail)"
+echo "   scope: lib/screens + lib/widgets (excluding $EXCLUDE)"
+hist=$(grep -rhoE 'fontSize:[[:space:]]*[0-9]+(\.[0-9]+)?' lib/screens lib/widgets \
+         $EXCLUDE --include='*.dart' 2>/dev/null \
+       | grep -oE '[0-9]+(\.[0-9]+)?' | sort -n | uniq -c)
+if [ -n "$hist" ]; then
+  echo "$hist" | sed 's/^/    /'
+else
+  echo "    (no fontSize literals found)"
+fi
+
 echo ""
 if [ "$fail" -ne 0 ]; then
   echo "════════════════════════════════════════════════════════════"

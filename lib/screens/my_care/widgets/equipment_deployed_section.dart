@@ -25,7 +25,7 @@ class EquipmentDeployedSection extends StatelessWidget {
         children: [
           Text(l.t('equipment_deployed'),
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           ...equipment.map((eq) => Card(
                 child: ListTile(

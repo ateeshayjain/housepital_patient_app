@@ -344,7 +344,7 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
             const SizedBox(height: 16),
             Text(l.t('no_active_services'),
                 style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w600)),
+                    fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(l.t('no_active_services_desc'),
                 textAlign: TextAlign.center,
@@ -640,7 +640,7 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
             children: [
               const Text("We're sorry. What went wrong?",
                   style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,

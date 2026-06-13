@@ -67,7 +67,7 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Add Photo Evidence',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           ListTile(
             leading: const Icon(Icons.camera_alt, color: HousepitalColors.orange),

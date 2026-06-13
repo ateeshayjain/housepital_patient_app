@@ -229,7 +229,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         children: [
           Text(l.t('staff_on_duty'),
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           // Standard card surface — green is reserved for good-STATUS only,
           // so avatars are the brand orange-tinted initials tile and the
@@ -412,7 +412,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         children: [
           Text(l.t('medications'),
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           // Two equal-height tonal pills ('Schedule' not 'Today's Schedule'
           // so both stay single-line at 320px) — the outlined buttons used
@@ -556,7 +556,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         children: [
           Text(l.t('billing_summary'),
               style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Card(
             child: Padding(

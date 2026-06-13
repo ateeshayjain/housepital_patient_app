@@ -38,7 +38,7 @@ class BillingSummarySection extends StatelessWidget {
         children: [
           Text(l.t('billing_summary'),
               style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Card(
             child: Padding(

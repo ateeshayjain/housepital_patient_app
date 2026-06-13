@@ -272,8 +272,8 @@ class _LabTestsTabState extends State<LabTestsTab> {
                           child: Text(
                             'Popular Packages',
                             style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: context.hc.black,
                             ),
                           ),
@@ -293,8 +293,8 @@ class _LabTestsTabState extends State<LabTestsTab> {
                           child: Text(
                             'All Individual Tests',
                             style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: context.hc.black,
                             ),
                           ),
