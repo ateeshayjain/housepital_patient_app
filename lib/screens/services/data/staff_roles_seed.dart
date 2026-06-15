@@ -125,14 +125,16 @@ const staffRoles = <StaffRole>[
     rating: 4.9,
     reviewCount: 189,
     levels: [
+      // Nurses do CLINICAL work. Personal hygiene / toilet / diaper / sanitary
+      // care / massage are CARETAKER tasks (scope-of-service matrix) — they are
+      // NOT nurse responsibilities at any level, so they sit in `excluded`
+      // ("for this, add a caretaker"), never `included` (owner: "nurse does
+      // not do this").
       ServiceLevel(
         name: 'Basic',
         included: [
           'Oral care',
-          'Toilet assistance',
-          'Personal hygiene care (including sponging)',
           'Feeding',
-          'Muscle strengthening exercise',
           'Movement assistance',
           'Patient dressing & undressing',
           'Administration of oral medication',
@@ -143,10 +145,11 @@ const staffRoles = <StaffRole>[
           'Catheter care & change',
         ],
         excluded: [
-          'RT feeding',
+          'Personal hygiene care & sponging',
+          'Toilet assistance & diaper changing',
           'Sanitary care',
-          'Diaper changing & motion cleaning',
           'Patient massage',
+          'RT feeding',
           'Tracheostomy care',
           'RT change',
           'Suctioning',
@@ -160,7 +163,6 @@ const staffRoles = <StaffRole>[
         included: [
           'All Basic services',
           'RT feeding',
-          'Sanitary care',
           'Tracheostomy care',
           'RT change',
           'Suctioning',
@@ -168,7 +170,8 @@ const staffRoles = <StaffRole>[
           'Bed sores care',
         ],
         excluded: [
-          'Diaper changing & motion cleaning',
+          'Personal hygiene care & sponging',
+          'Toilet assistance & diaper changing',
           'Patient massage',
           'Ventilator care under FIO2 45%',
         ],
@@ -177,12 +180,11 @@ const staffRoles = <StaffRole>[
         name: 'Critical',
         included: [
           'All Advanced services',
-          'Personal hygiene care',
-          'Diaper changing & motion cleaning',
           'Ventilator care under FIO2 45%',
         ],
         excluded: [
-          'Toilet assistance',
+          'Personal hygiene care & sponging',
+          'Toilet assistance & diaper changing',
           'Patient massage',
           'Household chores',
         ],
