@@ -36,9 +36,13 @@ class EquipmentDeployedSection extends StatelessWidget {
                       icon: Icons.medical_services_outlined,
                       color: HousepitalColors.orange),
                   title: Text(eq.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600)),
+                  // Rate as grey subtext; deployment start date dropped —
+                  // immaterial to the patient (field report).
                   subtitle: Text(
-                      '${DateHelper.formatCurrency(eq.monthlyRate)}/month · Since ${DateHelper.formatDateShort(eq.startDate)}'),
+                      '${DateHelper.formatCurrency(eq.monthlyRate)}/month',
+                      style: TextStyle(fontSize: 12, color: context.hc.grey)),
                   trailing: StatusBadge(
                     text: eq.status == 'active' ? 'Active' : 'Returned',
                     color: eq.status == 'active'

@@ -433,10 +433,12 @@ void main() {
       expect(find.text('Latest'), findsNothing);
     });
 
-    testWidgets('shows Renewal stat when renewalDate is set', (tester) async {
+    // Renewal reminder only surfaces within 5 days (owner: don't show it at
+    // day 12/30). daysRemaining = totalDays - consumedDays.
+    testWidgets('shows Renewal reminder only within 5 days', (tester) async {
       final service = _makeActiveService(
         totalDays: 30,
-        consumedDays: 12,
+        consumedDays: 27, // 3 days remaining → within the 5-day window
         renewalDate: DateTime(2026, 4, 1),
       );
 
@@ -444,9 +446,22 @@ void main() {
         _host(ActiveServiceCard(service: service, onTap: () {})),
       );
 
-      expect(find.text('Renews in 18d'), findsOneWidget);
-      // daysRemaining = 30 - 12 = 18
-      // (renewal countdown asserted above)
+      expect(find.text('Renews in 3d'), findsOneWidget);
+    });
+
+    testWidgets('hides Renewal reminder when more than 5 days remain',
+        (tester) async {
+      final service = _makeActiveService(
+        totalDays: 30,
+        consumedDays: 12, // 18 days remaining → hidden
+        renewalDate: DateTime(2026, 4, 1),
+      );
+
+      await tester.pumpWidget(
+        _host(ActiveServiceCard(service: service, onTap: () {})),
+      );
+
+      expect(find.textContaining('Renews'), findsNothing);
     });
 
     testWidgets('does not show Renewal stat when renewalDate is null',

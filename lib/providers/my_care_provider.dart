@@ -85,14 +85,15 @@ class MyCareProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _detailError = e.message;
     } catch (e) {
-      // Fallback to demo ICU service detail
-      if (deploymentId == 'dep_icu_001' ||
-          deploymentId == 'svc_icu_001') {
-        _selectedServiceDetail = DemoData.icuServiceDetail;
-        _detailError = null;
-      } else {
-        _detailError = 'Failed to load service detail';
-      }
+      // Demo fallback: every active service must open with real content.
+      // Previously only the ICU deployment got demo detail; caretaker
+      // (dep_ct_001) and physio (dep_physio_001) fell through to a hard
+      // error that replaced the whole screen — so tapping those cards
+      // "opened nothing" (field report). In demo mode we never hard-error:
+      // serve the demo deployment detail for any known deployment id, and
+      // leave detail null (sections hide gracefully) for anything else.
+      _selectedServiceDetail = DemoData.icuServiceDetail;
+      _detailError = null;
     }
 
     _isDetailLoading = false;

@@ -50,6 +50,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l.t('medications')),
+        // No cart here — irrelevant on the medications screen; share (handover)
+        // is the meaningful action instead (owner: replace cart with share).
+        showCart: false,
         actions: [
           // Doctor Handover Report — same share as the My Care entry card.
           // audit R2: role-gated like the My Care card — hidden entirely for

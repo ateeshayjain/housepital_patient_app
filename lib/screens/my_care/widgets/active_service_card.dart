@@ -91,21 +91,28 @@ class ActiveServiceCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (service.renewalDate != null) ...[
+                  // Renewal reminder only surfaces when it's actually
+                  // actionable — within 5 days of renewal (owner: don't show
+                  // it on day 15/30). Spacer right-aligns it.
+                  if (service.renewalDate != null &&
+                      service.daysRemaining <= 5) ...[
                     const Spacer(),
                     Icon(
                       Icons.event_repeat,
                       size: 13,
-                      color: context.hc.greyLight,
+                      color: context.hc.warning,
                     ),
                     const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        'Renews in ${service.daysRemaining}d',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: context.hc.grey),
-                      ),
+                    Text(
+                      service.daysRemaining <= 0
+                          ? 'Renews today'
+                          : 'Renews in ${service.daysRemaining}d',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: context.hc.warning),
                     ),
                   ],
                 ],

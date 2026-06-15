@@ -151,13 +151,17 @@ void main() {
       expect(provider.selectedServiceDetail, isNull);
     });
 
-    test('generic error: sets "Failed to load service detail"', () async {
+    // Contract change (field fix 2026-06-15): demo mode never hard-errors on
+    // service detail — every active service must OPEN with content. The API
+    // failure falls back to the demo deployment detail (previously only the
+    // ICU deployment did, so caretaker/physio cards "opened nothing").
+    test('generic error: falls back to demo detail, no hard error', () async {
       mock.shouldThrowGenericError = true;
 
       await provider.loadServiceDetail('d1');
 
-      expect(provider.detailError, 'Failed to load service detail');
-      expect(provider.selectedServiceDetail, isNull);
+      expect(provider.detailError, isNull);
+      expect(provider.selectedServiceDetail, isNotNull);
     });
 
     test('isDetailLoading is true during load and false after success', () async {

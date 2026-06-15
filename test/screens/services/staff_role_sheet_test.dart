@@ -2,8 +2,9 @@
 //
 // Widget tests for the need-based selection bottom sheet opened from
 // StaffRoleCard (Manpower tab). Verifies:
-//  - Basic (level-0) tasks come pre-checked and the recommendation starts
-//    at Basic.
+//  - Basic (level-0) tasks are shown read-only ("Included as standard") as
+//    green ticks, NOT as interactive checkboxes, and the recommendation
+//    starts at Basic.
 //  - Checking an advanced task flips the recommendation (and CTA label)
 //    to Advanced.
 //  - Unchecking it drops the recommendation back to Basic.
@@ -87,28 +88,38 @@ void main() {
   }
 
   group('Staff role sheet — need-based selection', () {
-    testWidgets('basic tasks pre-checked and Recommended: Basic visible',
+    testWidgets(
+        'basic tasks shown read-only and Recommended: Basic visible',
         (tester) async {
       await openSheet(tester);
 
-      // Checklist heading is shown (old static scope heading is gone).
-      expect(find.text('Select what you need'), findsOneWidget);
+      // Reframed headers (old "Select what you need" / static scope heading
+      // are gone).
+      expect(find.text('Included as standard'), findsOneWidget);
+      expect(find.text('Select what you need'), findsNothing);
       expect(find.text('Scope of Service'), findsNothing);
 
-      // All 11 concrete Basic caretaker tasks come pre-checked; the 4
-      // Advanced adds are unchecked.
-      expect(find.byIcon(Icons.check_box), findsNWidgets(11));
+      // The 11 concrete Basic caretaker tasks are read-only green ticks
+      // (NOT checkboxes — they're always included). The 4 Advanced adds are
+      // the only interactive (unchecked) checkboxes.
+      expect(find.byIcon(Icons.check_circle), findsNWidgets(11));
+      expect(find.byIcon(Icons.check_box), findsNothing);
       expect(find.byIcon(Icons.check_box_outline_blank), findsNWidgets(4));
 
       // Meta entries ("All Basic services") are not rendered as tasks.
       expect(find.text('All Basic services'), findsNothing);
 
-      // Section headers per level.
-      expect(find.text('Basic care'), findsOneWidget);
-      expect(find.text('Advanced care adds'), findsOneWidget);
+      // Advanced question framing + section header.
+      expect(find.text('Need any of these? (advanced care)'), findsOneWidget);
+      expect(find.text('Advanced care'), findsOneWidget);
+      // The old per-level "Basic care" header is gone (Basic is read-only).
+      expect(find.text('Basic care'), findsNothing);
+      expect(find.text('Advanced care adds'), findsNothing);
 
-      // Recommendation starts at Basic, CTA mirrors it.
+      // Recommendation starts at Basic with the explicit relationship line;
+      // CTA mirrors it.
       expect(find.text('Recommended: Basic Caretaker'), findsOneWidget);
+      expect(find.text('Covers everything above'), findsOneWidget);
       expect(find.text('Continue — Basic Caretaker'), findsOneWidget);
       expect(find.text('Request Assessment'), findsNothing);
     });
@@ -123,16 +134,18 @@ void main() {
       expect(find.text('Continue — Advanced Caretaker'), findsOneWidget);
       expect(find.text('Recommended: Basic Caretaker'), findsNothing);
 
-      // One-line reason for the upgrade.
+      // Reason names the specific task that drove the upgrade.
       expect(
-        find.text('Includes 1 advanced-care task you selected'),
+        find.text('Needed for Insulin administration'),
         findsOneWidget,
       );
 
-      // A second advanced task updates the count.
+      // A second advanced task folds into a "+ N more" reason. The lead task
+      // is the first selected in seed order (Sugar monitoring precedes
+      // Insulin administration in the Advanced level).
       await tapTask(tester, 'Sugar monitoring');
       expect(
-        find.text('Includes 2 advanced-care tasks you selected'),
+        find.text('Needed for Sugar monitoring + 1 more'),
         findsOneWidget,
       );
     });
@@ -147,6 +160,7 @@ void main() {
       // Uncheck the same task — recommendation reverts.
       await tapTask(tester, 'Insulin administration');
       expect(find.text('Recommended: Basic Caretaker'), findsOneWidget);
+      expect(find.text('Covers everything above'), findsOneWidget);
       expect(find.text('Continue — Basic Caretaker'), findsOneWidget);
       expect(find.text('Recommended: Advanced Caretaker'), findsNothing);
     });
@@ -154,6 +168,37 @@ void main() {
     testWidgets('sheet shows no prices for manpower', (tester) async {
       await openSheet(tester);
       expect(find.textContaining('₹'), findsNothing);
+    });
+
+    testWidgets('reframed sheet lays out without overflow at 320px width',
+        (tester) async {
+      // Narrowest supported width; the sheet is tall but scrollable, so the
+      // only risk is horizontal overflow on the reframed headers/rows. (The
+      // StaffRoleCard *behind* the modal is rendered with the worst-case Ahem
+      // font and is allowed to overflow at this width — that's pre-existing
+      // card chrome, not the reframed sheet under test. We open the sheet,
+      // discard any such card-side exception, then interact with the sheet
+      // and require it to produce no overflow of its own.)
+      tester.view.physicalSize = const Size(320, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_host());
+      await tester.pump();
+      await tester.tap(find.byType(StaffRoleCard));
+      await tester.pumpAndSettle();
+      // Clear any pre-existing card-behind layout exception so the assertions
+      // below only catch overflow produced by the reframed sheet itself.
+      tester.takeException();
+
+      // Tick an advanced task so the pinned recommendation reason renders too.
+      await tapTask(tester, 'Insulin administration');
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Included as standard'), findsOneWidget);
+      expect(find.text('Need any of these? (advanced care)'), findsOneWidget);
+      expect(find.text('Needed for Insulin administration'), findsOneWidget);
     });
 
     testWidgets(

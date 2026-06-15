@@ -189,9 +189,13 @@ class StaffRoleCard extends StatelessWidget {
 
 /// Bottom-sheet body: need-based selection checklist for one staff role.
 ///
-/// All level-0 (Basic) tasks come pre-checked; ticking tasks from higher
-/// levels live-updates the recommended staff tier shown in the pinned
-/// summary card and the "Continue" CTA label.
+/// Framing (owner, 2026-06): the level-0 (Basic) tasks are shown as
+/// read-only "included as standard — staff does these anyway" ticks, NOT
+/// as choices. Only the higher-level tasks are interactive checkboxes under
+/// a "Need any of these? (advanced care)" question. Ticking any advanced
+/// task live-suggests (and effectively adds) the higher staff tier shown in
+/// the pinned summary card and the "Continue" CTA label — so families who
+/// know advanced care costs more self-select honestly.
 class _NeedsSelectionSheet extends StatefulWidget {
   final StaffRole role;
   final List<ServiceItem> services;
@@ -244,21 +248,25 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
     return 0;
   }
 
-  /// Checked tasks that belong to levels above Basic.
-  int get _higherLevelSelectedCount {
-    var count = 0;
-    for (var i = 1; i < _levelTasks.length; i++) {
-      count += _levelTasks[i]
-          .where((t) => _selected.contains(_taskKey(i, t)))
-          .length;
-    }
-    return count;
+  /// Checked task names from levels above Basic, in level/task order — these
+  /// are what drive the tier upgrade, used to explain the recommendation.
+  List<String> get _higherLevelSelectedTasks => [
+    for (var i = 1; i < _levelTasks.length; i++)
+      for (final t in _levelTasks[i])
+        if (_selected.contains(_taskKey(i, t))) t,
+  ];
+
+  /// Header for an advanced (non-Basic) level group inside the
+  /// "Need any of these?" question.
+  String _advancedSectionTitle(int levelIndex) {
+    final name = widget.role.levels[levelIndex].name;
+    return '$name care';
   }
 
-  String _sectionTitle(int levelIndex) {
-    final name = widget.role.levels[levelIndex].name;
-    return levelIndex == 0 ? '$name care' : '$name care adds';
-  }
+  /// True when this role has any task levels above Basic (level 0). The
+  /// physiotherapist has a single Standard level, so there's nothing to
+  /// "upgrade" to — the advanced question is hidden for it.
+  bool get _hasAdvancedLevels => _levelTasks.length > 1;
 
   ServiceItem get _matchingService => widget.services.firstWhere(
     (s) => s.name.toLowerCase().contains(
@@ -324,7 +332,18 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
   Widget build(BuildContext context) {
     final recommendedIndex = _recommendedLevelIndex;
     final recommendedName = widget.role.levels[recommendedIndex].name;
-    final higherCount = _higherLevelSelectedCount;
+    final selectedAdvanced = _higherLevelSelectedTasks;
+    // Explain WHY this tier — explicit link between picked task(s) and tier.
+    final String recommendationReason;
+    if (recommendedIndex == 0) {
+      recommendationReason = 'Covers everything above';
+    } else if (selectedAdvanced.length == 1) {
+      recommendationReason = 'Needed for ${selectedAdvanced.first}';
+    } else {
+      recommendationReason =
+          'Needed for ${selectedAdvanced.first} '
+          '+ ${selectedAdvanced.length - 1} more';
+    }
     // Exclusions of the currently RECOMMENDED level — recomputed every build,
     // so the block live-updates as ticking tasks changes the recommendation.
     final excludedTasks = widget.role.levels[recommendedIndex].excluded
@@ -430,9 +449,12 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                 ),
                 const SizedBox(height: 16),
 
-                // Need-based selection checklist
+                // ── Included as standard (read-only) ──────────────────
+                // These are the level-0 (Basic) tasks. They are NOT choices:
+                // staff always does them. Shown as read-only ticks so they
+                // read as "guaranteed/done", never as optional checkboxes.
                 Text(
-                  'Select what you need',
+                  'Included as standard',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -441,8 +463,8 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Basic staff work is already selected. Tick anything '
-                  'extra you need — we will match the right staff level.',
+                  'Your ${widget.role.title.toLowerCase()} does these '
+                  'anyway — no need to choose.',
                   style: TextStyle(
                     fontSize: 13,
                     color: context.hc.greyLight,
@@ -450,27 +472,54 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                for (var i = 0; i < _levelTasks.length; i++) ...[
-                  Container(
-                    margin: const EdgeInsets.only(top: 8, bottom: 4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.hc.orangeLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _sectionTitle(i),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.orangeText,
-                      ),
+                ..._levelTasks.first.map(_includedRow),
+
+                // ── Need any of these? (advanced care) ────────────────
+                // Only levels ABOVE Basic are interactive. Ticking any drives
+                // the live tier recommendation below.
+                if (_hasAdvancedLevels) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Need any of these? (advanced care)',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.black,
                     ),
                   ),
-                  ..._levelTasks[i].map((task) => _taskRow(i, task)),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Pick only what you need — we'll suggest the right "
+                    'staff level.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: context.hc.greyLight,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (var i = 1; i < _levelTasks.length; i++) ...[
+                    Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.hc.orangeLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _advancedSectionTitle(i),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: context.hc.orangeText,
+                        ),
+                      ),
+                    ),
+                    ..._levelTasks[i].map((task) => _taskRow(i, task)),
+                  ],
                 ],
 
                 // "Not included at this level" — mirrors the printed
@@ -630,19 +679,14 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
                                   color: context.hc.black,
                                 ),
                               ),
-                              if (recommendedIndex > 0) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Includes $higherCount '
-                                  '${recommendedName.toLowerCase()}-care '
-                                  'task${higherCount == 1 ? '' : 's'} '
-                                  'you selected',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: context.hc.grey,
-                                  ),
+                              const SizedBox(height: 2),
+                              Text(
+                                recommendationReason,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.hc.grey,
                                 ),
-                              ],
+                              ),
                             ],
                           ),
                         ),
@@ -674,6 +718,34 @@ class _NeedsSelectionSheetState extends State<_NeedsSelectionSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Read-only "always included" row for a Basic (level-0) task. Rendered as
+  /// a static green tick (status outcome, not a selection) so it never reads
+  /// as an optional checkbox the user has to tick.
+  Widget _includedRow(String task) {
+    return Semantics(
+      label: '$task — included as standard',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 36),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle, size: 20, color: context.hc.success),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                task,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: context.hc.black,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

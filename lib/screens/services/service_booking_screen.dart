@@ -466,12 +466,33 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         'Digital report within 4 hours',
         'Radiologist interpretation included',
       ];
-    } else if (id == 'dx-holter') {
+    } else if (id.startsWith('dx-holter')) {
       return [
-        '24-hour Holter monitor device',
+        'At-home Holter monitor device',
         'Technician for setup & removal (2 visits)',
+        'Cardiologist-reviewed report in 24 hours',
+        'Continuous arrhythmia detection',
+      ];
+    } else if (id == 'dx-abpm-24') {
+      return [
+        'At-home 24-hour ambulatory BP monitor',
+        'Technician for cuff fitting & removal',
+        'Physician-reviewed report in 24 hours',
+        'Day & night BP profile',
+      ];
+    } else if (id == 'dx-elr') {
+      return [
+        'At-home event loop recorder',
+        'Worn as prescribed for intermittent symptoms',
+        'Technician for setup & removal',
         'Cardiologist-reviewed report in 48 hours',
-        'Real-time arrhythmia detection',
+      ];
+    } else if (id == 'dx-sleep-study') {
+      return [
+        'At-home Level III sleep study kit',
+        'Technician sets up before bedtime',
+        'Single overnight recording',
+        'Specialist-reviewed report in 24 hours',
       ];
     } else if (id.startsWith('lab-')) {
       return [
@@ -496,8 +517,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       return 'Fasting for 10-12 hours recommended for accurate results. Water is allowed.';
     } else if (id == 'dx-ecg') {
       return 'Wear loose, comfortable clothing. Avoid applying lotion on chest area.';
-    } else if (id == 'dx-holter') {
-      return 'Wear a button-down shirt. Device will be attached for 24 hours — avoid showers during monitoring.';
+    } else if (id.startsWith('dx-holter')) {
+      return 'Wear a button-down shirt. The device stays attached for the full monitoring period — avoid showers during monitoring.';
+    } else if (id == 'dx-abpm-24') {
+      return 'Wear a loose, short-sleeved top so the cuff can inflate over your arm. Keep your arm still during each automatic reading.';
+    } else if (id == 'dx-elr') {
+      return 'Wear a button-down shirt. Keep the recorder dry and note the time of any symptoms during the recording period.';
+    } else if (id == 'dx-sleep-study') {
+      return 'Set up the kit at your usual bedtime. Avoid caffeine and alcohol on the day of the study. Sleep in your normal position.';
     } else if (id == 'dx-xray') {
       return 'Remove jewellery or metal objects near the area being X-rayed. Inform if pregnant.';
     }
@@ -2730,41 +2757,251 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 /// every newline-separated line becomes its own paragraph with breathing
 /// room (field report: the psychiatrist notes rendered as an unformatted
 /// blob).
+/// Renders preparationNotes as calm, structured blocks instead of a plain
+/// paragraph run-on. The structure is GENERIC — it is driven entirely by the
+/// SHAPE of each line so Diet, Psychiatrist (and any future consultation)
+/// benefit without bespoke code:
+///
+///   • 'Plans: a ₹.. · b ₹..'   → distinct plan rows (label + price pill),
+///     split on '·', each entry's trailing ₹amount pulled to the right.
+///   • 'Label: a, b, c'          → small sub-label + a wrapped set of soft
+///     tonal chips (comma- OR '·'-separated list).
+///   • 'Label: prose sentence'   → small sub-label + body text (no commas to
+///     chip-ify, e.g. 'On call: …').
+///   • bare line with '·' parts  → a bulleted credential list.
+///   • bare prose line           → body text.
+///
+/// Everything is token-styled (context.hc) with an 11pt floor.
 List<Widget> _prepNoteBlocks(BuildContext context, String notes) {
   final lines = notes
       .split('\n')
       .map((l) => l.trim())
       .where((l) => l.isNotEmpty)
       .toList();
-  return [
-    for (final line in lines)
-      Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Builder(builder: (context) {
-          final colon = line.indexOf(': ');
-          // Bold lead-in only for short labels ('Fees', 'Helps with', …) —
-          // a colon deep into the sentence is punctuation, not a label.
-          if (colon > 0 && colon <= 24) {
-            return Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 14, color: context.hc.grey),
-                children: [
-                  TextSpan(
-                    text: line.substring(0, colon + 1),
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.black),
-                  ),
-                  TextSpan(text: line.substring(colon + 1)),
-                ],
-              ),
-            );
-          }
-          return Text(line,
-              style: TextStyle(fontSize: 14, color: context.hc.grey));
-        }),
+
+  final blocks = <Widget>[];
+  for (final line in lines) {
+    final colon = line.indexOf(': ');
+    final hasLabel = colon > 0 && colon <= 24;
+    final label = hasLabel ? line.substring(0, colon) : null;
+    final content = hasLabel ? line.substring(colon + 2).trim() : line;
+
+    // ── Plan rows: a labelled list of '·'-separated entries that carry ₹ ──
+    if (hasLabel && content.contains('·') && content.contains('₹')) {
+      final entries = content
+          .split('·')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (entries.every((e) => e.contains('₹'))) {
+        blocks.add(_prepSubLabel(context, label!));
+        for (final e in entries) {
+          blocks.add(_planRow(context, e));
+        }
+        blocks.add(const SizedBox(height: 4));
+        continue;
+      }
+    }
+
+    // ── Chip list: a labelled comma/·-separated list of short items ──
+    if (hasLabel) {
+      final items = _splitListItems(content);
+      // Treat as chips when there are ≥2 short items (a genuine list), not a
+      // single prose sentence like 'On call: a senior dietitian is …'.
+      final isList = items.length >= 2 && items.every((i) => i.length <= 48);
+      if (isList) {
+        blocks.add(_prepSubLabel(context, label!));
+        blocks.add(_prepChips(context, items));
+        blocks.add(const SizedBox(height: 4));
+        continue;
+      }
+      // Labelled prose: sub-label + body text.
+      blocks.add(_prepSubLabel(context, label!));
+      blocks.add(Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Text(content,
+            style: TextStyle(fontSize: 13, color: context.hc.grey)),
+      ));
+      continue;
+    }
+
+    // ── Bare credential line with '·' separators → bulleted list ──
+    if (content.contains('·')) {
+      final items = content
+          .split('·')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      for (final item in items) {
+        blocks.add(_prepBullet(context, item));
+      }
+      blocks.add(const SizedBox(height: 4));
+      continue;
+    }
+
+    // ── Plain prose line ──
+    blocks.add(Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(content,
+          style: TextStyle(fontSize: 13, color: context.hc.grey)),
+    ));
+  }
+  return blocks;
+}
+
+/// Split a list-string on '·' first, else commas (top-level only — commas
+/// inside '(parentheses)' are kept so 'pack ₹9,500 (8 sessions)' stays whole).
+List<String> _splitListItems(String content) {
+  if (content.contains('·')) {
+    return content
+        .split('·')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+  final items = <String>[];
+  final buf = StringBuffer();
+  var depth = 0;
+  for (final ch in content.split('')) {
+    if (ch == '(') depth++;
+    if (ch == ')') depth = depth > 0 ? depth - 1 : 0;
+    if (ch == ',' && depth == 0) {
+      items.add(buf.toString().trim());
+      buf.clear();
+    } else {
+      buf.write(ch);
+    }
+  }
+  if (buf.isNotEmpty) items.add(buf.toString().trim());
+  return items.where((e) => e.isNotEmpty).toList();
+}
+
+/// Small section sub-label above its content.
+Widget _prepSubLabel(BuildContext context, String label) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+        color: context.hc.greyLight,
       ),
-  ];
+    ),
+  );
+}
+
+/// A wrapped set of soft tonal pills.
+Widget _prepChips(BuildContext context, List<String> items) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final item in items)
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: context.hc.orangeLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              item,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: context.hc.orangeText,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// A single plan row: label on the left, ₹price pulled to the right.
+Widget _planRow(BuildContext context, String entry) {
+  // Last ₹token is the price; everything before it is the plan label.
+  final idx = entry.lastIndexOf('₹');
+  String label = entry;
+  String price = '';
+  if (idx >= 0) {
+    // Price runs from ₹ up to the first space that is not inside a number
+    // group; simplest robust split: take the ₹ + following non-space, then
+    // the rest (e.g. '(8 sessions)') stays with the label as a sub-note.
+    final after = entry.substring(idx);
+    final spaceInAfter = after.indexOf(' ');
+    price = spaceInAfter > 0 ? after.substring(0, spaceInAfter) : after;
+    label = (entry.substring(0, idx) + after.substring(price.length))
+        .replaceAll('  ', ' ')
+        .trim();
+  }
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.hc.greyLighter,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: context.hc.black,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            price,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: HousepitalColors.orange,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// A bulleted credential line.
+Widget _prepBullet(BuildContext context, String text) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: HousepitalColors.orange,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 13, color: context.hc.grey),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Splits preparation notes into (general lines, about-the-specialist lines).

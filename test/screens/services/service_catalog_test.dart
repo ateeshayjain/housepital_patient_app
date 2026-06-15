@@ -53,7 +53,14 @@ final List<ServiceItem> _equipmentServices = [
 final List<ServiceItem> _diagnosticServices = [
   ServiceItem(id: 'dx-ecg', name: 'ECG at Home', category: 'diagnostics', bookingType: 'instant', basePriceMin: 500),
   ServiceItem(id: 'dx-xray', name: 'X-Ray at Home', category: 'diagnostics', bookingType: 'instant', basePriceMin: 800),
-  ServiceItem(id: 'dx-holter', name: 'Holter Monitoring', category: 'diagnostics', bookingType: 'instant', basePriceMin: 2500),
+  ServiceItem(id: 'dx-holter', name: 'Holter Monitoring — 24 Hours', category: 'diagnostics', bookingType: 'instant', basePriceMin: 2500),
+  // At-home cardiac & sleep diagnostics (prices are ESTIMATES — replace with
+  // confirmed vendor rates).
+  ServiceItem(id: 'dx-holter-48', name: 'Holter Monitoring — 48 Hours', category: 'diagnostics', bookingType: 'instant', basePriceMin: 3500),
+  ServiceItem(id: 'dx-holter-72', name: 'Holter Monitoring — 72 Hours', category: 'diagnostics', bookingType: 'instant', basePriceMin: 4500),
+  ServiceItem(id: 'dx-abpm-24', name: 'ABPM (Ambulatory BP Monitoring) — 24 Hours', category: 'diagnostics', bookingType: 'instant', basePriceMin: 2500),
+  ServiceItem(id: 'dx-elr', name: 'Event Loop Recorder (ELR)', category: 'diagnostics', bookingType: 'instant', basePriceMin: 8000),
+  ServiceItem(id: 'dx-sleep-study', name: 'Home Sleep Study (Level III)', category: 'diagnostics', bookingType: 'instant', basePriceMin: 6000),
 ];
 
 final List<ServiceItem> _labServices = [

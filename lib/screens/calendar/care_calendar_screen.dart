@@ -211,13 +211,15 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
           final gridHPad = narrow ? 8.0 : 16.0;
           return ListView(
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+              // Content starts right under the glass bar — the extra slack
+              // here read as a wasted empty band (field report).
+              top: MediaQuery.of(context).padding.top + kToolbarHeight,
               bottom: MediaQuery.of(context).padding.bottom + 24,
             ),
             children: [
               // Selected day + date FIRST — the question the screen answers.
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
                   DateFormat('EEEE, d MMMM').format(_selected),
                   style: TextStyle(
@@ -228,7 +230,7 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: _segmentedControl(),
               ),
               Padding(
@@ -1614,24 +1616,39 @@ class _CareCalendarScreenState extends State<CareCalendarScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Doses grouped by time of day — matches how patients think about
-          // medication routines (subah / dopahar / raat). Hairline separators
-          // between dose rows (owner field report: the list ran together).
-          ..._doseGroups(doses).expand(
-            (g) => [
-              Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 4),
+          const SizedBox(height: 4),
+          // Doses grouped by time of day (subah / dopahar / raat). Each
+          // day-part is its own clearly-separated section: a full-width
+          // divider above every group after the first, the DayPartHeader,
+          // then hairline-separated rows (owner field report: the sections
+          // ran together / formatting flat).
+          ...() {
+            final groups = _doseGroups(doses).toList();
+            final out = <Widget>[];
+            for (var gi = 0; gi < groups.length; gi++) {
+              final g = groups[gi];
+              if (gi > 0) {
+                out.add(Divider(
+                    height: 24, thickness: 1, color: context.hc.divider));
+              }
+              out.add(Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
                 child: DayPartHeader(g.part),
-              ),
-              for (var i = 0; i < g.doses.length; i++) ...[
-                if (i > 0)
-                  Divider(
-                      height: 1, thickness: 0.5, color: context.hc.divider),
-                _doseRow(medProv, g.doses[i].$1, g.doses[i].$2),
-              ],
-            ],
-          ),
+              ));
+              for (var i = 0; i < g.doses.length; i++) {
+                if (i > 0) {
+                  out.add(Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      indent: 4,
+                      endIndent: 4,
+                      color: context.hc.divider));
+                }
+                out.add(_doseRow(medProv, g.doses[i].$1, g.doses[i].$2));
+              }
+            }
+            return out;
+          }(),
         ],
       ),
     );

@@ -6,8 +6,10 @@ import '../../config/theme.dart';
 import '../../models/medication_models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/medication_provider.dart';
+import '../../services/handover_report_service.dart';
 import '../../services/medication_reminder_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/permissions.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
@@ -41,7 +43,18 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen> {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l.t('medication_schedule')),
+        // Cart is irrelevant on the schedule — replaced with Share so the
+        // patient can send the day's doses/handover to a doctor (owner ask).
+        showCart: false,
         actions: [
+          if (canUserPerform(
+              context.read<AppProvider>().currentUserRole,
+              UserAction.shareHandover))
+            IconButton(
+              icon: const Icon(Icons.ios_share, size: 20),
+              tooltip: 'Share Doctor Handover Report',
+              onPressed: () => HandoverReportService().shareHandover(),
+            ),
           IconButton(
             icon: const Icon(Icons.calendar_month),
             tooltip: 'Care Calendar',

@@ -79,6 +79,7 @@ import 'package:housepital_patient/screens/services/equipment_detail_screen.dart
 import 'package:housepital_patient/screens/services/my_orders_screen.dart';
 import 'package:housepital_patient/screens/services/service_booking_screen.dart';
 import 'package:housepital_patient/screens/services/service_catalog_screen.dart';
+import 'package:housepital_patient/screens/services/data/catalog_seeds.dart';
 import 'package:housepital_patient/screens/settings/about_screen.dart';
 import 'package:housepital_patient/screens/settings/add_patient_screen.dart';
 import 'package:housepital_patient/screens/settings/family_members_screen.dart';
@@ -479,6 +480,19 @@ void main() {
         () => PackageDetailScreen(package: carePackages[0]));
     argScreen('ServiceBookingScreen',
         () => ServiceBookingScreen(service: _bookingService()));
+    // Consultation detail with the rich preparationNotes formatting (plan
+    // rows, chips, bulleted credentials, 'Trained at' institution chips) must
+    // not overflow at the narrow 320px width under Ahem.
+    argScreen(
+        'ServiceBookingScreen (con-diet rich notes)',
+        () => ServiceBookingScreen(
+            service:
+                consultationServices.firstWhere((s) => s.id == 'con-diet')));
+    argScreen(
+        'ServiceBookingScreen (con-psychiatrist rich notes)',
+        () => ServiceBookingScreen(
+            service: consultationServices
+                .firstWhere((s) => s.id == 'con-psychiatrist')));
     argScreen('EquipmentDetailScreen',
         () => EquipmentDetailScreen(service: _equipmentService()));
     argScreen('AssessmentRequestScreen',

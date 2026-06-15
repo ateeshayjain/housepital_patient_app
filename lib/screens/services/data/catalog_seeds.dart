@@ -163,10 +163,43 @@ final List<ServiceItem> diagnosticServices = [
     basePriceMin: 800, durationMinutes: 30, leadTimeHours: 6, iconName: 'radiology',
   ),
   ServiceItem(
-    id: 'dx-holter', name: 'Holter Monitoring',
+    id: 'dx-holter', name: 'Holter Monitoring — 24 Hours',
     category: 'diagnostics', bookingType: 'instant',
-    description: '24-hour Holter monitor fitted at home. Technician visits for setup & removal. Report in 48 hours.',
+    description: 'At-home 24-hour Holter monitor. Technician visits for setup & removal. Report in 24 hours.',
     basePriceMin: 2500, durationMinutes: 45, leadTimeHours: 12, iconName: 'monitor_heart',
+  ),
+  // ── Added at-home cardiac & sleep diagnostics (owner: "we provide all of
+  //    these at home"). PRICES ARE ESTIMATES — vendor-rate column was blank;
+  //    replace with confirmed vendor rates before launch.
+  ServiceItem(
+    id: 'dx-holter-48', name: 'Holter Monitoring — 48 Hours',
+    category: 'diagnostics', bookingType: 'instant',
+    description: 'At-home 48-hour Holter monitor for longer arrhythmia capture. Setup & removal at home. Report in 24 hours.',
+    basePriceMin: 3500, durationMinutes: 45, leadTimeHours: 12, iconName: 'monitor_heart',
+  ),
+  ServiceItem(
+    id: 'dx-holter-72', name: 'Holter Monitoring — 72 Hours',
+    category: 'diagnostics', bookingType: 'instant',
+    description: 'At-home 72-hour Holter monitor for extended cardiac rhythm tracking. Setup & removal at home. Report in 24 hours.',
+    basePriceMin: 4500, durationMinutes: 45, leadTimeHours: 12, iconName: 'monitor_heart',
+  ),
+  ServiceItem(
+    id: 'dx-abpm-24', name: 'ABPM (Ambulatory BP Monitoring) — 24 Hours',
+    category: 'diagnostics', bookingType: 'instant',
+    description: 'At-home 24-hour ambulatory blood-pressure monitoring. Technician fits & removes the cuff. Report in 24 hours.',
+    basePriceMin: 2500, durationMinutes: 30, leadTimeHours: 12, iconName: 'monitor_heart',
+  ),
+  ServiceItem(
+    id: 'dx-elr', name: 'Event Loop Recorder (ELR)',
+    category: 'diagnostics', bookingType: 'instant',
+    description: 'At-home event loop recorder for intermittent arrhythmias — worn as prescribed. Setup & removal at home. Report in 48 hours.',
+    basePriceMin: 8000, durationMinutes: 45, leadTimeHours: 24, iconName: 'monitor_heart',
+  ),
+  ServiceItem(
+    id: 'dx-sleep-study', name: 'Home Sleep Study (Level III)',
+    category: 'diagnostics', bookingType: 'instant',
+    description: 'At-home Level III sleep study for sleep apnoea — single overnight recording. Technician sets up at home. Report in 24 hours.',
+    basePriceMin: 6000, durationMinutes: 45, leadTimeHours: 24, iconName: 'monitor_heart',
   ),
 ];
 
@@ -257,17 +290,22 @@ final List<ServiceItem> consultationServices = [
         'and judgment-free.',
     basePriceMin: 1000, basePriceMax: 1500,
     durationMinutes: 40, leadTimeHours: 24, iconName: 'psychology',
+    // preparationNotes shape (parsed generically by the booking screen):
+    //   'Label: a, b, c'      → sub-label + soft chips (comma list)
+    //   'Plans: x ₹.. · y ₹..' → plan rows (· -separated, each has ₹)
+    //   'About: …'             → routed to the 'About your specialist' section
+    // Keep the same facts; only the delimiters drive rendering.
     preparationNotes:
         'Helps with: depression & bipolar, anxiety & OCD, schizophrenia & '
         'psychosis, de-addiction (incl. gaming), child psychiatry & IQ, '
         'dementia & elderly care, eating disorders, ADHD, grief, sleep '
-        'issues & migraine.\n'
+        'issues, migraine.\n'
         'Therapy & assessment: CBT, DBT, grief, marital, family, '
-        'occupational, IQ assessment. Also trained in rTMS & ECT — '
-        'advanced, specialist-supervised care.\n'
-        'Fees: initial consult ₹1,000 (15-min assessment) · therapy session '
+        'occupational, IQ assessment.\n'
+        'Also trained in rTMS & ECT — advanced, specialist-supervised care.\n'
+        'Plans: initial consult ₹1,000 (15-min assessment) · therapy session '
         '₹1,500 (40 min) · monthly pack ₹9,500 (8 sessions).\n'
-        'Online · Mon–Fri · 6:00–8:00 PM.',
+        'On call: 100% online · Mon–Fri · 6:00–8:00 PM.',
   ),
   // Content from the Clinical Dietetics SM creatives (2026-06): The Nourish
   // Programme (30/60/90-day) + the senior clinical dietitian on
@@ -280,10 +318,16 @@ final List<ServiceItem> consultationServices = [
         'plan, built bedside, reviewed every week.',
     basePriceMin: 3000, basePriceMax: 6000,
     durationMinutes: 45, leadTimeHours: 24, iconName: 'restaurant',
+    // preparationNotes shape (parsed generically by the booking screen):
+    //   'Plans: x ₹.. · y ₹..' → distinct plan rows (· -separated, each ₹)
+    //   'Label: a, b, c'        → sub-label + soft chips (comma list)
+    //   'About: …'              → 'About your specialist' section; a
+    //                             'Trained at:' label there renders as
+    //                             institution chips.
     preparationNotes:
         'Plans: 30-day quick reset ₹3,000 · 60-day (most popular) ₹4,500 · '
         '90-day best results ₹6,000.\n'
-        'Every plan includes: daily WhatsApp support, a weekly plan and '
+        'Every plan includes: daily WhatsApp support, a weekly plan, '
         'recipes.\n'
         'Specialities: oncology nutrition, diabetes & cardiac, '
         'post-surgical, renal & liver, gut healing, geriatric care.\n'
@@ -293,11 +337,11 @@ final List<ServiceItem> consultationServices = [
         // section on the booking screen — never inside the notes blob.
         'About: Senior clinical dietitian, 12+ years in oncology, '
         'transplant & critical care.\n'
-        'About: M.Sc. Nutrition & Dietetics · double-certified cancer '
-        'nutritionist · liver-transplant nutrition certified · IAPEN India '
-        'Oncology Core Committee · published author.\n'
-        'About: Trained at Medanta, Sir HN Reliance, AIMS and '
-        'internationally (Stanford, Duke, Univ. of Colorado).',
+        'About: Credentials: M.Sc. Nutrition & Dietetics · double-certified '
+        'cancer nutritionist · liver-transplant nutrition certified · IAPEN '
+        'India Oncology Core Committee · published author.\n'
+        'About: Trained at: Medanta, Sir HN Reliance, AIMS, Stanford, Duke, '
+        'Univ. of Colorado.',
   ),
   ServiceItem(
     id: 'con-grief', name: 'Grief Counselling',
