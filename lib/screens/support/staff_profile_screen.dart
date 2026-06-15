@@ -9,7 +9,16 @@ import '../../widgets/glass.dart';
 
 class StaffProfileScreen extends StatefulWidget {
   final String staffId;
-  const StaffProfileScreen({super.key, required this.staffId});
+  // Real identity of the tapped staff member, used by the demo fallback so
+  // each row shows the right person (not a single hard-coded mock).
+  final String? staffName;
+  final String? staffRole;
+  const StaffProfileScreen({
+    super.key,
+    required this.staffId,
+    this.staffName,
+    this.staffRole,
+  });
 
   @override
   State<StaffProfileScreen> createState() => _StaffProfileScreenState();
@@ -33,8 +42,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
       // Mock data for preview
       _staff = StaffProfile.fromJson({
         'id': widget.staffId,
-        'name': 'Priya Mehra',
-        'role': 'nurse',
+        'name': widget.staffName ?? 'Housepital Staff',
+        'role': widget.staffRole ?? 'nurse',
         'photo_url': null,
         'rating': 4.8,
         'total_reviews': 142,

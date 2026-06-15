@@ -329,8 +329,15 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                           ],
                         )
                       : null,
+                  // Pass the tapped staff's real identity — the demo fallback
+                  // used to hard-code one person, so every row opened the same
+                  // profile (field report: Sunita & Ram both showed Priya).
                   onTap: () => Navigator.pushNamed(context, '/staff-profile',
-                      arguments: staff.id),
+                      arguments: {
+                        'id': staff.id,
+                        'name': staff.name,
+                        'role': staff.role,
+                      }),
                 ),
               )),
         ],

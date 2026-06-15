@@ -11,6 +11,7 @@ import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/document_attach_widgets.dart';
+import '../../widgets/common_widgets.dart';
 import '../checkout/address_selection_screen.dart';
 
 class ServiceBookingScreen extends StatefulWidget {
@@ -68,6 +69,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   /// Fetch slots from API; fall back to all-available on failure.
   Future<void> _fetchSlots(DateTime date) async {
     setState(() => _slotsLoading = true);
+    // Sleep study is a single overnight window — skip hourly slots entirely.
+    if (_isSleepStudy) {
+      setState(() {
+        _availableSlots = [
+          {
+            'hour': 22,
+            'available': true,
+            'label': 'Overnight · 10:00 PM – 6:00 AM',
+          }
+        ];
+        _slotsLoading = false;
+        _selectedSlot = null;
+      });
+      return;
+    }
     try {
       final apiSlots = await ApiService().getAvailableSlots(
         widget.service.id,
@@ -117,6 +133,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   /// Physio: pick a daytime slot + period (3/7/15/30 days)
   bool get _isPhysio => widget.service.id.startsWith('mp-physio');
+
+  /// Home sleep study runs OVERNIGHT (whole night) — not an hourly daytime
+  /// slot. The technician sets the kit up at bedtime; one fixed window.
+  bool get _isSleepStudy => widget.service.id == 'dx-sleep-study';
 
   // Manpower (caretaker / nursing / physio / ICU staffing) pricing rule
   // (owner, Mar 2026, re-confirmed 2026-06-11): rate-card prices ARE shown
@@ -1660,7 +1680,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                   ),
                 ),
                 child: Text(
-                  _slotLabel(hour),
+                  (slot['label'] as String?) ?? _slotLabel(hour),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
@@ -2482,26 +2502,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
               // Capture navigator before popping
               final nav = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-
-              // Pop first, then show SnackBar on the parent screen
+              // Pop first, then show a TOP toast on the parent (via the
+              // navigator's still-mounted context) so it never covers the CTA.
               nav.pop();
-
-              messenger
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: const Text('Service added to cart'),
-                    backgroundColor: context.hc.success,
-                    duration: const Duration(seconds: 2),
-                    dismissDirection: DismissDirection.horizontal,
-                    action: SnackBarAction(
-                      label: 'View Cart',
-                      textColor: Colors.white,
-                      onPressed: () => nav.pushNamed('/cart'),
-                    ),
-                  ),
-                );
+              showTopToast(
+                nav.context,
+                'Service added to cart',
+                actionLabel: 'View Cart',
+                onAction: () => nav.pushNamed('/cart'),
+              );
             },
             child: const Text('Confirm & Add to Cart'),
           ),

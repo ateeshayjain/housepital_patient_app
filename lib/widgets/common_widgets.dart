@@ -1,8 +1,103 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../config/app_colors.dart';
 import '../config/theme.dart';
+
+/// Brief confirmation toast anchored at the TOP of the screen (below the
+/// status bar), not the bottom. Used for "added to cart" style messages that,
+/// as bottom SnackBars, covered the primary CTA and couldn't be dismissed
+/// (field report: "I can't select slot" / "how do I cross it"). Auto-dismisses
+/// after [duration]; tap anywhere on it to dismiss immediately; optional
+/// trailing action (e.g. "View Cart"). Safe to call repeatedly — replaces any
+/// visible toast.
+OverlayEntry? _activeToast;
+Timer? _toastTimer;
+
+void showTopToast(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+  Duration duration = const Duration(seconds: 3),
+  bool isError = false,
+}) {
+  final overlay = Overlay.maybeOf(context);
+  if (overlay == null) return;
+  _dismissTopToast();
+
+  final hc = context.hc;
+  final top = MediaQuery.of(context).padding.top + 8;
+
+  void close() => _dismissTopToast();
+
+  _activeToast = OverlayEntry(
+    builder: (ctx) => Positioned(
+      top: top,
+      left: 12,
+      right: 12,
+      child: Material(
+        color: Colors.transparent,
+        child: GestureDetector(
+          onTap: close,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: ShapeDecoration(
+              color: isError ? hc.error : hc.success,
+              shape: const StadiumBorder(),
+              shadows: const [
+                BoxShadow(
+                    color: Colors.black26, blurRadius: 12, offset: Offset(0, 4)),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(isError ? Icons.error_outline : Icons.check_circle,
+                    color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(message,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                ),
+                if (actionLabel != null && onAction != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      close();
+                      onAction();
+                    },
+                    child: Text(actionLabel,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            decoration: TextDecoration.underline)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(_activeToast!);
+  _toastTimer = Timer(duration, _dismissTopToast);
+}
+
+void _dismissTopToast() {
+  _toastTimer?.cancel();
+  _toastTimer = null;
+  _activeToast?.remove();
+  _activeToast = null;
+}
 
 /// Shared product-image renderer used by the equipment card AND the detail
 /// sheet. Picks the right loader by URL shape — `assets/…` → [Image.asset],

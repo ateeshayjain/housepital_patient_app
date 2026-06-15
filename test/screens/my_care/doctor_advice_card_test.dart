@@ -92,10 +92,11 @@ void main() {
     expect(find.text('Added'), findsOneWidget);
     expect(find.byKey(const Key('advice-add-rec_cbc')), findsNothing);
 
-    // SnackBar confirmation.
-    expect(find.text('Added to cart'), findsOneWidget);
+    // Top-toast confirmation (was a bottom SnackBar; now an overlay toast
+    // that names the item: "<title> added to cart").
+    expect(find.textContaining('added to cart'), findsOneWidget);
 
-    // Drain the SnackBar's display timer so the test ends clean.
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+    // Drain the toast's auto-dismiss timer so the test ends clean.
+    await tester.pumpAndSettle(const Duration(seconds: 4));
   });
 }

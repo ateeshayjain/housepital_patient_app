@@ -107,28 +107,14 @@ class _DoctorAdviceCardState extends State<DoctorAdviceCard> {
   }
 
   Future<void> _onAdd(DoctorRecommendation rec) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final successColor = context.hc.success;
-    final errorColor = context.hc.error;
     final ok = await _addToCart(rec);
     if (!mounted) return;
     if (ok) {
       setState(() => _added.add(rec.id));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: const Text('Added to cart'),
-          backgroundColor: successColor,
-          duration: const Duration(seconds: 2),
-        ));
+      showTopToast(context, '${rec.title} added to cart');
     } else {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: const Text('Could not add — please try from the catalog'),
-          backgroundColor: errorColor,
-          duration: const Duration(seconds: 2),
-        ));
+      showTopToast(context, 'Could not add — please try from the catalog',
+          isError: true);
     }
   }
 
@@ -137,8 +123,6 @@ class _DoctorAdviceCardState extends State<DoctorAdviceCard> {
         .where((r) => r.type != 'service' && !_added.contains(r.id))
         .toList();
     if (addable.isEmpty) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final successColor = context.hc.success;
     var addedCount = 0;
     for (final rec in addable) {
       final ok = await _addToCart(rec);
@@ -148,14 +132,8 @@ class _DoctorAdviceCardState extends State<DoctorAdviceCard> {
         addedCount++;
       }
     }
-    if (addedCount > 0) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: const Text('Added to cart'),
-          backgroundColor: successColor,
-          duration: const Duration(seconds: 2),
-        ));
+    if (addedCount > 0 && mounted) {
+      showTopToast(context, '$addedCount added to cart');
     }
   }
 

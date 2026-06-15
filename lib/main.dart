@@ -470,6 +470,16 @@ class _HousepitalAppState extends State<HousepitalApp> {
                     DailyReportScreen(reportId: reportId));
           case '/staff-profile':
             final raw = settings.arguments;
+            // Accepts a {id,name,role} map (preferred — carries the real staff
+            // identity for the demo fallback) or a bare id String (legacy).
+            if (raw is Map) {
+              return MaterialPageRoute(
+                  builder: (_) => StaffProfileScreen(
+                        staffId: raw['id'] as String? ?? '',
+                        staffName: raw['name'] as String?,
+                        staffRole: raw['role'] as String?,
+                      ));
+            }
             if (raw is! String) return _argErrorRoute();
             return MaterialPageRoute(
                 builder: (_) => StaffProfileScreen(staffId: raw));

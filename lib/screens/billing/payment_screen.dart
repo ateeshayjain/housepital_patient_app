@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/invoice_pdf_service.dart';
 import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
@@ -93,6 +94,35 @@ class _PaymentScreenState extends State<PaymentScreen>
       computeCartGst(_cartItems, discount: _discountAmount);
 
   int get _totalAmount => _subtotal - _discountAmount + _gstAmount;
+
+  /// Generate + share the paid invoice as a PDF (field bug: 'View Receipt'
+  /// only showed a toast — no receipt was produced). Builds an order from the
+  /// paid cart items and hands it to InvoicePdfService.
+  Future<void> _shareReceipt() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final order = <String, dynamic>{
+      'id': _transactionId ?? 'HPL-RECEIPT',
+      'status': 'paid',
+      'createdAt': DateTime.now().toIso8601String(),
+      'items': _cartItems
+          .map((c) => {
+                'name': c.name,
+                'quantity': c.quantity,
+                'unitPrice': c.unitPrice,
+                'isRental': c.isRental,
+                'rentalMonths': c.rentalMonths,
+                'isService': c.isService,
+              })
+          .toList(),
+    };
+    try {
+      await InvoicePdfService().shareInvoice(order);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not open the receipt. Please retry.')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -475,11 +505,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         child: SizedBox(
                           height: 48,
                           child: OutlinedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(l.t('opening_receipt'))),
-                              );
-                            },
+                            onPressed: _shareReceipt,
                             child: Text(l.t('view_receipt')),
                           ),
                         ),

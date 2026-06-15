@@ -10,6 +10,7 @@ import '../../../providers/cart_provider.dart';
 import '../../../providers/orders_provider.dart';
 import '../../../utils/helpers.dart';
 import '../../../utils/permissions.dart';
+import '../../../widgets/common_widgets.dart';
 import '../sheets/equipment_detail_sheet.dart';
 import '../widgets/permission_dialogs.dart';
 
@@ -250,25 +251,16 @@ class EquipmentItemCard extends StatelessWidget {
       }
       return;
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final cart = context.read<CartProvider>();
     cart.addItem(item, isRental: false, rentalMonths: 1);
-    // SnackBar supports a single action — Undo wins over View Cart here
-    // (error prevention beats navigation for a one-tap add).
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('${item.name} added to cart'),
-          backgroundColor: context.hc.success,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'Undo',
-            textColor: Colors.white,
-            onPressed: () => _undoAdd(cart),
-          ),
-        ),
-      );
+    // Top toast (not a bottom SnackBar) so it never covers the CTA and is
+    // tap-to-dismiss. Undo wins the single action (error prevention).
+    showTopToast(
+      context,
+      '${item.name} added to cart',
+      actionLabel: 'Undo',
+      onAction: () => _undoAdd(cart),
+    );
   }
 
   /// Reverts the one-tap ADD: the add either appended a new cart line or
@@ -323,21 +315,11 @@ class EquipmentItemCard extends StatelessWidget {
         if (agreed == true && context.mounted) {
           final cart = Provider.of<CartProvider>(context, listen: false);
           cart.addItem(item, isRental: true, rentalMonths: result['rentalMonths'] as int);
-          messenger
-            ?..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text('${item.name} rental added to cart'),
-                backgroundColor: context.hc.success,
-                duration: const Duration(seconds: 2),
-                dismissDirection: DismissDirection.horizontal,
-                action: SnackBarAction(
-                  label: 'View Cart',
-                  textColor: Colors.white,
-                  onPressed: () => navigator.pushNamed('/cart'),
-                ),
-              ),
-            );
+          if (context.mounted) {
+            showTopToast(context, '${item.name} rental added to cart',
+                actionLabel: 'View Cart',
+                onAction: () => navigator.pushNamed('/cart'));
+          }
         }
       } else if (result['action'] == 'add_to_cart') {
         // Buy flow: add to cart directly
@@ -348,20 +330,11 @@ class EquipmentItemCard extends StatelessWidget {
           rentalMonths: 1,
         );
         final itemName = result['itemName'] as String;
-        messenger
-          ?..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text('$itemName added to cart'),
-              backgroundColor: context.hc.success,
-              duration: const Duration(seconds: 2),
-              action: SnackBarAction(
-                label: 'View Cart',
-                textColor: Colors.white,
-                onPressed: () => navigator.pushNamed('/cart'),
-              ),
-            ),
-          );
+        if (context.mounted) {
+          showTopToast(context, '$itemName added to cart',
+              actionLabel: 'View Cart',
+              onAction: () => navigator.pushNamed('/cart'));
+        }
       } else if (result['action'] == 'reserve') {
         // Price-on-request flow: create a quote-pending order directly via
         // OrdersProvider — no price shown, the team confirms it on call
