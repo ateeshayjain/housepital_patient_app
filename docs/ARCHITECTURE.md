@@ -65,7 +65,7 @@ lib/
  |   +-- blog_provider.dart           # BlogProvider -- Care Guides articles (demo fallback)
  |   +-- assistant_provider.dart      # AssistantProvider -- service + executor + voice orchestration
  +-- screens/
- |   +-- main_shell.dart              # Bottom nav bar (5 tabs)
+ |   +-- main_shell.dart              # Fixed solid-orange bottom nav bar (6 tabs: Home/My Care/Services/Calendar/Billing/More)
  |   +-- auth/
  |   |   +-- login_screen.dart
  |   |   +-- otp_screen.dart
@@ -187,7 +187,13 @@ lib/
 - Every brightness-sensitive color resolves through `context.hc.*`
   (`lib/config/app_colors.dart` — `HcPalette` with light and dark token sets).
   Raw `Colors.*`, hex literals and `Colors.grey.shade*` are banned by
-  `scripts/check_design_consistency.sh` (allowlist inside the script).
+  `scripts/check_design_consistency.sh` (allowlist inside the script). The gate also
+  prints an **informational fontSize histogram** (echo-only — never fails the build)
+  to surface typography drift.
+- **Dark mode is true-black tonal.** One-accent color budget (orange `#F39314`).
+  **`onOrange` is WHITE app-wide** (`#FFFFFF` in both light and dark `theme.dart`,
+  owner decision) — all text/icons on orange fills are white. Large iOS-style
+  display titles.
 - `test/widgets/dark_mode_test.dart` guards the token contract in CI.
 
 ## Liquid Glass Chrome Layer
@@ -197,18 +203,42 @@ lib/
   (squircle `RoundedSuperellipseBorder(16)`, press-scale 0.97 @ 120ms).
 - Glass screens pair with `extendBodyBehindAppBar` + top scroll padding
   `MediaQuery.padding.top + kToolbarHeight`.
-- Nav contract: back on the left; trailing order `[custom…, search, home]`;
-  `showSearch` defaults on; `showHome` off on root tabs.
+- **Bottom nav** (`main_shell.dart`): FIXED full-width solid-orange bar, white
+  icons, SafeArea-padded (owner iterated floating-glass → pill → fixed). Six root
+  tabs (Calendar added at index 3 — indices 1/2 referenced externally).
+- **Nav contract:** back on the left (or HOME leftmost on non-Home root tabs);
+  trailing order `[custom…, home, search, cart]` with the **CART always rightmost**
+  and a live item-count badge. `showSearch`/`showCart`/`showHome` default on; the
+  purchase funnel (cart/checkout/payment) opts out of the cart icon; Billing shows
+  no cart; SOS is the home-screen far-right exception.
+- **`ProductImage`** (`lib/widgets/common_widgets.dart`) is the shared image
+  renderer for equipment: asset path → `Image.asset`, URL → `CachedNetworkImage`,
+  else fallback icon. Used by both the grid card and the detail sheet so bundled
+  product photos in `assets/images/products/` render in both places (320/351 items
+  have images; ~31 generic items show the icon).
 
 ## PDF Generation Layer
 
 - All PDFs are generated **on-device** with the `pdf` + `printing` packages —
   no backend dependency:
-  - `invoice_pdf_service.dart` — invoices; quote-pending (manpower) orders
-    render as PRO FORMA **without amounts**.
+  - `invoice_pdf_service.dart` — invoices; quote-pending orders (items that
+    genuinely lack a price) render as PRO FORMA **without amounts**.
   - `handover_report_service.dart` — Doctor Handover report; role-gated
     (sensitive export).
 - Both services accept an injected `DateTime` for deterministic tests.
+
+## Payments & Assistant
+
+- **Payments** (`payment_service.dart`): runs in **demo mode** when the Razorpay key
+  is a placeholder (`rzp_test_XXXXXXXXXX` / `rzp_test_dummy`) — `openCheckout`
+  simulates the checkout locally so the full purchase flow stays demoable. A real key
+  via `--dart-define=RAZORPAY_KEY=…` enables real checkout. The CI key
+  `rzp_test_ci_dummy_key` is deliberately NOT a placeholder (it un-skips the
+  real-checkout test groups). Manpower books at rate-card prices via this same path.
+- **Sahayak assistant**: demo builds use a local Hinglish intent matcher/executor
+  (`assistant_service.dart` + `assistant_local_actions.dart`) that really executes
+  add-to-cart / booking offline; the Cloud Function (Claude) is used when
+  `ASSISTANT_API_URL` is set.
 
 ### Backend (`/housepital-backend/`)
 

@@ -2,18 +2,22 @@
 
 ## Pricing and Commission
 
-### Manpower Services (Caretaker, Nursing Deployment, Japa, Nanny)
+### Manpower Services (Caretaker, Nurse, Physio)
 
-**RULE (inviolable, re-confirmed 2026-06-11): Manpower service prices are NEVER shown.** Caretaker, nursing, attendant (and legacy japa/nanny) services display no price anywhere — catalog, booking wizard, cart, orders, invoices. Users who see a manpower price reject without talking to us; the price is confirmed on a call. In-app booking is fully supported as **quote-pending**: the wizard runs end-to-end with all ₹/GST suppressed and the copy "Price confirmed on call before payment"; orders carry `quoteStatus: 'pending'` and are excluded from billing sums; ₹0 is never rendered; quote invoices export as PRO FORMA without amounts. *(A 2026-03-24 note here previously claimed prices were re-shown — that was a documentation error, reverted by the M-1 fix in code. This header is the source of truth.)* Equipment is unaffected: MRP strikethrough + discounted price, with price-on-request items using the Reserve flow.
+**RULE (owner decision, re-confirmed 2026-06-11): Manpower service prices ARE shown and directly bookable.** Caretaker, nurse and physio services display prices from the official Delhi NCR rate card and book through the normal cart/payment path. Per-day rates: **Caretaker ₹800–1,500/day, Nurse ₹1,600–3,000/day** (stored as per-day `basePriceMin` in `catalog_seeds.dart`, excl. GST), plus **monthly packages ₹18,000–₹90,000/mo**. The booking wizard multiplies the unit rate by the right quantity — per-day × days for ongoing manpower, × sessions for IV/physio (`_priceMultiplier` in `service_booking_screen.dart`); a 30-day caretaker charges rate × 30. After purchase Housepital calls back to confirm requirements and assign staff.
 
-- Staff salary + Commission to Housepital
+**Lineage:** prices were hidden Mar–Jun 2026 (audit M-1 and its extension, based on a stale memory). The owner reversed this on **2026-06-11 (re-confirmed explicitly)** — field round 6 / commit `e41224c`. The earlier "never show manpower prices" framing is dead; do not reintroduce it.
+
+**Quote-pending applies ONLY to items that genuinely lack a price.** `isQuote` is `price == null || price == 0` (`service_booking_screen.dart`) — **never** `category == 'manpower'`. For those price-less items: ₹0 is never rendered; orders carry `quoteStatus: 'pending'` (`OrdersProvider.isQuotePending`) and are excluded from billing sums; quote invoices export PRO FORMA without amounts. Equipment price-on-request uses the Reserve flow (no fabricated price).
+
+- Staff salary + Commission to Housepital (back-office model; not surfaced in-app pricing)
 - Monthly plan: Rs 12,000 commission (Rs 5,000 non-refundable minimum)
 - 3-Month plan: Rs 30,000 one-time (Rs 10,000 non-refundable minimum, EMI available)
 
 ### Nursing (Direct Salary Model)
 
 - Direct salary model -- NO commission layer
-- Pricing handled through assessment + quote flow
+- Per-day / monthly rates shown in catalog and directly bookable (see rate card above)
 
 ### Equipment (Sale and Rental)
 
@@ -22,7 +26,7 @@
 - Sale and rental prices synced from master Excel
 - 30% discount for 3-month plan customers on rentals
 - All prices stored in paise
-- **364 total items** in catalog (synced from master Excel)
+- **351 total items** in equipment catalog (`assets/equipment_catalog.json`; deduped 355 → 351, all priced)
 
 ### Rental Agreement Terms
 
@@ -44,8 +48,8 @@
 | Type        | Flow                                    | Price Display | Examples                               |
 |-------------|----------------------------------------|---------------|----------------------------------------|
 | `instant`   | Select slot -> Pay -> Confirmed        | Shown         | Nursing visit, Physio, Lab test        |
-| `scheduled` | Select date -> Pay -> Confirmed        | Shown         | Sleep therapy                          |
-| `assessment`| Fill questionnaire -> Callback -> Quote| Hidden        | Caretaker, Nursing deploy, Japa, Nanny, ICU |
+| `scheduled` | Select date/period -> Pay -> Confirmed  | Shown         | Sleep therapy, Caretaker, Nurse (per-day × days) |
+| `assessment`| Fill questionnaire -> Callback -> Quote| Hidden (only if no price) | Bespoke/price-less items (e.g. custom ICU setup) — Housepital calls back after a normal manpower purchase too |
 
 ---
 
@@ -208,10 +212,10 @@ Local push notifications for medication adherence. Uses `flutter_local_notificat
 
 **Single source of truth:** All service and equipment pricing is synced from a master Excel spreadsheet.
 
-- Catalog items: **364 total** (was 465, then 434 after cleanup)
+- Equipment catalog: **351 items** (`assets/equipment_catalog.json`; deduped 355 → 351 in round 6b). **Every item is priced — zero "price on request" remain.** 320 items carry an `image_url`; ~31 generic/unbranded items have no image (placeholder icon, known gap).
 - Equipment: MRP + discounted price (strikethrough display)
-- Manpower: prices now visible (previously hidden)
-- Lab tests: **153 individual tests** with per-test pricing (was 7 packages only)
+- Manpower: **prices shown and directly bookable** (per-day rate card — reversed/re-confirmed 2026-06-11; see Manpower Services above)
+- Lab tests: individual tests with per-test pricing (`assets/lab_tests_catalog.json`) + package tiers
 - Sync process: Excel -> backend seed script -> service_catalog + equipment_catalog tables
 
 ---
@@ -256,16 +260,19 @@ delhi, faridabad, gurgaon, noida, ghaziabad
 
 ## Service Categories
 
-### Instant Services (no assessment required)
+### Priced & directly bookable (price shown, normal cart/payment path)
 
 ```
-nursing_visit, physio_visit, sleep_therapy, lab_test
+nursing_visit, physio_visit, sleep_therapy, lab_test,
+manpower (caretaker, nurse — per-day × days), consultations, diagnostics, packages
 ```
 
-### Assessment Services (questionnaire -> callback -> quote)
+After a manpower purchase Housepital calls back to confirm requirements and assign staff — but the booking is paid up front, not quote-gated. (Japa/Nanny are Dai Maa, a separate business — not sold in this app.)
+
+### Quote / assessment path (questionnaire -> callback -> quote)
 
 ```
-caretaker, nursing_deployment, icu_setup, japa, nanny
+Only items that genuinely lack a price (price == null/0), e.g. bespoke ICU setup
 ```
 
 ---

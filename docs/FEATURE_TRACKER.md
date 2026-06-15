@@ -118,7 +118,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 6 | Promo Code Validation               | ServiceBookingScreen     | POST /coupons/validate | Done         | Coupon system fully wired in cart + booking  |
 | 7 | Cart System                         | CartScreen               | --                   | Done -- rewritten | Flat CartItem model, List-based CartProvider with index-based ops, SharedPreferences persistence, coupon support (WELCOME10). Rewritten 2026-03-25 to fix grey screen / empty cart bugs. |
 | 8 | Universal Search                    | UniversalSearchScreen    | --                   | Done           | Local search across services                 |
-| 9 | Manpower Price Rule (inviolable)    | catalog/wizard/cart/orders | OrdersProvider     | Done (2026-06) | Prices hidden EVERYWHERE for manpower; booking is quote-pending ("Price confirmed on call before payment"); billing sums exclude quotes. Equipment keeps MRP + strikethrough. |
+| 9 | Manpower Pricing (prices shown / direct booking) | catalog/wizard/cart/orders | OrdersProvider | Done (2026-06-11) | **Prices shown + directly bookable** (rate card: Caretaker ₹800–1,500/day, Nurse ₹1,600–3,000/day, monthly ₹18,000–₹90,000/mo); per-day × days / × sessions multiplier; Housepital calls back after purchase. Reversed/re-confirmed 2026-06-11 — old "never show" rule is dead. Quote-pending only for price-less items (`isQuote = price==null/0`). |
 | 10| Slot Availability Check             | ServiceBookingScreen     | GET /services/:id/slots | Done        | getAvailableSlots API checks real-time availability |
 | 11| Booking Cancellation                | BookingHistoryScreen     | PUT /bookings/:id/cancel | Done       | Cancel from booking history with confirmation dialog |
 | 12| Post-Service Rating                 | BookingHistoryScreen     | POST /ratings        | Done           | Rate completed bookings from booking history |
@@ -126,10 +126,13 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 14| Booking History                     | BookingHistoryScreen     | GET /patients/:id/bookings | Done     | Filter by status, cancel, rate, re-book      |
 | 15| Address Selection (checkout)        | AddressSelectionScreen   | SharedPreferences    | Done           | Saved addresses, pincode validation, add/edit/delete |
 | 16| My Orders                          | MyOrdersScreen           | OrdersProvider       | Done           | Done -- reads from OrdersProvider                    |
-| 17| Needs-Based Staff Tier Selection    | staff_role_card.dart     | --                   | Done (2026-06) | Care-needs checklist infers manpower tier; still quote-pending, no price |
-| 18| Quote-Pending Manpower Booking      | OrdersProvider           | --                   | Done (2026-06) | quoteStatus: 'pending'; never renders ₹0; PRO FORMA invoice without amounts |
+| 17| Needs-Based Staff Tier Selection    | staff_role_card.dart     | --                   | Done (2026-06) | Care-needs checklist infers manpower tier; tier is priced + directly bookable |
+| 18| Quote-Pending (price-less items only)| OrdersProvider          | --                   | Done (2026-06-11) | `isQuote = price==null/0` (NOT category==manpower); quoteStatus 'pending'; never renders ₹0; PRO FORMA invoice without amounts; excluded from billing sums |
 | 19| Blinkit-Style Equipment Browse      | equipment_tab.dart       | equipment_catalog    | Done (2026-06) | Left category rail + dense 2-col grid; MRP strikethrough + discounted price |
 | 20| Reserve Flow (price-on-request)     | equipment cards/sheet    | --                   | Done (2026-06) | No fabricated prices; Reserve instead of Add-to-cart |
+| 21| Equipment Catalog Dedup + Full Pricing | equipment_catalog.json | --                  | Done (2026-06-13) | Deduped 355 → 351; ALL items priced (zero "price on request" remain); fixed 2 price>MRP errors |
+| 22| Product Images (bundled)            | ProductImage widget; assets/images/products/ | -- | Done (2026-06-13) | Shared `ProductImage` renders asset/url/icon in grid + detail sheet; 320/351 items have images; ~31 generic items placeholder (known gap); +~148MB iOS bundle |
+| 23| Consultations: Psychiatrist + Diet  | catalog_seeds.dart       | --                   | Done (2026-06) | Added Psychiatrist + Diet & Nutrition (Nourish Programme); no staff names in copy |
 
 ---
 
@@ -137,6 +140,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend                 | Backend              | Status         | Notes                                        |
 |---|-------------------------------------|--------------------------|----------------------|----------------|----------------------------------------------|
+| 0 | Calendar root bottom-tab            | MainShell                | --                   | Done (2026-06-11) | Care Calendar added as root tab at **index 3** (Home/My Care/Services/**Calendar**/Billing/More = SIX tabs); indices 1/2 referenced externally |
 | 1 | Care Calendar (Day/Week/Month)      | CareCalendarScreen       | demo/CareEvent       | Done (2026-06) | /care-calendar; segmented Day-Week-Month views |
 | 2 | Dose groups + mark taken            | CareCalendarScreen       | MedicationProvider   | Done (2026-06) | Med quick-actions; future-day "N doses scheduled" cards |
 | 3 | Staff attendance + mark present     | CareCalendarScreen       | --                   | Done (2026-06) | Patient-side attendance confirmations        |
@@ -153,6 +157,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 3 | Invoice Detail                      | InvoiceDetailScreen    | /invoices/:id                    | Done           | Line items, amounts, status              |
 | 4 | Transaction Log                     | TransactionLogScreen   | /patients/:id/transactions       | Done           | Payment history with status badges       |
 | 5 | Razorpay Payment                    | PaymentScreen          | /payments/create-order + verify  | Done           | Done -- web simulation mode              |
+| 5a| Demo-mode payments (placeholder key)| payment_service.dart   | --                               | Done (2026-06) | Placeholder Razorpay key (`rzp_test_XXXXXXXXXX`/`rzp_test_dummy`) simulates checkout locally; real key via `--dart-define=RAZORPAY_KEY=…` enables real checkout |
 | 6 | Payment Webhook Handler             | --                     | /payments/webhook                | Done           | payment.captured, payment.failed, refund |
 | 7 | Invoice PDF Download                | InvoiceDetailScreen    | invoice_pdf_service.dart (client-side) | Done (2026-06) | On-device PDF via pdf+printing; PRO FORMA without amounts for quote orders |
 | 8 | Payment Methods Management          | PaymentMethodsScreen   | --                               | Not Started    | Placeholder screen                       |
@@ -242,8 +247,12 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 | 16| Pagination Widget                   | Done           | Reusable PaginatedList widget in lib/widgets/        |
 | 17| Video Consultation                  | Done           | VideoConsultationScreen + video_call_service          |
 | 18| Referral Program                    | Done           | ReferralScreen with share code + reward tracking     |
-| 19| Dark Mode (full)                    | Done (2026-06) | context.hc token resolver (HcPalette light/dark) across all screens; dark_mode_test guard |
+| 19| Dark Mode (full, true-black tonal)  | Done (2026-06) | context.hc token resolver (HcPalette light/dark) across all screens; true-black tonal dark; dark_mode_test guard |
 | 20| Liquid Glass Design System          | Done (2026-06) | GlassAppBar/GlassSurface chrome, HousepitalCard squircles (radius-16), motion gated on disableAnimations |
+| 20a| Fixed solid-orange bottom nav bar  | Done (2026-06-11) | `MainShell` fixed full-width orange bar (was floating-glass → pill → fixed), white icons, SafeArea-padded |
+| 20b| Chrome contract (cart/search/home)  | Done (2026-06-11) | HOME leftmost, CART rightmost with live badge, search between; funnel screens drop cart; Billing no cart; SOS home-screen far-right exception |
+| 20c| onOrange = WHITE app-wide           | Done (2026-06) | Owner decision; `onOrange = #FFFFFF` in light + dark theme.dart; one-accent color budget (orange #F39314) |
+| 20d| Typography scale convergence        | Done (2026-06-13) | 34 off-scale fontSize values snapped to canon across 22 screens; large iOS-style display titles; informational fontSize histogram in design gate |
 | 21| Bundled Fonts                       | Done (2026-06) | Archivo + NotoSansDevanagari TTFs in assets/fonts/; google_fonts removed |
 | 22| Medical History (read-only)         | Done (2026-06) | MedicalHistory model + read-only profile section     |
 | 23| Doctor Handover PDF (role-gated)    | Done (2026-06) | handover_report_service.dart, on-device via pdf+printing |

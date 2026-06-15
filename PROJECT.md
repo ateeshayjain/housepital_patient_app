@@ -1,9 +1,9 @@
 # Housepital Patient App
 
 **Status:** Active development — pre-launch
-**Stage:** Post-feature build (Jun 2026) — Home Layout B, Care Guides, AI Assistant (action-taking) + Cloud Function shipped; all audit batches + tri-audit fixes complete
+**Stage:** Post-feature build (Jun 2026) — Home Layout B, Care Guides, AI Assistant (action-taking) + Cloud Function shipped; all audit batches + tri-audit fixes complete; **six field-feedback rounds (3–6) shipped**: fixed solid-orange nav bar, Calendar root tab, chrome contract, calm/dark/one-accent design pass, working offline assistant, 1-tap dose logging, manpower prices shown + direct booking, equipment catalog dedup/pricing + bundled product images
 **Owner:** Ateeshay Jain ([Ateeshay.jain@gmail.com](mailto:Ateeshay.jain@gmail.com))
-**Last reviewed:** 2026-06-08
+**Last reviewed:** 2026-06-15
 
 > Created in audit batch 3 per the project Documentation Audit Report template — this is the "meta layer" doc that maps you to everything else. Skim it once; bookmark the Quick Links.
 
@@ -86,10 +86,10 @@ Skim once. Bookmark when you'll need it.
 | Test coverage map | [docs/TEST_MAP.md](./docs/TEST_MAP.md) (caveat: currently inconsistent with README's count) |
 | Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 
-**Doc TODOs (audit batch 3 follow-up):**
+**Doc TODOs:**
 - ARCHITECTURE.md is duplicated at root and `docs/` — keep one.
-- CHANGELOG.md last updated 2026-03-25 (stale by 2 months — needs batches 1, 2, 3 catch-up).
-- TEST_MAP.md claims 1090 tests, README claims 220 — reconcile.
+- CHANGELOG.md / FEATURE_TRACKER / SCREEN_MAP / TEST_MAP refreshed 2026-06-15 for field rounds 3–6.
+- TEST_MAP and README test counts reconciled (call-site + runtime expansion method documented in TEST_MAP).
 
 ---
 
@@ -112,7 +112,7 @@ Skim once. Bookmark when you'll need it.
 - **Branches:** `fix/<topic>` or `feat/<topic>` — never push directly to `main`.
 - **PRs:** all must pass CI (`flutter analyze --no-fatal-warnings --no-fatal-infos` + `flutter test` + `flutter build web --release`).
 - **Commits:** Conventional — `fix:`, `feat:`, `docs:`, `chore:`, `test:` prefix.
-- **Business rule (durable, INVIOLABLE):** manpower service prices (caretaker, nursing, attendant — and legacy japa/nanny) are **NEVER shown anywhere in the app**. Customers reject without talking when they see a price. Booking is fully in-app but quote-pending: no ₹/GST anywhere in the wizard, copy "Price confirmed on call before payment" (`catalog_seeds.dart` strips prices; `orders_provider.dart` sets `quoteStatus: 'pending'`); never render ₹0; quote invoices export PRO FORMA without amounts. *(An earlier note here claiming prices were re-shown on 2026-03-24 was a documentation error — code has hidden them since the M-1 fix.)* Do not re-introduce price display without explicit owner sign-off.
+- **Business rule (durable):** manpower service prices (caretaker, nurse, physio) **ARE shown and directly bookable** from the official Delhi NCR rate card (Caretaker ₹800–1,500/day, Nurse ₹1,600–3,000/day, plus monthly packages ₹18,000–₹90,000/mo; per-day `basePriceMin` in `catalog_seeds.dart`). Booking runs the normal cart/payment path with a per-day × days (or × sessions) multiplier; Housepital calls back after purchase to confirm requirements and assign staff. *Lineage:* prices were hidden Mar–Jun 2026 (audit M-1, based on a stale memory); the owner **reversed this on 2026-06-11, re-confirmed explicitly** (round 6 / `e41224c`). Quote-pending now applies **only** to items that genuinely lack a price — `isQuote` is `price == null || price == 0`, never `category == 'manpower'`; those export PRO FORMA invoices without amounts and are excluded from billing sums.
 - **Separate business (durable):** Dai Maa (mother & baby) is a **different company and app** — not a Housepital offering. In-app presence is ONE cross-promo banner on Home linking out; Japa/Nanny are not sold in this app. `daimaa_theme.dart` exists only for the banner's branding.
 
 Full conventions: [CONTRIBUTING.md](./CONTRIBUTING.md).

@@ -39,11 +39,12 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 
 ## Quick Stats
 
-- **144 Dart source files** | **~50,000 lines of code**
-- **86 test files** | **1,550+ tests** | **~19,800 test LOC**
-- **5 bottom tabs** (Home, My Care, Services, Billing, Settings)
-- **40+ screens** with full EN/HI localization and dark mode
+- **149 Dart source files** | **~53,800 lines of code**
+- **99 test files** | **~1,771 tests at runtime** (1,370 `test()`/`testWidgets()` call sites; parameterized guard suites expand at runtime) | **~23,800 test LOC**
+- **6 bottom tabs** (Home, My Care, Services, Calendar, Billing, More) — fixed solid-orange nav bar
+- **40+ screens** with full EN/HI localization and true-black tonal dark mode
 - **52 named routes** in onGenerateRoute
+- **351 equipment items** (all priced; 320 with bundled product photos, ~31 placeholder)
 
 ---
 
@@ -249,15 +250,23 @@ housepital_patient_app/
 - 6 sub-tabs: Manpower, Equipment, Consultations, Diagnostics, Lab Tests, Packages
 - Needs-based staff tier selection: checklist on `staff_role_card.dart` infers the
   right manpower tier from care needs
-- Quote-pending manpower booking — **no prices shown anywhere** for manpower;
-  copy is "Price confirmed on call before payment"
+- **Manpower prices shown + directly bookable** — Delhi NCR rate card (Caretaker
+  ₹800–1,500/day, Nurse ₹1,600–3,000/day, monthly packages ₹18,000–₹90,000/mo);
+  booking runs the normal cart/payment path with a per-day × days (or × sessions)
+  multiplier; Housepital calls back after purchase to assign staff. *(Reversed/
+  re-confirmed 2026-06-11 — the old "never show" rule is dead.)* Quote-pending now
+  applies only to items that genuinely lack a price (`isQuote = price == null/0`).
+- Consultations include Psychiatrist + new Diet & Nutrition (Nourish Programme);
+  no staff names in catalog copy
 - Blinkit-style equipment browse: left category rail + dense 2-column grid,
-  MRP strikethrough + discounted price
+  MRP strikethrough + discounted price; **all 351 items priced**, 320 with bundled
+  product photos (`assets/images/products/`) via the shared `ProductImage` widget
+  (renders in both grid card and detail sheet); ~31 generic items show placeholder
 - Reserve flow for price-on-request equipment (no fabricated prices)
 - Equipment detail sheet (buy vs. rent, specs, add to cart)
 - Cart + Razorpay checkout (equipment); service booking wizard for bookable services
 
-### Tab 4 — Billing
+### Tab 5 — Billing
 - Invoice dashboard (total due, overdue count, total paid)
 - Invoice list with filter tabs (all, pending, overdue, paid)
 - Invoice detail with line items + GST breakdown
@@ -266,7 +275,14 @@ housepital_patient_app/
 - Payment methods management
 - Spend summary by category
 
-### Tab 5 — Settings
+### Tab 4 — Calendar (root tab)
+- Care Calendar is a root bottom-tab (index 3, between Services and Billing)
+- Day / Week / Month views in one segmented control
+- Dose groups with single-tap mark-taken (records a timestamped log)
+- Staff attendance with mark-present confirmations
+- Future-day "N doses scheduled" cards; hairline separators between dose rows
+
+### Tab 6 — More (Settings)
 - Patient profile editor (medical details, dietary restrictions, emergency contacts)
 - Family members management (add/remove, notification preferences)
 - Medical document repository
@@ -281,14 +297,9 @@ housepital_patient_app/
 - Takes actions (all confirm-before-act): raise a concern, book/renew a service,
   request a staff replacement, place a call (SOS never blocked)
 - Pay a bill → routes to the payment screen (never charges money itself)
-- Powered by Claude via a Firebase Cloud Function (`functions/`); offline
-  Hinglish keyword stub when `ASSISTANT_API_URL` is not set
-
-### Care Calendar (`/care-calendar`)
-- Day / Week / Month views in one segmented control
-- Dose groups with mark-taken quick actions
-- Staff attendance with mark-present confirmations
-- Future-day "N doses scheduled" cards
+- Powered by Claude via a Firebase Cloud Function (`functions/`); offline builds use
+  a local Hinglish intent matcher/executor that really runs add-to-cart / booking
+  offline (`assistant_service.dart` + `assistant_local_actions.dart`)
 
 ### Care Team Hub (`/care-team`)
 - Group chat first — one tap reaches the whole team
@@ -297,8 +308,13 @@ housepital_patient_app/
 - Past staff history (read-only)
 
 ### Commerce & Orders
-- Full in-app equipment commerce: cart → address → Razorpay checkout
-- Quote-pending manpower bookings (`quoteStatus: 'pending'`, no prices ever)
+- Full in-app commerce: cart → address → Razorpay checkout (equipment + manpower)
+- Manpower booked at rate-card prices via the normal payment path (per-day × days /
+  × sessions multiplier); Housepital calls back to assign staff
+- **Demo-mode payments:** `payment_service.dart` simulates checkout when the Razorpay
+  key is a placeholder; a real key via `--dart-define=RAZORPAY_KEY=…` enables real checkout
+- Quote-pending only for items that genuinely lack a price (`quoteStatus: 'pending'`,
+  PRO FORMA invoice without amounts)
 - Reserve flow for price-on-request items
 - My Orders + order tracking, rental agreement + return, EMI plans
 - On-device PDF invoices via `invoice_pdf_service.dart` (PRO FORMA without
@@ -314,11 +330,20 @@ housepital_patient_app/
 - Redesigned list: featured hero card for the newest guide + per-category accent colors
 - BlogProvider with offline demo fallback
 
-### Design System — Liquid Glass
-- `GlassAppBar` / `GlassSurface` chrome on every screen (`lib/widgets/glass.dart`)
+### Design System — calm Apple direction
+- **Fixed full-width solid-orange bottom nav bar** (`MainShell`), white icons/labels,
+  SafeArea-padded — owner iterated floating-glass → pill → fixed
+- `GlassAppBar` / `GlassSurface` chrome on every screen (`lib/widgets/glass.dart`).
+  Nav contract: HOME leftmost, CART rightmost with a live badge, search in between;
+  funnel screens (cart/checkout/payment) opt out of the cart icon, Billing shows no
+  cart, SOS is the home-screen far-right exception
 - `HousepitalCard` squircle cards (`RoundedSuperellipseBorder(16)`, press-scale)
-- Full dark mode: every brightness-sensitive color resolves through `context.hc`
-  tokens (`HcPalette` light/dark in `lib/config/app_colors.dart`)
+- **`onOrange` is WHITE app-wide** (owner decision); one-accent color budget (orange
+  `#F39314`); **true-black tonal dark mode**; large iOS-style display titles
+- Typography scale converging on a canon; the design gate prints an informational
+  fontSize histogram (echo-only) so drift shows in CI
+- Every brightness-sensitive color resolves through `context.hc` tokens
+  (`HcPalette` light/dark in `lib/config/app_colors.dart`)
 - Bundled Archivo + NotoSansDevanagari fonts (no runtime font fetch)
 - Dai Maa is a separate business — a single cross-promo banner on Home, nothing else
 
@@ -369,9 +394,10 @@ flutter test test/utils/i18n_sync_test.dart          # EN/HI key sync
 ### Test Coverage
 
 Authoritative, always-current counts live in [docs/TEST_MAP.md](./docs/TEST_MAP.md).
-As of 2026-06-11: **1,550+ tests across 86 files** (analyzer clean). The table
-below is an illustrative sample; later batches added calendar, care-team,
-commerce, PDF-service, dark-mode, and overflow suites.
+As of 2026-06-15: **~1,771 tests at runtime across 99 files** (1,370 `test()`/
+`testWidgets()` call sites; parameterized guard suites expand at runtime; analyzer
+clean). The table below is an illustrative sample; field rounds 3–6 added fixed-nav
+shell, calendar-tab, manpower-pricing, product-image, and typography guards.
 
 | Module (sample) | Tests | What's Covered |
 |--------|-------|----------------|
@@ -381,14 +407,14 @@ commerce, PDF-service, dark-mode, and overflow suites.
 | medication_provider | 40 | CRUD operations, schedule builder, computed getters, error handling |
 | assistant (executor/service/provider/screen) | 52 | actions, confirm-first, permission gating, stub patterns |
 | overflow smoke | 111 | 37 screens × 320/375/414 widths, Ahem worst-case font |
-| **Total** | **1,550+** | see TEST_MAP.md for the full per-file breakdown |
+| **Total** | **~1,771** | see TEST_MAP.md for the full per-file breakdown |
 
 ---
 
 ## Business Rules
 
-- **Never show prices for manpower services** (caretaker, nursing, attendant; legacy japa/nanny removed with Dai Maa split) — users reject without talking to sales. Manpower booking is quote-pending: "Price confirmed on call before payment"; quote invoices are PRO FORMA without amounts; billing sums exclude quotes
-- **Equipment pricing is monthly** (minimum 15 days = 1 month), never per-day
+- **Manpower prices ARE shown and directly bookable** (caretaker, nurse, physio) — Delhi NCR rate card, per-day × days (or × sessions) on the normal cart/payment path; Housepital calls back after purchase to assign staff. *(Reversed/re-confirmed 2026-06-11; the old "never show" rule is dead. Japa/Nanny are Dai Maa, a separate business.)* Quote-pending applies only to items that genuinely lack a price (`isQuote = price == null/0`) — those export PRO FORMA invoices and are excluded from billing sums
+- **Equipment rental minimum** is 1 month (security deposit = 1 month rental)
 - **Staff app writes administration logs** — patient app is read-only for medication logs
 - **Patient app writes medication CRUD** — add, edit, delete, stock updates
 - **Health Manager** is the single point of contact — always visible at top of My Care tab

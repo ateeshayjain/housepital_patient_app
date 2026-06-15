@@ -4,6 +4,109 @@
 
 ---
 
+## [2026-06-13] -- Field Round 6b: Typography Scale + Catalog Dedup/Pricing (d89c0b8)
+
+### Typography
+- Converged 34 off-scale `fontSize` values across 22 screens to the canon
+  (section headers → 16/w600, list-row names → 14/w600, empty-state titles →
+  15/w600, sub-floor 10px → 11px); display titles, price/metric emphasis and IDs
+  left intentionally untouched
+- Added an **informational fontSize histogram** to `scripts/check_design_consistency.sh`
+  (echo-only — surfaces drift in CI logs, never changes pass/fail)
+
+### Equipment catalog (`assets/equipment_catalog.json`)
+- Deduped **355 → 351** items (removed 4 true duplicates incl. two generic pulse oximeters)
+- **Filled ALL remaining "price on request" items** with researched MRP + street price;
+  fixed 2 price > MRP data errors — **zero unpriced items remain**
+
+---
+
+## [2026-06-13] -- Field Round 6 + Round 5: Manpower Prices Shown, Search Nav, Product Images (e41224c, 51a0cd1)
+
+### Manpower pricing flip (owner reversal, re-confirmed 2026-06-11)
+- **Manpower prices ARE now shown and directly bookable** — Caretaker ₹800–1,500/day,
+  Nurse ₹1,600–3,000/day per the Delhi NCR rate card + monthly packages
+  ₹18,000–₹90,000/mo (`catalog_seeds.dart`)
+- Booking goes through the normal cart/payment path with a quantity multiplier:
+  per-day rate × days for ongoing manpower, × sessions for IV/physio
+  (`_priceMultiplier` in `service_booking_screen.dart`) — a 30-day caretaker charges rate × 30
+- `isQuote` is now **price-based only** (`price == null || price == 0`), never
+  `category == 'manpower'`; assessment callback kept as an optional secondary path
+- The prior "never show manpower prices" rule (audit M-1) was based on a stale memory
+  and is reversed; BUSINESS_RULES / PROJECT / CLAUDE corrected
+
+### Product images (round 5)
+- Downloaded 49 real product photos into `assets/images/products/` (bundled), setting
+  `image_url` on **100 catalog items** (variants share a canonical shot); 320 of 351
+  items now reference an image
+- Extracted a shared **`ProductImage`** widget (asset→`Image.asset`,
+  url→`CachedNetworkImage`, else fallback icon) — fixes the detail sheet, which
+  previously rendered all bundled asset-path images as the placeholder (only the grid showed them)
+- **Known gap:** ~31 generic/unbranded items still have no image (placeholder icon)
+- Product-image bundle grew the iOS app bundle to ~148MB
+
+### Search + chrome
+- Tapping an equipment search result now opens its detail sheet (was popping a
+  result payload no caller listened for)
+- Home header reordered to the contract (bell → search → cart rightmost; SOS stays
+  the far-right emergency exception)
+
+---
+
+## [2026-06-11] -- Field Round 4-5: Fixed Orange Nav, Calendar Tab, Chrome Reorder (ca987f0)
+
+### Bottom nav
+- Floating pill → **FIXED full-width solid-orange bar** anchored to the bottom edge
+  (like the Dai Maa app), white items, SafeArea-padded (`main_shell.dart`)
+
+### Calendar root tab
+- Care Calendar is now a **root tab at index 3** (between Services and Billing) — there
+  are now SIX tabs: Home (0), My Care (1), Services (2), Calendar (3), Billing (4), More (5).
+  Indices 1/2 are referenced externally via `switchToTab` and kept stable
+
+### Chrome reorder (decrowding)
+- HOME moved to the LEFT (leading slot on root screens; after custom actions on pushed
+  screens); CART is always RIGHTMOST; Billing drops the cart and its Transaction History
+  action becomes icon-only; Services' hand-rolled duplicate cart removed
+- Billing order badges: delivered/completed/in-progress are GREEN (delivered was
+  falling through to amber); confirmed/assigned/dispatched are info-blue
+
+### My Care + content
+- Doctor Handover Report moved to the TOP (under the Health Manager ribbon)
+- Psychiatrist + Diet (Nourish Programme) notes render as labeled blocks under
+  "Good to know"; "About:" lines split into a separate section; staff names removed
+  from catalog copy; suction machines reclassified to Respiratory
+
+---
+
+## [2026-06-11] -- Field Round 3: Orange Nav, Chrome Contract, Working Assistant (b533dcc, 2d3cef1)
+
+### Calm design pass (2d3cef1)
+- True-black tonal dark mode, one-accent color budget, large display titles
+- `onOrange` set to WHITE app-wide (owner decision); white-on-orange everywhere
+
+### Bottom nav (b533dcc — pill iteration)
+- Bottom bar became a solid brand-orange stadium pill, white icons/labels (later
+  iterated to the fixed full-width bar in round 4-5)
+
+### Chrome contract
+- Cart with a **live count badge** in the top-right of every screen (`GlassAppBar`
+  trailing order: custom → home → search → cart rightmost); funnel screens
+  (cart/checkout/payment) opt out of the cart icon (it would loop into itself);
+  home button on every screen except the Home tab
+
+### Working assistant (Sahayak)
+- Demo builds get a local Hinglish intent matcher + executor
+  (`assistant_service.dart` + `assistant_local_actions.dart`) — "add a nebulizer to
+  my cart" really adds the catalog match to `CartProvider`; "book a doctor
+  consultation" really creates the local booking request; confirmations work
+
+### Dose logging
+- **Single-tap mark-taken** records a timestamped log; "Taken" badges show the logged
+  time ("Taken — 4:32 PM"); the calendar mark action now records a timestamped log
+
+---
+
 ## [2026-06-11] -- PDF Exports, Medical History, UX Fixes (8d7b0eb)
 
 ### On-device PDF generation (`pdf` + `printing` deps)

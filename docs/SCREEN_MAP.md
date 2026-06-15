@@ -3,17 +3,20 @@
 ## Navigation Structure
 
 ```
-Bottom Tab Bar (MainShell -- 5 tabs)
+Bottom Tab Bar (MainShell -- 6 tabs, FIXED full-width solid-orange bar)
   |-- [0] Home        -> HomeScreen (Dashboard)
   |-- [1] My Care     -> MyCareScreen (Active services hub)
   |-- [2] Services    -> ServiceCatalogScreen (Marketplace)
-  |-- [3] Billing     -> BillingScreen (Payments & invoices)
-  |-- [4] More        -> SettingsScreen (Profile, settings, support)
+  |-- [3] Calendar    -> CareCalendarScreen (Day/Week/Month care calendar)
+  |-- [4] Billing     -> BillingScreen (Payments & invoices)
+  |-- [5] More        -> SettingsScreen (Profile, settings, support)
 ```
 
-Tab switching is managed via `IndexedStack` in `MainShell` for state preservation. A global key (`MainShell.shellKey`) allows programmatic tab switching from any screen via `MainShell.switchToTab(index)`.
+Tab switching is managed via `IndexedStack` in `MainShell` for state preservation. A global key (`MainShell.shellKey`) allows programmatic tab switching from any screen via `MainShell.switchToTab(index)`. **Calendar was added as a root tab at index 3** (field round 4-5); indices 1/2 (My Care, Services) are referenced externally by `switchToTab` calls and must not be reordered.
 
-**GlassAppBar nav contract:** every screen uses `GlassAppBar` (`lib/widgets/glass.dart`) — back on the left; trailing order `[custom…, search → /search, home → pop-to-root + switchToTab(0)]`; `showSearch` defaults on; `showHome` off on root tabs.
+**Nav bar:** FIXED full-width solid-orange bar anchored to the bottom edge (owner iterated floating-glass → pill → fixed), white icons/labels, SafeArea-padded.
+
+**GlassAppBar chrome contract:** every screen uses `GlassAppBar` (`lib/widgets/glass.dart`) — back on the left (or HOME leftmost on non-Home root tabs); trailing order `[custom…, home, search → /search, cart → /cart]` with the **CART always rightmost** and a live item-count badge. `showSearch`/`showCart`/`showHome` all default on; the purchase funnel (cart/checkout/payment) opts out of the cart icon; Billing shows no cart; the Home tab omits its own home button (SOS is the home-screen far-right emergency exception).
 
 ---
 
@@ -59,15 +62,23 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | Booking History     | /booking-history     | BookingHistoryScreen     | API: GET /patients/:id/bookings | Filter, cancel, rate, re-book  | All roles    |
 | My Orders           | /my-orders           | MyOrdersScreen           | API: unified orders endpoint    | View all orders (bookings + equipment + rentals) | All roles |
 
-**Manpower price rule (inviolable):** manpower prices are NEVER shown — no ₹/GST anywhere in catalog, wizard, cart or orders. Booking is quote-pending ("Price confirmed on call before payment"). Needs-based tier selection via the checklist on `staff_role_card.dart`. Equipment keeps MRP + strikethrough (Blinkit-style left category rail + dense 2-col grid); price-on-request items use the Reserve flow.
+**Manpower pricing rule:** manpower prices **ARE shown and directly bookable** (rate card: Caretaker ₹800–1,500/day, Nurse ₹1,600–3,000/day, monthly packages ₹18,000–₹90,000/mo). Booking runs the normal cart/payment path with a per-day × days (or × sessions) multiplier; Housepital calls back after purchase to assign staff. *(Reversed/re-confirmed 2026-06-11 — the old "never show" rule is dead.)* Quote-pending applies only to items that genuinely lack a price (`isQuote = price == null/0`, never `category == manpower`). Needs-based tier selection via the checklist on `staff_role_card.dart`. Equipment keeps MRP + strikethrough (Blinkit-style left category rail + dense 2-col grid); price-on-request items (none remain in the equipment catalog) use the Reserve flow. Consultations now include Psychiatrist + Diet & Nutrition (Nourish Programme).
 
-**Lab Tests:** 153 individual lab tests with full detail (name, price, preparation notes) in addition to the 7 lab test packages.
+**Lab Tests:** individual lab tests with full detail (name, price, preparation notes) plus package tiers (`assets/lab_tests_catalog.json`).
 
-**Catalog stats:** 364 items total (synced from master Excel as single source of truth).
+**Equipment catalog stats:** 351 items (`assets/equipment_catalog.json`; deduped 355 → 351, all priced); 320 carry a bundled product image (shared `ProductImage` widget renders in grid + detail sheet), ~31 generic items show the placeholder icon.
 
 ---
 
-### BILLING TAB (Index 3)
+### CALENDAR TAB (Index 3)
+
+| Screen        | Route           | Widget             | Data Source                    | Actions                                   | Permissions |
+|---------------|-----------------|--------------------|--------------------------------|-------------------------------------------|-------------|
+| Care Calendar | (tab) / /care-calendar | CareCalendarScreen | CareEvent + MedicationProvider | Day/Week/Month views; single-tap mark-taken (timestamped log); staff attendance mark-present; future-day "N doses scheduled" cards | All roles |
+
+---
+
+### BILLING TAB (Index 4)
 
 | Screen             | Route             | Widget                | Data Source                        | Actions                    | Permissions  |
 |--------------------|-------------------|-----------------------|------------------------------------|----------------------------|--------------|

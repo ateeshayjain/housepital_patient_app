@@ -1,9 +1,9 @@
 # Test Map -- Housepital Patient App
 
-**Last updated:** 2026-06-11
-**Total test count:** ~1,557 at runtime (1,226 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
+**Last updated:** 2026-06-15
+**Total test count:** ~1,771 at runtime (1,370 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
 **Pass rate:** all passing (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
-**Test file count:** 86 (`find test -name "*_test.dart" | wc -l`)
+**Test file count:** 99 (`find test -name "*_test.dart" | wc -l`)
 
 ### How to update this count
 
@@ -29,6 +29,7 @@ History:
 - 2026-06-05 (unit tests session): 1389 tests / 71 files (+6 home grid, FAB)
 - 2026-06-08 (assistant actions + tri-audit): 1407 tests / 72 files (+18 actions, Care Guides restore, SOS-call)
 - 2026-06-11 (glass/dark-mode/commerce/calendar/care-team/PDF waves): ~1,557 tests / 86 files (+overflow smoke 37×3, dark_mode, i18n_sync, calendar, care_team, articles, commerce/orders, invoice_pdf + handover services, payment/api/auth suites)
+- 2026-06-15 (field rounds 3–6): ~1,771 tests at runtime / 99 files / 1,370 call sites (+fixed-nav shell contract, calendar root tab, manpower pricing/multiplier, product-image/ProductImage, typography histogram, chrome reorder, dose-log timestamps)
 
 ---
 
