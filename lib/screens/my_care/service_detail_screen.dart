@@ -260,8 +260,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         child: Text(staff.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: context.hc.black)),
                       ),
                       if (staff.isReplacement)
                         Flexible(
@@ -277,8 +279,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Role as GREY subtext under the bold name — matches the
+                      // Home health-team hierarchy (was unstyled, so it read at
+                      // the same weight as the name).
                       Text('${staff.role} (${staff.shiftType})',
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              TextStyle(fontSize: 12, color: context.hc.grey)),
                       if (staff.checkInTime != null)
                         Row(
                           children: [
@@ -296,6 +304,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                 'Checked in ${DateHelper.formatTime(staff.checkInTime!)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 12, color: context.hc.grey),
                               ),
                             ),
                           ],
