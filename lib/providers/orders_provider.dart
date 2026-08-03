@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/models.dart';
 import '../utils/logger.dart';
 
@@ -195,6 +196,7 @@ class OrdersProvider extends ChangeNotifier {
       // transacts.
       if (_orders.isEmpty) {
         _orders = DemoData.orders;
+        DemoMode.markServingDemoData();
       }
 
       notifyListeners();
@@ -204,4 +206,13 @@ class OrdersProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+  /// Clears in-memory orders and assessments. Orders are scoped to the
+  /// patient they were placed for, so they must not survive a patient switch
+  /// or a logout on a shared phone.
+  void clearPatientScopedData() {
+    _orders = [];
+    _assessments = [];
+    notifyListeners();
+  }
+
 }

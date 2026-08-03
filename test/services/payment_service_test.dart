@@ -20,7 +20,8 @@
 //       - failed    → onFailure() with "Payment under verification…" message
 //                     (regression test for the M-2 / Fix-1 issue where a
 //                     failed verification still confirmed the booking).
-//       - skippedDemo (no order_id/signature) → onSuccess() (demo path).
+//       - skippedDemo (no order_id/signature) → onSuccess() ONLY in demo
+//                     builds; with a real key it must fail closed.
 //   • _handleError → onFailure(message-or-fallback).
 //   • Constructor assert fires in debug if razorpay_key placeholder.
 //
@@ -470,9 +471,9 @@ void main() {
   // ----------------------------------------------------------
   // openCheckout — demo mode (missing order_id / signature)
   // ----------------------------------------------------------
-  group('openCheckout — demo mode (skippedDemo)', () {
+  group('openCheckout — unverifiable success (skippedDemo)', () {
     test(
-        'success response missing order_id+signature → onSuccess (demo path) and verifyPayment NOT called',
+        'success response missing order_id+signature with a REAL key → onFailure, never onSuccess',
         () async {
       final fakeApi = _FakeApiService();
 
@@ -502,11 +503,19 @@ void main() {
 
       await completer.wait();
 
-      expect(successCalled, isTrue,
-          reason: 'demo-mode payments should still call onSuccess');
-      expect(failureMessage, isNull);
+      // A REAL Razorpay key is configured in this suite
+      // (rzp_test_ci_dummy_key is deliberately not a placeholder), so a
+      // checkout that completes without an order_id/signature is a payment we
+      // cannot verify — not a demo payment. Confirming it would clear the cart
+      // and confirm the booking for money nobody proved was taken.
+      expect(successCalled, isFalse,
+          reason:
+              'an unverifiable payment must NOT be confirmed when a real key '
+              'is configured');
+      expect(failureMessage, isNotNull,
+          reason: 'the user must be told verification is pending');
       expect(fakeApi.verifyCalls, isEmpty,
-          reason: 'verifyPayment should NOT be called in demo mode');
+          reason: 'nothing to verify without an order_id/signature');
 
       svc.dispose();
       teardown();
@@ -630,12 +639,15 @@ void main() {
         returnsNormally,
       );
 
-      // Let the demo response dispatch.
+      // Let the response dispatch.
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
-      // Demo flow → onSuccess fires.
-      expect(successCalled, isTrue);
-      expect(failure, isNull);
+      // The point of this test is the SYNCHRONOUS contract above. Which
+      // callback fires depends on verifiability: the stub response carries no
+      // signature, so with the real key this suite uses it fails closed. Any
+      // outcome is fine here — silence is not.
+      expect(successCalled || failure != null, isTrue,
+          reason: 'openCheckout must always resolve to one callback');
 
       svc.dispose();
       teardown();
@@ -767,6 +779,10 @@ void main() {
         description: 'Test',
         // no orderId
         onSuccess: completer.fire,
+        // Fail-closed contract: with a real key and no order_id the outcome is
+        // onFailure, not onSuccess. This test is about the options payload, so
+        // latch on either callback.
+        onFailure: (_) => completer.fire(),
       );
 
       await completer.wait();
@@ -803,6 +819,10 @@ void main() {
         prefillName: 'OnlyName',
         // phone + email omitted
         onSuccess: completer.fire,
+        // Fail-closed contract: with a real key and no order_id the outcome is
+        // onFailure, not onSuccess. This test is about the options payload, so
+        // latch on either callback.
+        onFailure: (_) => completer.fire(),
       );
 
       await completer.wait();

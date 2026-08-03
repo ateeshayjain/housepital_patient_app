@@ -1,0 +1,90 @@
+rules_version = '2';
+
+// =============================================================================
+// HOUSEPITAL PATIENT APP — CLOUD STORAGE SECURITY RULES
+// =============================================================================
+//
+// !!  CRITICAL  !!  THIS FILE MUST BE DEPLOYED  !!
+//
+// Editing this file in the repo does NOT change the live rules. Deploy with:
+//
+//   firebase deploy --only storage --project housepital-patient
+//
+// Verify at:
+//   https://console.firebase.google.com/project/housepital-patient/storage/rules
+//
+// History:
+// - Until 2026-08-03 there were NO Storage rules in this repo and no `storage`
+//   block in firebase.json, while the app uploaded chat photos and
+//   concern-evidence photos (firebase_service.dart uploadFile). Whatever the
+//   console happened to hold was the only thing standing between one
+//   patient's medical photographs and every other authenticated user.
+//   Found by the Security & Privacy audit; these rules are the fix.
+//
+// What the app actually writes (grep of lib/ for uploadFile call sites):
+//   chat/{patientId}/{ts}_{filename}          — chat_screen.dart:133
+//   concerns/{patientId}_{batchTs}/{i}_{name} — raise_concern_screen.dart:328
+//
+// Posture: default deny everything, then allow only those two prefixes, only
+// to signed-in users, only for their own patient id, only for images, and
+// only up to 10 MB. Reads are restricted the same way — a download URL is a
+// bearer token, so the rule is the real boundary, not the URL's obscurity.
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ---- helpers ----------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // The client uses the patient id as the path segment. A user may only
+    // touch their own patient's files.
+    //
+    // NOTE: this assumes auth uid == patient id, which is the same assumption
+    // firestore.rules makes today. If the backend ever issues a custom claim
+    // carrying a list of patients a caregiver may access (the family-sharing
+    // model this app is built around), replace this with a claim check —
+    // otherwise family members legitimately sharing a patient will be denied.
+    function ownsPatient(patientId) {
+      return isSignedIn() && request.auth.uid == patientId;
+    }
+
+    function isImageUnder10Mb() {
+      return request.resource.size < 10 * 1024 * 1024
+          && request.resource.contentType.matches('image/.*');
+    }
+
+    // ---- chat attachments -------------------------------------------------
+    // chat/{patientId}/{fileName}
+    match /chat/{patientId}/{fileName} {
+      allow read: if ownsPatient(patientId);
+      allow create: if ownsPatient(patientId) && isImageUnder10Mb();
+      // Chat history is a record. Nobody edits or deletes it from the client.
+      allow update, delete: if false;
+    }
+
+    // ---- concern evidence photos ------------------------------------------
+    // concerns/{patientId}_{batchTs}/{fileName}
+    //
+    // The batch folder embeds the patient id with a timestamp suffix, so the
+    // ownership check is a prefix match on that folder name rather than an
+    // equality check on a clean segment.
+    match /concerns/{batch}/{fileName} {
+      allow read: if isSignedIn() && batch.split('_')[0] == request.auth.uid;
+      allow create: if isSignedIn()
+                    && batch.split('_')[0] == request.auth.uid
+                    && isImageUnder10Mb();
+      allow update, delete: if false;
+    }
+
+    // ---- everything else --------------------------------------------------
+    // Explicit default deny. Any new upload path must be added above with its
+    // own ownership check — not left to fall through.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

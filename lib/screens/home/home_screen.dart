@@ -15,6 +15,7 @@ import '../../providers/medication_provider.dart';
 import '../../providers/my_care_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
+import '../../utils/session_scope.dart';
 import '../../utils/permissions.dart';
 import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
@@ -1764,6 +1765,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? const Icon(Icons.check, color: HousepitalColors.orange)
                     : null,
                 onTap: () {
+                  // Drop the outgoing patient's data from every provider
+                  // before switching, so nothing of theirs renders under the
+                  // incoming patient's name.
+                  SessionScope.clearPatientData(context);
                   app.switchPatient(patient);
                   Navigator.pop(context);
                 },

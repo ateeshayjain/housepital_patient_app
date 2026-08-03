@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+import '../../utils/session_scope.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 
@@ -265,6 +266,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             textColor: context.hc.error,
             onTap: () => _confirmLogout(context),
           ),
+          const Divider(height: 1),
+          // App Store Guideline 5.1.1(v) + DPDP 2023 §12: account deletion
+          // must be reachable IN the app. A Logout button does not satisfy
+          // either, and "email support to delete" is an automatic rejection.
+          _settingsTile(
+            context,
+            icon: Icons.person_remove_outlined,
+            title: 'Delete account',
+            textColor: context.hc.error,
+            onTap: () => Navigator.pushNamed(context, '/delete-account'),
+          ),
         ],
       ),
     );
@@ -439,6 +451,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              // Wipe patient data from memory BEFORE signing out — on a
+              // shared phone the next person must not see the previous
+              // patient's clinical data.
+              SessionScope.clearSession(context);
               context.read<AuthProvider>().logout();
               Navigator.pop(context);
             },

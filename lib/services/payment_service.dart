@@ -161,9 +161,25 @@ class PaymentService {
         _onSuccessCallback?.call();
         break;
       case _VerificationOutcome.skippedDemo:
-        // Demo mode (no order_id/signature) — keep existing demo behaviour
-        // so flows still complete locally without a backend.
-        _onSuccessCallback?.call();
+        // "Skipped" means we could not verify — it is only safe to treat that
+        // as success in DEMO builds, where no real money moved.
+        //
+        // With a real Razorpay key, this state is reachable whenever the
+        // backend order call failed (createOrder returns null on error), so
+        // treating it as success would confirm the booking and clear the cart
+        // for a payment nobody verified. Real money, unverified: fail closed.
+        if (isDemoPayments) {
+          _onSuccessCallback?.call();
+        } else {
+          Log.error(
+              'Payment could not be verified: checkout completed without an '
+              'order_id/signature while a real Razorpay key is configured. '
+              'Refusing to confirm.',
+              tag: 'PaymentService');
+          _onFailureCallback?.call(
+            "Payment under verification — we'll confirm in 24 hours",
+          );
+        }
         break;
       case _VerificationOutcome.failed:
         _onFailureCallback?.call(

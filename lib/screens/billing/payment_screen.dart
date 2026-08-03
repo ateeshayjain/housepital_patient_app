@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/invoice_pdf_service.dart';
 import '../../services/payment_service.dart';
@@ -217,9 +218,45 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     setState(() => _isProcessing = true);
 
+    // Real payments must carry a backend-created order_id, because that is
+    // what makes the signature verifiable afterwards. Without it the success
+    // handler can only reach the unverifiable "skipped" state. Demo builds
+    // skip this: openCheckout simulates locally and no money moves.
+    String? orderId;
+    if (!PaymentService.isDemoPayments) {
+      final patientId = context.read<AppProvider>().currentPatient?.id;
+      orderId = patientId == null
+          ? null
+          : await _paymentService!.createOrder(
+              patientId: patientId,
+              amount: _totalAmount,
+              paymentType: widget.invoiceId != null ? 'invoice' : 'order',
+              referenceType: widget.invoiceId != null ? 'invoice' : null,
+              referenceId: widget.invoiceId,
+            );
+      if (!mounted) return;
+      if (orderId == null) {
+        // Fail closed: opening checkout now would take money we could never
+        // verify. Better a retryable error than an unverifiable payment.
+        setState(() {
+          _isProcessing = false;
+          _showResult = true;
+          _paymentSuccess = false;
+          _transactionId = null;
+          _failureMessage =
+              "We couldn't start a secure payment just now. Nothing has been "
+              'charged — please try again in a moment.';
+        });
+        HapticFeedback.heavyImpact();
+        _playResultAnimations();
+        return;
+      }
+    }
+
     _paymentService!.openCheckout(
       amount: _totalAmount,
       description: widget.description,
+      orderId: orderId,
       onSuccess: () {
         if (!mounted) return;
         final txnId =
@@ -262,7 +299,14 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
   }
 
-  /// Web payment simulation — simulates a successful payment after a brief delay.
+  /// Web payment — simulated ONLY in demo builds.
+  ///
+  /// This used to report success unconditionally because it was gated on
+  /// `kIsWeb` rather than on whether payments are simulated at all. With a
+  /// real Razorpay key that meant a web user saw "payment successful" and a
+  /// confirmed order without any payment being taken. The correct axis is
+  /// [PaymentService.isDemoPayments]: web checkout is not wired up, so with a
+  /// real key we must fail closed rather than invent a success.
   Future<void> _processWebPayment() async {
     setState(() => _isProcessing = true);
 
@@ -270,6 +314,22 @@ class _PaymentScreenState extends State<PaymentScreen>
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    if (!PaymentService.isDemoPayments) {
+      setState(() {
+        _isProcessing = false;
+        _showResult = true;
+        _paymentSuccess = false;
+        _transactionId = null;
+        _failureMessage =
+            'Online payment is not available in the web app yet — please pay '
+            'from the Housepital mobile app, or call us and we will take it '
+            'over the phone.';
+      });
+      HapticFeedback.heavyImpact();
+      _playResultAnimations();
+      return;
+    }
 
     final txnId = 'web_pay_${DateTime.now().millisecondsSinceEpoch}';
     setState(() {

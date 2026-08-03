@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/models.dart';
 import '../services/cache_service.dart';
 import '../services/i_api_service.dart';
@@ -155,9 +156,41 @@ class AppProvider extends ChangeNotifier {
 
   // Switch patient context
   void switchPatient(Patient patient) {
+    // Drop the outgoing patient's data BEFORE the new one is current,
+    // otherwise their deployment, attendance, vitals, report and amount due
+    // keep rendering under the new patient's name until the dashboard call
+    // returns — and forever if it fails. See clearPatientScopedData.
+    clearPatientScopedData(notify: false);
     _currentPatient = patient;
     notifyListeners();
     loadDashboard();
+  }
+
+  /// Clears every field that belongs to ONE patient.
+  ///
+  /// Call on patient switch and on logout. Several family members share this
+  /// app, and on a shared phone the previous patient's clinical data
+  /// surviving into the next session is a PHI leak, not a caching nicety.
+  ///
+  /// Pass [notify] false when the caller will notify immediately afterwards.
+  void clearPatientScopedData({bool notify = true}) {
+    _activeDeployment = null;
+    _todayAttendance = null;
+    _latestVitals = null;
+    _todayReport = null;
+    _amountDue = 0;
+    _dueDate = null;
+    _dashboardError = null;
+    _lastUpdatedText = null;
+    if (notify) notifyListeners();
+  }
+
+  /// Full teardown for logout: also forgets who the patient was.
+  void clearSession() {
+    clearPatientScopedData(notify: false);
+    _currentPatient = null;
+    _patients = [];
+    notifyListeners();
   }
 
   /// Add a new patient to the current user's care list.
@@ -210,6 +243,8 @@ class AppProvider extends ChangeNotifier {
 
       _dashboardError = null;
       _lastUpdatedText = 'Last updated: just now';
+      // Live data arrived — take the sample-data banner down.
+      DemoMode.reset();
       await cache.cache(cacheKey, billing);
       notifyListeners();
     } catch (e) {
@@ -222,6 +257,7 @@ class AppProvider extends ChangeNotifier {
   void _seedDemoDataIfEmpty() {
     if (_activeDeployment == null) {
       _activeDeployment = DemoData.icuDeployment;
+      DemoMode.markServingDemoData();
       _todayAttendance = DemoData.todayAttendance;
       _latestVitals = DemoData.vitalsHistory.last;
       _todayReport = DemoData.todayReport;

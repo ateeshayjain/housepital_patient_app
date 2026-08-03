@@ -44,8 +44,16 @@ task "waiting for the test suite" — run targeted files, report results.
   shared `ProductImage` widget (asset→Image.asset, url→CachedNetworkImage, else
   fallback icon) in both the grid card and the detail sheet. ~31 generic/unbranded
   items still show the placeholder icon (known gap).
-- Secrets: `ANTHROPIC_API_KEY` lives server-side (Firebase secret) only; Razorpay key via
-  `--dart-define`; Firebase plists are gitignored.
+- Secrets: `ANTHROPIC_API_KEY` lives server-side (Firebase secret) only — verified absent from
+  every ref in git history; Razorpay key via `--dart-define`. **The iOS plist is gitignored and
+  was never committed, but `android/app/google-services.json` and `lib/config/firebase_options.dart`
+  ARE tracked** (the `.gitignore` entries were added after those files were committed, so they
+  are inert). Firebase client keys are not secrets in the way an API key is — they identify the
+  project and are embedded in every shipped binary — so the real control is Firebase Security
+  Rules plus API-key restrictions in the console, not untracking the files. Do not repeat the
+  old claim that "Firebase plists are gitignored" as though it covered all platforms.
+- **Storage rules:** `storage.rules` (default-deny + per-patient chat/concern photo paths) must be
+  deployed with `firebase deploy --only storage`; editing the file alone changes nothing live.
 
 ## Design system contract
 

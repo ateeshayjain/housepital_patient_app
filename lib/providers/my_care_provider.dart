@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/my_care_models.dart';
 // audit batch 4 (Agent J): still need api_service for the ApiException type
 // (thrown by the implementation, caught in loadServiceDetail).
@@ -46,6 +47,7 @@ class MyCareProvider extends ChangeNotifier {
     // Seed demo data immediately so UI is never empty
     if (_activeServices.isEmpty) {
       _activeServices = DemoData.activeServices;
+      DemoMode.markServingDemoData();
       _healthManager = DemoData.healthManager;
       _lastFetchedAt = DateTime.now();
     }
@@ -93,6 +95,7 @@ class MyCareProvider extends ChangeNotifier {
       // serve the demo deployment detail for any known deployment id, and
       // leave detail null (sections hide gracefully) for anything else.
       _selectedServiceDetail = DemoData.icuServiceDetail;
+      DemoMode.markServingDemoData();
       _detailError = null;
     }
 
@@ -102,4 +105,22 @@ class MyCareProvider extends ChangeNotifier {
 
   /// Called by FCM handler or pull-to-refresh.
   Future<void> refresh(String patientId) => loadMyCareData(patientId);
+  /// Clears every field that belongs to ONE patient.
+  ///
+  /// Called when the active patient changes and on logout. Without this the
+  /// previous patient's active services and health manager keep rendering
+  /// under the new patient's name — a PHI leak in an app several family
+  /// members share.
+  void clearPatientScopedData() {
+    _activeServices = [];
+    _healthManager = null;
+    _selectedServiceDetail = null;
+    _isLoading = false;
+    _isDetailLoading = false;
+    _error = null;
+    _detailError = null;
+    _lastFetchedAt = null;
+    notifyListeners();
+  }
+
 }

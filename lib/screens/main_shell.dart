@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_colors.dart';
+import '../data/demo_mode.dart';
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
 import 'home/home_screen.dart';
@@ -54,9 +55,20 @@ class MainShellState extends State<MainShell> {
       // Liquid Glass: the body extends behind the translucent nav bar so
       // content visibly glides beneath the glass while scrolling.
       extendBody: true,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Column(
+        children: [
+          // Sample-data banner. The app falls back to bundled demo records
+          // whenever the backend is unreachable so screens are never blank —
+          // which is safe only if the patient is TOLD. Without this, a family
+          // member reads the sample patient's chart believing it is their own.
+          const _DemoDataBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
+        ],
       ),
       floatingActionButton: const AssistantFab(),
       // Owner decision (field round 5): FIXED full-width bar like the Dai Maa
@@ -107,6 +119,52 @@ class MainShellState extends State<MainShell> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Persistent, honest notice that the app is showing bundled sample records
+/// rather than this patient's real data.
+///
+/// Deliberately NOT dismissible and deliberately not styled as a toast: the
+/// condition it reports (no backend) persists, and a patient must never be
+/// one dismissed snackbar away from mistaking sample vitals for their own.
+class _DemoDataBanner extends StatelessWidget {
+  const _DemoDataBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: DemoMode.isServingDemoData,
+      builder: (context, serving, _) {
+        if (!serving) return const SizedBox.shrink();
+        return Material(
+          color: context.hc.warningLight,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: context.hc.black),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Showing sample data — we can’t reach Housepital right '
+                      'now, so this is not your live record.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: context.hc.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

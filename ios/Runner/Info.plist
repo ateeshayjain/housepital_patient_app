@@ -70,5 +70,9 @@
 	<string>Housepital uses the microphone so you can speak to the assistant.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Housepital uses speech recognition to understand your questions.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Housepital uses the camera so you can photograph prescriptions, lab reports and anything you need to show your care team.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Housepital needs access to your photos so you can attach existing reports, prescriptions or a profile picture.</string>
 </dict>
 </plist>

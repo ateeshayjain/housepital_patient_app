@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/medication_models.dart';
 // audit batch 4 (Agent J): still need api_service for the ApiException type.
 import '../services/api_service.dart';
@@ -187,6 +188,7 @@ class MedicationProvider extends ChangeNotifier {
     // Seed demo data immediately
     if (_medications.isEmpty) {
       _medications = DemoData.medications;
+      DemoMode.markServingDemoData();
     }
 
     _isLoading = false;
@@ -231,6 +233,7 @@ class MedicationProvider extends ChangeNotifier {
           error: e, tag: 'MedicationProvider');
       if (_medications.isEmpty) {
         _medications = DemoData.medications;
+        DemoMode.markServingDemoData();
       }
       _schedule = _buildSchedule();
     }
@@ -382,4 +385,19 @@ class MedicationProvider extends ChangeNotifier {
       );
     }).toList();
   }
+  /// Clears every field that belongs to ONE patient (see
+  /// MyCareProvider.clearPatientScopedData). Dose-taken and refill markers go
+  /// too: they are keyed per medication, and medications are per patient.
+  void clearPatientScopedData() {
+    _medications = [];
+    _todayLogs = [];
+    _schedule = [];
+    _isLoading = false;
+    _isSaving = false;
+    _error = null;
+    _takenDoseKeys.clear();
+    _refillRequestedIds.clear();
+    notifyListeners();
+  }
+
 }
