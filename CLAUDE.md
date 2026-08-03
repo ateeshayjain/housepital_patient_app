@@ -73,9 +73,11 @@ task "waiting for the test suite" — run targeted files, report results.
   wrap cards in bare `GestureDetector` — use `HousepitalCard(onTap:)`.
 - **Bottom nav:** `MainShell` renders a **FIXED full-width solid-orange bar** anchored
   to the bottom edge (owner iterated floating-glass → pill → fixed), white icons/labels,
-  `SafeArea`-padded. **SIX root tabs:** Home (0), My Care (1), Services (2), Calendar (3),
-  Billing (4), More (5). Indices 1/2 are referenced externally via
-  `MainShell.switchToTab` — do not reorder them.
+  `SafeArea`-padded. **FIVE root tabs:** Home (0), My Care (1), Services (2),
+  Billing (3), More (4). The **care calendar is not a tab** — the owner moved it to the
+  My Care app bar (`'/care-calendar'`, custom action left of search) to get back to five
+  icons. Indices 1/2/3 are referenced externally via `MainShell.switchToTab` — do not
+  reorder them.
 - **Type:** bundled `Archivo` (+ `NotoSansDevanagari`) — google_fonts was removed; never
   re-add it. 11px minimum text size. Large iOS-style display titles. The typography scale
   is converging on a canon (28/w800 display • 16/w600 section header • etc.); the design

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../config/app_colors.dart';
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
-import 'calendar/care_calendar_screen.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
 import 'services/service_catalog_screen.dart';
@@ -29,14 +28,15 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  // Calendar inserted at index 3 (owner field request: 'add a tab for
-  // calendar view'). Indices 1 (My Care) and 2 (Services) are referenced
-  // from home_screen's switchToTab calls — do not reorder those.
+  // FIVE tabs (owner field round: 'move the calendar to My Care so that there
+  // are five icons below'). The calendar is now reached from the My Care app
+  // bar via '/care-calendar'. Indices are referenced from home_screen's
+  // switchToTab calls — 1 (My Care), 2 (Services), 3 (Billing) — do not
+  // reorder them.
   final _screens = [
     const HomeScreen(),
     const MyCareScreen(),
     ServiceCatalogScreen(key: ServiceCatalogScreen.catalogKey),
-    const CareCalendarScreen(),
     const BillingScreen(),
     const SettingsScreen(),
   ];
@@ -92,11 +92,6 @@ class MainShellState extends State<MainShell> {
             icon: const Icon(Icons.medical_services_outlined),
             activeIcon: const Icon(Icons.medical_services),
             label: l.t('tab_services'),
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Calendar',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.payment_outlined),

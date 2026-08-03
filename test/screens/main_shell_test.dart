@@ -148,7 +148,8 @@ Widget _host() => MultiProvider(
         ChangeNotifierProvider<OrdersProvider>.value(
             value: _TestOrdersProvider()),
         ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
-        // Calendar root tab (index 3) builds eagerly in the IndexedStack.
+        // RemindersProvider is needed by the care calendar route pushed from
+        // the My Care app bar.
         ChangeNotifierProvider<RemindersProvider>(
             create: (_) => RemindersProvider()),
         ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
@@ -224,26 +225,21 @@ void main() {
         greaterThanOrEqualTo(56.0));
   });
 
-  testWidgets('six tabs incl. Calendar; tapping an item switches tabs',
+  testWidgets('five tabs, no Calendar tab; tapping an item switches tabs',
       (tester) async {
     await _pump(tester, const Size(390, 844));
 
     final bar = tester
         .widget<BottomNavigationBar>(find.byType(BottomNavigationBar));
-    expect(bar.items, hasLength(6));
+    expect(bar.items, hasLength(5));
 
     Finder barLabel(String text) => find.descendant(
         of: find.byType(BottomNavigationBar), matching: find.text(text));
-    for (final label in [
-      'Home',
-      'My Care',
-      'Services',
-      'Calendar',
-      'Billing',
-      'More'
-    ]) {
+    for (final label in ['Home', 'My Care', 'Services', 'Billing', 'More']) {
       expect(barLabel(label), findsOneWidget);
     }
+    // Owner: the calendar moved to the My Care app bar — it is not a tab.
+    expect(barLabel('Calendar'), findsNothing);
 
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
         0);
@@ -251,9 +247,9 @@ void main() {
     await tester.pump();
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
         1);
-    // Calendar is index 3 (Home/MyCare/Services indices are referenced from
-    // home_screen switchToTab calls and must not shift).
-    await tester.tap(barLabel('Calendar'));
+    // Billing is index 3 — home_screen's 'Pay Now' and upcoming-payment card
+    // call switchToTab(3) and must land here.
+    await tester.tap(barLabel('Billing'));
     await tester.pump();
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack).first).index,
         3);
@@ -270,10 +266,10 @@ void main() {
     expect(fabRect.bottom, lessThanOrEqualTo(barRect.top));
   });
 
-  testWidgets('shell lays out without overflow at 320x568 with six tabs',
+  testWidgets('shell lays out without overflow at 320x568 with five tabs',
       (tester) async {
     await _pump(tester, const Size(320, 568));
     expect(tester.takeException(), isNull,
-        reason: 'Fixed six-tab bar must not introduce overflow at SE width.');
+        reason: 'Fixed five-tab bar must not introduce overflow at SE width.');
   });
 }
