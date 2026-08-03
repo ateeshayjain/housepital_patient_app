@@ -47,7 +47,7 @@ class MyCareProvider extends ChangeNotifier {
     // Seed demo data immediately so UI is never empty
     if (_activeServices.isEmpty) {
       _activeServices = DemoData.activeServices;
-      DemoMode.markServingDemoData();
+      DemoMode.markServingDemoData(DemoMode.sourceMyCare);
       _healthManager = DemoData.healthManager;
       _lastFetchedAt = DateTime.now();
     }
@@ -95,7 +95,7 @@ class MyCareProvider extends ChangeNotifier {
       // serve the demo deployment detail for any known deployment id, and
       // leave detail null (sections hide gracefully) for anything else.
       _selectedServiceDetail = DemoData.icuServiceDetail;
-      DemoMode.markServingDemoData();
+      DemoMode.markServingDemoData(DemoMode.sourceMyCare);
       _detailError = null;
     }
 

@@ -1,34 +1,60 @@
-# Content & Localization Checklist (App-Agnostic) — Audit vs commit 803124d
+# Content & Localization Checklist (App-Agnostic) — Audit round 2 vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** Content & Localization agent
-**Scope:** read-only. No files changed. All verdicts carry `path:LINE` or a command + output.
-**Method:** `rg`/`grep`/`python3` static scans over `lib/`, `assets/i18n/`, `ios/`, `android/`.
-`flutter test` / `flutter build` deliberately NOT run (central suite in flight); `flutter analyze` reported clean by brief.
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
+**Scope:** read-only. No files changed. Every verdict carries `path:LINE` or a command + its output.
+**Method:** `rg`/`grep`/`python3` static scans over `lib/`, `assets/i18n/`, `ios/`, `android/`, `docs/`, `test/`.
+`flutter test` / `flutter build` deliberately NOT run per the brief. Round-1 numbers were re-derived
+with a single script run against **both** trees (`git archive 803124d` into a scratch dir) so the
+round-1 → round-2 delta is like-for-like rather than method-for-method.
 
 ---
 
-## Headline metrics (measured, not estimated)
+## Changed since round 1
 
-| Metric | Value | How measured |
+Ten blockers were fixed repo-wide. **Exactly one of them was mine** (B-5). Everything else I graded
+❌ or ⚠️ in round 1 is unchanged, and the new code has introduced fresh content failures — including
+one screen whose own doc comment claims an honesty property its code does not have.
+
+| Round-1 finding | Status now | Evidence |
 |---|---|---|
-| Dart files in `lib/screens` + `lib/widgets` | **98** (42,090 LOC) | `find … -name '*.dart' \| wc -l`, `xargs wc -l` |
-| Localized call sites (`l.t(…)` / `AppLocalizations.of(…).t(…)`) | **199** | regex scan, comments stripped |
-| Hardcoded user-facing string literals | **1,246** | `Text('…')` + user-facing named params (`title:`, `label:`, `hintText:`, `tooltip:`, `message:`, `content:`, …), filtered to exclude routes, asset paths, snake_case ids, hex |
-| **Localized : hardcoded ratio** | **199 : 1,246 → 13.8 % localized / 86.2 % hardcoded** | derived |
-| Files that use `AppLocalizations` at all | **33 / 98 (34 %)** | scan |
-| Files with **zero** `l.t()` but ≥1 hardcoded user-facing literal | **57**, holding **742** literals | scan |
-| Keys in `en.json` / `hi.json` | **321 / 321**, key sets identical | `python3` set diff |
-| Keys actually referenced in code | **161** (50 %) — **160 unused** | `grep -rho ".t('…'"` vs json keys |
-| Unused keys whose **English value is hardcoded in a screen anyway** | **85** | value→key reverse map against the hardcoded-literal corpus |
-| `hi.json` values containing real Devanagari | **315 / 321** | `[ऀ-ॿ]` regex |
-| `hi.json` values identical to English | **6** — `app_name`, `bp`, `gst`, `sos`, `spo2`, `spo2_percent` (all legitimate acronyms) | set compare |
+| **B-5** iOS camera/photo purpose strings missing | ✅ **FIXED — and well written** | `ios/Runner/Info.plist:73-76`. Both strings are in the voice of the two that already existed and name the real use ("photograph prescriptions, lab reports and anything you need to show your care team"). No jargon, no legalese. Best copy to land this round. |
+| **B-1** Placeholder phones dialable | ❌ **UNCHANGED** | `lib/screens/settings/help_faq_screen.dart:352` `tel:+919999999999`, `:365` `wa.me/919999999999`; `lib/screens/my_care/staff_otp_verification_screen.dart:352` `tel:+918888888888` |
+| **B-2** SOS "Book Housepital Ambulance" → support ticket | ❌ **UNCHANGED** | `lib/screens/sos/sos_screen.dart:89-91` title/subtitle; `:192-193` `_bookAmbulance` → `Navigator.pushNamed(context, '/raise-concern')` |
+| **B-3** `emergencyPhone == supportPhone` | ❌ **UNCHANGED** | `lib/config/constants.dart:17,19` — both `'9990911911'` |
+| **B-4** Two contradictory vital classifiers | ❌ **UNCHANGED** | `lib/utils/helpers.dart:7-24` (`VitalHelper`, reads `AppConstants.vitalRanges`) and `lib/utils/vital_classifier.dart` both still present and both still live in `vitals_screen.dart` |
+| **H-1** "Airtel-style" dunning copy | ❌ **UNCHANGED** | `lib/services/payment_reminder_service.dart:126` comment; `:135` "Pay now to avoid service interruption."; `:153` "Late charges may apply. Pay now." |
+| **H-2** Legal consent English-only | ❌ **UNCHANGED** | `rental_agreement_screen.dart:96` still hardcodes the English of the translated `agree_terms` key |
+| **H-3** Handover PDF has no clinical disclaimer | ❌ **UNCHANGED** | `lib/services/handover_report_service.dart:274-277` |
+| **H-4** Red vital says "Needs attention" and stops | ❌ **UNCHANGED** | `lib/screens/reports/vitals_screen.dart:846-858` `_statusRow` — `'red'` still yields only `vital_status_alert` |
+| **H-5** No `Intl.defaultLocale` / `initializeDateFormatting` | ❌ **UNCHANGED** | `grep -rn "Intl.defaultLocale\|initializeDateFormatting" lib/` → **no matches** |
+| **H-6** Dai Maa's number presented as "our coordinator" | ❌ **UNCHANGED** | `payment_methods_screen.dart:355,363,374`, `staff_replacement_screen.dart:227` — all `+91-90502-00183` = `daimaa_theme.dart:23` |
+| **H-7** Android launcher label is `housepital_patient` | ❌ **UNCHANGED** | `android/app/src/main/AndroidManifest.xml:7` |
+| **M-1** 85 free localization wins | ⚠️ **WORSE — now 95** | 160 unused keys; 95 of them hold the exact English string a screen hardcodes (was 85). None taken. |
+| **M-3** Invoice money hand-formatted | ❌ **UNCHANGED** | `lib/services/invoice_pdf_service.dart:69` `'Rs ${amount.round()}'` |
+| **M-4** PDFs cannot render Devanagari | ❌ **UNCHANGED** | `grep -n "Font\.\|loadFont\|theme:"` on both PDF services → **no matches** |
+| **M-5** Pluralization | ❌ **UNCHANGED** | 5 `(s)` sites still present (`rental_agreement_screen.dart:54`, `service_booking_screen.dart:952,1460,2175`, `invoice_pdf_service.dart:212`) |
+| **M-10** `frequencyLabel` leaks snake_case | ❌ **UNCHANGED** | `lib/models/medication_models.dart:78` `default: return frequency;` |
+| **L-2** `'% off'` vs `'% OFF'` | ❌ **UNCHANGED** | 4 `% OFF` (`packages_tab.dart:83`, `package_detail_screen.dart:313`, `universal_search_screen.dart:247,496`) vs `% off` (`cart_screen.dart:813`, `equipment_detail_screen.dart:753`) |
+| **L-5** Stale contrast comment in `theme.dart` | ❌ **UNCHANGED** | `lib/config/theme.dart:159` still reads "Dark ink on orange — white on orange is only ~2.3:1 (fails AA)" above a white `onPrimary` |
+| §9 spelling sweep | ✅ **STILL CLEAN** | misspelling regex over all of `lib/` → **zero hits** |
 
-**Verdict on the "synced but untranslated" risk the brief flagged:** *not* the failure mode here.
-`hi.json` is a genuine, good-quality Hindi translation — natural phrasing, correct Delhi-register
-transliteration for clinical terms (`ब्लड प्रेशर`, `खुराक दर्ज करें`), Latin retained only where correct
-(OTP, EMI, PDF, GST, mmHg, bpm). The real failure is the **other direction**: the translations exist
-and are never called. 86 % of user-facing copy never reaches the i18n layer, so switching the app to
-Hindi still leaves the user reading English on almost every screen.
+### New this round — three surfaces of new user-facing copy, all of it hardcoded English
+
+`git diff 803124d HEAD -- assets/i18n/` is **empty**. Not one key was added, in either language, for
+any of the new copy below. Meanwhile hardcoded user-facing literals rose by 17.
+
+| Metric (same script, both trees) | `803124d` | `820060b` | Δ |
+|---|---:|---:|---:|
+| Localized call sites in `lib/screens` + `lib/widgets` | 199 | **199** | **0** |
+| Hardcoded user-facing literals | 1,159 | **1,176** | **+17** |
+| Localized share | 14.7 % | **14.5 %** | **−0.2 pt** |
+| Files with zero `l.t()` but ≥1 hardcoded literal | 56 (668 literals) | **57 (683)** | +1 file |
+| Keys in `en.json` / `hi.json` | 321 / 321 | **321 / 321** | **0** |
+| Unused keys whose EN value is hardcoded anyway | 85 | **95** | +10 |
+
+*(Round 1 reported 1,246 hardcoded / 13.8 %; that used a slightly wider named-parameter set. The
+table above is one script over both trees, so the **direction and size of the delta** is the reliable
+figure. Coverage did not improve and got marginally worse.)*
 
 ---
 
@@ -38,668 +64,525 @@ Hindi still leaves the user reading English on almost every screen.
 |---|---|---|---|---|
 | 1. Voice & tone | 0 | 2 | 1 | 0 |
 | 2. Microcopy | 0 | 2 | 1 | 0 |
-| 3. State copy | 0 | 3 | 1 | 0 |
+| 3. State copy | 0 | 2 | **2** | 0 |
 | 4. Terminology consistency | 0 | 1 | 1 | 0 |
 | 5. Numbers, dates, currency | 0 | 2 | 2 | 0 |
 | 6. Localization / i18n | 1 | 2 | 2 | 1 |
 | 7. Accessibility copy | 1 | 1 | 1 | 0 |
-| 8. Store / site / legal copy | 0 | 1 | 1 | 1 |
-| 9. Proofreading | 1 | 2 | 1 | 0 |
-| **Total (27 items)** | **3** | **16** | **11** | **2** |
+| 8. Store / site / legal copy | 0 | 2 | 1 | 0 |
+| 9. Proofreading | 2 | 1 | 1 | 0 |
+| **Total (32 items)** | **4** | **15** | **12** | **1** |
 
-*(§8 has one BLOCKED-OWNER item counted in the N/A column; see BLOCKED-OWNER section.)*
+**Round 1, restated on the same 32 items:** 3 ✅ · 16 ⚠️ · 11 ❌ · 2 N/A.
+Net: **+1 ✅** (Info.plist strings, §8) and **+1 ❌** — §3.3 "error messages are non-technical and
+actionable" drops from ⚠️ to ❌ because of the new payment-failure path (F-1/F-2 below).
+
+*Two round-1 bookkeeping errors corrected here:* the round-1 table summed to 32 while labelling
+itself "27 items"; and §9.2 was graded ⚠️ while the same finding was simultaneously filed as
+**Blocker B-1**. Three dead phone numbers shipping is a fail, so §9.2 is ❌ this round. Neither
+correction reflects a code change.
 
 ---
 
-## Findings
+## New-copy review (round-2 focus)
+
+### F-1 — ❌ BLOCKER · The deletion screen promises a deletion that nothing schedules
+
+`lib/screens/settings/delete_account_screen.dart`
+
+The screen's own header comment sets the honesty bar explicitly (`:17-24`):
+
+> "It therefore does two things and says so plainly: it wipes everything on THIS DEVICE immediately,
+> and **it records a deletion request for Housepital to complete** within the statutory window."
+
+It does the first thing. **It does not do the second.** `_submitDeletionRequest` (`:53-89`) is:
+
+```
+setState(() => _isSubmitting = true);
+// TODO(backend): POST /account/delete once api.housepital.in exists…
+await Future<void>.delayed(const Duration(milliseconds: 600));   // :59
+SessionScope.clearSession(context);
+await context.read<AuthProvider>().logout();
+```
+
+No network call, no queued request, no local record, no analytics event, no email. The 600 ms delay
+is a spinner, nothing more. The request is not recorded anywhere.
+
+The user is then shown (`:72-79`):
+
+> "Deletion requested … Your Housepital records are **scheduled for deletion** and will be removed
+> **within 30 days**. We keep only what the law requires us to keep — invoices, for tax records.
+> If you change your mind, **call us on 9990-911-911** before then."
+
+Every clause after the first sentence is false or unactionable:
+- **"scheduled for deletion"** — nothing was scheduled. No system anywhere knows this happened.
+- **"within 30 days"** — a statutory-sounding commitment (DPDP 2023 §12) with no mechanism behind it.
+- **"call us … before then"** — the user is invited to *cancel* a request that does not exist. The
+  agent who takes that call will find no record, which is the worst version of this interaction: the
+  family concludes Housepital lost their deletion request, or that it silently went through.
+- The user is logged out immediately (`:65`), so they cannot re-open the app to check status.
+
+This is not a missing feature — the file argues correctly (`:22-24`) that overstating erasure "would
+be worse than the missing feature." **The copy does the exact thing the comment forbids.**
+
+*What IS honest:* `'Everything on this phone has been erased.'` is substantively true. All local
+persistence is SharedPreferences (`lib/services/cache_service.dart:14,23,39,47,58`) and
+`AuthProvider.logout` (`lib/providers/auth_provider.dart:222-223`) calls `prefs.clear()`.
+Photos previously uploaded via `firebase_service.dart:116-137` are server-side and are **not**
+covered by that sentence — but the sentence is scoped to "this phone", so it holds.
+
+**Fix (copy-only, ships today, no backend needed):** say what actually happened.
+> "Everything on this phone has been erased. Your records on our servers are not deleted yet — we
+> can't reach our system from the app right now. **Call 9990911911 or email wecare@housepital.in and
+> ask for account deletion; we'll confirm within 30 days.** We keep invoices, which Indian tax law
+> requires."
+
+Make the phone number a `tel:` launcher, not plain text — this is now the only route the user has.
+
+**Better fix:** persist the request locally *before* wiping (it survives, keyed outside the cleared
+namespace) or fire a Firestore write, then the current copy becomes true.
+
+### F-2 — ❌ BLOCKER · "Payment Failed" and "Payment under verification" are on screen together, above a "Retry Payment" button
+
+`lib/screens/billing/payment_screen.dart` + `lib/services/payment_service.dart`
+
+The result screen renders, top to bottom:
+
+| Element | Source | Content |
+|---|---|---|
+| Icon | `payment_screen.dart:458-462` | `Icons.cancel`, `context.hc.error` (red) |
+| Title | `:469-472` | **"Payment Failed"** |
+| Amount | `:484-490` | **₹1,06,200** at 36 pt |
+| Body | `:539-554` | **"Payment under verification — we'll confirm in 24 hours"** |
+| CTA | `:590-591` | **"Retry Payment"** |
+| CTA | `:598-600` | "Go Back" |
+
+Three problems, in order of how much money they can cost a family:
+
+1. **"Retry Payment" is the primary CTA on a payment that may have succeeded.** Both paths that
+   produce this message (`payment_service.dart:179-181` `skippedDemo` with a real key, and `:184-187`
+   `failed`) are reached *after* Razorpay reported success — the money has very likely left the
+   account and only our verification is unresolved. Offering "Retry Payment" as the big filled button
+   invites a second debit for the same invoice. Nothing on the screen says "do not pay again."
+2. **The title contradicts the body.** "Failed" is terminal; "under verification" is pending. A
+   family reads the red X and the 36 pt amount and concludes they were charged and it failed —
+   the opposite of what "we'll confirm in 24 hours" means.
+3. **There is no reference and no contact.** `_transactionId` is explicitly nulled on every failure
+   path (`:245,280,323`), so the transaction-ID block (`:506-537`) does not render. The user has
+   nothing to quote and no number to call. "We'll confirm in 24 hours" is a promise with no
+   mechanism — there is no ticket, no push wiring, and `api.housepital.in` does not resolve. (24 h is
+   also just `AppConstants.concernSla['medium']`, which this path never touches.)
+
+**Fix (copy-only):** title `'Payment being confirmed'`, neutral/amber icon not red `Icons.cancel`;
+body: *"Your bank may have already debited ₹X. **Please don't pay again.** We're confirming with the
+bank and will update you within 24 hours — call 9990911911 with this invoice number if you need it
+sooner."*; demote "Retry Payment" to an outlined secondary and promote "Call Housepital" to primary.
+Show the invoice/order reference even on failure.
+
+### F-3 — ❌ HIGH · Raw Razorpay gateway text is rendered to the user
+
+`lib/services/payment_service.dart:220` — `_onFailureCallback?.call(response.message ?? 'Payment failed')`
+flows straight into `_failureMessage` (`payment_screen.dart:281`) and onto the screen (`:548`).
+Razorpay's `PaymentFailureResponse.message` carries gateway strings ("BAD_REQUEST_ERROR", issuer
+decline text, `payment_capture` errors). This is the exact §3.3 defect round 1 flagged at three
+sites — now reproduced on the payment screen, the one place a non-technical message matters most.
+**Fix:** log `response.message`, show a mapped plain-language message keyed on `response.code`.
+
+### F-4 — ⚠️ HIGH · "Call us" with no number; "call 9990-911-911" with no dialer
+
+- `payment_screen.dart:325-327` — *"…please pay from the Housepital mobile app, or **call us** and we
+  will take it over the phone."* No number anywhere on the screen. Dead end.
+- `delete_account_screen.dart:78,181` — the number is present but is **plain `Text`**, not tappable,
+  on the two screens where calling is the only remaining action. Every other "call" affordance in the
+  app launches `tel:` (`home_screen.dart:821`, `care_team_screen.dart:381`, `sos_screen.dart:56`).
+
+### F-5 — ⚠️ MEDIUM · The new copy hardcodes the phone number, in a third format
+
+**Digits check: `9990-911-911` == `AppConstants.supportPhone` == `AppConstants.emergencyPhone` ==
+`'9990911911'` (`lib/config/constants.dart:17,19`). The number is correct.** Two issues remain:
+
+1. It is a **hardcoded literal** at `delete_account_screen.dart:78` and `:181`, not
+   `AppConstants.supportPhone`. Every other reference in `lib/` goes through the constant (14 sites).
+   If ops changes the number, these two survive it — on the deletion screen, where the copy has just
+   told the user this is their only way back.
+2. It introduces a **third display format**. The constant renders bare (`sos_screen.dart:55` →
+   "Call 9990911911"); Dai Maa's renders `+91-90502-00183`; this one renders `9990-911-911`.
+   **Fix:** add `AppConstants.supportPhoneDisplay = '+91 99909 11911'` and use it everywhere.
+
+### F-6 — ⚠️ MEDIUM · The sample-data banner is honest, but a single global flag takes it down too early
+
+`lib/screens/main_shell.dart:132-170` + `lib/data/demo_mode.dart`
+
+**The copy is right.** *"Showing sample data — we can't reach Housepital right now, so this is not
+your live record."* — plain, non-technical, states the cause and the consequence, no "offline mode"
+jargon, no blame. Correctly non-dismissible (`:129-131` documents why). This is the second-best copy
+to land this round. Three defects around it:
+
+1. **`DemoMode.isServingDemoData` is one global bool, and `AppProvider` resets it unilaterally.**
+   `lib/providers/app_provider.dart:247` calls `DemoMode.reset()` the moment the *dashboard* fetch
+   succeeds — clearing the banner even though `MedicationProvider` (`:191,236`),
+   `BillingProvider` (`:43`), `MyCareProvider` (`:50,98`) and `OrdersProvider` (`:199`) may still be
+   serving `DemoData`. Partial recovery therefore removes the warning while the medication list is
+   still the sample patient's. That is worse than no banner: the user has now been told the data is
+   live. **Fix:** make it a `Set<String>` of provider tags; `reset(tag)` clears only its own.
+2. **`BlogProvider` never marks.** `lib/providers/blog_provider.dart:38,68` fall back to
+   `DemoData.articles` with no `markServingDemoData()`. Low clinical stakes (bundled education
+   content is legitimately bundled), but it is the one fallback path the brief asked about that was
+   missed.
+3. **The banner is not a live region.** No `Semantics(liveRegion: true)`, and the
+   `Icon(Icons.info_outline)` at `:149` has no `semanticLabel`. A VoiceOver user who is mid-screen
+   when the banner appears is not told.
+
+### F-7 — ⚠️ MEDIUM · The deletion screen repeats two known round-1 defects in brand-new code
+
+- **Disabled CTA with no reason** (round-1 §3.4 ❌). `delete_account_screen.dart:218`
+  `onPressed: _canSubmit ? _confirm : null` — the button is dead until both the checkbox is ticked
+  *and* `DELETE` is typed, with no line saying so. `login_screen.dart:48-60` has had the right
+  pattern all along.
+- **Consequence disclosed after consent, not before.** The confirm dialog (`:96-99`) says "This
+  cannot be undone. Your care history, reports and saved details will be removed." — good, and
+  better than 6 of the 7 existing destructive dialogs. But the 30-day server window and the invoice
+  retention only appear *after* the irreversible tap (`:74-78`). They are on the screen behind
+  (`:164-176`), which is correct, but the dialog is the last thing the user reads.
+
+### F-8 — ⚠️ · Voice and reading-level assessment of the new copy
+
+Judged against *"Hospital-like expertise. Home-like care."* for a Delhi NCR family:
+
+| Copy | Verdict |
+|---|---|
+| Sample-data banner (`main_shell.dart:153-154`) | **Good.** Plain, no jargon, states cause + consequence. |
+| `Info.plist:74,76` purpose strings | **Good.** Names the real use, warm, no legalese. |
+| "What gets deleted" bullets (`delete_account_screen.dart:152-155`) | **Good.** Concrete nouns a family recognises — "profile, address and contacts", "Medicines, reminders and documents". |
+| "What we must keep" (`:170-175`) | **Mostly good.** *"Invoices and payment records, which Indian tax law requires us to retain"* — names the reason, correct register. But *"Anything an ongoing medical or legal matter requires"* is vague enough to cover anything; a family reads it as "they can keep what they like." Tighten to a bounded example. |
+| *"If a service is currently running at your home, please call … first so we can close it properly"* (`:180-182`) | **Excellent.** This is the sentence that most shows the product understands its user — someone with a nurse in the house right now. |
+| "Keep my account" / "Delete" dialog buttons (`:103,114`) | **Good.** Outcome verbs, not Yes/No. Correctly asymmetric. |
+| "Payment Failed" (`payment_screen.dart:472`) | **Off-brand.** Title Case shout on a red screen; contradicts its own body. |
+| "Payment under verification" (`payment_service.dart:180,186`) | **Institutional register.** "Under verification" is bank/back-office language, not home-care language. "We're confirming this with your bank" says the same thing in the app's voice. |
+| *"Nothing has been charged — please try again in a moment"* (`payment_screen.dart:247-248`) | **Best new payment string.** Answers the only question that matters, immediately. Keep this one and model the others on it. |
+
+**Reading level:** the deletion screen is short sentences, second person, ~Grade 8 — appropriate.
+Two exceptions: "statutory" concepts survive as *"which Indian tax law requires us to retain"*
+(fine) and *"Anything an ongoing medical or legal matter requires"* (abstract).
+
+### F-9 — ❌ · What all of this means for a Hindi-preferring user
+
+Every string in F-1 through F-8 is **hardcoded English**. `git diff 803124d HEAD -- assets/i18n/` is
+empty; `delete_account_screen.dart` contains **zero** `l.t()` calls; `main_shell.dart` has `l` in
+scope at `:53` and the banner three lines later does not use it.
+
+Concretely, a user who has set the app to Hindi:
+
+- **Deletes their account entirely in English.** The consent checkbox *"I understand this cannot be
+  undone."* (`:191`), the "What we must keep" tax-retention disclosure, and the 30-day promise are
+  all English. This is an irreversible action taken on the basis of text the app already knows the
+  user did not choose to read. It sits alongside round-1 **H-2** (rental T&C and login consent also
+  English-only) — the app now has **three** consent surfaces that ignore the user's locale.
+- **Must type the Latin word `DELETE`** (`:40,196`) into the confirmation field. Defensible as a
+  convention, but on an otherwise-English screen it compounds rather than stands alone.
+- **Is told their payment succeeded in Hindi and failed in English.** `payment_screen.dart:470-472`:
+  success uses `l.t('payment_successful')`; failure is a hardcoded `'Payment Failed'`. The locale
+  holds while things go well and drops exactly when the user needs to understand what happened to
+  ₹1,06,200. The same asymmetry runs through the whole failure block (`'Retry Payment'` `:591`,
+  `'Go Back'` `:600`, and every `_failureMessage`).
+- **Is warned that their medical data is fake, in English** (`main_shell.dart:153`). The one banner
+  whose entire purpose is to stop a family trusting the wrong chart.
+
+**Cost to fix all of it: about 25 key pairs.** The infrastructure, the guard test
+(`test/utils/i18n_sync_test.dart`), and the Devanagari font fallback (`theme.dart:146-148,156`,
+verified round 1 against the `cmap` tables) are all already in place and working.
+
+### F-10 — ⚠️ · Neither new screen is covered by the overflow guard
+
+`test/screens/overflow_smoke_test.dart` covers 37 screens; `DeleteAccountScreen` is not among them
+(`grep -n "DeleteAccount\|delete_account"` → no match), and there is no widget test for it anywhere
+(`grep -rln "DeleteAccountScreen" test/` → no match). It is the app's longest-paragraph screen and
+its ListView contains two cards of wrapped body text plus a `CheckboxListTile` title. The suite is
+also still `locale: 'en'` (`:231`) with `supportedLocales: const [Locale('en')]` (`:335`), and
+`Locale('hi')` appears **zero** times in the entire test tree — so round-1 H-5 stands unchanged and
+now covers more untested surface.
+
+---
+
+## Findings (full checklist, round 2)
 
 ### §1 Voice & tone
 
-- ⚠️ **Copy matches the brand voice consistently across surfaces.**
-  The best copy in the app is genuinely excellent and on-brand. `lib/widgets/empty_state.dart:4-5`
-  encodes an explicit voice rule ("what this space will hold + who's behind it — warm, factual, no
-  database language, no exclamation marks"), and the 28 patient-education articles in
-  `lib/data/demo_articles.dart` are model work: plain sentences, India-context (chulha smoke, Delhi
-  AQI, bidi/hookah, achaar and papad for BP), red-flag lists, and a consistent closing disclaimer
-  ("*This is general guidance. For your specific situation, talk to your doctor or your Housepital
-  Health Manager.*").
-  Against that, three surfaces are off-brand:
-  1. `lib/services/invoice_pdf_service.dart:250` ships a **second tagline** on every invoice —
-     `'Housepital - ICU-grade care at home.'` — not "Hospital-like expertise. Home-like care."
-     (`assets/i18n/en.json:3`, `lib/screens/splash_screen.dart:46`, `about_screen.dart:54`).
-  2. `lib/services/payment_reminder_service.dart:126` is commented **"Airtel-style"** and reads like
-     telecom dunning — see the ❌ in Blockers.
-  3. `lib/screens/settings/referral_screen.dart:119` — `'Get hospital-like care at home with
-     Housepital! '` — the exclamation mark the empty-state voice rule bans.
-  **Fix:** make `assets/i18n/en.json:3` (`tagline`) the single source; replace the invoice footer
-  string with it; drop the referral exclamation mark.
-
-- ❌ **No unexplained jargon or internal/dev terms in user-facing text.**
-  Clinical acronyms ship unexpanded to a family audience:
-  - `lib/data/care_packages.dart:19,28,66,75` — "ventilator/BiPAP", "**ACLS** ambulance on call
-    (20 km)", "centralised vital monitoring" — inside the description of a ₹90,000/mo package.
-  - `lib/screens/search/universal_search_screen.dart:92` — `'RT (Ryles Tube) Change'`;
-    `:93` `'Tracheostomy Change'`.
-  - `lib/data/demo_data.dart:530` — medication instruction `'Subcutaneous injection at bedtime'`
-    for a self-administered insulin dose.
-  - `lib/data/demo_data.dart:221` — daily report note `'SpO2 maintained at 96% on 2L O2'`.
-  **Dev-term leak:** `lib/models/medication_models.dart:78` — `frequencyLabel`'s `default:` branch
-  returns the raw enum, so an unmapped value renders the snake_case token (e.g. `every_other_day`)
-  straight onto the medication row at `lib/screens/my_care/medications_screen.dart:487`.
-  **Impact:** a caregiver cannot judge whether "ACLS" is worth the price, and a snake_case token on a
-  dosage line reads as a broken app on the most safety-sensitive screen.
-  **Fix:** add a one-line plain gloss after each acronym ("ACLS ambulance — advanced life-support,
-  doctor-grade equipment on board"); change `medication_models.dart:78` to return a humanised
-  fallback (`frequency.replaceAll('_',' ')` title-cased) rather than the raw token.
-
-- ⚠️ **Reading level fits the audience.**
-  Articles and empty states: short, plain, second-person — excellent. But the rental contract
-  (`lib/screens/rental/rental_agreement_screen.dart:74-85`) and the catalog service names
-  (`universal_search_screen.dart:81-93`) sit at a much higher reading level, and both are
-  English-only (see §6). The rental terms themselves are well written ("Partial month rent is not
-  refundable") — the problem is language access, not density.
-
----
+- ⚠️ **Copy matches brand voice consistently.** The best copy remains excellent — `empty_state.dart:4-5`
+  encodes the voice rule; the 28 articles in `demo_articles.dart` are model work (chulha smoke, Delhi
+  AQI, achaar/papad for BP, consistent closing disclaimer). New copy mostly upholds it (F-8). Four
+  off-brand surfaces, all unchanged: `invoice_pdf_service.dart:250` ships a **second tagline**
+  ("Housepital - ICU-grade care at home.") against `en.json:3`; `payment_reminder_service.dart:126`
+  is still commented "Airtel-style"; `referral_screen.dart:119` still carries the banned exclamation
+  mark; and new: `'Payment Failed'` (F-8).
+- ❌ **No unexplained jargon or dev terms.** Unchanged: `care_packages.dart:19,28,66,75` ("ACLS
+  ambulance on call", "BiPAP", "centralised vital monitoring" inside a ₹90,000/mo package);
+  `universal_search_screen.dart:92-93` ("RT (Ryles Tube) Change"); `demo_data.dart:221,530`.
+  Dev-term leak `medication_models.dart:78` (`default: return frequency;` → `every_other_day` on a
+  dosage row) **unchanged**. New jargon: "Payment under verification" (F-8).
+- ⚠️ **Reading level fits the audience.** New deletion copy is appropriate (F-8). Rental contract
+  (`rental_agreement_screen.dart:74-85`) and catalog service names unchanged and still English-only.
 
 ### §2 Microcopy
 
-- ⚠️ **Buttons/CTAs are action verbs, not vague.**
-  The dominant pattern is good — `'Confirm & Add to Cart'`
-  (`rental_agreement_screen.dart:112`), `'Call coordinator'` (`payment_methods_screen.dart:380`),
-  `'Schedule Return Pickup'`, `'Book Housepital Ambulance'`. But **24 vague labels** remain:
-  `Text('OK')` ×5, `Text('Yes')` ×2, `Text('No')` ×2, `Text('Submit')`, `Text('Done')`,
-  `Text('Confirm')` — e.g. `lib/screens/cart/cart_screen.dart:663` uses a bare `'OK'` to dismiss the
-  "Booking request sent to your primary contact" dialog where `'Got it'` or `'Back to cart'` would
-  carry meaning.
-  **Fix:** replace the 5 `'OK'` and 1 `'Submit'` with outcome verbs; leave Yes/No only where the
-  dialog title is itself a question.
+- ⚠️ **CTAs are action verbs.** Dominant pattern still good, and the new "Keep my account" / "Delete"
+  pair (`delete_account_screen.dart:103,114`) is a genuine improvement on the app's usual Yes/No.
+  The 24 vague labels are unchanged (`Text('OK')` ×5 incl. `cart_screen.dart:663`, `'Yes'`/`'No'`
+  ×2 each, `'Submit'`, `'Done'`, `'Confirm'`) and the new screen adds `'Done'`
+  (`delete_account_screen.dart:84`). **"Retry Payment" is worse than vague — it is wrong** (F-2).
+- ❌ **Labels consistent across screens.** See §4 — unchanged, plus a third phone format (F-5).
+- ⚠️ **Confirmations state the consequence.** `confirmDestructiveAction`
+  (`common_widgets.dart:501-525`) is still used at 7 sites with **only 1** stating irreversibility
+  (`order_tracking_screen.dart:588`); `document_repository_screen.dart:531` still does not.
+  The new deletion dialog does state it (`delete_account_screen.dart:96-99`) — but discloses the
+  30-day window only afterwards (F-7).
 
-- ❌ **Labels and field names are clear and consistent across screens.** See §4 — the same concept
-  carries three different names (escalation contact, red-vital status, support phone number).
+### §3 State copy
 
-- ⚠️ **Confirmations state the consequence.**
-  A shared, correctly-styled destructive dialog exists — `confirmDestructiveAction`
-  (`lib/widgets/common_widgets.dart:501-525`, error-coloured confirm button) — and is used at 7 call
-  sites. But **only 1 of 7 states irreversibility**:
-  - ✅ `lib/screens/orders/order_tracking_screen.dart:588` — "…This action cannot be undone."
-  - ⚠️ `lib/screens/documents/document_repository_screen.dart:531` — `'Are you sure you want to
-    delete "${doc.name}"?'` — deleting a discharge summary or prescription is unrecoverable and the
-    copy does not say so.
-  - ⚠️ `lib/screens/settings/family_members_screen.dart:60`, `patient_profile_screen.dart:233`,
-    `cart_screen.dart:609,870`, `checkout/address_selection_screen.dart:171` — all "Are you sure…".
-  **Fix:** append the consequence clause to each message; `document_repository_screen.dart:531` is
-  the one that matters ("This permanently deletes the file from this device. It can't be undone.").
-
----
-
-### §3 State copy (empty / loading / error)
-
-- ⚠️ **Empty states explain what goes here + how to add the first item.**
-  `lib/widgets/empty_state.dart` is a well-designed shared component (icon + title + body + optional
-  CTA) and the copy routed through it is strong — e.g. `billing_empty_title` / `billing_empty_body`
-  ("No bills yet" / "When your services begin, every invoice and payment will appear here").
-  Four surfaces bypass it with bare database language:
-  - `lib/screens/reports/vitals_screen.dart:216` — `Text('No data available')`
-  - `lib/screens/reports/vitals_screen.dart:262` — `Text('No data')`
-  - `lib/widgets/paginated_list.dart:126` and `:154` — `'No items found'`
-  - `lib/widgets/paginated_list.dart:233` — `'No more items'`
-  Note `no_data_available` already exists in both JSONs and is simply not called.
-  **Fix:** swap the four sites to `HousepitalEmptyState` with a "how to add the first reading" CTA
-  pointing at the Add-reading sheet.
-
-- ⚠️ **Loading copy is honest and brief; long waits show progress.**
-  24 bare `CircularProgressIndicator` sites vs **1** with copy —
-  `lib/screens/billing/payment_screen.dart:311` `LoadingWidget(message: 'Processing payment...')`.
-  `LoadingWidget` is used 11× but only that one passes a message. A `loading` key exists in both
-  JSONs (`'Loading...'` / `'लोड हो रहा है...'`) and is never used. PDF generation
-  (`invoice_pdf_service`, `handover_report_service`) is on-device and can take seconds with no copy.
-
-- ⚠️ **Error messages are non-technical and actionable.**
-  The tone is mostly right and several messages give a real next step —
-  `lib/screens/support/staff_replacement_screen.dart:227` ("…Please try again or call our
-  coordinator at …"), `lib/screens/rental/return_screen.dart:367`,
-  `lib/screens/chat/chat_screen.dart:144`. Three leaks:
-  - `lib/screens/support/raise_concern_screen.dart:410` — `Text('Failed to submit: ${e.message}')`
-  - `lib/screens/settings/patient_profile_screen.dart:297` — `Text('Failed to save: ${e.message}')`
-  - `lib/main.dart:768` — `Text('$e', …)` renders the raw exception in the route-error fallback.
-  **Fix:** keep `e.message` in the logger, show the already-present generic + action copy to the user.
-
-- ❌ **Disabled actions tell the user *why*.**
-  5 disabled-CTA sites, **none** carry a reason string:
-  `lib/screens/reports/vitals_screen.dart:781` (`onPressed: _isValid ? _save : null`),
-  `lib/screens/settings/add_patient_screen.dart`, `lib/screens/services/equipment_detail_screen.dart`
-  (×2), `lib/screens/billing/payment_screen.dart`,
-  `lib/screens/my_care/widgets/doctor_advice_card.dart`.
-  `lib/screens/rental/rental_agreement_screen.dart:110` is the clearest miss: "Confirm & Add to Cart"
-  is dead until the T&C checkbox is ticked, with no text saying so.
-  Positive counter-example worth copying: `lib/screens/auth/login_screen.dart:60` scrolls to the
-  consent row *and* shows `'Please accept the Terms to continue'`.
-  **Fix:** apply the login_screen pattern (helper line under the disabled button) to the other five.
-
----
+- ⚠️ **Empty states.** Unchanged: `vitals_screen.dart:216` `'No data available'`, `:262` `'No data'`,
+  `paginated_list.dart:126,154,233`. `no_data_available` still exists in both JSONs, still uncalled.
+- ⚠️ **Loading copy honest and brief.** Unchanged: 24 bare `CircularProgressIndicator`s vs 1 with
+  copy (`payment_screen.dart:311`). The new deletion spinner (`delete_account_screen.dart:220-225`)
+  is bare — no "Erasing your data…" — during a 600 ms wait the user believes is deleting their
+  medical history. On-device PDF generation still silent.
+- ❌ **Error messages are non-technical and actionable.** *(⚠️ → ❌ this round.)* Round-1 leaks
+  unchanged (`raise_concern_screen.dart:410`, `patient_profile_screen.dart:297`, `main.dart:768`),
+  and the new payment path adds: raw Razorpay text to the user (F-3), a title that contradicts its
+  body (F-2), an actionless 24-hour promise, and "call us" with no number (F-4).
+- ❌ **Disabled actions tell the user why.** Unchanged at 5 sites, and **re-committed in new code** at
+  `delete_account_screen.dart:218` (F-7). Correct pattern still sitting unused at
+  `login_screen.dart:48-60`.
 
 ### §4 Terminology consistency
 
-- ❌ **One term per concept.** Three concrete collisions, all user-visible:
-
-  **(a) The escalation contact has three names.**
-  - "Housepital **Health Manager**" — every one of the 28 articles' closing line
-    (`lib/data/demo_articles.dart`), `lib/data/demo_data.dart:390`,
-    `lib/screens/my_care/widgets/health_manager_banner.dart`
-  - "**coordinator**" — `lib/screens/billing/payment_methods_screen.dart:355,380`,
-    `lib/screens/support/staff_replacement_screen.dart:227`,
-    `lib/screens/services/assessment_request_screen.dart:443,1435`,
-    `lib/screens/rental/return_screen.dart:367`, `lib/screens/my_care/my_care_screen.dart:660,680`
-  - "**Care Team**" — `lib/screens/care_team/care_team_screen.dart:95,126`,
-    `lib/screens/home/home_screen.dart:781,846`
-
-  **(b) The red-vital status has three words.**
-  - `lib/widgets/common_widgets.dart:281` → `'Alert'` (hardcoded, on the VitalCard)
-  - `assets/i18n/en.json` `vital_status_alert` → `'Needs attention'` (used at
-    `lib/screens/reports/vitals_screen.dart:851`)
-  - `lib/utils/helpers.dart:21` → `'alert'` (internal token, also compared as a string at
-    `vitals_screen.dart:548`)
-  The same reading therefore reads "Alert" on Home and "Needs attention" in the entry sheet.
-
-  **(c) Three support phone numbers.** See Blockers — `9990911911` (constants), `9050200183`
-  (the **Dai Maa** number, `lib/config/daimaa_theme.dart:23`), and two placeholders.
-
-  **(d) Hindi-side duplicates.** Two English strings have two keys each with *divergent* Hindi:
-  `todays_vitals`/`today_vitals` → `आज के विटल्स` vs `आज के वाइटल्स`;
+- ❌ **One term per concept.** All four round-1 collisions unchanged:
+  (a) escalation contact = "Health Manager" / "coordinator" / "Care Team";
+  (b) red vital = `'Alert'` (`common_widgets.dart:281`) vs `'Needs attention'` (`vital_status_alert`)
+  vs `'alert'` (`helpers.dart:21`);
+  (c) three support numbers, one of them Dai Maa's — **now four display formats** with F-5;
+  (d) `todays_vitals`/`today_vitals` → `आज के विटल्स` vs `आज के वाइटल्स`;
   `borderline`/`vital_status_borderline` → `सीमा रेखा` vs `सीमा पर`.
-  (`no_data`/`no_data_available`, `todays_report`/`today_report`, `tab_billing`/`billing_title`,
-  `normal`/`vital_status_normal` are duplicated but consistent.)
-  **Fix:** pick "Health Manager" and "Needs attention"; delete the duplicate keys; add a 15-line
-  glossary to `CLAUDE.md` under the design-system contract.
-
-- ⚠️ **Capitalization style consistent.**
-  AppBar titles are uniformly Title Case — `About`, `Care Guides`, `Care Team`, `EMI Options`,
-  `Help & FAQ`, `Notification Preferences`, `Order Tracking`, `Payment & Auto-pay`, `Refer & Earn`,
-  `Rental Agreement`, `Request Replacement`, `Return Equipment`, `Sahayak` — ✅.
-  Discount chips are not: `'% off'` at `cart_screen.dart:813`,
-  `equipment_item_card.dart:151`, `equipment_detail_screen.dart:753`,
-  `service_booking_screen.dart:282,2371` vs `'% OFF'` at `packages_tab.dart:83`,
-  `package_detail_screen.dart:313`, `universal_search_screen.dart:247,496`.
-
----
+- ⚠️ **Capitalization consistent.** AppBar titles uniformly Title Case; `'Delete account'`
+  (`delete_account_screen.dart:128`, `settings_screen.dart:276`) is sentence case and breaks that
+  pattern (`About`, `Care Guides`, `Care Team`, `EMI Options`, `Order Tracking`…). Discount chips
+  still mixed: 4× `% OFF` vs 2× `% off`.
 
 ### §5 Numbers, dates, currency
 
-- ⚠️ **Currency formatted per locale; never hand-format money.**
-  The helper is correct and dominant: `lib/utils/helpers.dart:51-54`
-  `NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0)` — **Indian lakh grouping
-  is handled** (₹1,00,000), and it is called **114 times**. Eight sites bypass it:
-  - `lib/services/invoice_pdf_service.dart:69` — `String _fmtAmount(num amount) => 'Rs ${amount.round()}';`
-    This is the **tax invoice**: subtotal, "GST (18%)" and "Grand total" all render as
-    `Rs 106200` instead of `₹1,06,200` (`:230,233,236`).
-  - `lib/services/payment_reminder_service.dart:135,141,147,153` — `'₹${reminder.amount.toInt()}'`.
-  - `lib/screens/services/tabs/packages_tab.dart:99` — `'₹${pkg.pricePerDay!.toStringAsFixed(0)}/day'`.
-  - `lib/screens/assistant/assistant_executor.dart:308,439` — `'₹$price'`, `'₹$amount'`.
-  - `lib/screens/cart/cart_screen.dart:404` — `'Free delivery on orders above Rs.999'` (`Rs.` vs `₹`
-    used everywhere else on the same screen).
-  **Fix:** `_fmtAmount` → `DateHelper.formatCurrency(amount.round())`; same for the other seven.
-
-- ❌ **Dates/times use the correct locale/zone; relative dates read naturally.**
-  - **`Intl.defaultLocale` is never set and `initializeDateFormatting` is never called** anywhere in
-    `lib/` (verified: `rg -n "Intl.defaultLocale|initializeDateFormatting" lib` → no matches, exit 1).
-    Every `DateFormat` therefore emits `en_US` regardless of the app locale. In Hindi mode the Care
-    Calendar still shows "Monday, 3 August" — 12 raw `DateFormat(…)` calls in
-    `lib/screens/calendar/care_calendar_screen.dart:224,399,400,561,655,759,851,865,933,1199,1327,1727`,
-    plus `DateHelper.formatDate/formatTime/formatDateShort`.
-  - **Four hand-rolled month-name arrays** bypass intl entirely and can never localize:
-    `lib/services/handover_report_service.dart:37-38`,
-    `lib/services/invoice_pdf_service.dart:61-66`,
-    `lib/services/payment_reminder_service.dart:160-165`,
-    `lib/screens/support/staff_profile_screen.dart:498`.
-  - **Three different time formats coexist:** `DateHelper.formatTime` → `'3:05 PM'`
-    (`helpers.dart:29`); `lib/screens/home/home_screen.dart:1722-1727` re-implements the same 12-hour
-    format by hand; `lib/screens/chat/chat_screen.dart:448-451` renders **24-hour** `'15:05'`.
-  - **Relative dates:** `DateHelper.formatRelative` (`helpers.dart:40-49`) has no "Yesterday" — it
-    jumps `1h ago → 1d ago`. `lib/screens/support/staff_profile_screen.dart:1190-1195` implements a
-    *second*, different relative formatter that does have Today/Yesterday. Both English-only.
-  **Fix:** set `Intl.defaultLocale = appProvider.locale.languageCode` in the `MaterialApp.builder`
-  (`lib/main.dart:413`) and call `initializeDateFormatting('hi')`; delete the four month arrays and
-  the two duplicate time formatters in favour of `DateHelper`.
-
-- ❌ **Pluralization correct via plural rules, not "item(s)".**
-  Both failure modes present.
-  *"(s)" hacks — 5 user-facing sites:*
-  `lib/services/invoice_pdf_service.dart:212` `'$months month(s)'`;
-  `lib/screens/rental/rental_agreement_screen.dart:54` `'${widget.durationMonths} month(s)'`;
-  `lib/screens/services/service_booking_screen.dart:952` `'Please enter medication name(s)'`,
-  `:1460` same, `:2175` `'${_attachedFiles.length} file(s)'`.
-  *Genuine "1 <plural>" bugs:*
-  - `lib/screens/support/staff_profile_screen.dart:1193-1195` — `'${(diff.inDays/7).floor()} weeks
-    ago'`, `'… months ago'`, `'… years ago'` all render **"1 weeks ago" / "1 months ago" /
-    "1 years ago"**.
-  - `lib/services/payment_reminder_service.dart:48` — `'Overdue by ${-days} days'` → **"Overdue by
-    1 days"**, rendered live at `lib/screens/billing/payment_methods_screen.dart:305`.
-  *Counter-examples done right:* `lib/screens/reports/vitals_screen.dart:552`
-  `'occasion${alertCount > 1 ? "s" : ""}'` and `lib/screens/services/tabs/packages_tab.dart:118`
-  `'${…length == 1 ? "service" : "services"}'`. `AppLocalizations.translate`
-  (`lib/utils/app_localizations.dart:29-37`) is plain `{param}` substitution with **no plural
-  support at all** — so this cannot be fixed inside the i18n layer as it stands.
-  **Fix:** add a `plural(count, one, other)` helper to `AppLocalizations` (or adopt ICU via
-  `intl`'s `Intl.plural`), then migrate the 5 "(s)" sites and the 4 "1 <plural>" sites.
-
-- ⚠️ **Numeric precision correct for money (no float artifacts).**
-  Core money fields are integers — `lib/models/models.dart:755` `final int amount;`, `:1215` same —
-  and `DateHelper.formatCurrencyPaise` (`helpers.dart:57-61`) divides paise by 100 with
-  `decimalDigits: 0`, so no float display artifacts. ✅ in the main path.
-  However ~10 display sites **truncate** rather than round doubles into the int formatter:
-  `lib/screens/packages/package_detail_screen.dart:391,504,521,540`,
-  `lib/screens/services/cards/equipment_item_card.dart:134,167,186`,
-  `lib/screens/services/equipment_detail_screen.dart:1467`,
-  `lib/screens/billing/payment_methods_screen.dart:310`,
-  `lib/screens/search/universal_search_screen.dart:174` — all `formatCurrency(x.toInt())`.
-  A computed discount of ₹1,499.9 displays as ₹1,499. `payment_reminder_service.dart:29` also stores
-  `final double amount`.
-  **Fix:** `.round()` not `.toInt()` at those 10 sites; make `PaymentReminder.amount` an `int`.
-
----
+- ⚠️ **Currency per locale.** `helpers.dart:51-54` (`en_IN`, lakh grouping) still correct and used
+  114×; the 8 bypasses unchanged, including `invoice_pdf_service.dart:69` on the **tax invoice**.
+  New code is clean — `payment_screen.dart:485` uses `DateHelper.formatCurrency`. ✅ on the new path.
+- ❌ **Dates/times locale-correct.** Unchanged. No `Intl.defaultLocale`, no `initializeDateFormatting`;
+  12 raw `DateFormat` calls in the care calendar; four hand-rolled month arrays; three time formats
+  (chat still 24-hour at `chat_screen.dart:448-451`); `formatRelative` still has no "Yesterday".
+  New: `delete_account_screen.dart:76` states "within 30 days" with no date arithmetic and no
+  concrete date shown — a family cannot tell when the window closes.
+- ❌ **Pluralization.** Unchanged: 5 `(s)` sites + 4 "1 weeks/months/years/days" bugs
+  (`staff_profile_screen.dart:1193-1195`, `payment_reminder_service.dart:48`).
+  `AppLocalizations.translate` (`app_localizations.dart:29-37`) still has no plural facility.
+- ⚠️ **Numeric precision for money.** Unchanged: ~10 `formatCurrency(x.toInt())` truncation sites;
+  `PaymentReminder.amount` still `double`.
 
 ### §6 Localization / i18n
 
-- ❌ **No hardcoded user-facing strings — all go through the platform i18n system.**
-  **199 localized vs 1,246 hardcoded (13.8 % coverage).** 65 of 98 screen/widget files never touch
-  `AppLocalizations`; 57 of those hold 742 hardcoded literals.
-  **Worst files (hardcoded / localized):**
-
-  | Hardcoded | Localized | File |
-  |---:|---:|---|
-  | 125 | 2 | `lib/screens/services/assessment_request_screen.dart` |
-  | 85 | 0 | `lib/screens/services/service_booking_screen.dart` |
-  | 62 | 2 | `lib/screens/settings/patient_profile_screen.dart` |
-  | 57 | 1 | `lib/screens/home/home_screen.dart` |
-  | 46 | 0 | `lib/screens/services/data/catalog_seeds.dart` |
-  | 45 | 0 | `lib/screens/services/equipment_detail_screen.dart` |
-  | 41 | 0 | `lib/screens/documents/document_repository_screen.dart` |
-  | 40 | 0 | `lib/screens/calendar/care_calendar_screen.dart` |
-  | 33 | 0 | `lib/screens/cart/cart_screen.dart` |
-  | 29 | 1 | `lib/screens/settings/family_members_screen.dart` |
-  | 25 | 0 | `lib/screens/billing/payment_methods_screen.dart` |
-  | 25 | 8 | `lib/screens/settings/settings_screen.dart` |
-  | 24 | 0 | `lib/screens/checkout/address_selection_screen.dart` |
-  | 23 | 0 | `lib/screens/settings/notification_preferences_screen.dart` |
-  | 21 | 5 | `lib/screens/support/staff_profile_screen.dart` |
-
-  **The cheapest 85 fixes:** 85 of the 160 "unused" keys are not unused at all — the screen hardcodes
-  the exact English string the key already holds, in both languages. Each is a one-line swap.
-  Highest-value examples:
-  - `agree_terms` — key exists (`'I agree to the rental terms and conditions'` /
-    `'मैं किराये के नियम और शर्तों से सहमत हूं'`) yet
-    `lib/screens/rental/rental_agreement_screen.dart:96` hardcodes the English. A Hindi-preferring
-    family ticks a **legal consent box in English**.
-  - `error_occurred` → hardcoded at `lib/widgets/paginated_list.dart:174`
-  - `no_data_available` → hardcoded at `lib/screens/reports/vitals_screen.dart:216`
-  - `tagline` → hardcoded at `about_screen.dart:54` and `splash_screen.dart:46`
-  - plus `cancel` (6 files), `other` (5), `share` (5), `total` (5), `male`/`female` (3 each),
-    `my_orders` (3), `tab_home` (3), `app_name` (3), `sos` (2), `retry` (2), `medications` (2)…
-
-  **Whole surfaces with zero localization:**
-  - **Patient-education library** — `lib/data/demo_articles.dart`, 28 articles, 236 lines, **zero
-    Devanagari characters** (`rg -c "[ऀ-ॿ]"` → 0). The single warmest, most valuable content in the
-    product is English-only.
-  - **Sahayak assistant** — `lib/services/assistant_service.dart` and
-    `lib/screens/assistant/assistant_executor.dart` reply in **romanized Hinglish regardless of app
-    locale** ("Iss waqt aapka outstanding bill ₹$amount hai." `assistant_executor.dart:439`;
-    "Confirm karein." `assistant_service.dart:95`). No locale is read anywhere in either file.
-    An English-only user gets Hinglish; a Devanagari-Hindi user gets Latin-script Hinglish.
-    Worse, the assistant's navigation breadcrumbs cite **English UI labels** — "Services > Equipment
-    se add karein" (`assistant_executor.dart:292`), "Settings > Raise a Concern se bhej sakte hain"
-    (`:343`) — labels that are translated in Hindi mode, so the instructions point at menu items the
-    user cannot see.
-  - **Login/consent** — `lib/screens/auth/login_screen.dart:209-240` builds "I agree to the Terms &
-    Privacy Policy" entirely from hardcoded `TextSpan`s.
-  - **Rental contract terms** — `rental_agreement_screen.dart:74-85`, six clauses, hardcoded English.
-
-- ✅ **Target languages/scripts render correctly (incl. non-Latin scripts).**
-  Measured directly against the font binaries with a `cmap` parser:
-  `assets/fonts/Archivo.ttf` has **no** coverage for U+0905 अ, U+0928 न, U+093F ि (format-4 cmap,
-  all `False`); `assets/fonts/NotoSansDevanagari.ttf` covers all three (format-12 cmap, all `True`).
-  Both fonts are bundled (`pubspec.yaml:94-100`) and the fallback is wired correctly at the
-  `ThemeData` level — `lib/config/theme.dart:146-148,156` `fontFamilyFallback:
-  _devanagariFallback` — which Flutter applies across the whole `textTheme`, so the per-style
-  `TextStyle(fontFamily: 'Archivo')` overrides in `:170-215` still inherit it. Mixed-script strings
-  (`'OTP सत्यापित करें'`, `'सिस्टोलिक (mmHg)'`) resolve per-glyph. ₹ (U+20B9) is in **both** fonts.
-
-- ⚠️ **Layouts tolerate text expansion/contraction without clipping.**
-  Mean Hindi/English character ratio across 276 non-trivial strings is **0.99** — Hindi is not longer
-  on average. But the expansion is concentrated exactly where it hurts: **short button labels**.
-  Worst measured: `re_book` 2.14× (`Re-book` → `दोबारा बुक करें`), `pay_now` 2.14×
-  (`Pay Now` → `अभी भुगतान करें`), `upgrading` 2.00×, `try_again` 1.89×, `log_dose` 1.88×
-  (`Log dose` → `खुराक दर्ज करें`, on the medication pill), `verify_otp` 1.70×, `resend_otp` 1.60×.
-  Devanagari also needs a taller line box (shirorekha + matras).
-  **The overflow guard never sees any of this:** `test/screens/overflow_smoke_test.dart:231` pins
-  `locale: 'en'`, and `rg -c "Locale('hi')" test/` returns **zero matches across the entire test
-  tree**. 37 screens × 3 widths are guarded in English only.
-  **Fix:** parameterize `overflow_smoke_test.dart` over `['en','hi']` — the 320 px × Hindi × Ahem
-  combination is where clipping will surface.
-
-- N/A **RTL handled if a target locale needs it.**
-  `lib/main.dart:398-401` declares `supportedLocales: [Locale('en'), Locale('hi')]` — both LTR, so
-  no RTL requirement today. Noting for the future: `rg -n "TextDirection|EdgeInsetsDirectional|
-  AlignmentDirectional" lib` returns **0 matches**, while 12 sites use non-directional
-  `EdgeInsets.only(left:/right:)`. Adding Urdu (a plausible Delhi NCR target) would require touching
-  those first.
-
-- ⚠️ **Text fits at largest accessibility text size / zoom.**
-  `lib/main.dart:413-424` clamps `textScaler` to `min 0.85 / max 1.4`, with a comment citing
-  WCAG 1.4.4. WCAG 1.4.4 asks for **200 %**; 1.4× is 140 %, so users on iOS Larger Text above that
-  setting are silently capped. The clamp is a deliberate, defensible trade — but it is a cap, and it
-  is untested: the overflow suite runs at scaler 1.0 only (`overflow_smoke_test.dart:102-105` varies
-  width, never scale).
-  **Fix:** add a 1.4× pass to the overflow suite before considering raising the cap.
-
-- ❌ **Date/number/currency formatters are locale-aware, not string-built.** Covered in §5 — no
-  `Intl.defaultLocale`, four hand-built month arrays, three hand-built time formatters, eight
-  hand-built currency strings.
-
----
+- ❌ **No hardcoded user-facing strings.** **199 localized : 1,176 hardcoded → 14.5 %.** Zero new
+  localized call sites and zero new keys this round while 17 new literals landed (F-9). 95 keys now
+  hold the exact English a screen hardcodes. `agree_terms` still hardcoded at
+  `rental_agreement_screen.dart:96`. Whole surfaces still unlocalized: 28 articles (zero Devanagari),
+  Sahayak (romanized Hinglish regardless of locale), login consent, rental contract — **plus the
+  three new surfaces**.
+- ✅ **Non-Latin scripts render correctly.** Unchanged and re-confirmed: `Archivo.ttf` has no
+  Devanagari coverage, `NotoSansDevanagari.ttf` does, and the fallback is wired at `ThemeData` level
+  (`theme.dart:146-148,156`) so it applies across the whole `textTheme`. ₹ (U+20B9) in both.
+- ⚠️ **Layouts tolerate expansion.** Mean HI/EN ratio 0.99, but short button labels expand up to
+  2.14× (`re_book`, `pay_now`). Guard still English-only (F-10).
+- N/A **RTL.** `main.dart:398-401` — `[Locale('en'), Locale('hi')]`, both LTR. Zero
+  `EdgeInsetsDirectional`/`AlignmentDirectional` in `lib/` if a target is ever added.
+- ⚠️ **Text fits at largest accessibility size.** `main.dart:413-424` still clamps `textScaler` to
+  0.85–1.4 citing WCAG 1.4.4 (which asks 200 %). Still untested — overflow suite runs at scaler 1.0.
+  The new deletion screen's dense body text is the worst new candidate for a 1.4× clip.
+- ❌ **Formatters locale-aware, not string-built.** Unchanged — see §5.
 
 ### §7 Accessibility copy
 
-- ⚠️ **Screen-reader labels are meaningful; icon-only controls are labeled.**
-  72 `Semantics(` wrappers and 18 `semanticLabel`s exist, and the best of them are exemplary —
-  `lib/widgets/common_widgets.dart:319` `label: '$label: $value ${unit ?? ''}, $status'` reads a
-  vital as "Blood Pressure: 128/84 mmHg, Normal"; `lib/screens/billing/billing_screen.dart:262`
-  reads "Total outstanding balance: ₹12,400, 2 orders overdue".
-  But **28 of 54 `IconButton`s carry no `tooltip:` within 500 chars** of the constructor —
-  `home_screen.dart` ×7, `patient_profile_screen.dart` ×3, `service_booking_screen.dart` ×3,
-  `chat_screen.dart` ×2, `health_manager_banner.dart` ×2, `document_repository_screen.dart` ×2,
-  `care_team_screen.dart` ×2, and 7 others ×1. Good counter-example:
-  `lib/screens/sos/sos_screen.dart:145` `tooltip: 'Copy address'`.
-
-- ❌ **Images/charts have alt text / accessibility descriptions.**
-  Images are largely handled — `ProductImage` sets `semanticLabel: 'Product photo'`
-  (`common_widgets.dart:131`) and callers override it with the item name
-  (`equipment_item_card.dart:221`, `equipment_detail_screen.dart:451,1898`).
-  **Charts are not.** The primary 240 px vitals trend `LineChart`
-  (`lib/screens/reports/vitals_screen.dart:345`) has **no** `Semantics` wrapper and no textual
-  alternative — `rg -n "Semantics" lib/screens/reports/vitals_screen.dart` returns nothing. A
-  screen-reader user gets silence from the main vitals chart. The "Insights" block below it
-  (`:536-567`) partially compensates but is not attached to the chart and is itself hardcoded
-  English. The sparkline variant does it right —
-  `lib/screens/my_care/widgets/vitals_trend_grid.dart:63-65` wraps in
-  `Semantics(button: true, label: '$title, ${card.status}')`.
-  **Fix:** wrap `vitals_screen.dart:345` in `Semantics(label: '<vital> trend over <period>: low <x>,
-  high <y>, average <z>, <n> readings outside range')`.
-
-- ✅ **Status conveyed by text/icon, not colour alone.**
-  `VitalCard` (`lib/widgets/common_widgets.dart:360-376`) renders an icon **plus** a text label next
-  to the coloured value, with the explicit comment "Accessible status: icon + text label instead of
-  color-only dot". `_statusIcon` (`:286-297`) maps green→`check_circle`,
-  amber→`warning_amber_rounded`, red→`error`. The order-status and attendance surfaces follow the
-  same pattern (`lib/utils/helpers.dart:84-101` pairs every status colour with a distinct icon).
-
----
+- ⚠️ **Screen-reader labels meaningful.** Best examples unchanged and exemplary
+  (`common_widgets.dart:319`, `billing_screen.dart:262`, `payment_screen.dart:524-525,614`).
+  28 of 54 `IconButton`s still have no `tooltip:`. New: the sample-data banner is not a live region
+  and its icon is unlabelled (F-6.3); the deletion screen's confirm `TextField` (`:199-208`) has a
+  `hintText` but no `labelText`/`semanticLabel`, so VoiceOver reads only "DELETE, text field".
+- ❌ **Images/charts have alt text.** Unchanged. The 240 px vitals `LineChart`
+  (`vitals_screen.dart:345`) still has no `Semantics` wrapper. Sparkline variant still does it right
+  (`vitals_trend_grid.dart:63-65`).
+- ✅ **Status conveyed by text/icon, not colour alone.** Unchanged. `VitalCard`
+  (`common_widgets.dart:360-376`) renders icon + text label; `helpers.dart:84-101` pairs every status
+  colour with a distinct icon. The new payment result also pairs icon + title (though both are
+  *wrong* about the state — F-2).
 
 ### §8 Store / site / legal copy
 
-- ❌ **Store listing / marketing-site copy accurate and current.**
-  The Android launcher label is the raw package slug:
-  `android/app/src/main/AndroidManifest.xml:7` — `android:label="housepital_patient"`.
-  The app appears on the Android home screen as **"housepital_patient"**, lowercase with an
-  underscore. iOS is correct — `ios/Runner/Info.plist:9-10` `CFBundleDisplayName` =
-  `Housepital Patient`.
-  Separately, **`NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` are absent** from
-  `ios/Runner/Info.plist` (only `NSMicrophoneUsageDescription:69` and
-  `NSSpeechRecognitionUsageDescription:71` are present), while `image_picker` camera/gallery is
-  invoked from five screens — `document_repository_screen.dart:614,632`,
-  `raise_concern_screen.dart:77,85`, `return_screen.dart:316`, `chat_screen.dart:122`,
-  `patient_profile_screen.dart:190,195`. Missing purpose strings are both an iOS crash and an App
-  Store rejection. See Blockers.
-  **Fix:** `android:label="Housepital"`; add both `NS*UsageDescription` keys in the voice of the two
-  that already exist ("Housepital uses your camera so you can photograph prescriptions and reports
-  for your care team.").
+- ❌ **Store listing copy accurate and current.** `AndroidManifest.xml:7` still
+  `android:label="housepital_patient"` — the Android home screen still shows a package slug.
+  *(The iOS purpose-string half of this item is now ✅ — `Info.plist:73-76`.)* Listing text itself
+  remains BLOCKED-OWNER.
+- ⚠️ **"What's New" / release notes.** Unchanged. `docs/CHANGELOG.md` is engineering-facing (commit
+  SHAs, `_priceMultiplier`, `check_design_consistency.sh`); no `fastlane/metadata` under `ios/` or
+  `android/`.
+- ⚠️ **In-app legal text reads clearly and matches behaviour.** Improved and regressed at once.
+  *Improved:* `delete_account_screen.dart` is a real DPDP §12 / App Store 5.1.1(v) surface where
+  there was none, correctly reachable from Settings (`settings_screen.dart:273-279`), and the
+  retention disclosure names its legal basis.
+  *Regressed:* that same screen makes a **30-day statutory-sounding promise with nothing behind it**
+  (F-1). Unchanged: `login_screen.dart:216,236` — both "Terms" and "Privacy Policy" push `/about`;
+  `handover_report_service.dart:274-277` still has no clinical disclaimer;
+  `invoice_pdf_service.dart:244-246` still handles the quote case well.
 
-- ⚠️ **"What's New" / release notes written.**
-  `docs/CHANGELOG.md` exists and is thorough (944 lines) but is an **engineering** changelog —
-  commit SHAs, file paths, `_priceMultiplier`, `check_design_consistency.sh`. There is no
-  user-facing release-note text anywhere in the repo, and no `fastlane/metadata` directory under
-  `ios/` or `android/`.
+### §9 Proofreading
 
-- ⚠️ **Privacy policy / terms / in-app legal text reads clearly and matches behaviour.**
-  In-app legal text is thin and slightly mislabelled:
-  - `lib/screens/settings/about_screen.dart:97-105` links out to
-    `https://housepital.in/terms` and `https://housepital.in/privacy` — no in-app copy.
-  - `lib/screens/auth/login_screen.dart:216,236` — the "Terms" and "Privacy Policy" links both
-    `Navigator.pushNamed(context, '/about')`. Tapping "Privacy Policy" opens the About screen, not
-    the policy; the user must then find and tap a second link. Copy and behaviour don't match.
-  - The consent row itself is well-implemented otherwise (`login_screen.dart:23-28,48-60,272-277`):
-    explicit checkbox, CTA disabled until ticked, scroll-to-and-explain on bounce.
-  - `handover_report_service.dart:275-277` closes the doctor handover PDF with "Compiled by the
-    Housepital patient app from supervisor-synced records. This is a computer-generated document." —
-    **no clinical disclaimer**, unlike every article. See High.
-  - `invoice_pdf_service.dart:244-246` handles the quote case well: "Amounts are intentionally
-    omitted. Our coordinator will confirm pricing with you on call before any payment." ✅
-  - The rental contract (`rental_agreement_screen.dart:74-85`) is clear and consequence-stating —
-    but English-only (§6).
+- ✅ **Spelling and grammar.** Misspelling sweep over all of `lib/` → **zero hits**. Convention
+  consistently British/Indian English (`behaviour`, `colour`, `cancelled`, `centralised`,
+  `recognise`, `organis*`). New copy conforms.
+- ❌ **No placeholder copy shipped.** *(⚠️ → ❌; see scorecard note.)* Three placeholder phone numbers
+  still dialable — `help_faq_screen.dart:352,365`, `staff_otp_verification_screen.dart:352`, the last
+  still carrying its own admission on `:351` ("Support number to be updated with production contact
+  details"). `document_repository_screen.dart:599` still ships "PDF upload coming soon". And a new
+  `TODO(backend)` at `delete_account_screen.dart:56` gates a promise the copy makes anyway (F-1).
+- ⚠️ **No truncated/overflowing strings on smallest viewport.** Guard is real (37 screens ×
+  320/375/414, Ahem) but still English-only, scaler-1.0-only, and now misses both new screens (F-10).
+- ✅ **Brand/product name consistent.** 740 `Housepital`; 7 `HOUSEPITAL` all deliberate wordmarks;
+  37 lowercase all technical identifiers. New copy uses `Housepital` correctly throughout.
+  *(Android launcher label filed under §8 as store metadata.)*
 
 ---
 
-### §9 Proofreading (final pass)
+## Blockers
 
-- ✅ **Spelling and grammar checked across all surfaces.**
-  A targeted misspelling sweep (`recieve|occured|seperate|acheiv|definately|succesful|mantain|
-  priviledge|calender|enviorn`) over all of `lib` returns **zero hits**. Spelling convention is
-  consistently **British/Indian English** — `behaviour` (7), `colour` (16), `cancelled` (28, zero
-  `canceled`), `centralised`, `recognise`, `organis*` (4, zero `organiz*`), `personalis*` (2, zero
-  `personaliz*`). The 3 `behavior` hits are all in code comments, not copy.
+**B-1 · Deletion screen promises a 30-day erasure that nothing records.** F-1 —
+`delete_account_screen.dart:53-89` (no persistence), copy at `:72-79`. The file's own comment
+(`:17-24`) forbids exactly this. **New this round.**
 
-- ⚠️ **No placeholder copy shipped (Lorem ipsum, "TODO", "test", "asdf").**
-  No Lorem ipsum; all 6 `TODO(` markers are in comments (`lib/main.dart:192`,
-  `billing_screen.dart:1`, `app_provider.dart:171`, `logger.dart:63`, `staff_role_card.dart:300`) —
-  none render. But **three placeholders are user-visible**:
-  - `lib/screens/settings/help_faq_screen.dart:352` — Call button dials `tel:+919999999999`
-  - `lib/screens/settings/help_faq_screen.dart:365` — WhatsApp button opens `wa.me/919999999999`
-  - `lib/screens/my_care/staff_otp_verification_screen.dart:352` — "Call Support" dials
-    `tel:+918888888888`, with the comment on `:351` admitting "Support number to be updated with
-    production contact details."
-  - `lib/screens/documents/document_repository_screen.dart:599` ships a stub message —
-    `'PDF upload coming soon. Email your documents to wecare@housepital.in for now.'` — at least it
-    gives a real alternative.
-  See Blockers.
+**B-2 · "Payment Failed" + "under verification" + "Retry Payment" on one screen.** F-2 —
+`payment_screen.dart:469-472,539-554,590-591`, `payment_service.dart:179-187`. Invites a double
+debit on a payment that likely succeeded. **New this round.**
 
-- ⚠️ **No truncated/overflowing strings on the smallest supported viewport.**
-  `test/screens/overflow_smoke_test.dart` is a real, valuable guard — 37 screens × 320/375/414 with
-  Ahem (worst-case wide glyphs), `devicePixelRatio` pinned to 1.0. That is genuinely better than
-  most apps. Its blind spots are the two called out above: **English only** (`:231`) and **scaler
-  1.0 only**, i.e. neither the 2.14× Hindi button labels nor the app's own 1.4× cap is exercised.
+**B-3 · Placeholder phone numbers still dialable.** `help_faq_screen.dart:352,365`,
+`staff_otp_verification_screen.dart:352`. *Unchanged from round 1.*
 
-- ✅ **Brand/product name spelled and cased consistently everywhere.**
-  In-app: 740 `Housepital`, 7 `HOUSEPITAL` (all deliberate wordmark/letterhead —
-  `splash_screen.dart:36`, `invoice_pdf_service.dart:49`, `handover_report_service.dart:135`, plus
-  document-ID references in `staff_roles_seed.dart`), 37 lowercase — **all** of which are technical
-  identifiers (`housepital_cache_`, `housepital-patient` Firebase project, PDF filename slug), none
-  user-facing. One email address app-wide: `wecare@housepital.in` (4 uses). Tagline is consistent
-  across `splash_screen.dart:46`, `home_screen.dart:543`, `about_screen.dart:54`, `en.json:3`.
-  *(The Android launcher-label defect is filed under §8 as a store-metadata issue, not an in-app
-  brand-casing one.)*
+**B-4 · SOS "Book Housepital Ambulance" opens a support-ticket form.**
+`sos_screen.dart:89-91` → `:192-193`. *Unchanged from round 1.*
 
----
+**B-5 · `emergencyPhone == supportPhone`, presented as two escalation paths.**
+`constants.dart:17,19`; `sos_screen.dart:51-67`. *Unchanged from round 1.*
 
-## Blockers (must fix before release)
-
-**B-1 — Placeholder phone numbers are dialable from Help and from staff verification.**
-`lib/screens/settings/help_faq_screen.dart:352` (`tel:+919999999999`), `:365`
-(`wa.me/919999999999`), `lib/screens/my_care/staff_otp_verification_screen.dart:352`
-(`tel:+918888888888`). A family that taps "Call" from Help & FAQ, or "Call Support" when they cannot
-verify the nurse standing at their door, reaches a dead number.
-**Fix:** replace all three with `AppConstants.supportPhone`; add a grep guard to
-`scripts/check_design_consistency.sh` for `9{7,}|8{7,}` inside `tel:`/`wa.me` literals.
-
-**B-2 — SOS "Book Housepital Ambulance" does not book an ambulance.**
-`lib/screens/sos/sos_screen.dart:89-91` renders title `'Book Housepital Ambulance'` / subtitle
-`'Request ACLS ambulance dispatch'`, but `_bookAmbulance` (`:192-194`) navigates to
-`/raise-concern` — a general support-ticket form. The code comment (`:186-191`) documents the
-fallback honestly, but the **user-facing copy does not**. On an emergency screen, copy that promises
-dispatch and delivers a ticket form is the worst possible failure mode.
-**Fix (copy-only, ships today):** retitle to `'Request ambulance callback'` / subtitle `'We'll call
-you back to arrange dispatch — for an immediate ambulance, call 112 above.'`
-
-**B-3 — "Medical Emergency — Call Ambulance" and "Staff Emergency" dial the same number.**
-`lib/config/constants.dart:17,19` — `emergencyPhone` and `supportPhone` are both `'9990911911'`.
-The SOS screen presents them as two distinct escalation paths
-(`sos_screen.dart:51-67`: `sos_medical` → "Medical Emergency — Call Ambulance" vs `sos_staff` →
-"Alert Housepital Ops"). Either the copy is wrong or the routing is.
-**Fix:** if one line genuinely serves both, merge the two options into one and say so; otherwise set
-a real ambulance number on `emergencyPhone`.
-
-**B-4 — Two contradictory vital-safety classifiers run on the same screen.**
-`lib/utils/helpers.dart:7-24` (`VitalHelper`, thresholds from `AppConstants.vitalRanges`,
-`constants.dart:32-39`) and `lib/utils/vital_classifier.dart:24-76` (`classifyVital`) disagree:
-- SpO₂ **91 %** → `VitalHelper` = *borderline* (low = 90); `classifyVital` = **red** (< 92)
-- Blood sugar **190** → `VitalHelper` = *alert* (high = 180); `classifyVital` = **yellow** (140–200)
-
-Both are live in `lib/screens/reports/vitals_screen.dart` — `:548` uses `VitalHelper` to print
-"Outside safe range on N occasions", `:696` uses `classifyVital` for the entry-sheet status row —
-and `lib/screens/my_care/my_care_screen.dart:381` uses `classifyVital`. A family can enter an SpO₂ of
-91, see "Needs attention" in the sheet, then read on the same screen that the reading was never
-outside safe range.
-**Fix:** delete `VitalHelper.getVitalColor/getVitalStatus` and `AppConstants.vitalRanges`; route
-`vitals_screen.dart:548` through `classifyVital`. `test/utils/vital_ranges_test.dart` and
-`vital_classification_test.dart` already exist to catch regressions.
-
-**B-5 — iOS camera/photo-library purpose strings are missing.**
-`ios/Runner/Info.plist` has no `NSCameraUsageDescription` / `NSPhotoLibraryUsageDescription`, yet
-`image_picker` is invoked from five screens (`document_repository_screen.dart:614,632`,
-`raise_concern_screen.dart:77,85`, `return_screen.dart:316`, `chat_screen.dart:122`,
-`patient_profile_screen.dart:190,195`). Hard crash on tap + guaranteed App Store rejection.
+**B-6 · Two contradictory vital classifiers on one screen.** `helpers.dart:7-24` vs
+`vital_classifier.dart:24-76`; both live in `vitals_screen.dart:548,696`. SpO₂ 91 → *borderline* in
+one, *red* in the other. *Unchanged from round 1.*
 
 ---
 
 ## High
 
-**H-1 — Payment-reminder copy threatens care interruption, and contradicts the in-app card.**
-`lib/services/payment_reminder_service.dart:126` is commented **"Airtel-style"** and reads as telecom
-dunning to a family whose relative may be ventilated at home:
-`:139` "Pay now to avoid service interruption." · `:143` title "Payment due tomorrow**!**" ·
-`:149` "Pay now to continue uninterrupted service." · `:154` "Late charges may apply. Pay now."
-This directly contradicts the in-app overdue card, which gets it exactly right —
-`lib/screens/home/home_screen.dart:1578-1580` renders "**Your care continues uninterrupted.**" with
-the comment "firm ask, calm tone: lateness never reads as a threat to the patient's care."
-The exclamation mark also violates the app's own voice rule (`lib/widgets/empty_state.dart:5`).
-*Mitigating:* `getReminderMessages` is currently **unwired** (`rg -n "getReminderMessages" lib` finds
-only the definition) — this copy is latent, not live. `PaymentReminder.urgencyLabel` (`:46-52`) **is**
-live at `payment_methods_screen.dart:305`.
-**Fix:** rewrite the four bodies in the home-card voice before wiring notifications — e.g. "₹X for
-{service} is due on {date}. Your care continues either way — pay when you can."
+**H-1 · Raw Razorpay gateway text rendered to the user.** F-3 — `payment_service.dart:220` →
+`payment_screen.dart:281,548`. **New.**
 
-**H-2 — Legal consent is presented only in English.**
-`agree_terms` is fully translated in both JSONs, yet `lib/screens/rental/rental_agreement_screen.dart:96`
-hardcodes the English, and the six contract clauses at `:74-85` have no keys at all. Same at
-`lib/screens/auth/login_screen.dart:209-240`. A Hindi-preferring family agrees to a rental contract
-and to the app's Terms in a language the app knows they didn't choose.
+**H-2 · Every new user-facing string is hardcoded English; zero new i18n keys.** F-9 — deletion
+consent, tax-retention disclosure, sample-data warning and payment-failure copy. The success message
+is localized and the failure message is not (`payment_screen.dart:470-472`). **New.**
 
-**H-3 — The doctor handover PDF carries no clinical disclaimer.**
-`lib/services/handover_report_service.dart:275-277` closes with only "Compiled by the Housepital
-patient app from supervisor-synced records. This is a computer-generated document." Every article
-carries a proper disclaimer; the one document that goes to a treating clinician does not.
-**Fix:** append the article disclaimer's sibling — "Compiled from caregiver-logged and
-supervisor-synced records; it is not a clinical record and has not been verified by a physician.
-Confirm all values before acting on them."
+**H-3 · Sample-data banner is cleared globally by one provider's recovery.** F-6.1 —
+`app_provider.dart:247`. The banner comes down while other providers still serve `DemoData`. **New.**
 
-**H-4 — A red vital says "Needs attention" and stops there.**
-`lib/screens/reports/vitals_screen.dart:846-858` — a `'red'` classification renders only
-`vital_status_alert` ("Needs attention" / "ध्यान देने की ज़रूरत"). A family entering an SpO₂ of 85 or a
-temperature of 103 °F gets a two-word label and a "Save reading" button, with no next step and no
-route to the SOS screen or the Health Manager. The articles model the right pattern ("Get urgent help
-if: lips or nails turn blue…").
-**Fix:** on `'red'`, append a per-vital action line and a "Call your Health Manager" / "Open SOS"
-affordance.
+**H-4 · "Call us" with no number, and untappable numbers.** F-4 — `payment_screen.dart:325-327`;
+`delete_account_screen.dart:78,181`. **New.**
 
-**H-5 — Dates and times are locale-blind, and the Hindi locale is untested end to end.**
-No `Intl.defaultLocale` / `initializeDateFormatting` anywhere; 12 raw `DateFormat` calls in the Care
-Calendar; four hand-rolled month arrays; three competing time formats (one of them 24-hour, in chat).
-Zero tests instantiate `Locale('hi')`.
+**H-5 · Payment-reminder copy threatens care interruption.** `payment_reminder_service.dart:126,135,
+143,149,153` — still commented "Airtel-style", still contradicts `home_screen.dart:1578-1580` ("Your
+care continues uninterrupted."). Still unwired (latent, not live). *Unchanged.*
 
-**H-6 — Three support phone numbers, one of them another company's.**
-`AppConstants.supportPhone = 9990911911` (`constants.dart:19`) vs `+91-90502-00183` presented as
-"our coordinator" at `lib/screens/billing/payment_methods_screen.dart:355,364,374` and
-`lib/screens/support/staff_replacement_screen.dart:227`. That second number is **Dai Maa's**
-(`lib/config/daimaa_theme.dart:16,23,24`) — a business CLAUDE.md defines as separate.
+**H-6 · Legal consent presented only in English — now three surfaces.**
+`rental_agreement_screen.dart:96` (with `agree_terms` translated and unused),
+`login_screen.dart:209-240`, and now `delete_account_screen.dart` in full. *Worsened.*
 
-**H-7 — The Android app is named `housepital_patient` on the home screen.**
-`android/app/src/main/AndroidManifest.xml:7`.
+**H-7 · Doctor handover PDF carries no clinical disclaimer.**
+`handover_report_service.dart:274-277`. *Unchanged.*
+
+**H-8 · A red vital says "Needs attention" and stops.** `vitals_screen.dart:846-858`. *Unchanged.*
+
+**H-9 · Dates/times locale-blind; Hindi untested end to end.** No `Intl.defaultLocale`; four
+hand-rolled month arrays; three time formats; zero `Locale('hi')` in `test/`. *Unchanged.*
+
+**H-10 · Three support numbers, one of them Dai Maa's.** `constants.dart:19` vs
+`daimaa_theme.dart:23` presented as "our coordinator" at `payment_methods_screen.dart:355,363,374`
+and `staff_replacement_screen.dart:227`. *Unchanged.*
+
+**H-11 · Android app is named `housepital_patient` on the home screen.**
+`AndroidManifest.xml:7`. *Unchanged.*
 
 ---
 
 ## Medium / Low
 
-**M-1 — 85 one-line localization wins are already paid for.** 85 keys exist, translated, in both
-JSONs, while the screen hardcodes the identical English. Highest-value: `agree_terms`,
-`error_occurred`, `no_data_available`, `tagline`, `cancel` (6 files), `retry`, `medications`, `sos`.
-
-**M-2 — Sahayak is a third language that follows neither locale.** Romanized Hinglish regardless of
-`locale`, and its breadcrumbs cite English menu labels that don't exist in Hindi mode
-(`assistant_executor.dart:292,343,411`, `assistant_service.dart:95-181`).
-
-**M-3 — Invoice money is hand-formatted with no Indian grouping.**
-`lib/services/invoice_pdf_service.dart:69` → `Rs 106200` instead of `₹1,06,200`, on the line items,
-subtotal, "GST (18%)" and grand total (`:217,230,233,236`).
-
-**M-4 — PDFs cannot render Devanagari.** Neither `invoice_pdf_service.dart` nor
-`handover_report_service.dart` loads a font (`rg -n "Font\.|loadFont|theme:"` → no matches), so both
-fall back to Helvetica. Any Hindi patient name or caregiver note in a PDF renders as tofu. The
-`_ascii()` helpers (`handover_report_service.dart:45-51`, `invoice_pdf_service.dart:73`) normalise
-smart quotes and dashes only — they do not catch Devanagari.
-
-**M-5 — Pluralization.** 5 `(s)` sites + 4 "1 weeks/months/years/days" bugs; `AppLocalizations` has
-no plural facility. Details in §5.
-
-**M-6 — Duplicate i18n keys with divergent Hindi.** `todays_vitals` vs `today_vitals`
-(`आज के विटल्स` / `आज के वाइटल्स`); `borderline` vs `vital_status_borderline`
-(`सीमा रेखा` / `सीमा पर`). Plus four consistent-but-redundant pairs.
-
-**M-7 — Raw exception text reaches the user** at `raise_concern_screen.dart:410`,
-`patient_profile_screen.dart:297`, `main.dart:768`.
-
-**M-8 — The main vitals chart is silent to screen readers.** `vitals_screen.dart:345`, no
-`Semantics`. Compare `vitals_trend_grid.dart:63`.
-
-**M-9 — Disabled CTAs give no reason.** 5 sites; `login_screen.dart:48-60` shows the right pattern.
-
-**M-10 — `frequencyLabel` leaks snake_case onto medication rows.**
-`lib/models/medication_models.dart:78`.
+**M-1 — 95 one-line localization wins already paid for** (was 85). `agree_terms`, `error_occurred`,
+`no_data_available`, `tagline`, `cancel` (6 files), `retry`, `medications`, `sos`, `loading`.
+**M-2 — Sahayak is a third language following neither locale.** `assistant_executor.dart:292,343,411`,
+`assistant_service.dart:95-181`; breadcrumbs cite English menu labels absent in Hindi mode.
+**M-3 — Invoice money hand-formatted.** `invoice_pdf_service.dart:69` → `Rs 106200`, on line items,
+subtotal, GST and grand total (`:217,230,233,236`).
+**M-4 — PDFs cannot render Devanagari.** No font loaded in either PDF service.
+**M-5 — Pluralization.** 5 `(s)` sites + 4 "1 weeks/months/years/days" bugs; no plural facility in
+`AppLocalizations`.
+**M-6 — Duplicate keys with divergent Hindi.** `todays_vitals`/`today_vitals`;
+`borderline`/`vital_status_borderline`.
+**M-7 — Raw exception text to the user.** `raise_concern_screen.dart:410`,
+`patient_profile_screen.dart:297`, `main.dart:768`, plus F-3.
+**M-8 — Vitals chart silent to screen readers.** `vitals_screen.dart:345`.
+**M-9 — Disabled CTAs give no reason.** 5 sites + `delete_account_screen.dart:218` (**new**).
+**M-10 — `frequencyLabel` leaks snake_case.** `medication_models.dart:78`.
+**M-11 — Phone number hardcoded in new copy, in a third display format.** F-5 —
+`delete_account_screen.dart:78,181`. **New.**
+**M-12 — `BlogProvider` demo fallback never marks demo mode.** `blog_provider.dart:38,68`. **New.**
+**M-13 — Deletion spinner has no copy** during a wait the user believes is erasing medical history.
+`delete_account_screen.dart:220-225`. **New.**
 
 **L-1 — 28 of 54 IconButtons have no tooltip.**
-
-**L-2 — `'% off'` vs `'% OFF'`** across 9 sites.
-
-**L-3 — 24 bare spinners, 1 with copy;** the `loading` key is unused.
-
+**L-2 — `'% off'` vs `'% OFF'`** — 4 vs 2 sites.
+**L-3 — 24 bare spinners, 1 with copy;** `loading` key still unused.
 **L-4 — Money truncated not rounded** at ~10 `formatCurrency(x.toInt())` sites.
-
-**L-5 — Stale contradictory comment.** `lib/config/theme.dart:157` still reads "Dark ink on orange —
-white on orange is only ~2.3:1 (fails AA)" directly above `onPrimary: HousepitalColors.onOrange`,
-which is **white** per the owner decision recorded in CLAUDE.md. Not user-facing, but it will send
-the next auditor down the wrong path.
-
-**L-6 — `'PDF upload coming soon'`** ships at `document_repository_screen.dart:599` (with a workable
-email alternative).
-
-**L-7 — 160 unused i18n keys** (85 of them recoverable per M-1; the remaining 75 are dead weight).
+**L-5 — Stale contrast comment.** `theme.dart:159` still contradicts the owner's white-on-orange
+decision, directly above `onPrimary: HousepitalColors.onOrange`.
+**L-6 — `'PDF upload coming soon'`** at `document_repository_screen.dart:599`.
+**L-7 — 160 unused i18n keys** (95 recoverable per M-1).
+**L-8 — Sentence-case `'Delete account'`** breaks the Title Case AppBar convention.
+**L-9 — Sample-data banner not a live region**, icon unlabelled. `main_shell.dart:141-160`. **New.**
+**L-10 — Stale docs assert six tabs / a Calendar tab.** `docs/ARCHITECTURE.md:68`,
+`docs/SCREEN_MAP.md:6` (and its `:10`, `:15`, `:73-77` sections). Both still live and both false —
+`test/screens/main_shell_test.dart:228` asserts five tabs and no Calendar tab. Also
+`lib/screens/services/service_catalog_screen.dart:127` says "6 tab bodies".
 
 ---
 
 ## BLOCKED-OWNER
 
-1. **App Store / Play Store listing copy accuracy (§8.1).** No `fastlane/metadata`, no listing text
-   in the repo. *Need:* the current App Store Connect and Play Console listing text (description,
-   subtitle, keywords, screenshot captions) to check it against shipped behaviour — particularly
-   whether it claims ambulance booking (B-2) or Hindi language support (which is 13.8 % real).
+1. **App Store / Play listing copy (§8.1).** No `fastlane/metadata`, no listing text in the repo.
+   *Need:* current App Store Connect and Play Console text (description, subtitle, keywords,
+   screenshot captions) to check against shipped behaviour — specifically whether it claims ambulance
+   booking (B-4) or Hindi support (14.5 % real).
+2. **Privacy policy / Terms body text (§8.3).** Live only at `housepital.in/privacy` and `/terms`
+   (`about_screen.dart:100,104`). *Need:* the published text — and this round it matters more, because
+   `delete_account_screen.dart` now makes a **30-day erasure commitment in-app** (F-1). If the policy
+   states a different window, or states one at all, they must agree.
+3. **Does a deletion request reach anyone today? (F-1).** *Need:* owner confirmation of whether any
+   out-of-band process (ops inbox, WhatsApp, CRM) receives deletion requests. If not, the copy must be
+   rewritten before release; if yes, the copy must name that route.
+4. **"What's New" release notes (§8.2).** *Need:* owner sign-off on whether user-facing notes are
+   drafted outside the repo.
+5. **Hindi copy sign-off.** `hi.json` reads as competent, natural Hindi (315/321 values carry real
+   Devanagari; the 6 identical-to-English are legitimate acronyms). *Need:* a native Delhi-NCR
+   reviewer on register — the clinical terms (`वाइटल्स`, `सीमा रेखा`, `खुराक`) and whether the
+   आप-form is right for a caregiver addressing a parent's care.
 
-2. **Privacy policy / Terms body text (§8.3).** Both live only at `https://housepital.in/privacy`
-   and `/terms` (`about_screen.dart:100,104`); no in-app copy to audit. *Need:* the published text,
-   to verify it matches actual behaviour — specifically camera/photo access (B-5), the medical
-   documents stored on-device (`document_repository_screen.dart`), and the Firebase/Razorpay
-   third-party data flows.
+---
 
-3. **"What's New" release notes (§8.2).** `docs/CHANGELOG.md` is engineering-facing.
-   *Need:* owner sign-off on whether user-facing release notes are drafted outside the repo.
+## Verdict
 
-4. **Hindi copy sign-off.** `hi.json` reads as competent, natural Hindi to this auditor's analysis,
-   but *Need:* a native Delhi-NCR reviewer to confirm register — particularly the clinical terms
-   (`वाइटल्स`, `सीमा रेखा`, `खुराक`) and whether `आप`-form is right for a caregiver addressing a
-   parent's care.
+**FAIL for release on content grounds.** Six blockers, four of them carried unchanged from round 1
+and two newly introduced by this round's own fixes.

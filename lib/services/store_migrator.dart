@@ -34,20 +34,13 @@ abstract final class StoreMigrator {
 
   static const String _versionKey = 'housepital_schema_version';
 
-  /// Keys that existed before versioning. Used only to tell a pre-versioning
-  /// install (has data, no stamp) apart from a fresh one (no data at all).
-  /// FROZEN — do not update when a key is renamed; add a migration instead.
-  static const List<String> _v1Keys = <String>[
-    'housepital_orders',
-    'housepital_assessments',
-    'housepital_cart_items',
-    'housepital_saved_items',
-    'housepital_saved_addresses',
-    'theme_mode',
-    'preferred_language',
-    'profile_photo_path',
-    'has_onboarded',
-  ];
+  // NOTE: an earlier version listed the pre-versioning keys explicitly to tell
+  // a fresh install from a v1 one. That list was wrong on the day it was
+  // written (9 of 14 live keys) and, worse, it was the kind of wrong that
+  // fails silently: a device whose only data sat in an unlisted key was
+  // treated as a fresh install, stamped at currentVersion, and skipped every
+  // future migration. `prefs.getKeys().isEmpty` cannot go stale, so it is the
+  // inference we use instead — see _hasAnyStoredData.
 
   /// Ordered migration steps. `_migrations[n]` upgrades version n → n+1.
   ///
@@ -61,12 +54,24 @@ abstract final class StoreMigrator {
   /// Never throws: a migration failure must not stop the app from starting —
   /// it quarantines and moves on.
   static Future<void> run() async {
+    // This runs in main() BEFORE runApp(). An escaping exception here is not a
+    // crash report — it is a permanently black screen with no ErrorWidget to
+    // catch it, so the whole body is guarded. The contract at the top of this
+    // file says "never throws"; this is what makes that true.
+    try {
+      await _run();
+    } catch (e, st) {
+      Log.error('StoreMigrator aborted; continuing without migration',
+          error: e, stack: st, tag: 'StoreMigrator');
+    }
+  }
+
+  static Future<void> _run() async {
     final prefs = await SharedPreferences.getInstance();
     final stamped = prefs.getInt(_versionKey);
 
     if (stamped == null) {
-      final hasLegacyData = _v1Keys.any(prefs.containsKey);
-      if (!hasLegacyData) {
+      if (!_hasAnyStoredData(prefs)) {
         // Fresh install: nothing to migrate, just stamp it.
         await prefs.setInt(_versionKey, currentVersion);
         return;
@@ -106,16 +111,36 @@ abstract final class StoreMigrator {
         try {
           await step(prefs);
         } catch (e, st) {
-          Log.error('Migration v$version → v${version + 1} failed',
+          Log.error('Migration v$version → v${version + 1} failed — STOPPING '
+              'at v$version so it is retried on the next launch',
               error: e, stack: st, tag: 'StoreMigrator');
-          // Deliberately continue: a half-migrated store that starts is
-          // better than a boot loop, and quarantine (below) preserves the
-          // original bytes for support to recover.
+          // Do NOT advance past a step that failed. The previous version of
+          // this loop stamped success regardless, which permanently labelled
+          // un-migrated data as migrated and guaranteed it was never retried
+          // — silent data loss, which is the exact failure this file exists
+          // to prevent. Stamping the last GOOD version leaves the app
+          // working on old-shaped data and retries next launch.
+          await prefs.setInt(_versionKey, version);
+          return;
         }
       }
       version++;
       await prefs.setInt(_versionKey, version);
     }
+    // Always leave a stamp, even when there was no work to do. Without this a
+    // pre-versioning install whose `from` already equals currentVersion (the
+    // `while (1 < 1)` case) fell through unstamped and re-ran this path,
+    // re-warning, on every single launch — forever.
+    await prefs.setInt(_versionKey, currentVersion);
+  }
+
+  /// True if ANY key is present. Deliberately not a curated list: see the note
+  /// where the old `_v1Keys` list used to be.
+  static bool _hasAnyStoredData(SharedPreferences prefs) {
+    for (final key in prefs.getKeys()) {
+      if (key != _versionKey) return true;
+    }
+    return false;
   }
 
   /// Copies [key]'s current value aside instead of destroying it.

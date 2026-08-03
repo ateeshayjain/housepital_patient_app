@@ -450,13 +450,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Wipe patient data from memory BEFORE signing out — on a
-              // shared phone the next person must not see the previous
-              // patient's clinical data.
-              SessionScope.clearSession(context);
-              context.read<AuthProvider>().logout();
-              Navigator.pop(context);
+            onPressed: () async {
+              // Wipe patient data from memory AND disk BEFORE signing out —
+              // on a shared phone the next person must not see the previous
+              // patient's clinical data. Awaited so logout's prefs.clear()
+              // cannot race the wipe.
+              final nav = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              await SessionScope.clearSession(context);
+              await auth.logout();
+              nav.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: context.hc.error,

@@ -201,6 +201,19 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Drops the cart AND the saved-for-later list, then persists both.
+  ///
+  /// [clear] alone was wrong for a patient switch: it emptied `_items` and
+  /// then `_persist()` wrote BOTH keys, re-serialising the outgoing patient's
+  /// saved-items list under the incoming patient. A cart and a wishlist are
+  /// both built for one patient's care plan.
+  void clearPatientScopedData() {
+    _items.clear();
+    _savedItems.clear();
+    _persist();
+    notifyListeners();
+  }
+
   // ── SharedPreferences persistence ─────────────────────────
 
   Future<void> _persist() async {

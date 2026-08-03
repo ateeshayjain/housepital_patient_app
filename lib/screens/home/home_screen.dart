@@ -1764,13 +1764,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 trailing: patient.id == app.currentPatient?.id
                     ? const Icon(Icons.check, color: HousepitalColors.orange)
                     : null,
-                onTap: () {
-                  // Drop the outgoing patient's data from every provider
-                  // before switching, so nothing of theirs renders under the
-                  // incoming patient's name.
-                  SessionScope.clearPatientData(context);
+                onTap: () async {
+                  // Drop the outgoing patient's data from every provider AND
+                  // from disk before switching, so nothing of theirs renders
+                  // under the incoming patient's name. Awaited: the async
+                  // stores (reminders, cache, addresses) must finish before
+                  // the next patient's load starts writing.
+                  final nav = Navigator.of(context);
+                  await SessionScope.clearPatientData(context);
                   app.switchPatient(patient);
-                  Navigator.pop(context);
+                  nav.pop();
                 },
               ),
             ),

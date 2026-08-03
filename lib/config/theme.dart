@@ -45,6 +45,12 @@ class HousepitalColorsDark {
   static const Color warningLight = Color(0xFF3A2D14); // tint bg
   static const Color error = Color(0xFFEF5350);        // 4.9:1 on surface
   static const Color errorLight = Color(0xFF3A1F1F);   // tint bg
+  /// Text/icons ON an error fill. The dark-mode error is a LIGHTER red, so
+  /// white on it measures only 3.49:1 — a real AA failure that shipped on the
+  /// delete-account button. Dark ink measures 4.62:1. This is the "paired
+  /// foreground that flips with appearance" rule; the white-on-orange owner
+  /// decision is specific to orange and does not extend to error surfaces.
+  static const Color onError = Color(0xFF212121);
   static const Color info = Color(0xFF64B5F6);         // 7.6:1 on surface
   static const Color infoLight = Color(0xFF1A2735);    // tint bg
 
@@ -88,6 +94,8 @@ class HousepitalColors {
   static const Color warningLight = Color(0xFFFFF3E0);
   static const Color error = Color(0xFFD32F2F); // 4.7:1
   static const Color errorLight = Color(0xFFFFEBEE);
+  /// Text/icons ON an error fill. Measured: #FFFFFF on #D32F2F = 4.98:1. ✅
+  static const Color onError = Color(0xFFFFFFFF);
   static const Color info = Color(0xFF1565C0); // darker blue, 5.1:1
   static const Color infoLight = Color(0xFFE3F2FD);
 

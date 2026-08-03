@@ -52,6 +52,8 @@ class HcPalette {
   final Color warningLight;
   final Color error;
   final Color errorLight;
+  /// Text/icons ON an error fill — flips with appearance (see theme.dart).
+  final Color onError;
   final Color info;
   final Color infoLight;
 
@@ -86,6 +88,7 @@ class HcPalette {
         warningLight = HousepitalColors.warningLight,
         error = HousepitalColors.error,
         errorLight = HousepitalColors.errorLight,
+        onError = HousepitalColors.onError,
         info = HousepitalColors.info,
         infoLight = HousepitalColors.infoLight,
         orange = HousepitalColors.orange,
@@ -114,6 +117,7 @@ class HcPalette {
         warningLight = HousepitalColorsDark.warningLight,
         error = HousepitalColorsDark.error,
         errorLight = HousepitalColorsDark.errorLight,
+        onError = HousepitalColorsDark.onError,
         info = HousepitalColorsDark.info,
         infoLight = HousepitalColorsDark.infoLight,
         orange = HousepitalColorsDark.orange,

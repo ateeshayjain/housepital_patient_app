@@ -40,7 +40,7 @@ class BillingProvider extends ChangeNotifier {
       // Fallback to demo billing data
       if (_amountDue == 0) {
         final demoBilling = DemoData.billingSummary;
-        DemoMode.markServingDemoData();
+        DemoMode.markServingDemoData(DemoMode.sourceBilling);
         _amountDue = demoBilling['amount_due'] ?? 0;
         _dueDate = demoBilling['due_date'] != null
             ? DateTime.parse(demoBilling['due_date'])

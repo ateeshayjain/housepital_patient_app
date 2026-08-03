@@ -1,8 +1,48 @@
-# Performance & Reliability Checklist (App-Agnostic) — Audit vs commit 803124d
+# Performance & Reliability Checklist (App-Agnostic) — Audit round 2 vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** Performance & Reliability agent
-**Method:** static only — `du`, `sips`, `rg`, `python3` measurement + code reading.
-`flutter analyze` reported clean by the caller; no `flutter test` / `build` / `clean` run (central suite owns those).
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
+**Method:** static only — `du`, `python3` measurement, `rg`/`grep`, code reading.
+`flutter analyze` clean, design gate passing, 1,797 tests passing per the caller; no
+`flutter test` / `build` / `clean` run by me (central suite owns those).
+
+---
+
+## Changed since round 1
+
+| Round-1 finding | Status now | Evidence |
+|---|---|---|
+| **Unverified real payment accepted as success** (`payment_service.dart`) | ✅ **GENUINELY FIXED** — verified line by line | `payment_service.dart:163-183` — `skippedDemo` now branches on `isDemoPayments`; the real-key arm logs `Log.error` and calls `_onFailureCallback`. `_verifyPaymentOnBackend:196-202` unchanged but its output is no longer trusted. |
+| **Web always reports payment success** (`payment_screen.dart`) | ✅ **GENUINELY FIXED** | `payment_screen.dart:318-332` — `_processWebPayment` gates on `!PaymentService.isDemoPayments` and fails closed with an honest message. Gate is `isDemoPayments`, not `kIsWeb`. |
+| `createOrder` never called before real checkout | ✅ **FIXED on the PaymentScreen path only** | `payment_screen.dart:226-253` — calls `createOrder`, and `orderId == null` fails closed before `openCheckout`. **But see B-1: the second payment entry point was not fixed.** |
+| **40.8 MB of dead product images** | ❌ **UNCHANGED** — re-measured, still there | 238 unreferenced files, **40.3 MiB**, of 439 files / 77.4 MiB. `pubspec.yaml:85` still declares the whole directory. |
+| **No `cacheWidth` anywhere — full-res decode on catalog hot path** | ❌ **UNCHANGED** | `grep -rn "cacheWidth\|cacheHeight\|ResizeImage\|memCacheWidth\|imageCache" lib/` → **0 matches**. |
+| **`logger.dart:63` unwired TODO — no remote sink for warn/error** | ❌ **UNCHANGED** | `lib/utils/logger.dart:63-65` — TODO verbatim; `_log` still ends at `debugPrint`. |
+| **`ApiService` not a singleton, no timeout/cancellation, 17 leaked clients** | ❌ **UNCHANGED, now 18 sites** | `api_service.dart:41` `_client = client ?? http.Client()`; no `factory`/`static instance`/`close()`. `grep -c "ApiService()" lib/` → **18** (was 17). |
+| 862 KB catalog decoded on UI isolate at 7 sites | ❌ **UNCHANGED** | Same 7 `rootBundle.loadString('assets/equipment_catalog.json')` sites; `grep "compute(\|Isolate\." lib/` → **0**. |
+| `requestRefill` cannot return false | ❌ **UNCHANGED** | `medication_provider.dart:165-180` — `return true` still outside the `try`. |
+| `CacheService` never evicts | ❌ **UNCHANGED** | `cache_service.dart:31` — expired entries `return null`, never removed. |
+| Corrupt persisted orders silently wipe | ❌ **UNCHANGED** | `orders_provider.dart:196-206` — demo seed still inside the `try`, above the throw point. |
+| Undisposed `TextEditingController` | ❌ **UNCHANGED** | `document_repository_screen.dart:47`; still no `dispose()` in the file. |
+| 2 s hard-coded splash delay | ❌ **UNCHANGED** | `splash_screen.dart:15`. |
+| Reduced-motion gap on the one ungated controller | ❌ **UNCHANGED** | `equipment_detail_screen.dart:1690`, `:1708-1712`. |
+| No high-contrast / reduce-transparency handling | ❌ **UNCHANGED** | `glass.dart:156` `BackdropFilter` unconditional; 0 matches for `highContrast`. |
+| Overflow suite never exercises 1.4× textScaler | ❌ **UNCHANGED** | `grep -rn textScaler test/` → **0**. |
+| Four unused deps (`dio`, `go_router`, `flutter_svg`, `cupertino_icons`) | ❌ **UNCHANGED** | 0 `package:<name>/` imports in `lib/` for all four. |
+| Silent demo fallback invisible to the user | ⚠️ **PARTIALLY FIXED** | New `DemoMode` + banner (`demo_mode.dart`, `main_shell.dart:64`) — real progress, but 3 fallback paths don't set the flag and 1 provider clears it for everyone. See §7. |
+
+**New in round 2 (none of these existed at `803124d`):**
+
+| New code | Verdict |
+|---|---|
+| `store_migrator.dart` awaited in `main()` | ⚠️ cheap, but can throw and abort startup — §1 |
+| `_DemoDataBanner` in `main_shell.dart` | ✅ rebuild scope is correctly narrow — §2 |
+| `session_scope.dart` | ⚠️ bounded, but amplified by the IndexedStack — §6 |
+| `main.dart:395` root `watch<AppProvider>()` | ⚠️ MaterialApp rebuilt on every dashboard tick — §2 |
+| `delete_account_screen.dart` | ✅ controller disposed, `mounted` guarded — no perf/reliability defect found |
+
+**Nothing regressed** in the measurable sense: no round-1 grade got worse. One round-1
+finding is *larger* than reported (`ApiService()` sites 17 → 18, from the new
+`billing_screen.dart:304` construction).
 
 ---
 
@@ -12,7 +52,7 @@
 |---|---|---|---|---|---|
 | 1. Startup / first response | 1 | 1 | 1 | 0 | 0 |
 | 2. Rendering & interaction | 0 | 2 | 2 | 0 | 0 |
-| 3. Memory | 0 | 1 | 2 | 0 | 1 |
+| 3. Memory | 0 | 0 | 3 | 0 | 1 |
 | 4. Battery, network & resource | 0 | 3 | 1 | 0 | 0 |
 | 5. Data & query performance | 0 | 2 | 1 | 1 | 0 |
 | 6. Concurrency & responsiveness | 0 | 2 | 2 | 0 | 0 |
@@ -20,47 +60,33 @@
 | 8. Size & asset hygiene | 0 | 1 | 2 | 0 | 0 |
 | 9. Accessibility-driven perf | 0 | 2 | 1 | 0 | 0 |
 | 10. Measurement & evidence | 0 | 1 | 0 | 0 | 3 |
-| **TOTAL (39 items)** | **2** | **18** | **14** | **1** | **4** |
+| **TOTAL (39 items)** | **2** | **17** | **15** | **1** | **4** |
+
+Round 1 was ✅2 / ⚠️18 / ❌14 / N/A1 / BLOCKED4. The one-item shift from ⚠️ to ❌ is §3
+"no leaks" — the new `billing_screen.dart:304` `PaymentService()` construction adds an
+18th unclosed client and a leak window, tipping an already-weak partial into a fail.
 
 ---
 
-## Measured facts (the numbers this audit rests on)
+## Measured facts (round 2, re-measured — not carried over)
 
 ```
-assets/                       81 MB total
-assets/images/                79 MB
-assets/images/products/       78 MB across 439 files (avg 182.6 KB)
-  >500 KB: 30 files   >200 KB: 55   >100 KB: 84   >50 KB: 138   <=50 KB: 132
-assets/equipment_catalog.json 862,279 bytes / 351 entries
-assets/lab_tests_catalog.json 153 entries
-lib/                          2.2 MB, 54,295 LOC across 149 .dart files
+assets/                       81 MB
+assets/images/products/       77.4 MiB across 439 files
+  referenced (unique):        201 files = 37.1 MiB
+  UNREFERENCED:               238 files = 40.3 MiB   <-- dead weight, unchanged
+  referenced-but-missing:       0 files
+lib/  →  cacheWidth|cacheHeight|ResizeImage|memCacheWidth|imageCache : 0 matches
+lib/  →  compute( | Isolate.                                        : 0 matches
+lib/  →  ApiService()                                               : 18 sites
+test/ →  textScaler                                                 : 0 matches
 ```
 
-**Product-image reference analysis** (`assets/images/products/*` vs every `assets/images/products/…`
-string in `lib/` + `assets/*.json`):
-
-```
-referenced (unique):   201 files = 37.5 MB
-UNREFERENCED:          238 files = 40.8 MB   <-- dead weight in the binary
-referenced-but-missing:  0 files             (no broken paths — good)
-```
-
-`equipment_catalog.json` carries 320 `image_url` asset paths resolving to 201 unique files
-(variants share art) and 31 null/absent entries — the "~31 placeholder items" known gap in
-`CLAUDE.md` is confirmed accurate.
-
-**Largest images vs their display size.** Grid cards are `(width − 30) / 2` ≈ **180 pt** wide
-(`lib/screens/services/tabs/equipment_tab.dart:394-397`), image area ≈ 164 pt → **~492 px at 3×**.
-
-| File | On-disk | Pixels | Decoded RGBA |
-|---|---|---|---|
-| `0009_Aircurve_10_Vauto_Apac_Tri_4g.png` | 5.5 MB | 2000×2000 | **16.0 MB** |
-| `0094_ECG_Electrodes.png` | 3.6 MB | 3000×2010 | **24.1 MB** |
-| `0479_ResMed_AirFit_F20_Full_Face_Mask.png` | 1.9 MB | 2048×2048 | **16.8 MB** |
-| `0360_Inj_Ondomed.jpg` | 1.7 MB | 1800×2890 | **20.8 MB** |
-
-A 492 px target needs ~0.97 MB decoded. The worst asset is decoded at **~17× the required
-pixel budget**.
+*Method note:* round 1 reported "40.8 MB"; my round-1 extraction regex truncated at `)`,
+which mis-scored the 41 catalog filenames containing parentheses (e.g.
+`0033_BIPAP_Mask_(L).png`). Corrected regex (`assets/images/products/([^"']+)`) gives
+**238 files / 40.3 MiB unreferenced and 0 referenced-but-missing** — same file count as
+round 1, so the finding is confirmed, not revised. No files were added or deleted.
 
 ---
 
@@ -68,413 +94,466 @@ pixel budget**.
 
 ### 1. Startup / first response
 
-- ❌ **Time-to-interactive is floored at 2 s by construction** — evidence:
-  `lib/screens/splash_screen.dart:15` — `Future.delayed(const Duration(seconds: 2), …)` then
-  `pushReplacementNamed('/home')`. The splash does no work; it is a hard-coded wait.
-  **Impact:** cold launch can never meet the <2 s target no matter how fast init becomes;
-  every user pays 2 s on every launch. **Fix:** race the delay against real readiness —
-  `await Future.wait([initFuture, Future.delayed(Duration(milliseconds: 400))])` — so the
-  splash covers actual work rather than replacing it.
+- ❌ **Time-to-interactive still floored at 2 s** — `splash_screen.dart:15`,
+  `Future.delayed(const Duration(seconds: 2), …)` then `pushReplacementNamed('/home')`.
+  Unchanged from round 1. **Fix:** race the delay against real readiness.
 
-- ⚠️ **Work blocking startup** — evidence: `lib/main.dart:101` awaits `Firebase.initializeApp`;
-  `:120-131` awaits four Crashlytics/Performance setters; `:170` awaits
-  `MedicationReminderService().init()` — all **before** `runApp` at `:183`. Additionally
-  `lib/screens/main_shell.dart:36-42` puts all five root screens in an `IndexedStack`
-  (`:57-60`), which **builds and lays out every child**, so at first frame the app runs
-  `initState` + `build` for HomeScreen (1,904 LOC), MyCareScreen (750), ServiceCatalogScreen
-  (247), BillingScreen (687) and SettingsScreen (454) — ~4,000 LOC of widget tree for four
-  tabs the user has not opened. Three of them kick off async loads immediately:
-  `home_screen.dart:58` `app.loadPatients()`, `my_care_screen.dart:41`
-  `Future.microtask(() => _loadData())`, `settings_screen.dart:29` `_loadProfilePhoto()`.
-  **Fix:** keep `IndexedStack` but wrap non-Home children in a lazily-instantiated
-  placeholder that materialises on first visit.
+- ⚠️ **Heavy work blocking startup — one item added, and it can abort the launch.**
+  `main.dart:174` now `await StoreMigrator.run()` before `runApp` (`:191`).
+  **Measured cost is small:** `_migrations` is empty (`store_migrator.dart:57-58`),
+  `currentVersion` is 1, so the whole run is one `SharedPreferences.getInstance()`, one
+  `getInt`, and at most one `setInt` (`:64-72`). On a fresh install that is a plist load
+  the app performs anyway — the migrator does not add I/O so much as **serialise** it
+  ahead of `runApp` instead of letting providers do it lazily. Call it single-digit ms
+  on a warm store, dominated by the first `getInstance()` platform-channel round trip.
+  **The real defect is the failure mode.** The doc comment at `:61-62` says *"Never
+  throws: a migration failure must not stop the app from starting"*, but the code does
+  not honour that: `SharedPreferences.getInstance()` (`:64`), `prefs.setInt` (`:71`) and
+  `prefs.setInt` (`:117`) are **outside any try/catch**. Only the migration *step* is
+  guarded (`:106-114`). If the platform channel fails — corrupt plist, low storage, the
+  documented iOS `getInstance` failure modes — `run()` throws, `runApp` at `:191` is
+  never reached, `runZonedGuarded` (`:100`) swallows it to Crashlytics, and the user gets
+  a **permanently black screen with no error UI**, because `ErrorWidget.builder` only
+  helps once a widget tree exists. **Fix:** wrap the body of `run()` in try/catch and
+  return on failure — the tolerant readers already handle an unmigrated store.
+  Also still blocking, unchanged from round 1: `Firebase.initializeApp` (`:103`), four
+  awaited Crashlytics/Performance setters (`:122-132`), `MedicationReminderService().init()`
+  (`:178`), and the five-screen eager `IndexedStack` (`main_shell.dart:37-43`, `:66-69`).
 
-- ✅ **First view shows content fast** — evidence: `lib/screens/splash_screen.dart:22-56`
-  paints a branded screen with zero async dependencies; the equipment catalog has a real
-  shimmer skeleton at `lib/screens/services/tabs/equipment_tab.dart:204-235`.
+- ✅ **First view shows content fast** — `splash_screen.dart:22-56` paints with zero async
+  dependencies; `equipment_tab.dart:204-235` has a real shimmer skeleton.
 
 ### 2. Rendering & interaction
 
-- ⚠️ **Smooth scroll/animation (60fps)** — BLOCKED on a device for the actual measurement,
-  but the static risk is concrete: see the image-decode finding below. Flutter's `ImageCache`
-  is left at its default 100 MB / 1000 entries (no `imageCache` tuning exists anywhere in
-  `lib/`). With 6–8 grid tiles visible at up to 16–24 MB decoded each, the cache thrashes
-  during a normal catalog scroll.
+- ⚠️ **Smooth scroll/animation (60fps)** — BLOCKED for the measurement; static risk
+  unchanged and concrete (full-res decode below, `ImageCache` still untuned).
+  **New in round 2, and worth naming:** `main.dart:395` does
+  `final appProvider = context.watch<AppProvider>();` in `HousepitalApp.build` **solely to
+  read `appProvider.locale` at `:405`**. Every `AppProvider.notifyListeners()` therefore
+  rebuilds the `MaterialApp` element and its `Theme`/`Localizations`/`MediaQuery`/`Navigator`
+  scaffolding. That is **≥6 root rebuilds on a cold start** — `loadPatients` notifies twice
+  (`app_provider.dart:139`, `:149`), `loadDashboard` three times (`:212`, `:218`, `:249`),
+  `switchPatient` once (`:165`) — plus one per dashboard refresh thereafter.
+  Element reuse keeps the mounted route contents from rebuilding, so this is **not** a
+  whole-tree repaint; it is avoidable root churn during the most jank-sensitive window.
+  **Fix:** `context.select<AppProvider, Locale>((p) => p.locale)` — one line, eliminates it.
 
-- ⚠️ **Lazy loading / virtualization for long lists** — mixed. Correctly virtualized:
-  `equipment_tab.dart:212` and `:400` (`GridView.builder` with `mainAxisExtent`),
-  `lab_tests_tab.dart`, `packages_tab.dart`, and `lib/widgets/paginated_list.dart` used by
-  four history screens (`report_history_screen.dart:30`, `transaction_log_screen.dart:57`,
-  `attendance_history_screen.dart:31`, `notifications_screen.dart:44`). **Not** virtualized
-  over unbounded data:
-  - `lib/screens/search/universal_search_screen.dart:300-307` — `ListView(children: grouped.entries.expand(…).toList())`
-    builds **every** search result eagerly across a ~550-item corpus (351 equipment + 153 lab
-    tests + 46 service seeds).
-  - `lib/screens/services/tabs/diagnostics_tab.dart:39` and `:56` — `...filtered.map(…)` eager.
-  - `lib/screens/services/tabs/consultations_tab.dart:41`, `lib/screens/services/tabs/manpower_tab.dart:48` — same pattern.
+- ⚠️ **Lazy loading / virtualization** — unchanged from round 1. Correctly virtualized:
+  `equipment_tab.dart:212`/`:400`, `lab_tests_tab.dart`, `packages_tab.dart`,
+  `widgets/paginated_list.dart` (4 history screens). Still eager over unbounded data:
+  `universal_search_screen.dart:300` (`ListView(children: …)` over a ~550-item corpus),
+  `diagnostics_tab.dart:39`/`:56`, `consultations_tab.dart:41`, `manpower_tab.dart:48`.
 
-  **Fix:** convert these four to `ListView.builder` with a header index, as `equipment_tab` already does.
+- ❌ **Images sized/compressed to display size** — unchanged. `common_widgets.dart:129-140`,
+  `Image.asset` with no `cacheWidth`, `CachedNetworkImage` with no `memCacheWidth`;
+  repo-wide grep returns **zero**. Grid cards are ~180 pt (`equipment_tab.dart:394-397`)
+  → ~492 px at 3× → ~0.97 MB needed. Largest live asset
+  `0009_Aircurve_10_Vauto_Apac_Tri_4g.png` is 5.46 MB / 2000×2000 → **16.0 MB decoded**,
+  ~17× the pixel budget. **This remains the single largest runtime memory lever.**
 
-- ❌ **Images sized/compressed to display size** — evidence: `lib/widgets/common_widgets.dart:129-131`
-  `Image.asset(url, fit: fit, …)` with **no `cacheWidth`/`cacheHeight`**, and `:135-140`
-  `CachedNetworkImage` with **no `memCacheWidth`/`memCacheHeight`**. Repo-wide grep for
-  `cacheWidth|cacheHeight|ResizeImage|memCacheWidth` returns **zero matches**.
-  **Impact:** a 180 pt card decodes a 2000×2000 PNG at full resolution — 16 MB of RAM for
-  ~1 MB of need. This is the single largest runtime memory lever in the app.
-  **Fix:** in `ProductImage.build`, add
-  `cacheWidth: (MediaQuery.devicePixelRatioOf(context) * 180).round()` to the `Image.asset`
-  branch and the matching `memCacheWidth` to `CachedNetworkImage`.
+- ❌ **No expensive work in render/row builders** — unchanged.
+  `universal_search_screen.dart:277` `onChanged: (v) => setState(() => _query = v.trim())`
+  with no debounce; `:261` `final results = _results;` invokes the getter at `:159` that
+  rescans the whole corpus **inside `build`**.
 
-- ❌ **No expensive work in render/row builders** — evidence:
-  `lib/screens/search/universal_search_screen.dart:277` —
-  `onChanged: (v) => setState(() => _query = v.trim())` with **no debounce**; `:261`
-  `final results = _results;` calls a **getter that rescans the whole corpus inside `build`**
-  (`:159-…`). Every keystroke therefore = full corpus scan + eager rebuild of all matching
-  tiles + full-resolution image decodes.
-  **Fix:** debounce input ~250 ms, memoise `_results` against `_query`, and switch the
-  result list to `ListView.builder`.
+- ✅ *(credit, not a checklist row)* **The new sample-data banner does NOT cause a
+  per-frame or per-tab rebuild storm** — I checked this specifically. The
+  `ValueListenableBuilder` is scoped **inside** `_DemoDataBanner`
+  (`main_shell.dart:137-139`), which is itself a `const` widget at `:64`. A flag flip
+  therefore rebuilds the banner subtree only; `IndexedStack` at `:66` and the five tab
+  screens are untouched, and `_screens` (`:37-43`) is a `final` field built once. This is
+  the correct implementation and it should stay this way.
+  Two secondary costs are real but small: (a) the flip false→true changes the `Column`'s
+  layout, so the `Expanded(IndexedStack)` gets shorter constraints and **all five tabs
+  relayout once** — and because `markServingDemoData` fires from provider loads
+  immediately after first frame, that relayout lands in the launch window; (b) the banner's
+  `SafeArea(bottom: false)` at `:143` consumes top padding for *itself* only — the sibling
+  `IndexedStack` still sees the full `MediaQuery.padding.top`, so every glass tab adds a
+  second status-bar inset *below* the banner. Cosmetic, but visible.
 
 ### 3. Memory
 
-- ⚠️ **No leaks / retain cycles** — mostly good, three real defects:
-  - ❌ `lib/screens/documents/document_repository_screen.dart:47` — `final _searchController = TextEditingController();`
-    is **State-owned and never disposed**; the file contains **no `dispose()` at all**
-    (grep for `dispose` in that file returns nothing). Confirmed leak.
-  - ⚠️ `lib/widgets/common_widgets.dart:16-17` — `OverlayEntry? _activeToast;` and
-    `Timer? _toastTimer;` are **module-level mutable globals**. `_dismissTopToast`
-    (`:95-100`) only runs on tap, on timer fire, or when the next toast replaces it —
-    **nothing cancels it on route teardown**. Navigating away within the 3 s window leaves a
-    live `Timer` holding an `OverlayEntry` for a route that is gone.
-    **Fix:** key the toast to the route (`ModalRoute.of(context)`) and cancel in a route-aware
-    observer, or at minimum null-check the overlay's `mounted` state before `remove()`.
-  - ❌ **17 unclosed HTTP clients** — `ApiService` is **not a singleton** (no `factory` /
-    `static instance` in `lib/services/api_service.dart`), `_client` is created per instance at
-    `:41`, and there is **no `dispose()`/`close()` in the file**. `ApiService()` is constructed
-    ad hoc at 17 call sites: `daily_report_screen.dart:33`, `universal_search_screen.dart:145`,
-    `transaction_log_screen.dart:62`, `cart_screen.dart:64`, `payment_methods_screen.dart:25`,
-    `staff_profile_screen.dart:39`, `notifications_screen.dart:33/49/149`,
-    `staff_replacement_screen.dart:187`, `doctor_advice_card.dart:52`, `return_screen.dart:325`,
-    `equipment_detail_screen.dart:170/1351`, `service_booking_screen.dart:88`,
-    `equipment_tab.dart:67`, `payment_service.dart:58`.
+- ❌ **No leaks / retain cycles** — downgraded from ⚠️; all three round-1 defects survive
+  and one grew.
+  - **18 unclosed HTTP clients** (was 17). `ApiService` still has no `factory`, no
+    `static instance`, no `close()`/`dispose()`; `_client = client ?? http.Client()` at
+    `api_service.dart:41`. New 18th site: `billing_screen.dart:304`
+    `final paymentService = PaymentService();` inside an `onPressed`, which constructs an
+    `ApiService()` via `payment_service.dart:58` — **a fresh client per tap of Pay Now.**
+    That `PaymentService` is disposed only on the success/failure callbacks
+    (`billing_screen.dart:309`, `:320`); if the user backgrounds the app or navigates away
+    with the Razorpay sheet open, neither fires and the service, its Razorpay channel and
+    its client leak with closures over `context`.
+  - `document_repository_screen.dart:47` — `TextEditingController` still State-owned and
+    **never disposed**; the file still contains no `dispose()`.
+  - `common_widgets.dart:16-17` — module-level `OverlayEntry? _activeToast` / `Timer?
+    _toastTimer` still cancelled only on tap, timer fire, or replacement — never on route
+    teardown.
 
-  Correctly handled elsewhere, and worth crediting: every periodic `Timer` is cancelled
+  Still correct and still worth credit: every periodic `Timer` is cancelled
   (`otp_screen.dart:77`, `home_screen.dart:88`, `auth_provider.dart:234`,
-  `sync_service.dart:111`, `video_consultation_screen.dart`), and all four
-  `StreamSubscription`s are cancelled (`firebase_service.dart:16`, `chat_screen.dart:40`,
+  `sync_service.dart:111`), and all four `StreamSubscription`s are cancelled
+  (`firebase_service.dart:16`, `chat_screen.dart:40`,
   `staff_otp_verification_screen.dart:44`, `order_tracking_screen.dart:37`).
 
-- ❌ **Large media streamed or bounded** — evidence: as §2 above, plus `ImageCache` never
-  tuned. Nothing bounds decoded image memory anywhere in the app.
+- ❌ **Large media streamed or bounded** — unchanged. No `cacheWidth`, no `ImageCache`
+  tuning anywhere. Nothing bounds decoded image memory.
 
-- ❌ **Caches have a size bound and evict** — evidence: `lib/services/cache_service.dart` has a
-  30-minute TTL (`:7`, `_isExpired` `:52-55`) but **no size bound and no eviction**. Expired
-  entries `return null` at `:31` yet are **never removed from disk** — only the blanket
-  `clear()` (`:37-43`) or an explicit `remove(key)` deletes anything. Backed by
-  `SharedPreferences`, which iOS loads wholly into memory as a plist, so the store grows
-  monotonically for the life of the install.
-  **Fix:** delete the key inside the `_isExpired` branch, and add an LRU/entry-count cap in `cache()`.
+- ❌ **Caches have a size bound and evict** — unchanged. `cache_service.dart:30-31`,
+  `_isExpired` → `return null` **without** `prefs.remove`; only the blanket `clear()`
+  (`:37-43`) or explicit `remove(key)` (`:45-48`) deletes anything. Backed by
+  `SharedPreferences`, which iOS loads wholly into memory, so the store grows monotonically
+  for the life of the install. **Fix is two lines:** `await remove(key)` inside the
+  `_isExpired` branch, plus an entry-count cap in `cache()`.
 
 - **BLOCKED-OWNER** — "Memory returns to baseline after heavy flows." Needs an Instruments
-  Allocations run on a device: launch → scroll the full equipment catalog → back out, and
-  confirm the image cache releases. I can predict pressure but cannot measure recovery statically.
+  Allocations run: launch → scroll the full equipment catalog → back out.
 
 ### 4. Battery, network & resource use
 
-- ⚠️ **No busy-wait loops / runaway timers** — no busy-waits; all timers are cancelled. But
-  `lib/services/sync_service.dart:96` is `Timer.periodic(interval, …)` at a **fixed 5-minute
-  interval with no backoff and no escalation** — against an unreachable host it retries
-  forever at the same rate. Both call sites swallow the outcome (`:92-94`, `:97-99`).
+- ⚠️ **No busy-wait loops / runaway timers** — unchanged. `sync_service.dart:96`
+  `Timer.periodic` at a fixed 5-minute interval, no backoff, no escalation; both call sites
+  swallow the outcome (`:92-94`, `:97-99`).
 
-- ⚠️ **Background work registered correctly and finishes promptly** — FCM setup is correctly
-  deferred to `addPostFrameCallback` (`lib/main.dart:321-324`) and cold-start notifications are
-  drained at `:376-382`. However nothing bounds how long a detached request runs (see cancellation below).
+- ⚠️ **Background work registered correctly** — unchanged. FCM deferred to
+  `addPostFrameCallback` (`main.dart:321-324`); cold-start notifications drained
+  (`:384-390`). Nothing bounds how long a detached request runs.
 
-- ⚠️ **Requests batched/coalesced; retried with backoff** — backoff **is** implemented and is
-  genuinely good: `lib/services/api_service.dart:55-85`, 2 retries at `_retryDelay * attempt`
-  (1 s then 2 s) for `SocketException`, `TimeoutException` and 5xx, with a deliberately separate
-  one-shot 401 recovery (`:92-100`) so a permanent 401 does not fan out. **Not** coalesced:
-  the 862 KB `equipment_catalog.json` is loaded and decoded independently at **seven** sites
-  with **no shared cache** (grep for a static/memoised catalog returns nothing):
-  `universal_search_screen.dart:149`, `package_detail_screen.dart:35`,
-  `assistant_local_actions.dart:39`, `doctor_advice_card.dart:55`,
-  `equipment_detail_screen.dart:138`, `equipment_tab.dart:72`, `medications_screen.dart:353`.
-  Opening Equipment → tapping an item re-parses the entire 862 KB file a second time.
-  **Fix:** one `static Future<List<EquipmentItem>>? _catalog` memo in a shared loader.
-  (`doctor_advice_card.dart:38-60` already does exactly this per-instance — that pattern is
-  the right one, just needs to be static and shared.)
+- ⚠️ **Batched/coalesced; retried with backoff** — backoff is real and good
+  (`api_service.dart:55-85`: 2 retries at `_retryDelay * attempt` for `SocketException`,
+  `TimeoutException`, 5xx, with a separate one-shot 401 recovery). Coalescing is still
+  absent: the **862 KB** `equipment_catalog.json` is loaded and decoded independently at
+  **seven** sites with no shared memo — `universal_search_screen.dart:149`,
+  `package_detail_screen.dart:35`, `assistant_local_actions.dart:39`,
+  `doctor_advice_card.dart:55`, `equipment_detail_screen.dart:138`, `equipment_tab.dart:72`,
+  `medications_screen.dart:354`. Equipment → tap an item still re-parses the whole file.
 
-- ❌ **Requests cancelled when no longer needed** — evidence: grep for
-  `CancelToken|abort|_client.close` across `lib/services/` returns **nothing**. Timeouts exist
-  only at the **caller** level (9 sites: `app_provider.dart:144/199`,
-  `medication_provider.dart:198`, `my_care_provider.dart:61`, `blog_provider.dart:33/64`,
-  `assistant_executor.dart:336/363/392`) — `ApiService` itself sets **no request timeout at all**.
-  **Impact:** a caller's `.timeout(5s)` abandons the *future* but the underlying socket and the
-  `_withRetry` loop keep running detached, so a hung connection burns radio and memory well past
-  the 5 s budget. It also means the `on TimeoutException` branch at `api_service.dart:77` is
-  effectively dead code — that exception is thrown by the caller's wrapper, outside `_withRetry`.
-  Worse, **20 of 25 API call sites have no timeout at all**.
-  **Fix:** apply `.timeout(const Duration(seconds: 10))` inside `_withRetry` per attempt, and
-  give `ApiService` a `close()` that disposes `_client`.
+- ❌ **Requests cancelled when no longer needed** — unchanged.
+  `grep "CancelToken\|abort\|_client.close" lib/services/` → nothing. `ApiService` sets
+  **no request timeout**; timeouts exist only at 9 caller sites. The `on TimeoutException`
+  branch at `api_service.dart:77` is still effectively dead code — that exception is thrown
+  by the caller's wrapper, outside `_withRetry`.
 
 ### 5. Data & query performance
 
-- **N/A — hot queries / indexes.** There is no local database (no sqflite/drift/Isar in
-  `pubspec.yaml`); persistence is `SharedPreferences` only. Firestore is used for three live
-  listeners (`chat_screen.dart:54`, `staff_otp_verification_screen.dart:97`,
-  `order_tracking_screen.dart:154`); index configuration is server-side and out of scope here.
+- **N/A — hot queries / indexes.** No local DB (no sqflite/drift/Isar in `pubspec.yaml`);
+  persistence is `SharedPreferences` only. Firestore index config is server-side.
 
-- ⚠️ **N+1 patterns avoided** — no classic N+1 over the network, but the catalog re-parse
-  above is the client-side equivalent: the same 862 KB / 351-object payload is materialised
-  repeatedly instead of once.
+- ⚠️ **N+1 avoided** — no network N+1; the 7-site catalog re-parse is the client-side
+  equivalent.
 
-- ⚠️ **Large result sets paginated; query timeouts set** — `PaginatedListView`
-  (`lib/widgets/paginated_list.dart`) exists and is used correctly in four history screens
-  with `pageSize: 20`. But timeouts cover only 5 of 25 provider call sites (see §4).
+- ⚠️ **Large result sets paginated; query timeouts set** — `PaginatedListView` used
+  correctly in four history screens at `pageSize: 20`; timeouts still cover a minority of
+  call sites.
 
-- ❌ **Connection pooling / reads off the UI thread** — two failures. (a) Pooling is defeated:
-  17 independent `http.Client()` instances, each with its own connection pool, none closed
-  (§3). (b) Nothing runs off the UI isolate — grep for `compute(` / `Isolate.` across `lib/`
-  returns **zero matches**, while `jsonDecode` of the 862 KB catalog runs on the main isolate at
-  seven sites, and PDF generation (`invoice_pdf_service.dart:96`,
-  `handover_report_service.dart:97`) is likewise synchronous on the UI isolate.
-  **Fix:** move catalog decode and PDF building into `compute()`.
+- ❌ **Connection pooling / reads off the UI thread** — unchanged and now worse by one.
+  (a) 18 independent `http.Client()`s, each with its own pool, none closed. (b)
+  `grep "compute(\|Isolate\." lib/` → **0 matches**, while 862 KB `jsonDecode` runs on the
+  main isolate at 7 sites and PDF generation (`invoice_pdf_service.dart:96`,
+  `handover_report_service.dart:97`) is synchronous on the UI isolate.
 
 ### 6. Concurrency & responsiveness
 
-- ❌ **No blocking calls on the main/UI thread** — as above: 862 KB `jsonDecode` + 351
-  `fromJson` allocations ×7 sites, plus PDF generation, all on the UI isolate with no
-  `compute()` anywhere.
+- ❌ **No blocking calls on the main/UI thread** — unchanged (see §5).
 
-- ❌ **Long operations cancellable and cancelled on navigation/teardown** — no cancellation
-  primitive exists in the codebase (§4).
+- ❌ **Long operations cancellable and cancelled on navigation/teardown** — unchanged; no
+  cancellation primitive exists.
 
 - ⚠️ **Shared mutable state protected** — the toast globals
-  (`lib/widgets/common_widgets.dart:16-17`) are app-wide mutable state mutated from any screen
-  with no ownership discipline. Dart's single isolate prevents a true data race, but the
-  read-modify-write in `showTopToast` → `_dismissTopToast` → `overlay.insert` is
-  interleavable across routes.
+  (`common_widgets.dart:16-17`) are unchanged. **New shared global in round 2:**
+  `DemoMode.isServingDemoData` (`demo_mode.dart:16-17`) is a process-wide `ValueNotifier`
+  written by five providers and **reset by one** — see §7 for why that ownership split is
+  a correctness bug, not just a style one.
 
-- ⚠️ **State captured at invocation, not execution** — 114 `mounted` guards across 123
-  `await`s in `lib/screens` is good coverage, plus 18 `context.mounted` guards. Two confirmed
-  gaps: `lib/screens/reports/daily_report_screen.dart:34` (`setState` straight after
-  `await ApiService().getReportDetail(…)`, launched from `initState:28`, no guard — also `:88`
-  in the catch) and `lib/screens/notifications/notifications_screen.dart:34`
-  (`setState` after `await ApiService().markAllNotificationsRead()` in a button handler, no guard).
+- ⚠️ **State captured at invocation, not execution** — unchanged. 114 `mounted` guards
+  across 123 `await`s plus 18 `context.mounted` guards is good coverage; the two confirmed
+  gaps remain: `daily_report_screen.dart:34` and `:88`, `notifications_screen.dart:34`.
+
+- ✅ *(credit, not a checklist row)* **`SessionScope` does not cause a rebuild storm —
+  I counted it.** `session_scope.dart:28-36` fires five `notifyListeners()` in sequence
+  (MyCare, Medication, Billing, Orders, Cart), and `home_screen.dart:1771-1772` follows
+  them with `app.switchPatient`, which notifies again (`app_provider.dart:165`) and calls
+  `loadDashboard` (two more synchronous notifications at `:212`/`:218`) — **8 synchronous
+  notifications from one tap.** They do **not** produce 8 frames: `notifyListeners` only
+  calls `markNeedsBuild`, and Flutter coalesces every dirtied element into the *next*
+  frame, so each listening element rebuilds exactly once. The bounded cost is the union of
+  listeners:
+
+  | Provider | Listening sites | Mounted during a patient switch |
+  |---|---|---|
+  | `AppProvider` | 13 | `main.dart:395` (root), `home_screen:97`, `my_care_screen:79`, `billing_screen:134`, `settings_screen:83`, `medications_screen:48` |
+  | `MedicationProvider` | 8 | `home_screen:1659`, `my_care_screen:122` |
+  | `CartProvider` | 6 | `home_screen:463` + `glass.dart:106` × every mounted `GlassAppBar` |
+  | `MyCareProvider` | 3 | `my_care_screen:78` |
+  | `OrdersProvider` | 4 | `billing_screen:133` |
+  | `BillingProvider` | **0** | — |
+
+  So: **one frame, ~15–20 elements rebuilt.** That is acceptable. Two notes worth acting on:
+  (a) `BillingProvider.clearPatientScopedData` (`billing_provider.dart:68-74`) calls
+  `notifyListeners()` to **zero listeners** — the provider is wired into the tree
+  (`main.dart:202-204`) but nothing watches it, confirming round 1's note that
+  `BillingScreen` still reads off `AppProvider`. Clearing it is dead work today, and the
+  PHI guarantee it is supposed to provide is not actually observable by any UI.
+  (b) The count is **amplified by the eager `IndexedStack`** (`main_shell.dart:66-69`):
+  because all five tabs stay mounted, listeners in four tabs the user is not looking at
+  rebuild on every patient switch. Fixing the lazy-tab finding in §1 shrinks this too.
 
 ### 7. Reliability & resilience
 
-- ❌ **Crash/error-free target defined and monitored** — evidence:
-  `lib/utils/logger.dart:63` — `// TODO(observability): forward warn/error to FirebaseCrashlytics.recordError`.
-  `_log` (`:52-66`) only calls `debugPrint`. Crashlytics therefore receives **fatal crashes
-  only**; every `Log.warn`/`Log.error` — the entire "we logged the fallback" story, ~45 call
-  sites — reaches no remote sink in release. No error-rate or crash-free-sessions target is
-  defined anywhere in the repo. **Fix:** it is a genuine one-line change at the documented
-  chokepoint — `FirebaseCrashlytics.instance.recordError(error, stack, fatal: false)` guarded
-  on `!kIsWeb && !kDebugMode`.
+- ❌ **Crash/error-free target defined and monitored** — unchanged, verbatim.
+  `logger.dart:63-65` still reads
+  `// TODO(observability): forward warn/error to FirebaseCrashlytics.recordError`, and
+  `_log` (`:52-67`) still ends at `debugPrint`. Crashlytics receives **fatals only**; every
+  `Log.warn`/`Log.error` — ~45 sites, including the new
+  `payment_service.dart:174` "Refusing to confirm" and the new
+  `store_migrator.dart:109` migration-failure line — reaches **no remote sink in release**.
+  No error-rate or crash-free-sessions target exists in the repo.
+  This is the finding that makes every other finding undetectable in the field, and it is
+  still a one-line change at a documented chokepoint.
 
-- ✅ **No uncaught exceptions on user paths; global error boundary exists** — this is done
-  well: `runZonedGuarded` wraps all of `main()` (`lib/main.dart:98`, handler `:274-284`),
-  `FlutterError.onError` → `recordFlutterFatalError` (`:114-115`),
-  `PlatformDispatcher.instance.onError` (`:116-119`), a friendly non-red `ErrorWidget.builder`
-  (`:137-166`), and a route-level try/catch with a user-visible recovery page (`:754-780`).
-  All correctly gated on `!kIsWeb` / `!kDebugMode`.
+- ✅ **No uncaught exceptions on user paths; global error boundary exists** — still done
+  well. `runZonedGuarded` wraps `main()` (`main.dart:100`), `FlutterError.onError` →
+  `recordFlutterFatalError` (`:116-117`), `PlatformDispatcher.instance.onError` (`:118-121`),
+  friendly `ErrorWidget.builder` (`:139-168`), route-level try/catch (`:434`). Correctly
+  gated on `!kIsWeb` / `!kDebugMode`. **Caveat:** none of it covers the pre-`runApp` window,
+  which is exactly where the new `StoreMigrator.run()` throw lands (§1).
 
-- ⚠️ **Degrades gracefully when a dependency is down** — it degrades, but **silently**. There
-  is no offline/demo indicator anywhere in `lib/screens` or `lib/widgets`. The one flag that
-  exists is dead: `AppProvider._lastUpdatedText` is written at `app_provider.dart:212`/`:232`
-  and exposed at `:60`, but **no screen, widget or test reads it**. Three provider error gates
-  are unreachable by construction because the demo path nulls the error it would have shown —
-  `my_care_provider.dart:96` (`_detailError = null`), `billing_provider.dart:46`,
-  `blog_provider.dart:39`. Per the brief this fallback behaviour is *by design*; the objective
-  fact to report is that **the user cannot distinguish demo data from live data**, which is a
-  resilience gap rather than a demo-mode complaint.
-  One case is worse than masking: `my_care_provider.dart:87-97` substitutes
-  `DemoData.icuServiceDetail` for **any** deployment id on a non-`ApiException` failure, with
-  **no log line at all** — tapping a physio or caretaker card renders the ICU roster.
+- ⚠️ **Degrades gracefully when a dependency is down** — **materially improved, and
+  incomplete.** The `DemoMode` flag + persistent banner (`demo_mode.dart`,
+  `main_shell.dart:64`, `:132-170`) is the right shape: non-dismissible, states the
+  consequence in plain language, and correctly scoped for rebuilds (§2). Six fallback
+  paths now set it: `app_provider.dart:260`, `my_care_provider.dart:50`/`:98`,
+  `medication_provider.dart:191`/`:236`, `billing_provider.dart:43`,
+  `orders_provider.dart:199`. **Four gaps remain:**
+  1. **One provider's success clears everyone's warning.** `app_provider.dart:247` calls
+     `DemoMode.reset()` when the *dashboard* fetch succeeds. The notifier is global, so a
+     successful dashboard takes the banner down while `MedicationProvider`,
+     `OrdersProvider`, `MyCareProvider` and `BillingProvider` are still serving
+     `DemoData`. Partial connectivity is the common real-world case, and it produces the
+     exact failure the banner exists to prevent: sample medications shown with no warning.
+     **Fix:** make it a per-source set (`Set<String> _demoSources`) and show the banner
+     while any source is demo.
+  2. **`blog_provider.dart:38` and `:68`** fall back to `DemoData.articles` with **no**
+     `markServingDemoData()` call.
+  3. **`app_provider.dart:136-140`** seeds `DemoData.patient` as the current patient
+     without marking — the sample *identity* itself is unannounced.
+  4. **`handover_report_service.dart:101-108`** builds the doctor-handover PDF entirely
+     from `DemoData` (patient, medical history, medications, vitals, report, services,
+     staff on duty, appointments) with no demo marking anywhere. This is the role-gated
+     clinical export; it leaves the phone as a document with no indication it is sample
+     data. Worth escalating beyond this checklist.
 
-- ⚠️ **Recovers cleanly from interruption** — foreground-resume refresh exists
-  (`my_care_screen.dart:59-62`) but is defeated by `my_care_provider.dart:50`, which sets
-  `_lastFetchedAt = DateTime.now()` **while seeding demo data**, so `isStale` (`:35-37`)
-  reports false for 60 s off a demo seed and the refresh is skipped.
+  Also unchanged: `my_care_provider.dart:88-99` still substitutes `DemoData.icuServiceDetail`
+  for **any** deployment id on a non-`ApiException` failure — it now marks demo mode
+  (`:98`), which is an improvement, but the user still sees the ICU roster after tapping a
+  physio card.
 
-- ❌ **Data integrity holds under interrupted writes** — the most serious cluster in this audit.
-  - **Unverified real payment accepted as success.** `lib/services/payment_service.dart:178-186`
-    returns `skippedDemo` whenever `paymentId`, `orderId` **or** `signature` is null, and
-    `:163-166` treats `skippedDemo` **identically to `verified`** — it fires the success
-    callback. Reachable with a real key: `createOrder` fails → warn-logged → **returns null**
-    (`:87-88`) → `openCheckout` omits `order_id` → Razorpay returns success with no signature →
-    `skippedDemo` → order marked confirmed and cart cleared (`cart_screen.dart:571-583`). The
-    condition is "signature missing", **not** "demo mode". A backend blip during order creation
-    becomes an accepted, unverified, real-money payment. The `failed` branch (`:168-172`)
-    already has the correct honest behaviour.
-  - **Web payments always succeed.** `lib/screens/billing/payment_screen.dart:213-214` routes
-    all web payments to `_processWebPayment` (`:266-283`), which sleeps 2 s and sets
-    `_paymentSuccess = true` unconditionally. Gated on `kIsWeb` only — **not** on
-    `PaymentService.isDemoPayments`.
-  - **No write queue exists.** `lib/services/sync_service.dart` is read-only (`:47-64` fetches
-    six endpoints, sends nothing); grep for `outbox|pending_writes|writeQueue|enqueue` returns
-    zero matches. `OrdersProvider.addOrder` (`orders_provider.dart:59-75`) persists locally and
-    makes no API call, yet all four call sites show an unqualified confirmation.
-  - **`requestRefill` cannot return false.** `lib/providers/medication_provider.dart:172-178` —
-    the catch logs, then execution falls through to `_refillRequestedIds.add(med.id)` and
-    `return true`, which sits **outside** the try. A medication refill reports "Requested" while
-    nothing was sent, and `_refillRequestedIds` is session-only.
-  - **Failed delete pops as success.** `lib/screens/my_care/add_edit_medication_screen.dart:271-273`
-    awaits `deleteMedication` and pops `true` without checking the returned bool.
-  - **Corrupt persisted orders silently wipe.** `orders_provider.dart:175-206` — a `jsonDecode`
-    failure is caught at `:201`, warn-logged, and leaves `_orders` empty; the demo seed at
-    `:196-198` sits inside the try above the throw point, so real user orders vanish.
+- ⚠️ **Recovers cleanly from interruption** — unchanged. `my_care_provider.dart:52` still
+  sets `_lastFetchedAt = DateTime.now()` **while seeding demo data**, so `isStale`
+  (`:36-38`) reports false for 60 s off a demo seed and the foreground-resume refresh at
+  `my_care_screen.dart:59-62` is skipped.
 
-- ⚠️ **Retries with backoff + circuit breakers** — backoff is present and correct in
-  `ApiService` (`:55-85`). **No circuit breaker exists anywhere**, and `sync_service.dart:96`
-  has no backoff at all. Nothing escalates after N consecutive failures.
+- ❌ **Data integrity holds under interrupted writes** — the two payment blockers are
+  genuinely fixed (see "Changed since round 1"), but the cluster is not closed:
+  - **B-1 · A second payment entry point still opens real checkout with no order.**
+    `billing_screen.dart:303-336` — "Pay Now" on the outstanding-balance card constructs
+    `PaymentService()` and calls `openCheckout(amount: totalDue * 100, …)` **without ever
+    calling `createOrder`**. This path was not touched by the round-1 fix. With a real key:
+    `isDemoPayments` is false so `payment_service.dart:113` does not simulate;
+    `openCheckout` builds options at `:124-140` where `'order_id': ?orderId` **omits the
+    key entirely** because `orderId` is null; real Razorpay checkout opens and can capture
+    real money; the success response carries no signature; `_verifyPaymentOnBackend:196`
+    returns `skippedDemo`; `_handleSuccess:171` now correctly refuses — and calls
+    `_onFailureCallback` with *"Payment under verification — we'll confirm in 24 hours."*
+    **Net effect: the patient is charged and told the payment failed, with no order record
+    and no recoverable reference.** The round-1 fix converted "unverified payment silently
+    accepted" into "real payment taken and disowned" on this path. It is a smaller loss
+    than round 1 but it is still a money-losing bug, and it is now the headline.
+    **Fix:** apply the same guard `payment_screen.dart:226-253` uses — call `createOrder`
+    and fail closed on null — or route this button through `PaymentScreen`.
+  - **No write queue exists.** `sync_service.dart` is still read-only (`:47-64` fetches six
+    endpoints, sends nothing); `grep "outbox\|pending_writes\|writeQueue\|enqueue"` → 0.
+    `OrdersProvider.addOrder` persists locally and makes no API call, yet all four call
+    sites show an unqualified confirmation.
+  - **`requestRefill` cannot return false** — `medication_provider.dart:165-180`. The catch
+    logs, then `_refillRequestedIds.add(med.id)` and `return true` execute **outside** the
+    try. Patient-safety-adjacent: the UI says the pharmacy was notified when it was not.
+  - **Failed delete pops as success** — `add_edit_medication_screen.dart:268-272` awaits
+    `deleteMedication` and pops `true` without checking the returned bool.
+  - **Corrupt persisted orders silently wipe** — `orders_provider.dart:196-206`. The demo
+    seed sits inside the `try` above the throw point, so a `jsonDecode` failure caught at
+    `:203` leaves `_orders` empty and real user orders vanish.
+
+- ⚠️ **Retries with backoff + circuit breakers** — backoff correct in `ApiService:55-85`;
+  **no circuit breaker anywhere**; `sync_service.dart:96` has no backoff at all.
 
 ### 8. Size & asset hygiene
 
-- ❌ **No unused assets, deps, or dead code shipped** — evidence:
-  - **238 unreferenced product images = 40.8 MB** (52 % of `assets/images/products/`), bundled
-    because `pubspec.yaml:31` declares the whole `assets/images/products/` **directory** —
-    Flutter ships every file in a declared directory regardless of reference.
-  - **Four unused dependencies** (zero `package:<name>/` imports in `lib/`): `dio` (superseded
-    by `http`), `go_router` (the app uses `onGenerateRoute` in `main.dart:425`), `flutter_svg`,
-    `cupertino_icons`.
+- ❌ **No unused assets, deps, or dead code shipped** — unchanged, re-measured.
+  - **238 unreferenced product images = 40.3 MiB** (54 % of `assets/images/products/` by
+    size), bundled because `pubspec.yaml:85` declares the whole
+    `assets/images/products/` **directory** — Flutter ships every file in a declared
+    directory regardless of reference. Two of the five largest files on disk are dead:
+    `0094_ECG_Electrodes.png` (3.55 MB) and `0360_Inj_Ondomed.jpg` (1.71 MB).
+  - **Four unused dependencies**, all still at 0 imports in `lib/`: `dio`, `go_router`,
+    `flutter_svg`, `cupertino_icons`.
 
-  **Impact:** removing the 238 dead images cuts ~40.8 MB from the install — roughly a quarter
-  to a third of total app size (assets are ~81 MB of an estimated 130–150 MB iOS install;
-  PNG/JPG do not compress further inside the IPA zip). **Fix:** delete the 238 unreferenced
-  files, then narrow `pubspec.yaml` to enumerate files or keep the directory but prune it in CI
-  against `equipment_catalog.json`.
+  **This is the largest single win available and it is a pure delete** — ~40 MiB off the
+  install, roughly a quarter to a third of total app size, with no code change and no
+  behavioural risk (`referenced-but-missing` is **0**, so nothing breaks). **Fix:** delete
+  the 238 files, then either enumerate assets in `pubspec.yaml` or add a CI check that
+  prunes `assets/images/products/` against `equipment_catalog.json`.
 
-- ⚠️ **Code-splitting / tree-shaking applied where the platform supports it** — Dart AOT
-  tree-shakes unreached code, and bundling `Archivo`/`NotoSansDevanagari` locally instead of
-  `google_fonts` (`pubspec.yaml:37-45`) is the right call and correctly documented. But
-  **assets are never tree-shaken** — directory-level declaration defeats it entirely, which is
-  precisely why the 40.8 MB above ships.
+- ⚠️ **Code-splitting / tree-shaking** — Dart AOT tree-shakes unreached code, and bundling
+  `Archivo`/`NotoSansDevanagari` locally instead of `google_fonts` (`pubspec.yaml:94-98`)
+  is the right call. **Assets are never tree-shaken** — directory-level declaration defeats
+  it, which is precisely why the 40.3 MiB above ships.
 
-- ❌ **No debug-only resources or large sample data in the release artifact** — `DemoData` is
-  referenced from **10 files** in `lib/screens` + `lib/providers`, so it is reachable and
-  **not** tree-shakeable; `lib/data/demo_data.dart` (749 LOC), `demo_articles.dart` (236),
-  `care_packages.dart` (266) all ship. Plus inline mock data in production screens:
-  `lib/screens/reports/daily_report_screen.dart:41-87` is a ~47-line hardcoded clinical report
-  (fabricated vitals, tasks and medications attributed to a named nurse) compiled into the
-  release binary and rendered on API failure.
+- ❌ **No debug-only resources or large sample data in the release artifact** — unchanged,
+  and the round-2 work slightly widened it. `DemoData` is referenced from providers,
+  screens **and now `handover_report_service.dart:101-108`**, so it is reachable and not
+  tree-shakeable; `demo_data.dart` (749 LOC), `demo_articles.dart` (236),
+  `care_packages.dart` (266) all ship, plus the new `demo_mode.dart`. Inline mock data
+  survives in a production screen: `daily_report_screen.dart:41-87` is a ~47-line
+  hardcoded clinical report (fabricated vitals, tasks and medications attributed to a named
+  nurse) compiled into the release binary and rendered on API failure.
 
 ### 9. Accessibility-driven performance
 
-- ⚠️ **Reduced-motion honoured — verify it's wired everywhere** — good coverage in 11 files
-  (`care_pulse_ring.dart:84`, `billing_screen.dart:156`, `order_tracking_screen.dart:120`,
-  `payment_screen.dart:256`, `booking_confirmation_screen.dart:126`,
-  `care_calendar_screen.dart:251/1080/1602/1709`, `staff_otp_verification_screen.dart:105`,
-  `my_care_screen.dart:101`, `medication_schedule_screen.dart:322`,
-  `medications_screen.dart:329`, `equipment_tab.dart:267`), and the "no infinite pulses" rule
-  holds — the only `.repeat(` in `lib/` is a comment recording its removal
-  (`order_tracking_screen.dart:103`). **One gap:** `lib/screens/services/equipment_detail_screen.dart:1690`
-  constructs an `AnimationController` with a hardcoded 250 ms and calls `_controller.forward()`
-  at `:1708` with **no `disableAnimations` check** — the only one of five
-  `AnimationController` sites that is ungated.
+- ⚠️ **Reduced-motion honoured** — unchanged. Good coverage in 11 files; the "no infinite
+  pulses" rule holds. **Same one gap:** `equipment_detail_screen.dart:1689-1693` constructs
+  an `AnimationController` with a hardcoded 250 ms and `_toggle` at `:1704-1712` calls
+  `forward()`/`reverse()` with **no `disableAnimations` check** — still the only ungated
+  `AnimationController` of five.
 
-- ⚠️ **Largest text / zoom doesn't break layout** — the clamp is correct and deliberate:
-  `lib/main.dart:417-420` clamps `textScaler` to 0.85–1.4 (honouring WCAG 1.4.4 up to 1.4×).
-  Overflow is guarded across three widths (320/375/414) by
-  `test/screens/overflow_smoke_test.dart:102-104`. **Gap:** grep for `textScaler` across
-  `test/` returns nothing — the overflow suite runs at **default scale only**, so the 1.4×
-  ceiling the app advertises is never actually tested.
-  **Fix:** add a 1.4× textScaler axis to the existing overflow sweep.
+- ⚠️ **Largest text / zoom doesn't break layout** — the clamp is correct and deliberate
+  (`main.dart:421-432`, 0.85–1.4, honouring WCAG 1.4.4). Overflow guarded across
+  320/375/414 by `test/screens/overflow_smoke_test.dart`. **Gap unchanged:**
+  `grep -rn textScaler test/` → **0 matches**, so the overflow suite runs at default scale
+  only and the 1.4× ceiling the app advertises is never tested.
 
-- ❌ **Reduced-transparency / high-contrast preferences respected** — grep for
-  `highContrast|boldText|accessibleNavigation` across `lib/config/theme.dart` and
-  `lib/widgets/glass.dart` returns **zero matches**. `GlassAppBar` applies its blur
-  unconditionally on every screen. **Impact:** users with Reduce Transparency enabled still pay
-  the full `BackdropFilter` cost — the most expensive raster op in the app — on every screen.
-  **Fix:** in `glass.dart`, skip the `BackdropFilter` and use an opaque fill when
-  `MediaQuery.of(context).highContrast` or the platform reduce-transparency flag is set.
+- ❌ **Reduced-transparency / high-contrast respected** — unchanged.
+  `grep "highContrast\|boldText\|accessibleNavigation"` across `glass.dart` and `theme.dart`
+  → **0 matches**; `glass.dart:156` applies its `BackdropFilter` unconditionally on every
+  screen. Users with Reduce Transparency enabled still pay the full blur cost — the most
+  expensive raster op in the app — on every screen, and the new banner adds a sixth
+  translucent surface above it.
 
 ### 10. Measurement & evidence
 
-- **BLOCKED-OWNER — profiler pass on a real target.** Needs an Xcode Instruments run on a
-  physical mid-range iPhone (Time Profiler + Allocations + Leaks). Specifically: cold-launch
-  trace to confirm the 2 s splash floor and the five-tab `IndexedStack` build cost, and an
-  Allocations trace scrolling the equipment catalog to confirm the predicted image-cache churn.
-- **BLOCKED-OWNER — startup, interaction and memory measured.** No stored measurements exist in
-  the repo (`docs/` has no perf artefact). Firebase Performance **is** initialised
-  (`lib/main.dart:122-123`) so cold-start and HTTP traces should already be flowing to the
-  console — I would need console access to read them.
-- ⚠️ **Crash/error/latency reports monitored** — Crashlytics and Performance are correctly
-  initialised and correctly gated (`lib/main.dart:110-131`), which is real credit. But the
+- **BLOCKED-OWNER — profiler pass on a real target.** Xcode Instruments on a physical
+  mid-range iPhone: Time Profiler on cold launch (confirm the 2 s splash floor, the
+  five-tab `IndexedStack` build, and the `StoreMigrator` + `getInstance` cost), Allocations
+  while scrolling the equipment catalog (confirm image-cache churn).
+- **BLOCKED-OWNER — startup/interaction/memory measured.** No perf artefact exists in
+  `docs/`. Firebase Performance **is** initialised (`main.dart:124-125`), so cold-start and
+  HTTP traces should already be flowing — needs console access to read.
+- ⚠️ **Crash/error/latency reports monitored** — Crashlytics and Performance correctly
+  initialised and correctly gated (`main.dart:112-134`), which is real credit. The
   `logger.dart:63` gap means non-fatals never arrive, so what is monitored is fatals only.
-- **BLOCKED-OWNER — tested on a low-end target.** Needs a run on an older device / throttled
-  network. This matters more than usual here: the image-decode and catalog-parse findings are
-  exactly the class of problem that is invisible on a modern dev machine.
+- **BLOCKED-OWNER — tested on a low-end target.** Matters more than usual here: the
+  image-decode and catalog-parse findings are exactly the class of problem invisible on a
+  modern dev machine.
 
 ---
 
 ## Blockers (must fix before release)
 
-1. **Unverified real payments are accepted as successful** — `lib/services/payment_service.dart:163-166`
-   + `:178-186` + `:87-88`. `skippedDemo` must not call the success callback; treat a missing
-   signature as `failed` whenever the key is not a placeholder.
-2. **Web builds always report payment success** — `lib/screens/billing/payment_screen.dart:213-214`,
-   `:266-283`. Gate `_processWebPayment` on `PaymentService.isDemoPayments`, not `kIsWeb`.
-3. **40.8 MB of unreferenced product images ship in the binary** — 238 files in
-   `assets/images/products/`, bundled via the directory declaration at `pubspec.yaml:31`.
-4. **Full-resolution image decode on the catalog hot path** — `lib/widgets/common_widgets.dart:129-140`.
-   Up to 24 MB decoded per tile against a ~1 MB need; no `cacheWidth`, no `ImageCache` tuning.
-5. **All non-fatal errors are invisible in production** — `lib/utils/logger.dart:63`. Every
-   fallback in the app is unobservable in release, which makes findings 1–2 undetectable in
-   the field.
+1. **B-1 · `billing_screen.dart:303-336` opens real Razorpay checkout with no backend
+   order.** The Pay Now button on the outstanding-balance card never calls `createOrder`,
+   so with a real key the patient can be charged and then shown "Payment under
+   verification", with no order record. This is the payment path the round-1 fix missed.
+2. **40.3 MiB of unreferenced product images ship in the binary** — 238 files, bundled via
+   the directory declaration at `pubspec.yaml:85`. Pure delete, zero risk, largest single
+   win available. Unchanged from round 1.
+3. **Full-resolution image decode on the catalog hot path** — `common_widgets.dart:129-140`.
+   Up to 16 MB decoded per tile against a ~1 MB need; no `cacheWidth`, no `ImageCache`
+   tuning. Unchanged from round 1.
+4. **All non-fatal errors invisible in production** — `logger.dart:63`. Every fallback,
+   including the new payment refusal and migration failure, is unobservable in release,
+   which makes blockers 1 and 5 undetectable in the field. Unchanged from round 1.
+5. **`StoreMigrator.run()` can throw and prevent `runApp` from ever being called** —
+   `store_migrator.dart:64`/`:71`/`:117` are outside any try/catch despite the "never
+   throws" contract at `:61`, and `main.dart:174` awaits it before `runApp` at `:191`.
+   Failure mode is a permanent black screen. **New in round 2.**
 
 ## High
 
-- **No request-level timeout or cancellation in `ApiService`** — `lib/services/api_service.dart:55-85`,
-  `:102-136`; 20 of 25 call sites have no caller timeout either. Abandoned futures leave sockets running.
-- **`ApiService` is not a singleton — 17 unclosed `http.Client`s** (`api_service.dart:41`, no
-  `dispose`). Defeats connection pooling; ad-hoc instances also never receive the auth token
-  (`_authToken` is per-instance, set only via `AuthProvider` on the `main.dart:174` instance),
-  so against a real backend all 17 call sites would 401 and fall back to demo data permanently.
-- **862 KB catalog decoded on the UI isolate at 7 sites with no shared cache** — see §4;
-  no `compute()` anywhere in `lib/`.
-- **`requestRefill` cannot return false** — `lib/providers/medication_provider.dart:172-178`.
-  Patient-safety-adjacent: the UI says the pharmacy was notified when it was not.
-- **`CacheService` never evicts** — `lib/services/cache_service.dart:31`; unbounded
-  `SharedPreferences` growth.
-- **Silent wrong-record substitution** — `lib/providers/my_care_provider.dart:87-97` serves the
-  ICU deployment for any id, with no log.
+- **`DemoMode.reset()` is global but called by one provider** — `app_provider.dart:247`.
+  A successful dashboard fetch takes the sample-data banner down while four other providers
+  are still serving `DemoData`. **New in round 2**, and it undermines the round-2 fix it
+  belongs to.
+- **Three demo fallbacks never set the flag** — `blog_provider.dart:38`/`:68`,
+  `app_provider.dart:136-140`, `handover_report_service.dart:101-108`. The last is the
+  role-gated clinical handover PDF, built entirely from `DemoData` and exported unmarked.
+- **No request-level timeout or cancellation in `ApiService`** — `api_service.dart:55-85`,
+  `:102-136`. Abandoned futures leave sockets running.
+- **`ApiService` is not a singleton — 18 unclosed `http.Client`s** (`api_service.dart:41`,
+  no `close()`). Defeats pooling; ad-hoc instances also never receive the auth token, so
+  against a real backend those call sites would 401 and fall back to demo data permanently.
+- **862 KB catalog decoded on the UI isolate at 7 sites with no shared cache** — no
+  `compute()` anywhere in `lib/`.
+- **`requestRefill` cannot return false** — `medication_provider.dart:165-180`.
+- **`CacheService` never evicts** — `cache_service.dart:31`; unbounded growth.
+- **Silent wrong-record substitution** — `my_care_provider.dart:88-99` serves the ICU
+  deployment detail for any deployment id.
 
 ## Medium / Low
 
+- Root `context.watch<AppProvider>()` for `locale` alone — `main.dart:395`, `:405`.
 - Eager `ListView` over unbounded data — `universal_search_screen.dart:300`,
   `diagnostics_tab.dart:39`, `consultations_tab.dart:41`, `manpower_tab.dart:48`.
 - No search debounce; `_results` recomputed in `build` — `universal_search_screen.dart:261`, `:277`.
-- Undisposed `TextEditingController` — `lib/screens/documents/document_repository_screen.dart:47`.
-- Global toast timer not cancelled on route teardown — `lib/widgets/common_widgets.dart:16-17`, `:92`.
+- Undisposed `TextEditingController` — `document_repository_screen.dart:47`.
+- `PaymentService` leaked when checkout is abandoned — `billing_screen.dart:304`.
+- Global toast timer not cancelled on route teardown — `common_widgets.dart:16-17`.
 - Unguarded `setState` after `await` — `daily_report_screen.dart:34`, `:88`;
   `notifications_screen.dart:34`.
-- 2 s hard-coded splash delay — `lib/screens/splash_screen.dart:15`.
-- Five root tabs built eagerly in `IndexedStack` — `lib/screens/main_shell.dart:36-42`, `:57-60`.
+- 2 s hard-coded splash delay — `splash_screen.dart:15`.
+- Five root tabs built eagerly in `IndexedStack` — `main_shell.dart:37-43`, `:66-69`.
+- `BillingProvider` has zero listeners; `clearPatientScopedData` notifies nobody —
+  `billing_provider.dart:68-74`, `main.dart:202-204`.
+- Banner's `SafeArea` double-insets the tabs below it — `main_shell.dart:143` vs `:66`.
 - Four unused dependencies — `dio`, `go_router`, `flutter_svg`, `cupertino_icons`.
-- `sync_service` fixed 5-min retry, no backoff or circuit breaker — `lib/services/sync_service.dart:96`.
-- Reduced-motion gap — `lib/screens/services/equipment_detail_screen.dart:1690`, `:1708`.
+- `sync_service` fixed 5-min retry, no backoff or circuit breaker — `sync_service.dart:96`.
+- Reduced-motion gap — `equipment_detail_screen.dart:1689-1693`, `:1704-1712`.
 - No high-contrast / reduce-transparency handling; `GlassAppBar` blurs unconditionally.
-- Overflow suite never exercises the 1.4× textScaler ceiling it clamps to.
+- Overflow suite never exercises the 1.4× textScaler ceiling — 0 `textScaler` in `test/`.
 - Large hardcoded sample data in a production screen — `daily_report_screen.dart:41-87`.
+
+## Stale docs asserting six tabs / a Calendar tab
+
+Reported per the brief. The **tests are current** — `test/screens/main_shell_test.dart:228`
+asserts *"five tabs, no Calendar tab"*. The docs are not:
+
+| File:line | Stale text |
+|---|---|
+| `docs/ARCHITECTURE.md:68` | "Fixed solid-orange bottom nav bar (6 tabs: Home/My Care/Services/Calendar/Billing/More)" |
+| `docs/SCREEN_MAP.md:6` | "Bottom Tab Bar (MainShell -- 6 tabs …)" |
+| `docs/CHANGELOG.md:64` | "are now SIX tabs: … Calendar (3), Billing (4), More (5)" |
+| `docs/FEATURE_TRACKER.md:143` | "Care Calendar added as root tab at index 3 … = SIX tabs" |
+| `README.md:166` | "services/ # catalog (6 tabs)…" — separate issue: that catalog has 7 tabs |
+| `lib/screens/services/service_catalog_screen.dart:127` | comment "the TabBar + 6 tab bodies" — there are 7 |
 
 ## BLOCKED-OWNER
 
 | Item | What I need |
 |---|---|
-| §10 profiler pass (CPU/memory/leaks) | Xcode Instruments run on a physical mid-range iPhone — Time Profiler on cold launch, Allocations while scrolling the equipment catalog |
-| §10 startup/interaction/memory measured | Firebase Performance console access — cold-start and HTTP traces are already being collected (`lib/main.dart:122-123`) |
+| §10 profiler pass (CPU/memory/leaks) | Xcode Instruments on a physical mid-range iPhone — Time Profiler on cold launch, Allocations while scrolling the equipment catalog |
+| §10 startup/interaction/memory measured | Firebase Performance console access — traces are already being collected (`main.dart:124-125`) |
 | §10 low-end target testing | A run on an older device / throttled network |
 | §3 memory returns to baseline | Allocations trace across launch → full catalog scroll → back out |
 | §2 60fps confirmation | On-device scroll with the performance overlay / DevTools timeline |
+| Live storage-rules posture | `storage.rules` exists but deployment is unverifiable from the repo — `firebase deploy --only storage` status |
 
 ---
 
 ## Note on owner-decision items
 
-Per the brief I did not grade the white-on-orange contrast, manpower pricing, or the fixed
-orange bottom nav as failures. The only performance-relevant consequence of those decisions
-I found is the unconditional `BackdropFilter` in `GlassAppBar` (§9), which is a
-reduce-transparency issue rather than a colour-contrast one. The expected demo-mode
-failed-fetch log at startup was **not** counted as a defect; what I did count is that the
-fallback is invisible to the user and unobservable in production telemetry.
+Per the brief I did not grade white-on-orange contrast (round 1 measured 2.33:1 — restated
+as fact, not a failure), manpower pricing, or the fixed orange bottom nav. The only
+performance consequence of those decisions I found is the unconditional `BackdropFilter`
+in `GlassAppBar` (§9), which is a reduce-transparency issue rather than a colour-contrast
+one. The expected demo-mode failed-fetch log at startup was **not** counted as a defect;
+what I counted is that the demo signal is now shown but is cleared by a single provider's
+success and missing from four fallback paths (§7).

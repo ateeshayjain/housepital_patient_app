@@ -13,6 +13,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/logger.dart';
+
 import '../models/care_event.dart';
 
 /// What kind of thing the user is reminding themselves about. Kept small on
@@ -184,4 +186,21 @@ class RemindersProvider extends ChangeNotifier {
       // Persistence is best-effort; the in-memory list stays authoritative.
     }
   }
+  /// Clears reminders from memory AND disk.
+  ///
+  /// Reminder titles are free text a family types about one patient ("insulin
+  /// before dinner"), so they are clinical content and must not survive a
+  /// patient switch or a logout on a shared phone.
+  Future<void> clearPatientScopedData() async {
+    _items.clear();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(storageKey);
+    } catch (e) {
+      Log.warn('Failed to clear reminders from storage',
+          error: e, tag: 'RemindersProvider');
+    }
+  }
+
 }

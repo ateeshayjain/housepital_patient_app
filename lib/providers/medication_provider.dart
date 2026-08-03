@@ -188,7 +188,7 @@ class MedicationProvider extends ChangeNotifier {
     // Seed demo data immediately
     if (_medications.isEmpty) {
       _medications = DemoData.medications;
-      DemoMode.markServingDemoData();
+      DemoMode.markServingDemoData(DemoMode.sourceMedications);
     }
 
     _isLoading = false;
@@ -233,7 +233,7 @@ class MedicationProvider extends ChangeNotifier {
           error: e, tag: 'MedicationProvider');
       if (_medications.isEmpty) {
         _medications = DemoData.medications;
-        DemoMode.markServingDemoData();
+        DemoMode.markServingDemoData(DemoMode.sourceMedications);
       }
       _schedule = _buildSchedule();
     }

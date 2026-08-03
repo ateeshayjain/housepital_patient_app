@@ -22,7 +22,9 @@ import 'package:housepital_patient/providers/app_provider.dart';
 import 'package:housepital_patient/providers/billing_provider.dart';
 import 'package:housepital_patient/providers/medication_provider.dart';
 import 'package:housepital_patient/providers/my_care_provider.dart';
+import 'package:housepital_patient/providers/cart_provider.dart';
 import 'package:housepital_patient/providers/orders_provider.dart';
+import 'package:housepital_patient/providers/reminders_provider.dart';
 import 'package:housepital_patient/services/api_service.dart';
 
 /// Every call fails, which is the real-world condition this app runs in today
@@ -44,6 +46,35 @@ class _UnreachableApi extends ApiService {
   @override
   Future<Map<String, dynamic>> getBillingSummary(String patientId) async =>
       throw Exception('unreachable');
+}
+
+EquipmentItem _equipment({String id = 'eq1'}) => EquipmentItem(
+      id: id,
+      name: 'Oxygen Concentrator',
+      brand: 'Philips',
+      category: 'Equipment',
+      availableForSale: true,
+      availableForRent: true,
+      price: 25000,
+      rentalPrice: 3000,
+    );
+
+/// Returns a DIFFERENT patient from the API than the demo seed, so the
+/// loadPatients switch path is observable.
+class _SwitchingApi extends _UnreachableApi {
+  int _calls = 0;
+
+  /// Returns a DIFFERENT patient on the second call, which is what makes the
+  /// loadPatients switch path observable at all.
+  @override
+  Future<List<Patient>> getPatients() async {
+    _calls++;
+    return [
+      _calls <= 1
+          ? Patient(id: 'pat_api_first', name: 'Rajesh Kumar', age: 72)
+          : Patient(id: 'pat_api_other', name: 'Sunita Devi', age: 68),
+    ];
+  }
 }
 
 Patient _otherPatient() => Patient(
@@ -81,6 +112,10 @@ void main() {
               'misleading value on the screen');
       expect(app.dueDate, isNull);
       expect(app.lastUpdatedText, isNull);
+      expect(app.vitalsHistory, isEmpty,
+          reason: 'manually entered readings are PHI — the round-1 audit '
+              'named this field by line number and the first fix still '
+              'missed it, because it was written from a symptom list');
     });
 
     test('switchPatient clears before adopting the new patient', () async {
@@ -186,4 +221,90 @@ void main() {
     expect(DemoMode.isServingDemoData.value, isTrue,
         reason: 'serving sample data without saying so is the bug');
   });
+  group('stores the first fix missed', () {
+    test('manually entered vitals do not survive a clear', () async {
+      final app = AppProvider(_UnreachableApi());
+      await app.loadPatients();
+      await app.addVitalReading(VitalReading(
+        id: 'manual_1',
+        patientId: 'pat_demo_rajesh',
+        recordedAt: DateTime(2026, 8, 3),
+        systolic: 150,
+        diastolic: 95,
+      ));
+      expect(app.vitalsHistory, isNotEmpty);
+
+      app.clearPatientScopedData();
+
+      expect(app.vitalsHistory, isEmpty);
+    });
+
+    test('cart clear drops SAVED items too, and persists that', () async {
+      SharedPreferences.setMockInitialValues({});
+      final cart = CartProvider();
+      cart.addItem(_equipment(id: 'eq1'));
+      cart.addItem(_equipment(id: 'eq2'));
+      cart.saveForLater(0); // move one into the saved list
+      expect(cart.items, isNotEmpty);
+      expect(cart.savedItems, isNotEmpty);
+
+      cart.clearPatientScopedData();
+      // let _persist() run
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(cart.items, isEmpty);
+      expect(cart.savedItems, isEmpty,
+          reason: 'a wishlist is built for one patient too; plain clear() '
+              're-persisted the outgoing saved list under the new patient');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('housepital_saved_items'), '[]');
+    });
+
+    test('orders clear reaches DISK, not just memory', () async {
+      SharedPreferences.setMockInitialValues({});
+      final orders = OrdersProvider();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(orders.orders, isNotEmpty);
+
+      orders.clearPatientScopedData();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('housepital_orders'), '[]',
+          reason: 'an in-memory-only clear looked right and then '
+              '_loadFromStorage restored the previous patient on next launch');
+    });
+
+    test('reminders are cleared from memory AND disk', () async {
+      SharedPreferences.setMockInitialValues({
+        RemindersProvider.storageKey: '[]',
+      });
+      final reminders = RemindersProvider();
+      await reminders.load();
+
+      await reminders.clearPatientScopedData();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(reminders.reminders, isEmpty);
+      expect(prefs.containsKey(RemindersProvider.storageKey), isFalse);
+    });
+  });
+
+  test('loadPatients is a switch path too, and clears on identity change',
+      () async {
+    // This path runs on every Home mount and used to reassign the current
+    // patient with no clear at all, quietly defeating the UI switch path.
+    final app = AppProvider(_SwitchingApi());
+    await app.loadPatients(); // -> pat_api_first
+    await app.loadDashboard();
+    expect(app.activeDeployment, isNotNull);
+    expect(app.currentPatient?.id, 'pat_api_first');
+
+    await app.loadPatients(); // API now returns a DIFFERENT patient
+
+    expect(app.currentPatient?.id, 'pat_api_other');
+    expect(app.activeDeployment, isNull,
+        reason: "the outgoing patient's dashboard must not survive");
+  });
+
 }

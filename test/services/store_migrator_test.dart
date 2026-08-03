@@ -1,0 +1,174 @@
+// test/services/store_migrator_test.dart
+//
+// StoreMigrator shipped with zero tests and three real defects that only a
+// test would have caught — the round-2 audit found all three by reading:
+//
+//   1. `_migrateFrom(prefs, 1)` with currentVersion == 1 entered `while (1 < 1)`
+//      and never stamped, so the devices that most needed a version never got
+//      one and re-ran the pre-versioning path on every launch, forever.
+//   2. A failing step still advanced the stamp, permanently labelling
+//      un-migrated data as migrated — the exact silent data loss the file
+//      exists to prevent.
+//   3. The "fresh install" inference used a hand-maintained key list that was
+//      wrong on the day it was written (9 of 14 live keys).
+//
+// This file pins the behaviour, not the implementation.
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:housepital_patient/services/store_migrator.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final versionKey = StoreMigrator.versionKeyForTest;
+
+  Future<SharedPreferences> prefs() => SharedPreferences.getInstance();
+
+  group('first install', () {
+    test('stamps at currentVersion and writes nothing else', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion);
+      expect(p.getKeys(), {versionKey},
+          reason: 'a fresh install must not gain anything but the stamp');
+    });
+  });
+
+  group('pre-versioning install (data, no stamp)', () {
+    test('is stamped — the case that silently never was', () async {
+      SharedPreferences.setMockInitialValues({
+        'housepital_orders': '[]',
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion,
+          reason: 'without a stamp this device re-runs migration forever');
+      expect(p.getString('housepital_orders'), '[]',
+          reason: 'existing data must survive untouched');
+    });
+
+    test('is detected from ANY key, not a curated list', () async {
+      // 'housepital_reminders' was missing from the old frozen list, so a
+      // device holding only reminders was misread as a fresh install and
+      // would have skipped every future migration.
+      SharedPreferences.setMockInitialValues({
+        'housepital_reminders': '[]',
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion);
+      expect(p.getString('housepital_reminders'), '[]');
+    });
+
+    test('running twice is a no-op the second time', () async {
+      SharedPreferences.setMockInitialValues({'theme_mode': 'dark'});
+
+      await StoreMigrator.run();
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion);
+      expect(p.getString('theme_mode'), 'dark');
+    });
+  });
+
+  group('already current', () {
+    test('leaves the stamp and the data alone', () async {
+      SharedPreferences.setMockInitialValues({
+        versionKey: StoreMigrator.currentVersion,
+        'housepital_cart_items': '[{"id":"x"}]',
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion);
+      expect(p.getString('housepital_cart_items'), '[{"id":"x"}]');
+    });
+  });
+
+  group('downgrade', () {
+    test('refuses to migrate backwards and preserves the newer stamp',
+        () async {
+      final newer = StoreMigrator.currentVersion + 5;
+      SharedPreferences.setMockInitialValues({
+        versionKey: newer,
+        'housepital_orders': '[{"id":"from-the-future"}]',
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), newer,
+          reason: 'an older app must not claim data written by a newer one');
+      expect(p.getString('housepital_orders'), '[{"id":"from-the-future"}]',
+          reason: 'a wrong migration is worse than a missing one');
+    });
+  });
+
+  group('never throws', () {
+    test('a corrupt stamp does not stop the app from starting', () async {
+      // run() sits in main() BEFORE runApp — an escaping exception is a
+      // permanently black screen, not a crash report.
+      SharedPreferences.setMockInitialValues({
+        versionKey: 'not-an-int',
+        'housepital_orders': '[]',
+      });
+
+      await expectLater(StoreMigrator.run(), completes);
+    });
+  });
+
+  group('quarantine', () {
+    test('COPIES the value aside and leaves the original in place', () async {
+      SharedPreferences.setMockInitialValues({
+        'housepital_orders': '{"corrupt": true}',
+      });
+      final p = await prefs();
+
+      await StoreMigrator.quarantine(p, 'housepital_orders', 1);
+
+      expect(p.getString('__quarantine_v1_housepital_orders'),
+          '{"corrupt": true}',
+          reason: 'support must be able to recover the original bytes');
+      expect(p.getString('housepital_orders'), '{"corrupt": true}',
+          reason: 'quarantine copies — the migration step decides what to '
+              'overwrite, and it does so knowingly');
+    });
+
+    test('is a no-op for a key that does not exist', () async {
+      SharedPreferences.setMockInitialValues({});
+      final p = await prefs();
+
+      await StoreMigrator.quarantine(p, 'not_here', 1);
+
+      expect(p.getKeys(), isEmpty);
+    });
+
+    test('preserves non-string types', () async {
+      SharedPreferences.setMockInitialValues({
+        'an_int': 7,
+        'a_bool': true,
+        'a_list': <String>['a', 'b'],
+      });
+      final p = await prefs();
+
+      await StoreMigrator.quarantine(p, 'an_int', 2);
+      await StoreMigrator.quarantine(p, 'a_bool', 2);
+      await StoreMigrator.quarantine(p, 'a_list', 2);
+
+      expect(p.getInt('__quarantine_v2_an_int'), 7);
+      expect(p.getBool('__quarantine_v2_a_bool'), true);
+      expect(p.getStringList('__quarantine_v2_a_list'), ['a', 'b']);
+    });
+  });
+}

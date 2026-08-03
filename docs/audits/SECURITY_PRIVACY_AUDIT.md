@@ -1,102 +1,96 @@
-# Security & Privacy Checklist (App-Agnostic) — Audit vs commit 803124d
+# Security & Privacy Checklist (App-Agnostic) — Audit round 2 vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** Security & Privacy agent · **Repo:** `housepital_patient_app`
-**Scope:** Flutter/Dart client (`lib/`, `ios/`, `android/`), Firebase Cloud Function (`functions/`), Firestore rules, full git history (all refs).
-**Method:** read-only. Every verdict below cites a file:line or a command with its output. No code was modified.
-**Context:** healthcare app handling patient medical data in India → PHI leakage treated as top-severity; India DPDP Act 2023 obligations assessed alongside the checklist.
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
+**Scope:** Flutter/Dart client (`lib/`, `ios/`, `android/`), Cloud Function (`functions/`), Firestore + **Storage** rules, full git history (all refs).
+**Method:** read-only. Every verdict cites a `file:LINE` or a command with its output. No source file was modified.
+**Context:** healthcare app handling patient medical data in India → PHI leakage is top-severity; India DPDP Act 2023 assessed alongside the checklist.
+
+> **Item count correction.** Round 1 labelled the checklist "49 items"; counting the boxes in the
+> source checklist gives **53** (§1=4 §2=5 §3=4 §4=6 §5=4 §6=6 §7=3 §8=5 §9=4 §10=4 §11=4 §12=4).
+> Round-2 totals below use 53. Round-1 per-section grades are otherwise comparable.
+
+---
+
+## Changed since round 1
+
+| Round-1 finding | Status now | Evidence |
+|---|---|---|
+| **B-1** No Storage rules at all | ⚠️ **REPLACED BY A WORSE-SHAPED PROBLEM** — rules now exist but are **provably unsatisfiable by this app's own uploads**; deploying them breaks chat + concern photo upload 100% | `storage.rules:51-53,76,78` vs `chat_screen.dart:135`, `raise_concern_screen.dart:330`, `demo_data.dart:29` — see **B-1** |
+| **B-2** Missing iOS camera/photo usage strings | ✅ **FIXED** | `ios/Runner/Info.plist:73-76` — both keys present, wording clinical and specific |
+| **B-3** Assistant Cloud Function unauthenticated, wildcard CORS | ❌ **UNCHANGED** | `functions/index.js:107-114` — still `onRequest` + `cors: true`, no `verifyIdToken`, no App Check, no quota |
+| **B-4** PHI in release logs | ❌ **UNCHANGED** | `logger.dart:55-59` still strips only debug/info and interpolates `$error`; `staff_role_card.dart:312-315` still `debugPrint`s the care-needs checklist; `main.dart:288-291` still dumps error+stack on web release |
+| **B-5** No account deletion | ⚠️ **PARTIALLY FIXED** — an in-app flow now exists, but it transmits nothing and the success copy asserts a server-side deletion that no component performs | `delete_account_screen.dart:53-59` (`Future.delayed` + `TODO(backend)`) vs the claim at `:74-78` — see **B-5** |
+| **B-6** Sensitive exports not role-gated in code | ❌ **UNCHANGED** | `handover_report_service.dart:302-305` still has no role param; `invoice_pdf_service.dart:261-264` still ungated and `my_orders_screen.dart:389-393` now comments the gap as intentional ("downloadable invoice (always)"); `document_repository_screen.dart` still has zero `canUserPerform` |
+| **H-3** `logout()` leaves PHI in memory | ⚠️ **PARTIALLY FIXED** — `SessionScope` covers 5 providers and is correctly wired at both sites, but **6 PHI-bearing stores are outside it** and `ApiService._authToken` is still never cleared | `session_scope.dart:28-43`; misses listed in **H-3** |
+| **M-1** `google-services.json` + `firebase_options.dart` tracked; `CLAUDE.md` claim wrong | ⚠️ **RE-CONFIRMED (files) / ✅ FIXED (doc)** | `git ls-files` still returns both files; 3 `AIza…` keys in history. `CLAUDE.md` now states this accurately |
+| `ANTHROPIC_API_KEY` server-side only | ✅ **RE-CONFIRMED CLEAN** on every ref | 4 commands, all empty output — see Task-1 |
+| — | 🆕 **NEW: doctor-handover PDF is built entirely from `DemoData` with no sample-data marking** — the demo banner covers screens but not the one artifact that leaves the app and reaches a clinician | `handover_report_service.dart:95,101-108`; no `DemoMode.markServingDemoData()` and no watermark anywhere in the file |
+| — | 🆕 **NEW: `health_manager_banner.dart:83` passes a STAFF id as `patientId`** into `/chat`, so the Firestore thread key and the Storage ownership segment become a staff identifier | `health_manager_banner.dart:83` |
+| — | 🆕 **CORRECTION to round 1: `firestore.rules` isolation model does not match the app's identifiers either.** Round 1 graded it "genuinely good"; tracing `patientId` shows it is never a Firebase uid, so `auth.uid == patientId` fails everywhere | `firestore.rules:67,70,72,90,94,99,133` vs `home_screen.dart:781` |
+| — | 🆕 `StoreMigrator` quarantine has **zero call sites** — the retention risk is latent, not active | `grep -rn quarantine lib/ test/` → only `store_migrator.dart` |
+| — | 🆕 The isolation test's name overclaims: *"clearPatientScopedData nulls **every** per-patient field"* asserts 7 fields and misses 2 that survive | `test/providers/patient_scope_isolation_test.dart:63-84` |
 
 ---
 
 ## Scorecard
 
-| Section | ✅ | ⚠️ | ❌ | N/A |
-|---|---|---|---|---|
-| 1. Data inventory & minimization | 1 | 2 | 1 | 0 |
-| 2. Storage & encryption | 1 | 1 | 3 | 0 |
-| 3. Data in transit | 2 | 2 | 0 | 0 |
-| 4. Secrets management | 2 | 3 | 1 | 0 |
-| 5. Permissions & access requests | 0 | 1 | 3 | 0 |
-| 6. Authentication & access control | 1 | 2 | 2 | 1 |
-| 7. Third-party SDKs & dependencies | 0 | 2 | 1 | 0 |
-| 8. AI / LLM privacy | 1 | 2 | 2 | 0 |
-| 9. Privacy policy & disclosure | 0 | 1 | 1 | 2 (BLOCKED-OWNER) |
-| 10. Regulatory | 0 | 3 | 1 | 0 |
-| 11. Deletion & retention | 0 | 0 | 4 | 0 |
-| 12. Hardening & incident readiness | 0 | 2 | 2 | 0 |
-| **TOTAL (49 items)** | **8** | **21** | **21** | **1 + 2 blocked** |
+| Section | ✅ | ⚠️ | ❌ | N/A | Δ vs round 1 |
+|---|---|---|---|---|---|
+| 1. Data inventory & minimization | 1 | 2 | 1 | 0 | — |
+| 2. Storage & encryption | 1 | 1 | 3 | 0 | — |
+| 3. Data in transit | 2 | 2 | 0 | 0 | — |
+| 4. Secrets management | 1 | 4 | 1 | 0 | — |
+| 5. Permissions & access requests | 1 | 1 | 2 | 0 | **+1 ✅** (B-2 fixed) |
+| 6. Authentication & access control | 1 | 1 | 3 | 1 | **−1 ⚠️ / +1 ❌** (isolation regraded) |
+| 7. Third-party SDKs & dependencies | 0 | 2 | 1 | 0 | — |
+| 8. AI / LLM privacy | 1 | 2 | 2 | 0 | — |
+| 9. Privacy policy & store disclosure | 0 | 1 | 1 | 2 (BLOCKED-OWNER) | — |
+| 10. Regulatory | 0 | 4 | 0 | 0 | **+1 ⚠️** (DPDP now cited in code) |
+| 11. Deletion & retention | 0 | 1 | 3 | 0 | **+1 ⚠️** (B-5 partial) |
+| 12. Hardening & incident readiness | 0 | 2 | 2 | 0 | — |
+| **TOTAL (53 items)** | **8** | **23** | **19** | **1 + 2 blocked** | ✅ 8→8 · ⚠️ 21→23 · ❌ 21→19 |
+
+Net: **two failures converted to partials, one failure converted to a pass, one partial regraded down.**
+Nothing in the round-2 diff introduced a *new* code-level vulnerability — but the single most
+important new artefact (`storage.rules`) is functionally wrong, and the second (`delete_account_screen.dart`)
+makes a factual claim to the user that the code does not honour.
 
 ---
 
-## Task-1 result: SECRET SCAN (highest priority) — verbatim command output
+## Task-1 result: SECRET SCAN — re-run verbatim on `820060b`
 
-### ANTHROPIC_API_KEY — ✅ CLEAN. Confirmed server-side only.
+### `ANTHROPIC_API_KEY` — ✅ **RE-CONFIRMED CLEAN.** Server-side only.
 
 ```
-$ grep -rn "ANTHROPIC_API_KEY\|anthropic" . (excl .git/build/.dart_tool)
-functions/index.js:21:const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
-functions/index.js:114:    secrets: [ANTHROPIC_API_KEY],
-functions/index.js:153:      const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
-functions/package.json:10:    "@anthropic-ai/sdk": "^0.71.0",
-functions/README.md:46:firebase functions:secrets:set ANTHROPIC_API_KEY
-+ 9 documentation-only mentions (PROJECT.md, README.md, CLAUDE.md, .env.example, docs/)
-
-$ grep -rn "sk-ant-" .            # 3 hits, ALL doc placeholders:
-functions/README.md:31:(`sk-ant-...`)
-functions/README.md:47:#   → paste your sk-ant-... key when prompted
-functions/README.md:87:echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+$ git log --oneline --all -S "ANTHROPIC" -- lib/ ios/
+(NO OUTPUT — the string has never existed in lib/ or ios/ on any ref)
 
 $ git log -p --all | grep -oE "sk-ant-[A-Za-z0-9_-]{20,}" | sort -u
 (NO OUTPUT — no real Anthropic key in any commit, on any ref)
 
-$ grep -rni "anthropic|sk-ant" lib/ ios/
-(no key material; 2 prose comments only — lib/main.dart:237, lib/config/constants.dart:9)
-
-$ git log --oneline --all -S "ANTHROPIC" -- lib/ ios/
-(NO OUTPUT — the string has never existed in lib/ or ios/ in any commit)
-```
-
-**Verdict: ✅ CONFIRMED.** `ANTHROPIC_API_KEY` exists only as a Firebase `defineSecret` (`functions/index.js:21`), resolved at `functions/index.js:153`, and has never appeared in `lib/`, `ios/`, or git history. The key cannot ship in the binary.
-
-### Other credential classes — ✅ CLEAN
-
-```
 $ git log -p --all | grep -oE "(AKIA[0-9A-Z]{16}|sk_live_[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)" | sort -u
 (NO OUTPUT — no AWS, Stripe, GitHub, Slack, or private-key material in any commit)
-
-$ git grep -nIE "(password|secret|token|api[_-]?key)[\"' ]*[:=][\"' ]*[A-Za-z0-9_/+.-]{12,}" -- lib/ ios/ android/ functions/ web/
-(NO OUTPUT after excluding examples/placeholders — no hardcoded credential literals)
 ```
 
-Razorpay is correctly `--dart-define`-injected (`lib/config/constants.dart:23-26`) with the placeholder `rzp_test_XXXXXXXXXX` triggering simulated checkout by design (`lib/services/payment_service.dart:47-48`) — as documented, not a finding.
+The key exists only as `defineSecret` (`functions/index.js:21`), attached at `:109`, resolved at
+`:152`. It cannot ship in the binary. **Unchanged from round 1 and independently re-verified.**
 
-### ❌ Firebase config — the brief's premise is HALF WRONG. Correct the contract.
-
-`CLAUDE.md:48` states *"Firebase plists are gitignored."* That is true for iOS only. **Android and Dart Firebase config are committed and tracked.**
+### Firebase client config — ⚠️ **RE-CONFIRMED TRACKED.** Doc claim now correct.
 
 ```
 $ git ls-files | grep -iE "GoogleService|google-services|firebase_options"
-android/app/google-services.json          ← TRACKED
-lib/config/firebase_options.dart          ← TRACKED
-
-$ git check-ignore -v ios/Runner/GoogleService-Info.plist
-.gitignore:57:**/GoogleService-Info.plist   ios/Runner/GoogleService-Info.plist   ← correctly ignored
-$ git check-ignore -v android/app/google-services.json
-NOT IGNORED                                                                       ← gitignore is inert here
-$ git status --porcelain --ignored ios/Runner/GoogleService-Info.plist
-!! ios/Runner/GoogleService-Info.plist      ← never committed. GOOD.
-
-$ git log --all --oneline --diff-filter=A -- android/app/google-services.json lib/config/firebase_options.dart
-5a0ca2e feat: add documentation, tests, utilities, and Firebase config
+android/app/google-services.json          ← STILL TRACKED
+lib/config/firebase_options.dart          ← STILL TRACKED
 
 $ git log -p --all | grep -oE "AIza[A-Za-z0-9_-]{35}" | sort -u | wc -l
-       3      ← 3 distinct Firebase Web API keys in history (web / android / ios)
+       3      ← 3 distinct Firebase Web API keys still in history (web / android / ios)
 ```
 
-Committed key locations: `lib/config/firebase_options.dart:23` (web), `:32` (android), `:44` (ios); `android/app/google-services.json:18`. Project: `housepital-patient`, sender `536139461614`.
-
-**Why `.gitignore` did not help:** `.gitignore` never applies to already-tracked files. The rules at `.gitignore:56-57` were added *after* `5a0ca2e`; `android/app/google-services.json` was already in the index, so it stays tracked. The `.gitignore` comment at `.gitignore:50-51` even admits this ("google-services.json is currently COMMITTED — Agent F flagged this") — it was flagged in a prior audit and never actioned.
-
-**Severity: Medium, not Critical.** Firebase API keys are client identifiers, not secrets — Google publishes them in every app bundle by design. Their safety depends entirely on (a) Firestore/Storage rules and (b) console-side key restrictions. Firestore rules are strong (§6). **Storage rules do not exist (see Blocker B-1)**, which is what turns this from cosmetic into real exposure.
+The iOS plist remains correctly untracked. `CLAUDE.md` now states this accurately (the round-1
+"Firebase plists are gitignored" falsehood is gone) — **doc finding closed, file finding open.**
+Severity stays **Medium**: these are public-by-design client identifiers whose safety rests on
+(a) Security Rules and (b) console key restrictions. (a) is now *worse than absent* for Storage —
+see B-1. (b) is still **BLOCKED-OWNER**.
 
 ---
 
@@ -104,200 +98,298 @@ Committed key locations: `lib/config/firebase_options.dart:23` (web), `:32` (and
 
 ### 1. Data inventory & minimization
 
-- ❌ **Every piece of personal data the app stores is listed.** No data inventory exists. `git grep -lIi "data inventory|personal data|DPDP|GDPR" -- docs/ *.md` returns nothing; `docs/` holds 15 files (ARCHITECTURE, DATABASE_SCHEMA, KNOWN_ISSUES…) and none enumerates personal/health data. There is no `SECURITY_REVIEW.md` as the checklist's closing instruction requires. — **Impact:** DPDP §5 notice obligations and App Privacy answers cannot be completed accurately without one; nobody can state the blast radius of a breach. — **Fix:** add `docs/DATA_INVENTORY.md` listing each field, its store (SharedPreferences key / Firestore path / Storage path), purpose, and retention.
-- ⚠️ **Each item has a reason to exist.** Mostly true, two exceptions found. `lib/screens/services/cards/staff_role_card.dart:303-311` collects a care-needs checklist that no API accepts — it is only `debugPrint`ed (see §2). `lib/models/assistant_models.dart:126` sends `patient_id` to the assistant endpoint, but `functions/index.js:173` never uses it in the prompt — collected, transmitted, unused.
-- ✅ **Sensitive identifiers are optional, never required.** Genuinely strong. `git grep -nIi "aadhaar|pan|passport|bank|ifsc|account_number|abha" -- lib/` returns no patient-facing collection. The only Aadhaar reference is a *staff* vetting document type (`lib/models/models.dart:936`) and display copy about staff verification (`lib/screens/services/cards/staff_role_card.dart:587`). Phone number is the sole required identifier, used for OTP auth. No card data touches the app (Razorpay SDK handles it).
-- ⚠️ **No data collected "just in case."** Same two exceptions as above; otherwise clean.
+- ❌ **Every piece of personal data the app stores is listed.** Still no inventory. `ls docs/` shows 15 docs + `docs/audits/`; none enumerates personal/health data, and there is still no `SECURITY_REVIEW.md` as the checklist's closing instruction requires. `grep -rlIi "DPDP|GDPR|data inventory" docs/ *.md` matches only three **audit reports** — analysis, not a compliance artefact. — **Impact:** App Privacy answers and DPDP §5 notice cannot be completed accurately; blast radius of a breach is unknowable. — **Fix:** `docs/DATA_INVENTORY.md` listing field → store (prefs key / Firestore path / Storage path) → purpose → retention.
+- ⚠️ **Each item has a reason to exist.** Two exceptions, both **unchanged**: `staff_role_card.dart:305-315` still collects a care-needs checklist that no API accepts and only `debugPrint`s (§2); `assistant_models.dart:124-129` still sends `patient_id`, and `functions/index.js:171-174` still never uses it — the prompt is built from `role`, `locale`, `text` only. Collected, transmitted off-device, unused.
+- ✅ **Sensitive identifiers are optional, never required.** Re-verified. No patient-facing collection of Aadhaar/PAN/passport/bank/ABHA; the only Aadhaar reference is a *staff* vetting document type (`models.dart:936`). Phone is the sole required identifier (OTP auth). No card data touches the app.
+- ⚠️ **No data collected "just in case."** Same two exceptions; otherwise clean.
 
 ### 2. Storage & encryption
 
-- ⚠️ **Sensitive data encrypted at rest.** All persistence is `shared_preferences` — **there is no `flutter_secure_storage`, no `EncryptedSharedPreferences`, no SQLCipher** (confirmed against `pubspec.yaml` dependency block). PHI/PII written in plaintext JSON:
-  - `lib/providers/orders_provider.dart:166-167` — orders + **assessments** (`housepital_orders`, `housepital_assessments`)
-  - `lib/screens/checkout/address_selection_screen.dart:126` — saved addresses incl. name, full address, phone (`housepital_saved_addresses`)
-  - `lib/providers/reminders_provider.dart:179` — care reminders, free-text `title` (`housepital_reminders`)
-  - `lib/providers/cart_provider.dart:209-214`, `lib/providers/app_provider.dart:106` (profile photo path)
-  - `lib/services/cache_service.dart:19` — 30-min TTL API cache (only one live call site, `lib/providers/app_provider.dart:190`)
-  On **iOS** this is acceptable: `NSUserDefaults` inherits Data Protection (`NSFileProtectionCompleteUntilFirstUserAuthentication`), so it is encrypted at rest while the device is off. On **Android** it is a plaintext XML in app-private storage — readable on a rooted/backed-up device. Graded ⚠️ not ❌ because iOS is the stated first target.
-- ✅ **Secrets/tokens in a secure store, never plaintext prefs.** The app never persists a token itself. `ApiService._authToken` (`lib/services/api_service.dart:16`) is in-memory only; the Firebase refresh token is held by the Firebase SDK (iOS Keychain). `git grep "setString"` shows no token ever reaching prefs. Correct design — `flutter_secure_storage` is genuinely not needed.
-- ❌ **No PII in logs (redact before logging).** **Worst finding in the audit.** 91 logging call sites; none guarded by `kDebugMode` or `assert`. `lib/utils/logger.dart:54-57` strips only `debug`/`info` in release — **`Log.warn`/`Log.error` survive release and interpolate `$error`** (`lib/utils/logger.dart:59`), and all 30 raw `debugPrint(...)` calls survive release unconditionally. Confirmed leaks:
-  1. `lib/screens/services/cards/staff_role_card.dart:308-311` — writes the patient's **care-needs checklist** (feeding, toileting, catheter care…) plus recommended care level verbatim to logcat/os_log on every booking attempt. Functional health status, in the clear, in release.
-  2. `lib/services/firebase_service.dart:129-130` — logs `$localPath` of a user-picked file. Basenames are preserved (`lib/screens/chat/chat_screen.dart:132`, `lib/screens/support/raise_concern_screen.dart:327`), so `mother_biopsy_report.jpg` is logged in full.
-  3. ~28 sites logging `error: e` / `$e` where the exception carries a URL containing `patientId`. `package:http`'s `ClientException.toString()` appends `uri=…`, and every patient endpoint embeds the ID (`lib/services/api_service.dart:182,197,211,230,238,248,267,306,414,424,429,497,558`). Examples, all release-surviving: `lib/providers/app_provider.dart:151,216,255`; `lib/providers/medication_provider.dart:173,206,230`; `lib/providers/my_care_provider.dart:69`; `lib/services/sync_service.dart:70,93,98`; `lib/services/firebase_service.dart:247,269,289`; `lib/screens/assistant/assistant_executor.dart:310,340,367,397,407,441,463`; `lib/screens/reports/daily_report_screen.dart:39`.
-  4. `lib/main.dart:278-283` — on **web release** (`kIsWeb && !kDebugMode`) the `else` branch fires: every uncaught async error **plus full stack** goes to the browser console in production.
-  5. `lib/main.dart:115,117,279` — raw error + stack exported to Crashlytics (Google sub-processor) with no scrubbing. Widget-build exceptions carry the widget tree, which holds rendered patient names/vitals in `Text` constructors.
-  6. `functions/index.js:192` — `console.error("assistant error:", err)` logs the whole error object; Anthropic SDK `BadRequestError` messages echo request content, which is the patient's symptom utterance.
-  Note `lib/screens/rental/return_screen.dart:362` and `lib/screens/support/staff_replacement_screen.dart:222` carry a comment claiming raw exception text is not leaked — the redaction was applied to the **UI only**; the log still emits `$e`.
-  **No token ever leaks** — verified `lib/providers/auth_provider.dart:100`, `lib/services/firebase_service.dart:151,325,336`, `lib/services/payment_service.dart:203` all log the error/code, never the credential. — **Fix:** (a) delete `staff_role_card.dart:308-311`; (b) drop `$localPath` from `firebase_service.dart:129`; (c) add a `redact()` helper in `lib/utils/logger.dart` that strips `uri=…`/paths from `error` before the `debugPrint` at `:59`; (d) change `main.dart:281` to a static string on web.
-- ❌ **Sensitive views gated behind auth/biometric/re-auth.** `git grep -nIi "local_auth|biometric|FLAG_SECURE|screenshot|privacyScreen" -- lib/ ios/ android/ pubspec.yaml` → **no output**. No app-lock, no biometric re-auth, no screenshot/recents-preview blocking on a screen showing vitals, medications and diagnoses. Exporting the full doctor handover PDF requires no re-auth. — **Fix:** add `local_auth` gate on My Care / Documents, and `FLAG_SECURE` (Android) + recents blur (iOS) on PHI screens.
-- ❌ **Backups encrypted and don't leak sensitive data.** `android/app/src/main/AndroidManifest.xml` sets neither `android:allowBackup` nor `dataExtractionRules` → **defaults to `allowBackup="true"`**, so the plaintext SharedPreferences XML (orders, assessments, addresses, reminders) is swept into Google Drive auto-backup. No iOS `isExcludedFromBackup` on any written file. — **Fix:** set `android:allowBackup="false"` (or a `dataExtractionRules` XML excluding the PHI keys) on the `<application>` tag.
+- ⚠️ **Sensitive data encrypted at rest.** All persistence is still `shared_preferences` — no `flutter_secure_storage`, no `EncryptedSharedPreferences`, no SQLCipher (`pubspec.yaml`). PHI/PII in plaintext JSON: `orders_provider.dart:11-12` (orders + assessments), `address_selection_screen.dart:126`, `reminders_provider.dart:179`, `cart_provider.dart:209-214`, `app_provider.dart:100` (profile photo path), `cache_service.dart:19` (30-min API cache). **New surface in round 2:** `StoreMigrator` can write `__quarantine_v{n}_{key}` copies of the same blobs (`store_migrator.dart:130-141`) — dormant today (§11). iOS `NSUserDefaults` inherits Data Protection, so ⚠️ not ❌ given iOS-first; on Android this is plaintext XML.
+- ✅ **Secrets/tokens in a secure store, never plaintext prefs.** Unchanged and still correct. `ApiService._authToken` (`api_service.dart:16`) is memory-only; the Firebase refresh token lives in the SDK's Keychain. No token ever reaches prefs.
+- ❌ **No PII in logs (redact before logging).** ❌ **UNCHANGED — still the worst finding in the audit.** `logger.dart:55-57` strips only `debug`/`info` in release; `Log.warn`/`Log.error` survive and interpolate `$error` at `:59`, and every raw `debugPrint` survives release unconditionally. Confirmed leaks, all re-verified at `820060b`:
+  1. `staff_role_card.dart:312-315` — writes the patient's **care-needs checklist** (feeding, toileting, catheter care…) plus recommended care level verbatim to logcat/os_log. Note it fires **before** the role gate at `:317`, so it logs even for a role that cannot book.
+  2. `firebase_service.dart:129-130` — logs `$localPath` of a user-picked file; basenames are preserved (`chat_screen.dart:132`, `raise_concern_screen.dart:327`), so `mother_biopsy_report.jpg` is logged in full.
+  3. ~28 sites logging `error: e` where the exception carries a URL containing `patientId` (`http`'s `ClientException.toString()` appends `uri=…`; every patient endpoint embeds the ID).
+  4. `main.dart:288-291` — on **web release** (`!kDebugMode && kIsWeb` → `else` branch) every uncaught async error **plus full stack** goes to the browser console.
+  5. `main.dart:117-121,286` — raw error + stack to Crashlytics, unscrubbed.
+  6. `functions/index.js:191` — `console.error("assistant error:", err)` logs the whole error object; Anthropic SDK error messages echo request content, i.e. the patient's symptom utterance.
+  — **Fix:** delete `staff_role_card.dart:312-315`; drop `$localPath` from `firebase_service.dart:129`; add a `redact()` in `logger.dart` stripping `uri=…`/paths before the `debugPrint` at `:59`; make `main.dart:290` a static string on web.
+- ❌ **Sensitive views gated behind auth/biometric/re-auth.** ❌ **UNCHANGED.** `grep -rniE "local_auth|biometric|FLAG_SECURE|privacyScreen|secureWindow" lib/ ios/Runner android/app/src pubspec.yaml` → **no output**. No app-lock, no biometric re-auth, no screenshot/recents blocking on screens showing vitals, medications and diagnoses. Exporting the full handover PDF still requires no re-auth.
+- ❌ **Backups encrypted and don't leak sensitive data.** ❌ **UNCHANGED.** `android/app/src/main/AndroidManifest.xml:5-9` sets neither `android:allowBackup` nor `dataExtractionRules` → defaults to `allowBackup="true"`, sweeping the plaintext prefs XML (orders, assessments, addresses, reminders — and any future quarantine blobs) into Google Drive auto-backup.
 
 ### 3. Data in transit
 
-- ⚠️ **HTTPS/TLS only — insecure endpoints rejected in code, not just by convention.** Convention is clean: `git grep -nI "http://" -- lib/` returns **zero** results; every URL is `https://` (`lib/config/constants.dart:3`, `lib/screens/settings/about_screen.dart:98-110`, etc.). Platform enforcement is correct — no `NSAppTransportSecurity` exception block in `ios/Runner/Info.plist`, no `usesCleartextTraffic` / `networkSecurityConfig` in the Android manifest, so ATS/cleartext-blocking defaults apply. But **there is no code-level rejection**: `ApiService({this.baseUrl = AppConstants.apiBaseUrl, ...})` (`lib/services/api_service.dart:37-41`) accepts any string, and `git grep -nI "isScheme|scheme ==|startsWith('https" -- lib/` returns nothing. Same for `AssistantService.assistantUrl` (`lib/services/assistant_service.dart:33`). A misconfigured `--dart-define=ASSISTANT_API_URL=http://…` would be attempted, not refused. Graded ⚠️ because the OS would still block it — the code itself would not. — **Fix:** `assert(Uri.parse(baseUrl).isScheme('https'))` in both constructors.
-- ✅ **No PII in URL query parameters.** Every `queryParams` map carries only pagination/period/date: `lib/services/api_service.dart:220,239,276,290,344,373,525`. Patient IDs travel in the path (unavoidable, and not logged by design — see §2 for where that assumption breaks); all mutations use `jsonEncode(body)` (`lib/services/api_service.dart:115,125`). Auth rides in the header (`lib/services/api_service.dart:50`).
-- ⚠️ **Certificate pinning considered for high-value endpoints (optional).** Not implemented and not documented as a decision. Checklist marks this optional; for a PHI API it is worth an explicit accept/reject note.
-- ✅ **Modern TLS; no deprecated ciphers/protocols.** No custom `HttpClient`, no `badCertificateCallback` override anywhere (`git grep` → no output), so platform TLS defaults hold. Nothing downgrades the connection.
-
-> **Task-4 direct answer:** *Would `ApiService` silently accept a downgraded connection?* **No.** It has no `badCertificateCallback`, no custom `SecurityContext`, and no `HttpOverrides` — an invalid or MITM'd certificate throws `HandshakeException`, which surfaces as a failed request. The only gap is that it would *attempt* an `http://` base URL if one were injected at build time (ATS would then block it on iOS).
+- ⚠️ **HTTPS/TLS only — rejected in code, not just by convention.** Convention still clean: `grep -rn "http://" lib/` → **zero**. Platform enforcement correct (no ATS exception in `Info.plist`, no `usesCleartextTraffic`). But `grep -rn "isScheme|startsWith('https" lib/` → **still no output**: `ApiService` (`api_service.dart:37-41`) and `AssistantService` (`assistant_service.dart:33`) accept any string, so a misconfigured `--dart-define=…=http://…` would be *attempted*, not refused.
+- ✅ **No PII in URL query parameters.** Re-verified. Query maps carry only pagination/period/date; patient IDs travel in the path; all mutations use `jsonEncode(body)`; auth rides in the header.
+- ⚠️ **Certificate pinning considered.** Still not implemented and still not documented as an accepted risk. Checklist marks it optional; for a PHI API an explicit written decision is worth having.
+- ✅ **Modern TLS; no deprecated ciphers.** No custom `HttpClient`, no `badCertificateCallback`, no `HttpOverrides` anywhere — platform TLS defaults hold. A MITM'd certificate throws `HandshakeException`.
 
 ### 4. Secrets management
 
-- ⚠️ **No credentials in source.** No real secrets (see scan above). Three Firebase client API keys are committed (`lib/config/firebase_options.dart:23,32,44`) — these are public-by-design identifiers, but they are in source.
-- ⚠️ **No credentials in version-control history.** ✅ for all high-value classes (Anthropic, AWS, Stripe, GitHub, Slack, private keys — all confirmed absent from every ref). ⚠️ only for the 3 Firebase keys added in `5a0ca2e`.
-- ✅ **Secrets loaded from env / secret manager, not bundled into the client.** `ANTHROPIC_API_KEY` → `defineSecret` (`functions/index.js:21`). `RAZORPAY_KEY` → `String.fromEnvironment` (`lib/config/constants.dart:23`). `ASSISTANT_API_URL` → `String.fromEnvironment` (`lib/config/constants.dart:9`). Exactly right.
-- ❌ **Different credentials per environment.** One Firebase project (`housepital-patient`) across all three platform entries in `lib/config/firebase_options.dart:26,35,47` — no dev/staging/prod separation, no flavors. `firebase.json` defines a single default database. Debug builds, CI, and production share one datastore. — **Impact:** a developer test writes into the same Firestore/Storage as real patient data; a leaked key cannot be rotated per-environment. — **Fix:** add a `housepital-patient-dev` project + Flutter flavors before real patient data lands.
-- ⚠️ **Keys rotatable without a client release.** True for `ANTHROPIC_API_KEY` (re-set secret + redeploy function). False for the Firebase keys and the Razorpay key — both are baked into the binary and need a store release.
-- ⚠️ **BLOCKED-OWNER — Client-embedded keys assumed public, scoped/restricted accordingly.** Cannot verify from the repo. **Need from owner:** screenshots of (a) Google Cloud Console → APIs & Services → Credentials → each of the 3 `AIza…` keys → *Application restrictions* (must be iOS bundle `com.housepital.housepitalPatient` / Android package + SHA-1, not "None") and *API restrictions*; (b) Firebase Console → App Check status.
+- ⚠️ **No credentials in source.** No real secrets. Three Firebase client keys committed (`firebase_options.dart:23,32,44`) — public-by-design, but in source.
+- ⚠️ **No credentials in version-control history.** ✅ for every high-value class (re-verified above); ⚠️ only for the 3 Firebase keys.
+- ✅ **Secrets loaded from env / secret manager.** `ANTHROPIC_API_KEY` → `defineSecret`; `RAZORPAY_KEY`, `ASSISTANT_API_URL` → `String.fromEnvironment` (`constants.dart:9,23`).
+- ❌ **Different credentials per environment.** ❌ **UNCHANGED.** One Firebase project (`housepital-patient`) across all three platform entries; `firebase.json:9-14` defines a single default database. Debug builds, CI and production share one datastore — and now one **Storage bucket** governed by one set of rules.
+- ⚠️ **Keys rotatable without a client release.** True for the Anthropic secret; false for the Firebase and Razorpay keys.
+- ⚠️ **BLOCKED-OWNER — client-embedded keys scoped/restricted.** Unverifiable from the repo. Need GCP Console → Credentials → each `AIza…` key → Application + API restrictions, and Firebase Console → App Check status.
 
 ### 5. Permissions & access requests (least privilege)
 
-- ❌ **App requests only the permissions it uses.** `android.permission.SCHEDULE_EXACT_ALARM` (`android/app/src/main/AndroidManifest.xml:3`) is an **orphan**. Both scheduling call sites explicitly use inexact mode: `lib/services/medication_reminder_service.dart:178` and `:228` — `androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle`. No `exactAllowWhileIdle`, no `alarmClock`, no `requestExactAlarmsPermission()` anywhere in `lib/`. — **Impact:** Google Play policy-restricted permission; declaring it forces a declaration form and review scrutiny for zero functional benefit. — **Fix:** delete `android/app/src/main/AndroidManifest.xml:3`.
-- ❌ **Every permission maps to a reachable shipping feature.** The inverse failure is worse and is a **release blocker**. `ios/Runner/Info.plist` contains exactly two usage-description keys (lines 69-72) — **no `NSCameraUsageDescription`, no `NSPhotoLibraryUsageDescription`** — yet `image_picker` is called from six screens (12 call sites): `lib/screens/documents/document_repository_screen.dart:613,631`; `lib/screens/support/raise_concern_screen.dart:96`; `lib/screens/rental/return_screen.dart:316`; `lib/screens/chat/chat_screen.dart:121`; `lib/screens/settings/settings_screen.dart:69`; `lib/screens/settings/patient_profile_screen.dart:205`. On iOS a missing usage string is a **hard process crash**, not a denial. Every one of those taps kills the app on device. (Android is correct here — `image_picker` delegates to system intents, so no `CAMERA`/`READ_MEDIA_IMAGES` declaration is needed.)
-- ⚠️ **Permission rationale strings are specific and honest.** The two that exist are genuinely good, not boilerplate: `NSMicrophoneUsageDescription` = *"Housepital uses the microphone so you can speak to the assistant."* (`ios/Runner/Info.plist:70`); `NSSpeechRecognitionUsageDescription` = *"Housepital uses speech recognition to understand your questions."* (`:72`). One honest-disclosure gap: `lib/services/voice_service.dart:48` calls `_speech.initialize(...)` without `onDevice: true`, so Apple's framework may send audio **off-device** — and the string does not say so. For a patient describing symptoms aloud, that omission matters. Two required strings are missing entirely (above).
-- ❌ **App degrades gracefully when a permission is denied.** Inconsistent. Handled (catch + snackbar): `lib/screens/support/raise_concern_screen.dart:104-112`, `lib/screens/documents/document_repository_screen.dart:620-626,638-644`. **Unhandled — bare `await`, no try/catch, so a denial `PlatformException` propagates as an unhandled async error:** `lib/screens/settings/settings_screen.dart:69-70`, `lib/screens/settings/patient_profile_screen.dart:205-206`, `lib/screens/rental/return_screen.dart:315-319`, `lib/screens/chat/chat_screen.dart:121-126`. None of the six distinguishes *cancelled* from *permanently denied*, so no screen ever offers an "Open Settings" path. Microphone degrades safely but **silently** — `lib/providers/assistant_provider.dart:165-166` does `if (!ok) return;` with no snackbar and no UI state change, so the mic button appears dead.
+- ❌ **App requests only the permissions it uses.** ❌ **UNCHANGED.** `android.permission.SCHEDULE_EXACT_ALARM` (`AndroidManifest.xml:3`) remains an orphan — both scheduling call sites are explicitly inexact (`medication_reminder_service.dart:178,228`, `AndroidScheduleMode.inexactAllowWhileIdle`), and nothing calls `requestExactAlarmsPermission()`. Play policy-restricted permission for zero functional benefit.
+- ✅ **Every permission maps to a reachable shipping feature.** ✅ **FIXED — round-1 blocker B-2 closed.** `ios/Runner/Info.plist:73-74` `NSCameraUsageDescription`, `:75-76` `NSPhotoLibraryUsageDescription`. The 12 `image_picker` call sites no longer hard-crash the process on iOS. `RECORD_AUDIO` (`AndroidManifest.xml:4`) maps to `speech_to_text`. Verified against the full plist (`:1-78`).
+- ⚠️ **Permission rationale strings are specific and honest.** The two new strings are genuinely good, not boilerplate — the camera string names *prescriptions and lab reports* (`Info.plist:74`), the photo string names *reports, prescriptions or a profile picture* (`:76`). One honest-disclosure gap survives: `voice_service.dart:48` calls `_speech.initialize(...)` without `onDevice: true`, so Apple may send audio off-device, and `NSSpeechRecognitionUsageDescription` (`:72`) does not say so. For a patient describing symptoms aloud, that omission matters.
+- ❌ **App degrades gracefully when a permission is denied.** ❌ **UNCHANGED.** Handled: `raise_concern_screen.dart:104-112`, `document_repository_screen.dart:620-626,638-644`. Unhandled bare `await` (denial `PlatformException` propagates as an unhandled async error): `settings_screen.dart:69-70`, `patient_profile_screen.dart:205-206`, `return_screen.dart:315-319`, `chat_screen.dart:121-126`. None of the six distinguishes *cancelled* from *permanently denied*, so no screen offers an "Open Settings" path. Mic denial still fails silently (`assistant_provider.dart:165-166`, bare `if (!ok) return;`).
 
 ### 6. Authentication & access control
 
-- ✅ **Auth implemented correctly for the model.** Firebase phone-OTP, correctly wired. Proactive refresh at 50 min against Firebase's 60-min expiry (`lib/providers/auth_provider.dart:30,76-81`), forced refresh via `getIdToken(true)` (`:95`), one-shot 401 recovery with a single retry (`lib/services/api_service.dart:92-100`, `lib/providers/auth_provider.dart:109-116`), timer stopped before sign-out so a tick cannot race and re-set a stale token (`:220`), and disposed defensively (`:234`). Well covered by `test/providers/auth_provider_test.dart` (cold-start restore, sendOtp, verifyOtp, onboarding, logout).
-- N/A **Passwords hashed with bcrypt/scrypt/Argon2.** No passwords — OTP-only. (`firebase.json:16` does enable an `emailPassword` provider, but no code path in `lib/` uses it; worth disabling to shrink the auth surface.)
-- ❌ **Authorization checked server-side on every privileged action, not just hidden in the UI.** The role is a **client-side mutable string with a hardcoded default**: `lib/providers/app_provider.dart:19` — `String _currentUserRole = 'PRIMARY_CONTACT';` with a public setter at `:22`, never derived from a verified token claim. `lib/main.dart:227` hardcodes `const role = UserRole.primaryContact;` for the assistant. No Firebase custom claims, no server-side role check. See the next two items for the consequences.
-- ⚠️ **Data isolation between users/tenants enforced and tested.** `firestore.rules` is genuinely good: default-deny at `firestore.rules:52-54`, then per-collection owner-scoped allows for `chat_messages` (`:74-85`), `patients/*/attendance|vitals` (`:93-107`), `users/*/notifications` (`:115-129`), `active_sessions` (`:137-141`), `fcm_tokens` (`:148-151`), with client writes denied where the backend owns them. Two real caveats: (a) every rule keys on `request.auth.uid == patientId`, conflating the auth user with the patient — the file's own comment (`:64-66`) admits this and defers the `user_patients` mapping, so the multi-patient feature (`lib/providers/app_provider.dart:167-172 addPatient`) has no isolation model; (b) **no test proves no cross-leak** — `test/utils/permission_test.dart` only asserts the pure `canUserPerform` lookup table, and there are no rules tests. Also note `firestore.rules:9-17`: the file must be deployed from a *different* repo, so the repo cannot prove what is live (**BLOCKED-OWNER**: need a screenshot of the live rules at console.firebase.google.com/project/housepital-patient/firestore/rules).
-- ❌ **Role-based access enforced where the app has roles.** **The gate is widget-visibility only. Nothing is enforced at the service layer, anywhere.** Answering Task-7 directly:
-  - `lib/services/handover_report_service.dart` does **not** import `lib/utils/permissions.dart` (imports are `:16-25`). `shareHandover({DateTime? now})` at `:302-307` calls `Printing.sharePdf` at `:305` with **no role parameter and no check**. The class is a publicly constructible zero-arg `class HandoverReportService {` (`:27`), so every call site does `HandoverReportService().shareHandover()` inline — there is no injection point where a guard could be centralised.
-  - All three call sites are `if (canUserPerform(...)) <render widget>`: `lib/screens/my_care/my_care_screen.dart:168` (handler `_share()` at `:465-482` calls the service at `:469` with **no re-check**), `lib/screens/my_care/medications_screen.dart:60` (`onPressed` at `:64` is a bare call), `lib/screens/my_care/medication_schedule_screen.dart:50-52` (`onPressed` at `:56`, bare).
-  - Concrete bypass window: `medication_schedule_screen.dart:51` reads the role with `context.read`, **not `watch`** — so if `AppProvider.setCurrentUserRole` (`lib/providers/app_provider.dart:22`) changes role after that frame is built, a stale allowed button stays on screen and fully functional. Routes offer no backstop (`lib/main.dart:563-568` registers `/medications` and `/medication-schedule` as plain `MaterialPageRoute`, no redirect, no guard), and the assistant can navigate a `CARETAKER` there because `lib/screens/assistant/assistant_executor.dart:480` gates navigation on `UserAction.view` only — which `CARETAKER` holds (`lib/utils/permissions.dart:69`).
-  - **Worse, other sensitive exports have no gate at all — not even a hidden widget.** Invoice PDF: `lib/services/invoice_pdf_service.dart:261-265` ungated; the download button at `lib/screens/services/my_orders_screen.dart:390-394` has **no** `canUserPerform` wrapper while the *Cancel* button immediately below it at `:395-398` **is** gated — an inconsistency inside one `children:` list. Also ungated: `lib/screens/my_care/service_detail_screen.dart:551-553`, `lib/screens/billing/payment_screen.dart:101-119`. **Medical document repository**: `lib/screens/documents/document_repository_screen.dart` contains **zero** `canUserPerform` references; the share action at `:442-448` exports prescription/report metadata, and route `/documents` (`lib/main.dart:552-554`) is unguarded. So a `CARETAKER` — the exact role `lib/utils/permissions.dart:66` says "must not export the medical history" — has unrestricted access to the document repository and every invoice.
-  - The policy table itself is sound and fail-closed (`lib/utils/permissions.dart:77-81`, unknown role → `false`) and well tested — but it tests the *table*, not the *enforcement*. — **Fix:** change the signature to `shareHandover({required String role, DateTime? now})` and put `if (!canUserPerform(role, UserAction.shareHandover)) return;` immediately above `Printing.sharePdf` at `lib/services/handover_report_service.dart:305`; do the same in `invoice_pdf_service.dart:264`; add a role guard to the `/documents` route.
-- ⚠️ **Session/token expiry + refresh-rotation; failed-login rate limiting.** Expiry/refresh is solid (above). Client-side resend cooldown is 30 s (`lib/screens/auth/otp_screen.dart:19,36-40`). **BLOCKED-OWNER** for server-side limits: Firebase Phone Auth has built-in per-number/per-IP quotas, but whether App Check and SMS-abuse protection are enabled is console state — **need:** Firebase Console → Authentication → Settings → SMS region policy + App Check enforcement status.
-  Additional gap found: **`logout()` does not fully clear patient data from memory.** `lib/providers/auth_provider.dart:217-227` does `prefs.clear()` (good — wipes orders, assessments, addresses, reminders, cart from disk) and nulls `_currentUser`, but: (a) it never clears `ApiService._authToken`, so a valid bearer token lingers in memory for up to 60 min — `IApiService` (`lib/services/i_api_service.dart:12`) exposes only `setAuthToken`, no `clearAuthToken`; (b) `_phone` (`:22`) is not cleared; (c) providers are app-root singletons (`lib/main.dart:184-267`) and the logout UI at `lib/screens/settings/settings_screen.dart:440-443` only calls `logout()` then `Navigator.pop` — **no provider reset, no app restart**. So `AppProvider._currentPatient` (name, conditions, diagnosis, medications), `OrdersProvider._orders`, `MyCareProvider` and `MedicationProvider` all retain the previous patient's PHI in RAM and will render for the next user until the process is killed. The logout test (`test/providers/auth_provider_test.dart:278-300`) asserts only `signOutCalls`, `currentUser == null`, and `state == initial` — it does not assert that PHI-bearing providers were reset. — **Fix:** add `clearAuthToken()` to `IApiService`, and have `logout()` call `reset()` on every PHI-holding provider (or rebuild the provider tree on auth-state change).
+- ✅ **Auth implemented correctly for the model.** Unchanged and still strong. Firebase phone-OTP; proactive refresh at 50 min (`auth_provider.dart:30,76-81`), forced `getIdToken(true)` (`:95`), one-shot 401 recovery (`api_service.dart:92-100`), timer stopped before sign-out (`:219`), disposed defensively (`:231-235`).
+- N/A **Passwords hashed.** No passwords — OTP-only. (`firebase.json:18` still enables an `emailPassword` provider no code path uses; disabling it shrinks the auth surface.)
+- ❌ **Authorization checked server-side on every privileged action.** ❌ **UNCHANGED.** Role is still a client-side mutable string with a hardcoded default: `app_provider.dart:20` `String _currentUserRole = 'PRIMARY_CONTACT';` with a public setter at `:22`, never derived from a verified token claim. `main.dart:226` still hardcodes `const role = UserRole.primaryContact;` for the assistant. No custom claims, no server-side check.
+- ❌ **Data isolation between users/tenants enforced and tested.** ❌ **REGRADED DOWN from ⚠️.** Round 1 called `firestore.rules` "genuinely good" and treated the `auth.uid == patientId` conflation as a future tightening. Tracing the identifier proves it is a **present defect**, and the new `storage.rules` inherits it verbatim:
+  - `grep -rn "\.uid" lib/` → **zero hits.** The app never reads a Firebase uid, anywhere.
+  - Every `patientId` handed to Firestore/Storage is a backend domain id: `home_screen.dart:781` and `:845` pass `app.currentPatient?.id ?? 'pat_demo_rajesh'`; `care_team_screen.dart:30,94,125,302` the same; `demo_data.dart:29` shows the shape — `'pat_demo_rajesh'`.
+  - So `request.auth.uid == patientId` (`firestore.rules:67,70,72,90,94,99`; `storage.rules:52`) compares a 28-char Firebase uid to `pat_demo_rajesh`. It is **always false**. Chat reads/writes, attendance, vitals and `active_sessions` (`firestore.rules:133`) are all denied for the legitimate owner.
+  - `health_manager_banner.dart:83` is worse still: it passes `manager.staffId` as `patientId` into `/chat` (its own comment admits it: *"FUTURE: Replace with actual patient ID"*), so depending on entry point the same conversation resolves to a **different thread key**, and the Storage ownership segment becomes a staff identifier.
+  - There is still **no test proving absence of cross-leak** — `test/utils/permission_test.dart` tests the pure lookup table only, and there are no rules-emulator tests.
+  - The rules files themselves flag the gap and defer it (`firestore.rules:151` `user_patients` TODO; `storage.rules:46-50`). It cannot be deferred any longer: it is the reason both rule sets deny their own app. **BLOCKED-OWNER** on what is live (`firestore.rules:9-17` says deploy happens from `housepital-backend`).
+- ❌ **Role-based access enforced where the app has roles.** ❌ **UNCHANGED — still widget-visibility only.**
+  - `handover_report_service.dart:302` — `Future<void> shareHandover({DateTime? now})` still takes no role and performs no check before `Printing.sharePdf` at `:305`. Still a zero-arg publicly constructible class, so there is no injection point for a central guard.
+  - The three call sites still only hide the button: `my_care_screen.dart:168`, `medications_screen.dart:60`, `medication_schedule_screen.dart:50`. `medication_schedule_screen.dart:50-51` still reads the role with `context.read`, not `watch`, so a role change after that frame leaves a stale, fully functional allowed button on screen.
+  - `invoice_pdf_service.dart:261-264` still ungated — and `my_orders_screen.dart:389-393` now **documents the gap as deliberate**: *"downloadable invoice (always)"*, with the `Cancel` button immediately below at `:394-397` gated on `UserAction.pay`. One `children:` list, two opposite policies.
+  - `document_repository_screen.dart` still contains **zero** `canUserPerform` references, and `/documents` (`main.dart:560-562`) is registered as a plain `MaterialPageRoute` with no guard. No route in `main.dart` has any auth or role guard.
+  - So a `CARETAKER` — the role `permissions.dart:66` says must not export medical history — still reaches the document repository and every invoice.
+- ⚠️ **Session/token expiry + refresh-rotation; failed-login rate limiting.** Expiry/refresh solid; client resend cooldown 30 s (`otp_screen.dart:19,36-40`). **BLOCKED-OWNER** for server-side SMS abuse limits and App Check. **The logout/PHI half is materially better than round 1 but still incomplete — see H-3.**
 
-> **Task-3 direct answer:** token storage ✅ (memory + Firebase Keychain, never in prefs); refresh ✅ (proactive 50-min + 401 one-shot); expiry handling ✅; **logout ⚠️ — clears disk fully, clears memory only partially.**
+> **Round-2 direct answer on SessionScope:** it is a genuine improvement — the two call sites are
+> correctly placed (`home_screen.dart:1771` before `switchPatient`, `settings_screen.dart:457`
+> before `logout`, plus `delete_account_screen.dart:64`) and the five covered providers clear
+> thoroughly. But it is a **partial wipe that reads as complete**: the class docstring
+> (`session_scope.dart:11-24`) and the test name (`patient_scope_isolation_test.dart:63`) both
+> assert completeness that the code does not deliver. Enumerated in H-3.
 
 ### 7. Third-party SDKs & dependencies
 
-- ⚠️ **No analytics/tracking/ads SDKs unless explicitly intended and disclosed.** Genuinely good news: **no `firebase_analytics`, no ads SDK, no Segment/Mixpanel/Amplitude/Facebook SDK** anywhere in `pubspec.yaml` or `pubspec.lock`. But `firebase_crashlytics` and `firebase_performance` are enabled **unconditionally in every release build with no consent prompt and no opt-out**: `lib/main.dart:120-123` calls `setCrashlyticsCollectionEnabled(true)` / `setPerformanceCollectionEnabled(true)` inside `if (!kDebugMode)`. There is no settings toggle (`lib/screens/settings/settings_screen.dart` has rows for notifications, language, appearance — none for telemetry). Under DPDP that is telemetry processing without notice or consent.
-- ❌ **Each dependency's data collection is known and disclosed.** No disclosure artefact exists. Worse, **`ios/Runner/PrivacyInfo.xcprivacy` is missing** — `find ios -name PrivacyInfo.xcprivacy` returns 24 hits, **all under `ios/Pods/`** (Firebase, Razorpay, gRPC…), none for the app target. Apple has required an app-level privacy manifest since May 2024, and `shared_preferences` uses `NSUserDefaults`, a required-reason API (CA92.1) that must be declared. — **Impact:** App Store submission rejection. — **Fix:** add `ios/Runner/PrivacyInfo.xcprivacy` declaring `NSPrivacyAccessedAPITypes` (UserDefaults CA92.1, File timestamp if used) and `NSPrivacyCollectedDataTypes` (health, name, phone, photos, crash data, performance data).
-  **Task-8 — dependencies that transmit data off-device, and what each sees:**
-
-  | Dependency | Transmits off-device | What it sees |
-  |---|---|---|
-  | `firebase_auth` ^5.7.0 | Google | Phone number, OTP, device/IP, Firebase UID |
-  | `cloud_firestore` ^5.6.8 | Google | Chat messages, attendance, vitals, notifications — **PHI** |
-  | `firebase_storage` ^12.4.0 | Google | Chat photos, concern evidence photos — **medical images** (`lib/services/firebase_service.dart:137`) |
-  | `firebase_messaging` ^15.2.5 | Google | FCM token, device identifiers, push payloads |
-  | `firebase_crashlytics` ^4.3.5 | Google | Exception messages + **full stack traces**, unscrubbed (`lib/main.dart:115,117,279`) — see §2 |
-  | `firebase_performance` ^0.10.1+5 | Google | Network URLs (which contain `patientId`), latency, device/carrier |
-  | `razorpay_flutter` ^1.3.7 | Razorpay (IN) | Payment amount, order ID, card/UPI data entered in its own sheet |
-  | `speech_to_text` ^7.4.0 | Apple/Google | **Raw audio of spoken symptoms** — `onDevice` not set (`lib/services/voice_service.dart:48`) |
-  | `flutter_tts` ^4.2.5 | Apple/Google | Text sent for synthesis (assistant replies) |
-  | `cached_network_image` ^3.4.1 | image hosts | Image URLs requested |
-  | `http` ^1.4.0 / `dio` ^5.8.0+1 | app backend | All API traffic. **`dio` is declared but `git grep "package:dio"` in `lib/` finds no import — an unused dependency; remove it.** |
-  | `share_plus` ^11.0.0 | user-chosen app | Whatever is shared — **incl. the handover PDF and invoices** |
-  | `printing` ^5.14.3 | user-chosen target | Rendered PDF bytes (full medical history) |
-  | `image_picker`, `url_launcher`, `flutter_local_notifications`, `pdf`, `fl_chart`, `shimmer`, `flutter_svg`, `intl`, `timezone`, `pin_code_fields`, `flutter_markdown`, `path`, `provider`, `go_router`, `shared_preferences` | — | Local only |
-- ⚠️ **Dependencies scanned for vulnerabilities; lockfile committed; no unnecessary deps.** `pubspec.lock` is committed ✅. **`functions/package-lock.json` is NOT committed** (`git ls-files functions/` → `.gitignore`, `README.md`, `index.js`, `package.json` only) — the Cloud Function that holds the Anthropic key has an unpinned dependency tree. No scanning of any kind: no `.github/dependabot.yml`, and `.github/workflows/ci.yml` has no `pub outdated` / `npm audit` / OSV / Snyk step. One unnecessary dep (`dio`, above).
+- ⚠️ **No analytics/tracking/ads SDKs unless intended and disclosed.** Still genuinely good news: no `firebase_analytics`, no ads SDK, no Segment/Mixpanel/Amplitude/Facebook SDK in `pubspec.yaml` or `pubspec.lock`. But **Crashlytics + Performance are still forced on in every release build with no consent prompt and no opt-out** (`main.dart:115-131`), and `settings_screen.dart` still has no telemetry toggle. Under DPDP that is processing without notice or consent.
+- ❌ **Each dependency's data collection is known and disclosed.** ❌ **UNCHANGED.** No disclosure artefact. **`ios/Runner/PrivacyInfo.xcprivacy` is still missing** (`ls` → *No such file or directory*); the 24 `PrivacyInfo.xcprivacy` files under `ios/Pods/` are pod-level, not app-level. Apple has required an app-level manifest since May 2024, and `shared_preferences` uses `NSUserDefaults`, required-reason API CA92.1. — **Impact:** App Store submission rejection. The round-2 additions make this *more* urgent, not less: camera and photo-library access are now actually granted.
+  **Dependencies that transmit data off-device (re-verified against `pubspec.yaml`):** unchanged from round 1 — `firebase_auth`, `cloud_firestore` (PHI), `firebase_storage` (medical images), `firebase_messaging`, `firebase_crashlytics` (unscrubbed stacks), `firebase_performance` (URLs containing `patientId`), `razorpay_flutter`, `speech_to_text` (raw symptom audio, `onDevice` unset), `flutter_tts`, `cached_network_image`, `http`, `share_plus` (handover PDF + invoices), `printing` (full medical history).
+- ⚠️ **Dependencies scanned; lockfile committed; no unnecessary deps.** `pubspec.lock` committed ✅. **`functions/package-lock.json` still NOT committed** (`git ls-files functions/` → `.gitignore`, `README.md`, `index.js`, `package.json`) — the Cloud Function holding the Anthropic key has an unpinned dependency tree. No `.github/dependabot.yml`; `.github/workflows/ci.yml` has no `npm audit` / `pub outdated` / OSV / Snyk step. **`dio: ^5.8.0+1` (`pubspec.yaml:39`) is still declared and still never imported** (`grep -rn "package:dio" lib/` → no output).
 
 ### 8. AI / LLM privacy
 
-- ❌ **User content redacted of PII before being sent to any model — and the redaction is actually wired in.** There is **no redaction at all**, built or called. `lib/providers/assistant_provider.dart:95-100` passes the raw user utterance straight through; `lib/models/assistant_models.dart:124-129` serialises `{text, patient_id, role, locale}`; `lib/services/assistant_service.dart:53-58` POSTs it; `functions/index.js:173` embeds it verbatim in the user turn. The whole point of the feature is free-form Hinglish ("mummy ko saans lene mein takleef ho rahi hai"), so symptom descriptions and names will routinely be in `text`. — **Fix:** add a redaction pass in `AssistantProvider.sendText` before constructing the request, and drop the unused `patient_id`.
-- ⚠️ **Cloud AI is opt-in and off by default; endpoint disclosed/configurable.** Off by default and configurable ✅ — `AssistantService.useStub` defaults `true` (`lib/services/assistant_service.dart:23,45`) and the cloud path activates only when `--dart-define=ASSISTANT_API_URL` is set (`lib/config/constants.dart:9-11`). But that is a **build-time** switch, not a user choice: once a build ships with the URL set, every user's messages go to the cloud with no in-app toggle and no disclosure that a third-party LLM processes their words. DPDP requires notice.
-- ⚠️ **Model output sanitized before display or storage.** Structurally constrained ✅ — `functions/index.js:157-176` uses `output_config.format = {type: "json_schema", schema: SCHEMA}` with `max_tokens: 512`, and `AssistantResponse.fromJson` maps to a closed `AssistantAction` enum, so an unknown action degrades rather than executes. But `reply_text` is rendered with no control-char strip and no length cap client-side. Low practical risk (Flutter `Text` is not an HTML/SQL sink), hence ⚠️ not ❌.
-- ✅ **Prompt-injection surface minimized.** Well done. Input capped at 1000 chars (`functions/index.js:128-129`); `role` validated against a hard allowlist so a caller cannot inject prompt text through it (`functions/index.js:141-150`); structured `json_schema` output rather than free-form parsing; system prompt cached separately from user content (`functions/index.js:159-165`); and the app-side executor independently re-checks permissions.
-- ❌ **Token/cost limits enforced per user.** **The Cloud Function is completely unauthenticated.** `functions/index.js:112-118` uses `onRequest` with `cors: true` (wildcard) and **no** `verifyIdToken`, no App Check, no API key, no rate limiter — and the client sends no `Authorization` header (`lib/services/assistant_service.dart:55` sets only `Content-Type`). Anyone who learns the URL can POST unlimited requests and bill them to the owner's Anthropic account. Per-request cost is bounded (1000 chars in, 512 tokens out) but per-user/total cost is not bounded at all. — **Impact:** unbounded financial exposure + an open proxy to a Claude endpoint. — **Fix:** enforce Firebase App Check on the function, verify the caller's ID token, and add a per-uid daily counter.
+- ❌ **User content redacted of PII before being sent to any model.** ❌ **UNCHANGED — no redaction exists, built or called.** `assistant_provider.dart:91-100` passes the raw utterance straight into `AssistantRequest`; `assistant_models.dart:124-129` serialises `{text, patient_id, role, locale}`; `assistant_service.dart:53-58` POSTs it; `functions/index.js:171-174` embeds it verbatim. The feature's whole purpose is free-form Hinglish symptom description.
+- ⚠️ **Cloud AI opt-in and off by default; endpoint disclosed/configurable.** Off by default ✅ (`assistant_service.dart:23,45`, activated only when `--dart-define=ASSISTANT_API_URL` is set). Still a **build-time** switch with no in-app toggle and no disclosure that a third-party LLM processes the user's words.
+- ⚠️ **Model output sanitized before display or storage.** Structurally constrained ✅ (`functions/index.js:156-176`, `output_config.format` json_schema, `max_tokens: 512`, closed action enum). `reply_text` still rendered with no control-char strip and no client-side length cap. Low practical risk (Flutter `Text` is not an HTML/SQL sink).
+- ✅ **Prompt-injection surface minimized.** Still well done: input capped at 1000 chars (`functions/index.js:127-128`), `role` validated against a hard allowlist (`:139-149`), structured JSON output, system prompt cached separately from user content (`:157-164`), app-side executor independently re-checks permissions.
+- ❌ **Token/cost limits enforced per user.** ❌ **UNCHANGED.** `functions/index.js:107-114` is still `onRequest` with `cors: true` (wildcard), **no** `verifyIdToken`, no App Check, no API key, no rate limiter; the client still sends only `Content-Type` (`assistant_service.dart:55`). Anyone who learns the URL can POST unlimited requests billed to the owner's Anthropic account. Per-request cost is bounded; per-user and total cost are not bounded at all.
 
 ### 9. Privacy policy & store/site disclosure
 
-- ⚠️ **Privacy policy exists at a stable URL, linked in store listing / site footer + in-app.** In-app linking is done well: the login screen requires an explicit consent checkbox before the CTA enables (`lib/screens/auth/login_screen.dart:25,48-60,177-196,272-277`) with tappable **Terms** (`:218`) and **Privacy Policy** (`:238`) links, plus a Settings → About entry (`lib/screens/settings/about_screen.dart:102-104` → `https://housepital.in/privacy`). **BLOCKED-OWNER** on whether that URL actually resolves to a published policy and whether it is set in App Store Connect — **need:** the live URL loading, plus the App Store Connect privacy-policy field.
-- **BLOCKED-OWNER** — **The policy describes the app's actual data flows.** Cannot assess without the policy text. **Need:** the current policy. When reviewing it, confirm it covers: Firebase Storage upload of chat/evidence photos, Crashlytics + Performance telemetry, off-device speech recognition, and the Anthropic LLM processing — none of which are obvious from the app UI.
-- **BLOCKED-OWNER + ❌** — **Store/site disclosure matches reality.** The App Privacy answers cannot be verified from the repo (**need:** App Store Connect → App Privacy screenshot). Independently ❌: the app-level `PrivacyInfo.xcprivacy` is missing (§7), which is the machine-readable half of this requirement.
-- ❌ **Encryption export-compliance answered where the platform requires it.** `grep -n "ITSAppUsesNonExemptEncryption" ios/Runner/Info.plist` → **missing**. The full key list in `ios/Runner/Info.plist` (lines 5-72) has no export-compliance key, so every upload will prompt manually and can stall a release. The app uses only standard HTTPS/TLS, so it qualifies for the exemption. — **Fix:** add `<key>ITSAppUsesNonExemptEncryption</key><false/>`.
+- ⚠️ **Privacy policy exists at a stable URL, linked in-app.** In-app linking still done well: explicit un-prechecked consent gate before the CTA enables (`login_screen.dart:25,48-60,177-196,272-277`) with tappable Terms (`:218`) and Privacy Policy (`:238`), plus Settings → About (`about_screen.dart:102-104` → `https://housepital.in/privacy`). **BLOCKED-OWNER** on whether that URL resolves and is set in App Store Connect.
+- **BLOCKED-OWNER** — **The policy describes the app's actual data flows.** Cannot assess without the text. When reviewing it, confirm it covers: Firebase Storage upload of chat/evidence photos, Crashlytics + Performance telemetry, off-device speech recognition, Anthropic LLM processing, **and the new deletion-request path with its 30-day claim (B-5)**.
+- **BLOCKED-OWNER + ❌** — **Store/site disclosure matches reality.** App Privacy answers unverifiable from the repo. Independently ❌: `ios/Runner/PrivacyInfo.xcprivacy` still missing (§7) — the machine-readable half. Round 2 makes the answers *harder*: camera and photo-library are now functional, so "Photos" and "User Content" must be declared.
+- ❌ **Encryption export-compliance answered.** ❌ **UNCHANGED.** `ITSAppUsesNonExemptEncryption` is absent from the full `ios/Runner/Info.plist:1-78` — the round-2 edit added the two usage strings and did not add this. Every upload will prompt manually and can stall a release. The app uses only standard HTTPS/TLS, so it qualifies for the exemption. — **Fix:** `<key>ITSAppUsesNonExemptEncryption</key><false/>`.
 
 ### 10. Regulatory
 
-- ❌ **Applicable data-protection law considered (India DPDP 2023 · GDPR · HIPAA).** `git grep -lIi "DPDP|GDPR|HIPAA|data protection"` across `docs/` and all root `*.md` → **no output**. For an app processing Indian patients' health data — a category the DPDP Act treats with heightened obligation — there is no evidence anywhere in the repo that the law was considered. — **Fix:** produce a DPDP compliance note covering notice, consent, purpose limitation, data-principal rights, retention, and the breach-notification runbook.
-- ⚠️ **Lawful basis / consent obtained; most privacy-preserving default chosen.** Partial credit: the explicit, un-prechecked T&C gate at `lib/screens/auth/login_screen.dart:177-196` (button disabled until ticked, `:272-277`) is real, well-implemented consent for the core service — better than most apps at this stage. But DPDP §6 requires **granular, purpose-specific** consent, and there is none for: Crashlytics/Performance telemetry (forced on, `lib/main.dart:120-123`), cloud LLM processing of utterances (§8), or off-device speech recognition (§5). Defaults are not the most privacy-preserving.
-- ⚠️ **Children: not directed at children, or age-gating handled.** `git grep -nIi "age_gate|dateOfBirth|COPPA|minor"` → no age gate exists. The app is not *directed* at children (home care for adults/elderly is the clear framing: `lib/data/demo_data.dart` patient is a post-stroke adult), so this is defensible. But DPDP §9 imposes strict verifiable-parental-consent duties for under-18s, and nothing prevents a family member from adding a minor as a patient via `addPatient` (`lib/providers/app_provider.dart:167`). — **Fix:** either document the adults-only scope in the T&C, or capture patient DOB and branch on it.
-- ⚠️ **Cross-border data transfer handled if data leaves its region.** Partly right by construction: Firestore is pinned to `asia-south1` (`firebase.json:8`) and the assistant function too (`functions/index.js:115`) — good instincts for Indian data residency. But data does leave India: Anthropic's API is US-hosted, Crashlytics/Performance telemetry lands in Google's US infrastructure, and Apple/Google speech recognition is off-device. None of this is disclosed or contractually documented in the repo.
+- ⚠️ **Applicable data-protection law considered.** ⚠️ **UPGRADED from ❌, narrowly.** DPDP is now cited *in code*: `delete_account_screen.dart:12-14` cites Guideline 5.1.1(v) and DPDP §12, and `settings_screen.dart:270-272` repeats it. That is evidence the law was considered for one obligation. It is not a compliance position: there is still no notice text, no lawful-basis record, no data-principal-rights matrix, no grievance officer, no breach runbook, and no `docs/` artefact of any kind (`grep -rlIi "DPDP|GDPR" docs/ *.md` matches only audit reports).
+- ⚠️ **Lawful basis / consent obtained; most privacy-preserving default chosen.** Partial credit unchanged: the login consent gate is real and well-implemented. Still no **granular, purpose-specific** consent (DPDP §6) for Crashlytics/Performance telemetry (forced on, `main.dart:115-131`), cloud LLM processing (§8), or off-device speech recognition (§5). Defaults are not the most privacy-preserving.
+  **New in round 2:** the entire account-deletion screen — the most legally operative copy in the app — is **hardcoded English** (`delete_account_screen.dart:72-78,96-98,136-206`); `grep -n "delete" assets/i18n/en.json` returns only unrelated keys. The app ships Hindi. DPDP §5(3) entitles the data principal to the notice in any Eighth Schedule language of their choice; an erasure flow the user cannot read is not informed consent.
+- ⚠️ **Children: not directed at children, or age-gating handled.** Unchanged. No age gate (`grep -nIi "age_gate|dateOfBirth|COPPA|minor"` → none). The app is not *directed* at children, which is defensible, but DPDP §9 imposes verifiable-parental-consent duties for under-18s and nothing prevents adding a minor via `addPatient` (`app_provider.dart:196-203`).
+- ⚠️ **Cross-border data transfer handled.** Unchanged. Good instincts by construction — Firestore pinned to `asia-south1` (`firebase.json:11`), function region `asia-south1` (`functions/index.js:110`). But data does leave India: Anthropic's API is US-hosted, Crashlytics/Performance land in Google's US infrastructure, Apple/Google speech recognition is off-device. None disclosed or contractually documented in the repo.
 
 ### 11. Deletion & retention
 
-- ❌ **User can delete their data; deletion actually deletes.** `git grep -nIi "deleteAccount|delete_account|deleteMyData|erase" -- lib/ assets/i18n/en.json` → **no output**. The Settings screen (`lib/screens/settings/settings_screen.dart:185-264`) has 11 rows — orders, patient profile, add patient, family, documents, notifications, language, appearance, referral, help, about, logout — and **no delete-account row**. — **Impact:** two-fold. (1) DPDP §12(3) gives the data principal an enforceable right to erasure. (2) **Apple App Store Review Guideline 5.1.1(v) requires any app supporting account creation to offer in-app account deletion** — this is a hard rejection at submission. — **Fix:** add a "Delete my account" flow in Settings that calls a backend endpoint cascading across Firestore (`patients/*`, `chat_messages/*`, `users/*`), Firebase Storage, and Firebase Auth, then wipes SharedPreferences.
-- ❌ **No orphaned records/files after deletion (cascade verified).** Vacuously failed — with no deletion path, the cascade cannot exist or be tested. Note the two stores most likely to orphan: Firebase Storage blobs (uploaded at `lib/services/firebase_service.dart:137`) and the download URLs persisted into chat messages, which remain publicly fetchable by anyone holding the URL even after the parent record is gone.
-- ❌ **User can export their data.** No portability path. The handover PDF (`lib/services/handover_report_service.dart:302`) and invoice PDF (`lib/services/invoice_pdf_service.dart:261`) are clinical/financial artefacts, not a DPDP §11 data export (they do not include profile, addresses, chat history, or documents). — **Fix:** add a "Download my data" action producing a JSON bundle.
-- ❌ **Retention limits defined and enforced.** The only TTL in the codebase is `CacheService._ttlMinutes = 30` (`lib/services/cache_service.dart:7`), which governs an API cache with exactly one call site (`lib/providers/app_provider.dart:190`) — not patient records. Orders, assessments, addresses, reminders, chat messages, vitals, attendance and uploaded medical images all persist indefinitely with no documented retention period.
+- ⚠️ **User can delete their data; deletion actually deletes.** ⚠️ **UPGRADED from ❌ — the store-rejection half is addressed; the erasure half is not, and the copy is not defensible.** Full assessment:
+  - **What now exists.** `delete_account_screen.dart` + `/delete-account` (`main.dart:745-747`) + a Settings entry (`settings_screen.dart:273-279`). The flow has a real confirmation ladder — an "I understand" checkbox (`:185-194`), a typed `DELETE` confirmation (`:196-208`), and a second dialog (`:91-119`). That is better friction design than most apps ship.
+  - **Guideline 5.1.1(v):** Apple requires deletion to be **initiated in-app**; apps in highly-regulated sectors (healthcare is enumerated) may add customer-service steps for confirmation. Initiation is now in-app, so the *structural* requirement is met and the automatic rejection risk is gone. **But the review risk is not.** A reviewer in airplane mode taps Delete and sees the same success dialog, because `_submitDeletionRequest` (`:53-59`) is `await Future<void>.delayed(const Duration(milliseconds: 600));` and a `TODO(backend)`. Nothing is sent, nothing is queued, nothing is stored. There is no ticket reference (the code's own comment at `:57` says it should surface one "once api.housepital.in exists").
+  - **The copy is false as implemented.** The success dialog states *"Your Housepital records are scheduled for deletion and will be removed within 30 days"* (`:75-77`). Nothing is scheduled by anything. The class docstring's claim that the screen *"records a deletion request for Housepital to complete"* (`:20-21`) is also untrue — it records nothing. The docstring is admirably candid that the backend is missing; the **user-facing string is not**, and the user-facing string is the one that carries legal weight.
+  - **DPDP §12:** §12(3) gives an enforceable right to erasure and §8(7) obliges the Data Fiduciary to erase when consent is withdrawn. A **request-only** flow *can* satisfy DPDP — the Act does not require instantaneous deletion, and §8(7) tolerates a retention carve-out for legal obligations (which the "What we must keep" card at `:160-177` correctly anticipates for tax invoices). What DPDP does **not** tolerate is a request that reaches no Data Fiduciary. Since the request is never transmitted, no §13 grievance clock starts and no §12 obligation is ever triggered. It is not a deletion request; it is a local logout with a deletion-shaped dialog.
+  - **Compounding:** the flow signs the user out and `prefs.clear()`s (`auth_provider.dart:222-223`), so the user cannot revisit the screen, has no reference number, and the only recourse offered is a phone number (`:78`) that is not wired to anything in the repo either.
+  - **Minimum honest fix, in order of cost:** (1) change the copy to say a request has been *raised on this device* and instruct the user to call/email to confirm — truthful today, zero backend; (2) better, write the request to the one backend that *is* reachable — `deletion_requests/{uid}` in Firestore with a matching create-only rule — before showing any 30-day claim; (3) localise the whole screen into `en.json`/`hi.json`.
+- ❌ **No orphaned records/files after deletion (cascade verified).** ❌ **UNCHANGED, and now with a named orphan set.** With no server-side deletion the cascade cannot exist. The two stores most likely to orphan: Firebase Storage blobs (`firebase_service.dart:133-138`) and the `getDownloadURL()` token URLs (`:138`) persisted into chat records — those URLs remain fetchable by anyone holding them **regardless of rules**, so they survive any future cascade unless the objects themselves are deleted.
+- ❌ **User can export their data.** ❌ **UNCHANGED.** No DPDP §11 portability path. The handover PDF (`handover_report_service.dart:302`) and invoice PDF (`invoice_pdf_service.dart:261`) are clinical/financial artefacts, not a data export — and the handover one is sourced entirely from `DemoData` (see the demo-honesty finding below).
+- ❌ **Retention limits defined and enforced.** ❌ **UNCHANGED, plus one new latent liability.**
+  - The only TTL in the codebase is still `CacheService._ttlMinutes = 30` (`cache_service.dart:7`). Orders, assessments, addresses, reminders, chat messages, vitals, attendance and uploaded medical images all persist indefinitely with no documented period. The delete screen's "What we must keep" card (`delete_account_screen.dart:170-175`) makes a retention *promise* that no retention *schedule* backs.
+  - **`StoreMigrator` quarantine — direct answer to the round-2 question.** `quarantine()` (`store_migrator.dart:126-144`) copies an unparseable value to `__quarantine_v{n}_{key}` and never deletes it. **Today this is dormant, not active:** `grep -rn quarantine lib/ test/` returns only the definition file — **zero call sites** — and `_migrations` (`:57-58`) is empty with `currentVersion = 1` (`:33`), so `_migrateFrom` (`:98-119`) never executes a step. So it is **not a live DPDP retention breach**; it is a **design-time one, and the contract at `:19-21` makes it deliberate**: *"A migration NEVER deletes data it cannot parse."* The first real migration will therefore copy a PHI blob — `housepital_orders` and `housepital_assessments` carry service, patient and amount data — into an entry with no age stamp, no TTL, no reaper, no size cap, and no UI that mentions it exists. That is indefinite on-device retention of health-related personal data, contrary to DPDP §8(7) purpose-exhaustion and to the storage-limitation principle the checklist asks about.
+  - **Partial mitigation that already exists:** `AuthProvider.logout()` calls `prefs.clear()` (`auth_provider.dart:222-223`), which removes `__quarantine_*` along with everything else, so quarantined PHI does not survive a logout or the delete-account flow. It survives an indefinitely signed-in session — which, for a family care app on a shared phone, is the normal state.
+  - **Fix before the first migration ships:** stamp each quarantine entry with a creation timestamp; delete entries older than a stated window (30–90 days) at the top of `run()`; cap total quarantined bytes; and name the window in the privacy policy. Doing this now costs nothing; doing it after v2 data is on real phones is the same trap the file was written to avoid.
 
 ### 12. Hardening & incident readiness
 
-- ⚠️ **Input validation / output encoding against injection.** Client-side validation is present and reasonable: `Validators.indianMobile` + `FilteringTextInputFormatter.digitsOnly` on phone (`lib/screens/auth/login_screen.dart:157,171`), `Validators.name` (`lib/screens/auth/onboarding_screen.dart:60`), `Validators.pincode` (`lib/screens/checkout/address_selection_screen.dart:540`), bounded numeric vitals with `LengthLimitingTextInputFormatter` (`lib/screens/reports/vitals_screen.dart:834-840`). All requests are `jsonEncode`d, never string-concatenated (`lib/services/api_service.dart:115,125`), so no client-side injection sink. Firestore writes are type- and length-checked in rules (`firestore.rules:79-82`). Graded ⚠️ only because client validation is advisory — the REST backend is out of repo, so server-side validation is unverified (**BLOCKED-OWNER**).
-- ⚠️ **Error responses don't leak internals.** The **UI** is clean: `_handleResponse` (`lib/services/api_service.dart:138-150`) surfaces only `body['message']`, and `ErrorWidget.builder` is replaced with a friendly fallback (`lib/main.dart:137`). One residual UI path: `lib/widgets/paginated_list.dart:89` assigns `_error = e.toString()` into rendered state. The **logs** are not clean — fully covered in §2.
-- ❌ **Audit logging for security-relevant actions.** `git grep -nIi "audit_log|auditLog|AuditEvent" -- lib/ functions/` → **no output**. `firestore.rules:154` lists `audit_logs/{logId}` as a TODO that was never modelled. Nothing records who exported a handover PDF, who viewed medical documents, or when a role changed. Under DPDP breach-notification duties, there would be no way to establish what a compromised account actually accessed. — **Fix:** log export/view of PHI to a backend-write-only `audit_logs` collection.
-- ❌ **You know what a device/account/server compromise would expose, and have a plan to revoke access / rotate keys.** No `SECURITY_REVIEW.md`, no incident runbook, no key-rotation procedure beyond the Anthropic key note in `PROJECT.md:66`. `docs/` contains a `DEPLOYMENT_GUIDE.md` and `TROUBLESHOOTING.md` but nothing security-operational. Combined with the missing data inventory (§1) and missing audit log (above), the blast radius of a compromise is currently unknowable.
+- ⚠️ **Input validation / output encoding against injection.** Unchanged. Client-side validation present and reasonable (`login_screen.dart:157,171`; `onboarding_screen.dart:60`; `address_selection_screen.dart:540`; `vitals_screen.dart:834-840`). All requests `jsonEncode`d, never concatenated. Firestore writes type- and length-checked (`firestore.rules:74-75`). Storage writes now size- and type-checked (`storage.rules:55-58`) — but see B-1 on `contentType` being client-asserted. ⚠️ because the REST backend is out of repo (**BLOCKED-OWNER**).
+- ⚠️ **Error responses don't leak internals.** UI clean (`api_service.dart:138-150` surfaces only `body['message']`; `ErrorWidget.builder` replaced at `main.dart:138-168`). One residual UI path unchanged: `paginated_list.dart:89` assigns `_error = e.toString()` into rendered state. The **logs** are not clean — §2.
+- ❌ **Audit logging for security-relevant actions.** ❌ **UNCHANGED.** `grep -nIi "audit_log|auditLog|AuditEvent" lib/ functions/` → no output; `firestore.rules:149` still lists `audit_logs/{logId}` as a TODO. Nothing records who exported a handover PDF, who opened medical documents, when a role changed — **or who requested account deletion**, which is now a user-visible action with a legal clock attached and no record of it anywhere.
+- ❌ **You know what a compromise would expose, and have a revoke/rotate plan.** ❌ **UNCHANGED.** No `SECURITY_REVIEW.md`, no incident runbook, no key-rotation procedure beyond the Anthropic note in `PROJECT.md`. Combined with the missing inventory (§1) and missing audit log, blast radius remains unknowable.
 
 ---
 
 ## Blockers (must fix before release)
 
-**B-1. Firebase Storage has no security rules in the repo — patient medical images may be readable by any signed-in user.**
-`firebase.json` (read in full) configures `functions`, `firestore`, and `auth` — **there is no `storage` block**, and `git ls-files | grep storage.rules` returns nothing. Yet chat photos and concern-evidence photos are uploaded to Firebase Storage (`lib/services/firebase_service.dart:133-138`) from `lib/screens/chat/chat_screen.dart:133` and `lib/screens/support/raise_concern_screen.dart:328`. Firebase's default bucket rule is `allow read, write: if request.auth != null` — i.e. **any authenticated Housepital user could read every other patient's uploaded medical images**. Additionally `getDownloadURL()` (`lib/services/firebase_service.dart:138`) mints a permanent token URL that bypasses rules entirely once shared, and that URL is persisted into chat records. This is the single highest-severity PHI exposure found. **BLOCKED-OWNER to confirm live state** — need Firebase Console → Storage → Rules. **Fix:** add `storage.rules` scoped to `chat/{patientId}/**` and `concerns/{patientId}/**` with `request.auth.uid == patientId`, register it in `firebase.json`, and deploy.
+### B-1. `storage.rules` is new, undeployed, and **cannot be satisfied by the app's own uploads**. Deploying it as written breaks all photo upload; the predictable rollback is to a posture worse than today.
 
-**B-2. Missing iOS camera/photo-library usage strings — hard crash on six screens.**
-`ios/Runner/Info.plist` has only `NSMicrophoneUsageDescription` (:69) and `NSSpeechRecognitionUsageDescription` (:71). `image_picker` is invoked from 12 call sites including the primary medical-record capture flow (`lib/screens/documents/document_repository_screen.dart:613,631`). On iOS this terminates the process. **Fix:** add `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` with clinical-document-specific wording.
+Reviewed adversarially, as instructed. Three separate defects, in severity order.
 
-**B-3. Assistant Cloud Function is unauthenticated with wildcard CORS.**
-`functions/index.js:112-118` — `onRequest` + `cors: true`, no token verification, no App Check, no rate limit; client sends no auth header (`lib/services/assistant_service.dart:55`). Open proxy to a paid Claude endpoint with unbounded cost. **Fix:** enforce App Check + `verifyIdToken`, add a per-uid quota.
+**(a) The ownership key does not exist in this app.** `ownsPatient()` (`storage.rules:51-53`) requires
+`request.auth.uid == patientId`. But `grep -rn "\.uid" lib/` returns **zero hits** — the app never
+reads a Firebase uid anywhere. Every `patientId` it writes into a Storage path is a backend domain
+id: `chat_screen.dart:135` uses `widget.patientId`, supplied by `home_screen.dart:781` / `:845` and
+`care_team_screen.dart:30,94,125,302` as `app.currentPatient?.id ?? 'pat_demo_rajesh'`;
+`demo_data.dart:29` shows the shape. Comparing a 28-char Firebase uid to `pat_demo_rajesh` is always
+false. **Every chat photo upload and every concern-evidence upload is denied — for the patient
+themselves, not just for family.** `uploadFile` returns null (`firebase_service.dart:140`) and the
+user sees *"Couldn't send photo. Check your connection and try again."* (`chat_screen.dart:145-147`)
+— a message that misattributes an authorization failure to the network, so the real cause will not
+even be obvious in the field.
 
-**B-4. PHI written to release logs.**
-`lib/screens/services/cards/staff_role_card.dart:308-311` (care-needs checklist), `lib/services/firebase_service.dart:129-130` (medical-document filenames), and ~28 `error: e` sites leaking patient-ID-bearing URLs — none stripped in release (`lib/utils/logger.dart:54-57` strips only debug/info; `debugPrint` is never stripped). Plus `lib/main.dart:278-283` dumping full stacks to the browser console on web release.
+**(b) `batch.split('_')[0]` is structurally unsound, though not directly exploitable.** Direct answer
+to the question asked:
+- **Can a crafted path defeat it?** *Not for cross-tenant reads, given Firebase uids contain no
+  underscore.* The rule (`storage.rules:76,78`) grants access to `concerns/{batch}/…` only when the
+  substring before the first `_` equals the caller's own uid. An attacker with uid `X` can therefore
+  only reach folders literally named `X` or `X_…` — folders in their own namespace. A victim folder
+  `V_1754…` yields prefix `V`, and the attacker would need `uid == V`, i.e. to *be* the victim. An
+  attacker holding a custom-token uid containing an underscore (`V_evil`) yields prefix `V` ≠ `V_evil`
+  → **denied**. The failure mode is fail-closed. `split()` is a valid `rules.String` method and `'_'`
+  is a literal regex, so the rule compiles and evaluates as intended.
+- **Is it sound?** **No.** `_` is simultaneously a legal character *inside* the ownership key and the
+  field delimiter. It is not a reserved separator, and the code that builds the path
+  (`raise_concern_screen.dart:330`, `'concerns/${patientId}_$batchTs/…'`) uses the same character for
+  both roles. Today every patient id contains underscores, so `'pat_demo_rajesh_1754…'.split('_')[0]`
+  is `'pat'` — a value **shared by every patient in the system**. If the ownership model is ever
+  fixed by issuing a claim (the `user_patients` mapping both rule files defer), and that claim ever
+  carries a value like `pat…`, this single rule grants every patient's concern photographs at once.
+  The check is one identifier-format change away from being a universal allow.
+- **Fix:** stop parsing. Use two path segments — `concerns/{patientId}/{batchTs}/{fileName}` — and an
+  equality check on the clean segment, matching the `chat/` rule's shape. That removes the delimiter
+  question entirely and costs one line at `raise_concern_screen.dart:330`.
 
-**B-5. No account deletion — App Store Guideline 5.1.1(v) rejection + DPDP §12 violation.**
-No delete path anywhere in `lib/` or `assets/i18n/en.json`. Hard blocker for iOS submission.
+**(c) Two smaller defects.**
+- `match /{allPaths=**} { allow read, write: if false; }` (`storage.rules:86-88`) is a **no-op**.
+  Firebase Security Rules union their `allow`s; a `false` in one `match` never revokes an `allow` in
+  another, and unmatched paths already default to deny. The comment at `:83-85` claims it ensures
+  "any new upload path must be added above… not left to fall through" — it provides nothing the
+  default does not. Harmless, but a reader will trust it to do work it does not do.
+- `isImageUnder10Mb()` (`:55-58`) checks `request.resource.contentType`, which the **client asserts**:
+  `uploadFile` passes a hardcoded `contentType: 'image/jpeg'` (`chat_screen.dart:136`,
+  `raise_concern_screen.dart:331`) regardless of the actual bytes. The 10 MB size cap is real; the
+  "images only" constraint is advisory.
 
-**B-6. Sensitive exports are not role-gated in code.**
-`lib/services/handover_report_service.dart:302-307` has no role check; the three call sites only hide the button. Invoice export (`lib/screens/services/my_orders_screen.dart:390-394`) and the entire document repository have no gate at all — a `CARETAKER` can reach both.
+**Does the ownership model hold for family caregivers?** No — and the file anticipates exactly this
+in its own comment (`storage.rules:46-50`), treating it as a future problem. It is a present one, and
+it is broader than family: under the current identifiers *nobody* passes `ownsPatient`, including the
+patient. The correct fix is the `user_patients` → custom-claim mapping deferred at `firestore.rules:151`,
+with rules checking `patientId in request.auth.token.patients`. Until that exists, deploying these
+rules trades a silent over-permissive posture for a loud total outage — and the operational reflex
+under a "chat photos are broken in production" ticket is to paste back
+`allow read, write: if request.auth != null`, which is the exact posture these rules were written to
+remove. **Do not deploy `storage.rules` until the identifier mismatch is resolved.** Coverage itself
+is correct — both of the app's two `uploadFile` call sites are matched, and nothing else in `lib/`
+touches Storage.
+
+**Same defect in `firestore.rules`.** `:67,70,72,90,94,99,133` all key on `request.auth.uid == patientId`.
+Chat, attendance, vitals and `active_sessions` are denied to their owners by the same mismatch. This
+corrects a round-1 grade: the rules are well-structured and fail-closed, but the predicate they
+fail-close on is wrong. **BLOCKED-OWNER** to confirm what is live — `firestore.rules:9-17` says the
+deploy happens from `housepital-backend`, so the repo cannot prove the production posture. If the
+live rules differ, the repo file is misleading documentation of the real boundary.
+
+### B-2. Assistant Cloud Function is still unauthenticated with wildcard CORS. *(was B-3)*
+`functions/index.js:107-114` — `onRequest` + `cors: true`, no `verifyIdToken`, no App Check, no rate
+limit; the client sends no auth header (`assistant_service.dart:55`). Open proxy to a paid Claude
+endpoint with unbounded cost. **Fix:** enforce App Check + verify the caller's ID token, add a
+per-uid daily counter.
+
+### B-3. PHI written to release logs. *(was B-4)*
+`staff_role_card.dart:312-315` (care-needs checklist, logged *before* the role gate at `:317`),
+`firebase_service.dart:129-130` (medical-document filenames), ~28 `error: e` sites leaking
+patient-ID-bearing URLs — none stripped in release (`logger.dart:55-57` strips only debug/info;
+`debugPrint` is never stripped). Plus `main.dart:288-291` dumping full stacks to the browser console
+on web release.
+
+### B-4. Sensitive exports are still not role-gated in code. *(was B-6)*
+`handover_report_service.dart:302-305` has no role check; the three call sites only hide the button.
+Invoice export (`my_orders_screen.dart:389-393`) is now explicitly commented as ungated-by-design,
+and the entire document repository (`document_repository_screen.dart`, route `main.dart:560-562`) has
+no gate at all — a `CARETAKER` reaches both. **Fix:** `shareHandover({required String role, …})` with
+`if (!canUserPerform(role, UserAction.shareHandover)) return;` above `Printing.sharePdf` at `:305`;
+the same in `invoice_pdf_service.dart:264`; a role guard on `/documents`.
+
+### B-5. Account deletion claims a server-side erasure that no component performs.
+`delete_account_screen.dart:53-59` is a 600 ms delay and a `TODO(backend)`; the success dialog at
+`:74-78` tells the user their records are *"scheduled for deletion and will be removed within 30
+days."* Nothing is scheduled, transmitted, queued or logged. The structural App Store requirement is
+now met (initiation is in-app, and healthcare is an enumerated regulated sector), but the claim is
+falsifiable by a reviewer in airplane mode, and under DPDP §12/§8(7) a request that never reaches the
+Data Fiduciary starts no obligation and no §13 grievance clock. The whole screen is also hardcoded
+English in a Hindi-shipping app. **Fix (cheapest honest version):** state that the request was raised
+on this device and give a confirmation channel; or write `deletion_requests/{uid}` to Firestore
+before making any 30-day claim.
+
+### B-6. iOS `PrivacyInfo.xcprivacy` still missing — App Store rejection.
+`ios/Runner/PrivacyInfo.xcprivacy` does not exist. Required since May 2024; `shared_preferences`
+uses required-reason API CA92.1. Round 2 makes this worse, not better: camera and photo-library
+access now actually function, so Photos and User Content must be declared.
 
 ## High
 
-- **H-1.** Android `allowBackup` defaults to true → plaintext PHI SharedPreferences swept into Google Drive backup (`android/app/src/main/AndroidManifest.xml`, no `allowBackup`/`dataExtractionRules`).
-- **H-2.** Crashlytics + Performance forced on in release with no consent and no opt-out (`lib/main.dart:120-123`); raw errors + stacks exported unscrubbed (`:115,117,279`). The `TODO(observability)` at `lib/utils/logger.dart:63` would, if wired as written, additionally export all ~40 release-surviving `Log.warn` sites.
-- **H-3.** `logout()` leaves patient PHI in memory — no `clearAuthToken` on `IApiService` (`lib/services/i_api_service.dart:12`), no provider reset (`lib/screens/settings/settings_screen.dart:440-443`), providers are app-root singletons (`lib/main.dart:184-267`).
-- **H-4.** Missing `ios/Runner/PrivacyInfo.xcprivacy` (app target) — App Store rejection; `shared_preferences` uses required-reason API CA92.1.
-- **H-5.** Role is a client-side mutable string with a hardcoded default (`lib/providers/app_provider.dart:19,22`; `lib/main.dart:227`) — no server-verified claim backs any authorization decision.
+- **H-1.** Android `allowBackup` still defaults to true (`AndroidManifest.xml:5-9`, no `allowBackup`, no `dataExtractionRules`) → plaintext PHI prefs swept into Google Drive backup.
+- **H-2.** Crashlytics + Performance still forced on in release with no consent and no opt-out (`main.dart:115-131`); raw errors + stacks exported unscrubbed (`:117-121,286`). The `TODO(observability)` at `logger.dart:63-65` would, if wired as written, additionally export every release-surviving `Log.warn`.
+- **H-3.** **`SessionScope` is a partial wipe that reads as complete.** It correctly covers 5 providers and both call sites, but these PHI-bearing stores are outside it:
+  1. `AppProvider._vitalsHistory` (`app_provider.dart:41`, getter `:75`, appended `:280`) — cleared by **neither** `clearPatientScopedData` (`:176-186`) **nor** `clearSession` (`:189-193`). Patient A's vitals readings render for patient B.
+  2. `AppProvider._profilePhotoPath` (`:47`) — not cleared by either.
+  3. `AppProvider._currentUserRole` (`:20`) — not reset on logout; the next session inherits the previous user's role.
+  4. **`RemindersProvider`** (registered `main.dart:217`) — `_items` (`reminders_provider.dart:101`) persisted to `housepital_reminders` with free-text titles. **Not referenced by `SessionScope` at all**; survives a patient switch in memory *and* on disk, and `_loaded` (`:102`) stays true so nothing reloads.
+  5. **`AssistantProvider`** — `_messages` (`assistant_provider.dart:44`) holds the full symptom conversation. **Not in `SessionScope`**; survives switch and logout. Worse, `_patientId`/`_role` (`:21-22`) are `final`, fixed at construction from `DemoData.patient.id` and `UserRole.primaryContact` (`main.dart:224-226`), so the executor acts on the demo patient regardless of who is active — a cross-patient *action* path, not just a display leak.
+  6. **`CacheService`** — singleton (`cache_service.dart:9-11`) writing `housepital_cache_`-prefixed prefs (`:19`) from `app_provider.dart:223`. It has a `clear()` (`:38-44`) with **zero call sites**. Cached dashboard payloads (PHI) survive a patient switch for the full 30-minute TTL.
+  7. `OrdersProvider.clearPatientScopedData` (`:212-216`) clears memory only; `housepital_orders`/`housepital_assessments` on disk are untouched. `_loadFromStorage()` runs only in the constructor (`:21`), so nothing resurfaces within a process — but kill the app while patient B is active and patient A's orders reload under B.
+  8. `ApiService._authToken` (`api_service.dart:16`) is still never cleared; `IApiService` (`i_api_service.dart:12`) still exposes only `setAuthToken`. A valid bearer token lingers in memory for up to 60 min after logout.
+  9. `settings_screen.dart:458` does not `await logout()` before `Navigator.pop`, and `CartProvider.clear()` fires an unawaited `_persist()` (`cart_provider.dart:198-202`) that races `prefs.clear()`. Benign today (the write is an empty list) but order-dependent.
+  The test `patient_scope_isolation_test.dart:63` is named *"clearPatientScopedData nulls **every** per-patient field"* and asserts seven fields — it does not assert `vitalsHistory` or `profilePhotoPath`, both of which survive. A test whose name certifies completeness it does not check is worse than no test.
+- **H-4.** **The doctor-handover PDF is built entirely from `DemoData` and carries no sample-data marking.** `handover_report_service.dart:95` says so in its own docstring, and `:101-108` sources patient, medical history, medications, vitals, today's report, services, staff and appointments from the demo layer unconditionally. It calls neither `DemoMode.markServingDemoData()` nor renders any watermark (`grep -n "SAMPLE|DEMO|demo|Sample"` on the file → the import and the docstring only). The round-2 banner (`main_shell.dart:136-168`) covers *screens*; the one artefact that leaves the app and reaches a clinician is uncovered. A family member can hand a doctor a clinically-formatted PDF of a different, fictional patient's chart with nothing on the page saying so.
+- **H-5.** Role is still a client-side mutable string with a hardcoded default (`app_provider.dart:20,22`; `main.dart:226`) — no server-verified claim backs any authorization decision.
 - **H-6.** No app-lock/biometric/screenshot protection on PHI screens; no re-auth before handover export.
-- **H-7.** No PII redaction before the LLM call (`lib/providers/assistant_provider.dart:95-100` → `functions/index.js:173`).
+- **H-7.** No PII redaction before the LLM call (`assistant_provider.dart:91-100` → `functions/index.js:171-174`).
+- **H-8.** `health_manager_banner.dart:83` passes `manager.staffId` as `patientId` into `/chat` (its own comment flags it). The Firestore thread key and the Storage ownership segment become a **staff** identifier, so the same conversation resolves differently depending on entry point, and any future correct ownership rule will deny or mis-scope it.
 
 ## Medium / Low
 
-- **M-1.** `android/app/google-services.json` + `lib/config/firebase_options.dart` committed despite the `.gitignore` rule (`.gitignore:56-57` is inert on tracked files); 3 `AIza…` keys in history from `5a0ca2e`. **Correct `CLAUDE.md:48`** — only the iOS plist is gitignored. Client keys are public-by-design; the real control is console restriction (BLOCKED-OWNER) + Storage rules (B-1).
-- **M-2.** Orphan `SCHEDULE_EXACT_ALARM` (`android/app/src/main/AndroidManifest.xml:3`) while both schedules are inexact (`lib/services/medication_reminder_service.dart:178,228`) — Play policy-restricted for no benefit.
-- **M-3.** `image_picker` denial unhandled in 4 of 6 screens (`lib/screens/settings/settings_screen.dart:69`, `lib/screens/settings/patient_profile_screen.dart:205`, `lib/screens/rental/return_screen.dart:315`, `lib/screens/chat/chat_screen.dart:121`); mic denial fails silently (`lib/providers/assistant_provider.dart:166`).
-- **M-4.** `firestore.rules` conflates `auth.uid` with `patientId` (`:64-66`, and every rule) — the multi-patient path (`lib/providers/app_provider.dart:167`) has no isolation model. No rules test proves absence of cross-leak.
-- **M-5.** Missing `ITSAppUsesNonExemptEncryption` in `ios/Runner/Info.plist` — manual export-compliance prompt on every upload.
-- **M-6.** `functions/package-lock.json` not committed; no Dependabot, no `npm audit`/`pub outdated`/OSV step in `.github/workflows/ci.yml`.
-- **M-7.** `dio ^5.8.0+1` declared in `pubspec.yaml` but never imported in `lib/` — remove.
-- **M-8.** No code-level HTTPS assertion on `ApiService.baseUrl` (`lib/services/api_service.dart:37-41`) or `AssistantService.assistantUrl` (`lib/services/assistant_service.dart:33`).
-- **M-9.** Single Firebase project for all environments (`lib/config/firebase_options.dart:26,35,47`) — dev/CI writes share the production datastore.
-- **M-10.** `emailPassword` auth provider enabled (`firebase.json:16`) but unused by any code path — unnecessary auth surface.
-- **M-11.** `NSSpeechRecognitionUsageDescription` (`ios/Runner/Info.plist:72`) does not disclose that recognition may be server-side (`lib/services/voice_service.dart:48` omits `onDevice`).
-- **L-1.** `lib/widgets/paginated_list.dart:89` puts `e.toString()` into rendered state.
-- **L-2.** No audit logging; `firestore.rules:154` TODO never modelled.
-- **L-3.** No retention limits on any stored PHI.
-- **L-4.** `patient_id` sent to the assistant (`lib/models/assistant_models.dart:126`) but unused by `functions/index.js` — collected without purpose.
-- **L-5.** No `SECURITY_REVIEW.md` / data inventory / incident runbook (the checklist's own closing requirement).
+- **M-1.** `android/app/google-services.json` + `lib/config/firebase_options.dart` still tracked; 3 `AIza…` keys in history. `CLAUDE.md` now describes this accurately — **doc half fixed**. Real control remains console key restriction (BLOCKED-OWNER) + working Security Rules (B-1).
+- **M-2.** Orphan `SCHEDULE_EXACT_ALARM` (`AndroidManifest.xml:3`) while both schedules are inexact (`medication_reminder_service.dart:178,228`).
+- **M-3.** `image_picker` denial unhandled in 4 of 6 screens (`settings_screen.dart:69`, `patient_profile_screen.dart:205`, `return_screen.dart:315`, `chat_screen.dart:121`); mic denial fails silently (`assistant_provider.dart:165-166`). *Now more reachable than in round 1, since the iOS permission prompts finally appear.*
+- **M-4.** No rules-emulator test anywhere. `test/utils/permission_test.dart` tests the pure lookup table only. Neither `firestore.rules` nor `storage.rules` has a single test, which is why B-1 shipped.
+- **M-5.** Missing `ITSAppUsesNonExemptEncryption` in `ios/Runner/Info.plist` — the round-2 plist edit added the two usage strings and skipped this.
+- **M-6.** `functions/package-lock.json` still not committed; no Dependabot; no `npm audit`/`pub outdated`/OSV step in `.github/workflows/ci.yml`.
+- **M-7.** `dio ^5.8.0+1` (`pubspec.yaml:39`) still declared, still never imported.
+- **M-8.** No code-level HTTPS assertion on `ApiService.baseUrl` (`api_service.dart:37-41`) or `AssistantService.assistantUrl` (`assistant_service.dart:33`).
+- **M-9.** Single Firebase project for all environments (`firebase_options.dart:26,35,47`) — dev/CI writes share the production datastore *and now the production Storage bucket*.
+- **M-10.** `emailPassword` provider still enabled (`firebase.json:18`) with no code path using it.
+- **M-11.** `NSSpeechRecognitionUsageDescription` (`Info.plist:72`) still does not disclose possible server-side recognition (`voice_service.dart:48` omits `onDevice`).
+- **M-12.** Demo-fallback marking is incomplete: `app_provider.dart:135-139` (patients list) and `blog_provider.dart:38,68` fall back to `DemoData` without calling `DemoMode.markServingDemoData()`. The dashboard path (`app_provider.dart:260`) does mark, so the banner usually appears anyway — but the coverage is not what the `DemoMode` docstring (`demo_mode.dart:11-13`) claims ("*Every* provider that serves a demo fallback calls `markServingDemoData`").
+- **M-13.** The account-deletion screen is hardcoded English (`delete_account_screen.dart:72-78,96-98,136-206`); no keys in `assets/i18n/en.json`/`hi.json`. DPDP §5(3) notice-language issue on the app's most legally operative screen.
+- **L-1.** `paginated_list.dart:89` still puts `e.toString()` into rendered state.
+- **L-2.** No audit logging; `firestore.rules:149` TODO never modelled — now also missing for account-deletion requests.
+- **L-3.** No retention limits on any stored PHI; `StoreMigrator.quarantine` (`store_migrator.dart:126-144`) has no age stamp, TTL or reaper (dormant today — zero call sites).
+- **L-4.** `patient_id` still sent to the assistant (`assistant_models.dart:126`) and still unused by `functions/index.js`.
+- **L-5.** Still no `SECURITY_REVIEW.md` / data inventory / incident runbook — the checklist's own closing requirement.
+- **L-6.** `storage.rules:86-88` catch-all deny is a no-op and its comment overstates what it does.
+- **L-7.** Stale six-tab documentation persists (`docs/ARCHITECTURE.md:68`, `docs/SCREEN_MAP.md:6`, `docs/CHANGELOG.md:64`, `docs/FEATURE_TRACKER.md:143`) — already catalogued in `DOCUMENTATION_AUDIT.md:321-330`; noted here only because `SCREEN_MAP` is what a security reviewer would read to enumerate reachable surfaces.
 
 ## BLOCKED-OWNER
 
 | # | Item | Exactly what is needed |
 |---|---|---|
-| 1 | **Live Firebase Storage rules** (blocks B-1) | Firebase Console → Storage → Rules tab, full text |
-| 2 | Live Firestore rules match the repo | Console → Firestore → Rules (`firestore.rules:9-17` says deploy happens from another repo) |
+| 1 | **Live Firebase Storage rules** (gates B-1) | Firebase Console → Storage → Rules, full text. The repo file is undeployed and, as written, would deny the app's own uploads — so the live posture is genuinely unknown and may still be the permissive default |
+| 2 | Live Firestore rules vs the repo | Console → Firestore → Rules (`firestore.rules:9-17` says deploy happens from `housepital-backend`) — needed to know whether chat/vitals are currently working, and if so, under what rule |
 | 3 | Firebase API key restrictions | GCP Console → Credentials → each of the 3 `AIza…` keys → Application + API restrictions |
-| 4 | App Check enforcement status | Firebase Console → App Check (gates B-3 and OTP abuse) |
+| 4 | App Check enforcement status | Firebase Console → App Check (gates B-2 and OTP abuse) |
 | 5 | SMS/OTP abuse protection & quotas | Firebase Console → Authentication → Settings → SMS region policy |
-| 6 | Privacy policy is live and accurate | `https://housepital.in/privacy` loading + its text, to check against §7's SDK table |
-| 7 | App Store Connect App Privacy answers | Screenshot of the App Privacy section |
-| 8 | Backend REST API authorization | The `api.housepital.in` service is out of repo — server-side authz, rate limiting, and input validation cannot be audited (relevant to §6 and §12) |
-| 9 | Anthropic account spend limit | Console budget cap (mitigates B-3's cost exposure) |
+| 6 | Privacy policy is live and accurate | `https://housepital.in/privacy` loading + its text, checked against §7's SDK table **and B-5's 30-day claim** |
+| 7 | App Store Connect App Privacy answers | Screenshot of the App Privacy section (now must cover Photos + User Content) |
+| 8 | Backend REST API authorization | `api.housepital.in` is out of repo — server-side authz, rate limiting and input validation cannot be audited |
+| 9 | Anthropic account spend limit | Console budget cap (mitigates B-2's cost exposure) |
+| 10 | **Whether a deletion request has any destination** | Confirm no queue/inbox/CRM currently receives one. If none exists, B-5's copy is unsupported and must change before submission |
 
 ---
 
-*Generated as a read-only audit. No source file was modified.*
+*Round-2 read-only audit against commit `820060b`. No source file was modified.*

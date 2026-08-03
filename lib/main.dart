@@ -92,6 +92,7 @@ import 'config/constants.dart';
 import 'data/demo_data.dart';
 import 'utils/permissions.dart';
 import 'utils/notification_router.dart';
+import 'widgets/demo_data_banner.dart';
 
 void main() async {
   // audit batch 4 (Agent J): wrap the whole app in runZonedGuarded so async
@@ -427,7 +428,10 @@ class _HousepitalAppState extends State<HousepitalApp> {
               maxScaleFactor: 1.4,
             ),
           ),
-          child: child!,
+          // Above the Navigator, so the sample-data notice is present on
+          // EVERY route — not just the five root tabs. It handles its own
+          // top inset; see DemoDataBannerHost.
+          child: DemoDataBannerHost(child: child!),
         );
       },
       onGenerateRoute: (settings) {

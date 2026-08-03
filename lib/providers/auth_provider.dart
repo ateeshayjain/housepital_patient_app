@@ -220,7 +220,22 @@ class AuthProvider extends ChangeNotifier {
     _stopTokenRefreshTimer();
     await _firebaseService.signOut();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // prefs.clear() used to take EVERYTHING, including two keys that must
+    // outlive a session:
+    //   • the storage schema stamp — clearing it makes the next launch look
+    //     like a pre-versioning install and re-run migrations against already
+    //     migrated data;
+    //   • a pending account-deletion request — the only evidence the user
+    //     ever asked, and the thing a future backend replays.
+    // Neither is patient data. Everything else still goes.
+    const preserved = <String>{
+      'housepital_schema_version',
+      'housepital_pending_deletion',
+    };
+    for (final key in prefs.getKeys().toList()) {
+      if (preserved.contains(key)) continue;
+      await prefs.remove(key);
+    }
     _currentUser = null;
     _state = AuthState.initial;
     notifyListeners();

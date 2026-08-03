@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/article.dart';
 import '../services/api_service.dart';
 
@@ -36,6 +37,7 @@ class BlogProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Articles API unavailable, using demo data: $e');
       _articles = _filtered(DemoData.articles, category);
+      DemoMode.markServingDemoData(DemoMode.sourceArticles);
       _error = null; // recoverable demo path
     }
 
@@ -65,6 +67,7 @@ class BlogProvider extends ChangeNotifier {
       _error = null;
     } catch (e) {
       debugPrint('Article API unavailable, using demo data: $e');
+      DemoMode.markServingDemoData(DemoMode.sourceArticles);
       final demo = DemoData.articles.where((a) => a.id == id).toList();
       _selected = demo.isNotEmpty ? demo.first : null;
       _error = _selected == null ? 'Article not found' : null;

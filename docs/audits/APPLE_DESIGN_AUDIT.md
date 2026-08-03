@@ -1,15 +1,38 @@
-# Apple Design Framework — Complete Standard (v1.0, Feb 2026) — Audit vs commit `803124d`
+# Apple Design Framework — Complete Standard (v1.0, Feb 2026) — Audit **round 2** vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** Apple-Design-Framework agent
-**Repo:** `/Users/ateeshayjain/WIPApps/Housepital/housepital_patient_app` (working tree at HEAD `803124d`)
-**Method:** read-only. `rg`/`grep` sweeps + direct reads of `lib/config/theme.dart`, `lib/config/app_colors.dart`,
-`lib/widgets/*`, `lib/screens/main_shell.dart`, `lib/main.dart` route table, and every root-tab screen.
-Ran `bash scripts/check_design_consistency.sh` (PASS). Did **not** run `flutter test/build/clean` per brief.
-All contrast ratios below were computed with a WCAG 2.x relative-luminance calculator validated against
-reference pairs (`#767676`/white = 4.54, black/white = 21.0, `#0000FF`/white = 8.59 — exact matches).
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
+**Auditor:** Apple-Design-Framework agent · **Method:** read-only.
 
-**Working-tree note honoured:** this audit reflects the **FIVE**-tab shell
-(Home/My Care/Services/Billing/More) with the care calendar moved to the My Care app bar.
+`rg`/`grep` sweeps + direct reads of `lib/main.dart`, `lib/screens/main_shell.dart`,
+`lib/config/theme.dart`, `lib/config/app_colors.dart`, `lib/data/demo_mode.dart`,
+`lib/screens/settings/delete_account_screen.dart`, every root-tab screen, and the
+`ios/Runner/Assets.xcassets` icon + launch sets (inspected with `sips` and read as images).
+Ran `bash scripts/check_design_consistency.sh` — **PASS**. Did **not** run
+`flutter test/build/clean` per brief; central results cited where relevant.
+All contrast ratios recomputed this round with a WCAG 2.x relative-luminance calculator
+validated against reference pairs (`#767676`/white = 4.54, black/white = 21.0, `#0000FF`/white = 8.59).
+
+---
+
+## Changed since round 1
+
+| Round-1 finding | Status now | Evidence |
+|---|---|---|
+| **N-1 Blocker** — `/services` → bare `const Scaffold()`, blank screen, no way back | ✅ **FIXED, and the fix is sound** | `lib/main.dart:568-569` now returns `const _RootTabRedirect(tabIndex: 2)`; `:802-834` pops to the first route then `MainShell.switchToTab(2)`. Verified it cannot strand — see §Verification A |
+| **N-2 Blocker** — `orangeText`/`orangeDark`/`warning` documented as AA-passing, measure 3.99 / 3.62 / 3.79 | ❌ **UNCHANGED** — was not in the blocker fix list and `theme.dart` was not touched in `803124d..820060b` | `git diff --stat 803124d 820060b` lists no `lib/config/theme.dart`; comments still read "4.6:1" (`theme.dart:62`), "4.5:1" (`:64`), "4.6:1" (`:87`). Re-measured: **3.99 / 3.62 / 3.79** |
+| **N-3 High** — GlassAppBar unpaired with `extendBodyBehindAppBar` | ⚠️ **UNCHANGED (ratio identical)** | now **8 of 46** files comply (was 7 of 45). The one new compliant file is `delete_account_screen.dart:126`. The non-compliant count is still **38** |
+| **N-4 High** — four root-tab header idioms | ❌ **WORSENED → five** | the demo banner (`main_shell.dart:64`) inserts a sixth chrome layer above all five tabs; My Care's trailing group grew to 4 icons (`my_care_screen.dart:86-95`). See §Round-2 specifics C |
+| **N-5 High** — SOS: one entry point, scrolls off-screen, `SOSButton` dead | ❌ **UNCHANGED** | `grep -rn "'/sos'" lib` → still exactly 2 hits (`main.dart:447`, `home_screen.dart:493`); `SOSButton(` instantiations = **0** outside its own declaration; `home_screen.dart` diff this round added only a `SessionScope` import |
+| **N-6 High** — nav unselected labels 1.82:1 | ❌ **UNCHANGED** | `main_shell.dart:91` still `context.hc.onOrange.withValues(alpha: 0.7)` |
+| **N-7 High** — errors rendered as empty states | ❌ **UNCHANGED** | `transaction_log_screen.dart:60` and `notifications_screen.dart:47` still `showEmptyOnError: true` |
+| **N-8 High** — destructive actions with no confirmation | ❌ **UNCHANGED** | `patient_profile_screen.dart:145-150` still `setState` + `removeAt` on an **emergency contact**; `care_calendar_screen.dart:1308-1313` still deletes a reminder straight through; `cart_screen.dart:982` still `cart.removeSaved(index)` |
+| **N-9 High** — booking wizard: raw `AppBar`, overloaded back, no `PopScope` | ❌ **UNCHANGED** | `grep -rn PopScope lib` → **one** hit, `booking_confirmation_screen.dart:187` |
+| **N-10..N-14 Med/Low** — gate scope, sheet geometry, SnackBar split, dead `PopScope`, stale docs | ❌ **ALL UNCHANGED** | none of `scripts/check_design_consistency.sh`, `paginated_list.dart`, `document_attach_widgets.dart`, `glass.dart` appear in the round diff |
+| Previously-fixed items (radius 14, `Colors.grey.shade*`, raw hex, rainbow, 11px floor, text-scale clamp, 44pt floors) | ✅ **STILL HOLDING** | gate re-run this round: `✓ Design-consistency check passed`. fontSize histogram grew only on-canon (12: 191→192, 13: 200→202, 14: 184→186, 16: 138→141) — the new screen introduced **no** new off-canon size |
+| Test/doc staleness on tab count | ✅ **CLEAN** | `test/screens/main_shell_test.dart:228-242` asserts five tabs and `barLabel('Calendar') findsNothing`; no `.dart`/`.md` outside `docs/audits/` asserts six tabs |
+
+**Net movement: 1 blocker closed, 3 new failures opened.** Round 1: 33 ✅ / 39 ⚠️ / 10 ❌.
+Round 2: **29 ✅ / 42 ⚠️ / 11 ❌.** The regression is concentrated in the new shell chrome.
 
 ---
 
@@ -17,74 +40,270 @@ reference pairs (`#767676`/white = 4.54, black/white = 21.0, `#0000FF`/white = 8
 
 | Section | ✅ | ⚠️ | ❌ | N/A |
 |---|---|---|---|---|
-| 1.1 Calm Command pillars (4) | 2 | 2 | 0 | 0 |
-| 1.2 Ten First Principles (10) | 3 | 5 | 2 | 0 |
+| 1.1 Calm Command pillars (4) | 1 | 3 | 0 | 0 |
+| 1.2 Ten First Principles (10) | 1 | 5 | 4 | 0 |
 | 2.1 Typography system (5) | 0 | 2 | 3 | 0 |
 | 2.2 Color system (8) | 4 | 3 | 1 | 0 |
-| 2.3 Spacing & layout (9) | 5 | 4 | 0 | 0 |
+| 2.3 Spacing & layout (9) | 4 | 4 | 1 | 0 |
 | 3.1 Touch targets (3) | 2 | 1 | 0 | 0 |
 | 3.2 Animation (6) | 4 | 2 | 0 | 0 |
 | 3.3 Feedback patterns (3) | 1 | 2 | 0 | 0 |
 | 4.1 Buttons (4) | 1 | 3 | 0 | 0 |
 | 4.2 Cards (4) | 2 | 2 | 0 | 0 |
 | 4.3 Forms (4) | 1 | 3 | 0 | 0 |
-| 5.1 Quick tests (3) | 0 | 2 | 1 | 0 |
-| 5.2 Accessibility checklist (6) | 2 | 2 | 1 | 1 |
-| 5.3 Design review sign-off (9) | 3 | 4 | 2 | 0 |
+| 5.1 Quick tests (3) | 0 | 3 | 0 | 0 |
+| 5.2 Accessibility checklist (6+1) | 2 | 2 | 1 | 1 |
+| 5.3 Design review sign-off (9) | 3 | 5 | 1 | 0 |
 | 6.1–6.3 Figma / PPT / Notion (14) | 0 | 0 | 0 | 14 |
 | 6.4 Code implementation (5) | 3 | 2 | 0 | 0 |
-| **TOTAL (97 scored + 14 N/A)** | **33** | **39** | **10** | **15** |
+| **TOTAL (82 scored + 15 N/A)** | **29** | **42** | **11** | **15** |
 
 ---
 
-## Standing vs the earlier audit batch
+# Round-2 specifics (the four questions in the brief)
 
-### (a) Previously fixed — still holding ✅
+## A. Verification — does `_RootTabRedirect` actually restore a usable state? ✅ **YES**
 
-Verified by re-running the enforcement gate and re-greping the banned patterns:
+`lib/main.dart:802-834`:
 
+```dart
+class _RootTabRedirectState extends State<_RootTabRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      MainShell.switchToTab(widget.tabIndex);
+    });
+  }
+  @override
+  Widget build(BuildContext context) =>
+      Scaffold(backgroundColor: Theme.of(context).scaffoldBackgroundColor);
+}
 ```
-$ bash scripts/check_design_consistency.sh
-✓ Design-consistency check passed — no banned patterns in lib/screens.
-```
 
-| Item | Evidence |
-|---|---|
-| `BorderRadius.circular(14)` eliminated | gate check #1 clean; `circular(14)` count in `lib/screens` = 0 |
-| `Colors.grey.shade*` eliminated from screens | gate check #2 clean |
-| Raw `Colors.red/blue/green/teal/purple` eliminated from screens | gate check #3 clean |
-| Hardcoded `Color(0xFF…)` eliminated from screens (9-entry allowlist only) | gate check #4 clean |
-| Raw brand orange as text colour eliminated | gate check #5 clean, allowlist is literally `__none__` |
-| `CircleAvatar` wrapping an `Icon` eliminated | gate check #6 clean; `AppIconTile` is the primitive (`lib/widgets/common_widgets.dart:197`) |
-| Per-service rainbow retired from screens | gate check #7 clean, 4 documented categorical allowlist files |
-| Shared kit exists and is used | `HousepitalCard` 49 sites, `SectionHeader`/`StatusBadge`/`AppIconTile`/`DetailRow`/`VitalCard` all in `lib/widgets/common_widgets.dart` |
-| 11px text floor | fontSize histogram: `11` ×95, and exactly **one** sub-11 value (`9.5` ×1) at `lib/screens/calendar/care_calendar_screen.dart:817` — the documented year-view exception |
-| Text-scale clamp (WCAG 1.4.4) | `lib/main.dart:417` — `textScaler.clamp(0.85, 1.4)` |
-| 44pt hit areas on previously-flagged hot spots | `lib/screens/cart/cart_screen.dart:862`, `:979`; `lib/widgets/common_widgets.dart:691`; `lib/screens/home/home_screen.dart:410`, `:497`; `lib/widgets/empty_state.dart:96` |
-| Colour-blind-safe vital status | `VitalCard` renders icon + word ("Normal"/"Borderline"/"Alert"), not a colour dot — `lib/widgets/common_widgets.dart:363-378` |
-| Bottom-nav geometry after the 6→5 change | `test/screens/main_shell_test.dart:189-234` asserts fixed full-width orange bar, 5 items, no Calendar tab |
-| No dangling 6-tab indices | every `MainShell.switchToTab(n)` call site uses n ∈ {0,1,2,3} — `lib/screens/home/home_screen.dart` ×12, `lib/screens/my_care/my_care_screen.dart:364`, `lib/widgets/glass.dart:67` |
+I traced every way the user can arrive and every way it can fail:
 
-### (b) NEW or regressed violations ❌⚠️
+| Concern | Verdict | Evidence |
+|---|---|---|
+| Is the first route actually the shell? | ✅ | `main.dart:418` `home: const SplashScreen()`; `splash_screen.dart:17` `pushReplacementNamed('/home')`; `main.dart:437-438` `/home` → `MainShell(key: MainShell.shellKey)`. After the splash **replaces** itself, `isFirst` **is** the shell |
+| Does `switchToTab` actually reach a live state? | ✅ | the shell is built **with** `MainShell.shellKey` at both `main.dart:438` and `:769`, and `MainShellState` survives (it is the first route, never disposed) |
+| What if `shellKey.currentState` were null? | ✅ **fails safe** | `MainShell.switchToTab` (`main_shell.dart:21-23`) is a null-aware no-op, and `popUntil` has already returned the user to the shell — worst case they land on Home instead of Services. No stranding path exists |
+| Live entry point still works? | ✅ | `assistant_service.dart:189` maps `services`/`dikhao`/`kholo` → `'/services'`; `assistant_screen.dart` pushes it. Stack `MainShell → AssistantScreen → redirect`; `popUntil(isFirst)` clears both, leaving Services selected |
+| Bounds-checked? | ✅ | `switchTab` guards `index >= 0 && index < _screens.length` (`main_shell.dart:46`) |
 
-Ranked; full evidence in the Findings section below.
+**One inaccuracy in the fix's own comment.** `main.dart:806-807` says the redirect "never paints a frame."
+It does — `build()` returns a real `Scaffold`, and `addPostFrameCallback` fires *after* frame 1, by which
+point `MaterialPageRoute`'s ~350ms iOS slide has begun. The user sees a brief blank page slide in and
+immediately slide back out. Functionally safe, visually a stutter. — **Fix:** use
+`PageRouteBuilder(opaque: false, transitionDuration: Duration.zero)` for this one route so the redirect
+is genuinely invisible, and correct the comment.
 
-| # | Finding | Grade | Where |
-|---|---|---|---|
-| N-1 | `/services` route resolves to a bare `const Scaffold()` — blank screen, **no app bar, no back button**, reachable live from the Sahayak assistant | ❌ Blocker | `lib/main.dart:555-557`, `lib/services/assistant_service.dart:189` |
-| N-2 | Three colour tokens documented as WCAG-AA-passing measure **below 4.5:1** — the premise the design gate is built on | ❌ Blocker | `lib/config/theme.dart:62,64,87` |
-| N-3 | GlassAppBar chrome contract broken on **38 of 45** screens: no paired `extendBodyBehindAppBar` | ❌ High | see table in §1.2 P2 |
-| N-4 | **Four different root-tab header idioms** across five tabs (regression surface of the 6→5 tab change) | ❌ High | Home / My Care / Services / Billing / More |
-| N-5 | SOS has exactly **one** entry point app-wide and it **scrolls off-screen**; `SOSButton` is dead code | ⚠️ High | `lib/screens/home/home_screen.dart:483-530`, `lib/widgets/common_widgets.dart:586` |
-| N-6 | Bottom-nav **unselected** tab labels measure **1.82:1** (not covered by the white-on-orange owner override) | ❌ High | `lib/screens/main_shell.dart:79` |
-| N-7 | Errors silently rendered as empty states on Billing → Transaction Log and Notifications | ⚠️ High | `lib/screens/billing/transaction_log_screen.dart:60`, `lib/screens/notifications/notifications_screen.dart:47` |
-| N-8 | Two destructive actions ship with **no confirmation**, inconsistent with their own siblings | ⚠️ High | `lib/screens/calendar/care_calendar_screen.dart:1312`, `lib/screens/settings/patient_profile_screen.dart:145` |
-| N-9 | `service_booking_screen` hand-rolls a Material `AppBar`, overloads back for wizard steps, and has **no `PopScope`** — the iOS edge-swipe silently exits the whole wizard | ⚠️ High | `lib/screens/services/service_booking_screen.dart:325-336` |
-| N-10 | `lib/widgets/` is **outside** the design gate's scan scope — two shared widgets are light-mode-only | ⚠️ Med | `scripts/check_design_consistency.sh:18`, `lib/widgets/paginated_list.dart`, `lib/widgets/document_attach_widgets.dart` |
-| N-11 | Sheet geometry drift: three top-corner radii (16/20/28) + 6 sheets with no drag handle | ⚠️ Med | 25 `showModalBottomSheet` sites |
-| N-12 | Two competing transient-feedback idioms: 61 Material `SnackBar`s vs 7 `showTopToast`s (the *fix* pattern from this very commit) | ⚠️ Med | 35 files |
-| N-13 | `PopScope(canPop: false)` with no `onPopInvoked` → dead back-gesture on booking confirmation | ⚠️ Med | `lib/screens/services/booking_confirmation_screen.dart:187-188` |
-| N-14 | Stale documentation contradicting shipped code (4 sites) | ⚠️ Low | `lib/widgets/glass.dart:22`, `test/screens/main_shell_test.dart:3-9`, `lib/config/theme.dart:159,231,325,416`, `lib/screens/services/service_catalog_screen.dart:128` |
+**Grade: ✅ blocker closed.** ⚠️ Low: transition stutter + a comment that overstates.
+
+## B. The sample-data banner as chrome — ❌ **it fights all three: large titles, glass bars, and safe areas**
+
+`main_shell.dart:58-72` puts `_DemoDataBanner` **above** the `IndexedStack`, inside a `Column`,
+on a `Scaffold` that has **no `appBar:`**.
+
+### B-1. ❌ It double-counts the top safe-area inset on every screen in the app
+
+The mechanism is deterministic:
+
+1. `main_shell.dart:54` — the shell `Scaffold` declares **no `appBar:`**, so Scaffold does **not**
+   `removePadding(removeTop: true)` from its `body`.
+2. `main_shell.dart:143` — the banner's `SafeArea(bottom: false)` inserts `MediaQuery.padding.top`
+   (≈47pt on an iPhone 14/15/16) above its own text. `SafeArea` calls `MediaQuery.removePadding`
+   **for its own child only** — never for its siblings in the `Column`.
+3. `main_shell.dart:65-70` — the `Expanded(IndexedStack(...))` therefore still reads
+   `MediaQuery.of(context).padding.top == 47`, while it is now laid out starting at
+   y ≈ 47 + 8 + ~17 + 8 ≈ **80pt**.
+4. Each tab is its own `Scaffold` + `GlassAppBar`; `AppBar` adds `MediaQuery.padding.top` above its
+   56pt toolbar → the bar becomes **103pt** tall and begins at y≈80.
+
+Net: a **~47pt empty band inside every screen**, below the banner and above the app-bar title.
+Two tabs then add it a **third** time in their scroll padding:
+`billing_screen.dart:173` `MediaQuery.of(context).padding.top + kToolbarHeight + 16` and
+`my_care_screen.dart:141` `… + 8`. `delete_account_screen.dart:123` does the same.
+
+— **Impact:** this is the app's **default** state — `api.housepital.in` does not resolve, so
+`markServingDemoData()` fires on first load (`app_provider.dart:260`) and the banner is up for the
+entire session. Every screen in the app currently renders with roughly one-and-a-half phantom notches
+of dead space. Directly fails §2.3 "Always respect system safe areas".
+— **Fix:** wrap the stack in `MediaQuery.removePadding(context: context, removeTop: true, child: …)`
+when the banner is visible — or, better, stop treating this as body content at all (see B-3).
+
+### B-2. ❌ It breaks the glass app-bar material and the large-title pattern
+
+- **Glass.** `GlassSurface` (`glass.dart:145-156`) is a `BackdropFilter` that is only meaningful when
+  content passes under it. On the 8 screens that *do* pair `extendBodyBehindAppBar`
+  (`assistant_screen`, `delete_account_screen`, `care_calendar_screen`, `service_detail_screen`,
+  `my_care_screen`, `care_team_screen`, `service_catalog_screen`, `billing_screen`) the whole glass
+  assembly now floats **below** an opaque cream band instead of merging with the status bar.
+  The defining iOS chrome behaviour — nav bar and status bar reading as one surface — is gone app-wide
+  while the banner is up.
+- **Large titles.** My Care and Billing implement the iOS collapsing large title
+  (`my_care_screen.dart:99-105`, `billing_screen.dart:153-160`). The collapse itself still works (it is
+  scroll-driven), but the resting large title now starts ~127pt down the screen instead of ~103pt,
+  and the first thing the user reads on every tab is a warning, not the screen's own title. §1.2 P3
+  ("most important information largest and highest") inverts: the highest element on all five tabs is
+  12pt caption text.
+- **Home.** Home has no `AppBar` at all (`home_screen.dart:103`); the banner is now the **only** top
+  chrome on tab 0, which is a fifth distinct header treatment (see C).
+
+### B-3. Content and accessibility of the banner itself
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| Contrast | ✅ | light: `#212121` on `#FFF3E0` = **14.68:1**; dark: `hc.black`→`HousepitalColorsDark.textPrimary #F2F2F2` on `#3A2D14` = **11.98:1** (`app_colors.dart:107,114`). Both AAA |
+| Non-dismissible, persistent | ✅ correct call | the condition persists; the dartdoc's reasoning (`main_shell.dart:126-131`) is sound |
+| Icon + text, not colour alone | ✅ | `Icons.info_outline` (`:149`) |
+| **Localized** | ❌ | hardcoded English at `main_shell.dart:153-154`; `grep "Showing sample" assets/i18n/*.json` → **no match**. Violates the CLAUDE.md contract ("every new user-facing string gets a key in BOTH en.json and hi.json"); the `i18n_sync_test.dart` guard cannot catch a string that never became a key |
+| **Offers recovery** | ❌ | §1.2 P7 requires errors to explain *and* offer a fix. It explains; there is no Retry, no "learn more", no tap target at all |
+| **Announced to VoiceOver** | ❌ | no `Semantics(liveRegion: true)`. A banner that appears asynchronously mid-session is silent to a screen-reader user |
+| Regression-tested | ❌ | `test/screens/main_shell_test.dart` has no banner test (`grep -in banner` → 0 hits). The layout consequence in B-1 would have been caught by a golden or a `tester.getTopLeft` assertion |
+
+### B-4. The flag it renders can lie in both directions
+
+- **False-negative.** `DemoMode.reset()` is called at exactly one place — `app_provider.dart:247`,
+  when the **dashboard** fetch succeeds. It resets a single global flag that five other providers set.
+  If the dashboard endpoint recovers while `MedicationProvider` (`:191`, `:236`),
+  `MyCareProvider` (`:50`, `:98`), `BillingProvider` (`:43`) or `OrdersProvider` (`:199`) are still
+  serving `DemoData`, the banner **disappears while sample medication schedules and sample vitals stay
+  on screen** — the precise failure the banner exists to prevent.
+- **Unmarked fallback.** `blog_provider.dart:38` and `:68` serve `DemoData.articles` with **no**
+  `markServingDemoData()` call. Lower clinical stakes than vitals, but it is a genuine gap in the
+  "every provider that serves a demo fallback calls markServingDemoData" contract asserted in
+  `demo_mode.dart:11-13`.
+— **Fix:** make it a counter/`Set<String>` of provider ids rather than a bool, so the banner drops only
+when every registered source is live; add the `blog_provider` call.
+
+### B-5. What it should be instead
+
+Apple's idiom for "the data you are seeing is not live" is a **chrome-level** notice that participates in
+the nav bar (a subtitle / status line under the title, or a bar-tinted state), not a body-level band that
+translates the entire app down. — **Fix:** move it into `GlassAppBar` as an optional status strip inside
+`bottom:` (which already exists and already sizes correctly — `glass.dart:52-53`), or render it as an
+overlay in the `Stack` **below** the safe-area inset. Either removes B-1 and B-2 entirely.
+
+**Grade: ❌.** As chrome, this is a net regression despite the underlying safety idea being right.
+
+## C. Did five tabs improve or worsen the header-idiom inconsistency? — **Worsened.**
+
+Round 1 already measured the five-tab tree, so the tab count itself changed nothing. What changed in
+round 2 made it worse in two ways.
+
+| Tab | Header idiom (round 2) | Evidence |
+|---|---|---|
+| Home (0) | **No `AppBar`.** Hand-rolled in-body header (logo + bell + search + cart + SOS) that scrolls away — now sitting under the banner, which is its only fixed chrome | `home_screen.dart:103`, `:375-530` |
+| My Care (1) | `GlassAppBar` + collapsing in-body large title; trailing group now **four** icons (calendar → home → search → cart) | `my_care_screen.dart:84-105`, new action at `:86-95` |
+| Services (2) | `GlassAppBar` with a **static, non-collapsing** 28/w800 title inside `bottom:` + a 7-tab `TabBar` | `service_catalog_screen.dart:129-170` |
+| Billing (3) | `GlassAppBar` + collapsing in-body large title | `billing_screen.dart:146-160` |
+| More (4) | `GlassAppBar` with a **plain 20pt title**, no large title | `settings_screen.dart:88-91` |
+| **All five** | **plus** a persistent non-dismissible band above everything | `main_shell.dart:64` |
+
+Two regressions:
+1. **My Care's app bar grew to four trailing icons** with the calendar action, against Home's five
+   hand-rolled controls, Services' two, Billing's two, More's three. The 6→5 tab consolidation moved
+   density from the nav bar into the app bar rather than removing it.
+2. **The banner is now the top-most element on all five**, which means the *only* consistent header
+   element in the app is a warning message. On Home it is the only fixed header at all.
+
+Still **four title treatments across five tabs**, unchanged from round 1 — but the surface above them
+is new and the icon counts diverged further.
+— **Fix (unchanged from round 1):** adopt the My Care/Billing collapsing large title on Services and
+More; it already has two working implementations to copy. Then move the banner into the bar.
+
+## D. The new app icon — ❌ **not submission-quality. Do not ship it.**
+
+Inspected `ios/Runner/Assets.xcassets/AppIcon.appiconset/` (all 16 PNGs + `Contents.json`), read the
+1024 master and a 4× magnification of the 40×40 as images.
+
+| Apple icon requirement | Verdict | Evidence |
+|---|---|---|
+| **Crisp at every size** | ❌ | the 1024 master is a visibly soft, resampled raster — every edge of the ring and the nurse's cap carries a 3–6px blur halo. This is upscaling from a small source, exactly as the brief describes. Apple's App Review 2.3.8 treats blurry/pixelated icons as a quality rejection |
+| **Artwork fills the canvas** | ❌ | the mark occupies roughly the middle 50% of the 1024 square with ~25% white margin on each side. iOS applies its own rounded-rect mask and expects a **full-bleed** square; self-imposed padding makes the icon read visibly smaller and weaker than every neighbour on the home screen |
+| **Legible at 40×40 / 29×29** | ❌ | at 40×40 the white cross inside the cap collapses to 2–3 mud-coloured pixels and the cap reads as an unidentified orange blob. The self-imposed padding compounds it: the effective mark is ~20pt inside a 40pt tile |
+| **No alpha channel** | ✅ | `sips -g hasAlpha` → `no` on 1024, 180 and 40. Correct — alpha is an automatic upload rejection |
+| Correct sizes present | ✅ | all 15 required iPhone/iPad sizes, dimensions verified (1024², 180², 40²) |
+| **Avoid pure-white backgrounds** | ⚠️ | the background is `#FFFFFF`. Icons get no border on iOS, so a white icon dissolves into light wallpapers. Brand orange or a subtle orange gradient would separate it and is on-brand |
+| **iOS 18+ dark & tinted variants** | ❌ | `Contents.json` contains **zero** `appearances` entries (`grep -c 'appearances\|luminosity\|tinted'` → 0). On iOS 18+ dark/tinted home screens the system auto-derives a variant from a white-background icon, which produces a washed grey tile |
+| Recognisable / distinct | ⚠️ | the mark itself (ring + nurse's cap + face) is a good, ownable idea and is genuinely readable at ≥120pt. The execution, not the concept, is the problem |
+
+**Plain answer: no.** It is a better placeholder than the stock Flutter logo, but it is a blurry,
+over-padded, white-background upscale with no dark/tinted variants. It will look conspicuously
+amateur next to any other app on the home screen and is a plausible 2.3.8 rejection.
+— **Fix:** re-export the mark from **vector** at 1024×1024, full-bleed, on brand orange (or a
+1-stop orange gradient) with the cap/face in white; drop the cross detail or thicken it to ≥6% of the
+canvas so it survives 29pt; add `appearances` entries with a dark and a tinted (monochrome-safe)
+variant. `assets/images/housepital_logo.png` (1200×312, alpha) is a wordmark lockup, not a suitable
+icon source — the icon needs the standalone glyph at vector fidelity.
+
+**Related, same asset pass — ❌ the launch screen is light-mode-only.**
+`ios/Runner/Base.lproj/LaunchScreen.storyboard:22` hardcodes
+`<color key="backgroundColor" red="1" green="1" blue="1" alpha="1"/>` — literal white, not
+`systemBackground`. `LaunchImage@3x.png` is 282×360 with alpha, `contentMode="center"`. So on a
+dark-mode device the app launches to a **full white screen** and then cuts to the app's true-black
+surface (`theme.dart:16` `#000000`). That is the single most jarring transition in the product and it
+happens on every cold start. — **Fix:** set the storyboard background to the `systemBackground` named
+colour (or add a `LaunchBackground` color set with light/dark values) and supply a dark `LaunchImage`
+appearance.
+
+## E. `delete_account_screen.dart` vs the destructive-action pattern — ⚠️ **strong content, three real defects**
+
+`lib/screens/settings/delete_account_screen.dart` (247 lines), reached from
+`settings_screen.dart:273-279` (tile correctly tinted `context.hc.error`).
+
+**What it gets right — genuinely above the app's own bar:**
+
+- ✅ **Confirmation depth exceeds spec.** Checkbox (`:185-194`) **and** typed `DELETE` (`:199-208`)
+  **and** a final `AlertDialog` (`:91-119`). §1.2 P2 asks for "explicit confirmation"; this is three gates.
+- ✅ **Destructive button styling is correct** — `backgroundColor: context.hc.error` + white
+  foreground (`:213-217`) = **4.98:1**, matching §4.1's Destructive row and the
+  `confirmDestructiveAction` house style.
+- ✅ **Honours the glass contract** — `extendBodyBehindAppBar: true` (`:126`) + `topPad` (`:123`).
+  It is one of only 8 screens in the app that do, and it correctly opts out of the cart (`:131`).
+- ✅ **The copy is honest** — "What gets deleted" / "What we must keep" (`:142-177`), and the dartdoc
+  at `:17-27` explicitly refuses to claim server-side erasure it cannot perform. This is the right call.
+- ✅ On-canon type only (16/14/13), `HousepitalCard`, `context.hc.*` throughout. Gate passes.
+
+**Defects:**
+
+- ❌ **After deleting the account the user is returned to the working app.** `:82-83` the success
+  dialog's only action is `Navigator.of(context).popUntil((route) => route.isFirst)` — and `isFirst`
+  is `/home` → `MainShell` (`main.dart:438`, reached via `splash_screen.dart:17`'s
+  `pushReplacementNamed`). There is **no auth gate**: `main.dart:417` shows the auth-aware
+  `home: Consumer<AuthProvider>(…)` **commented out**. So "Delete my account" → "Everything on this
+  phone has been erased" → **Done** → the user is standing on the Home tab of a fully navigable app.
+  `settings_screen.dart:452-460` (Logout) has the same shape, so the two are at least consistent —
+  consistently wrong. — **Impact:** breaks §1.2 P2 (predictable behaviour) at the highest-stakes
+  moment in the app, and undermines the App Store 5.1.1(v) claim the screen was built to satisfy.
+  — **Fix:** `Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false)` from both, and
+  re-enable the auth-gated `home:`.
+- ⚠️ **A third competing destructive-confirmation idiom.** The app already has
+  `confirmDestructiveAction` (`common_widgets.dart:501`, 8 call sites) — this screen hand-rolls its own
+  `AlertDialog` (`:92-118`) instead. Combined with the three paths that confirm *nothing* (round-1 N-8,
+  still open), the app now has **three** behaviours for "user is about to destroy something":
+  helper dialog · bespoke dialog · silence. §1.1 "same action, same result, everywhere".
+  — **Fix:** the helper takes `title`/`message`/`confirmLabel`; this screen's dialog fits it exactly.
+- ⚠️ **Not localized.** ~22 user-facing strings, all hardcoded English (`:72-78`, `:95-98`, `:136-197`,
+  `:226`), including the phone number `9990-911-911` twice (`:78`, `:181`). Same contract breach as
+  the banner, on the one screen a Hindi-first user most needs to understand before acting.
+- ⚠️ **No haptic on the destructive commit** (`:110-113`). §3.3 reserves heavy impact for exactly this;
+  the app already uses `HapticFeedback.heavyImpact` for SOS.
+- ⚠️ **Button 48pt** (`:211`) vs the checklist's 50pt — consistent with the rest of the app (§4.1), not
+  a new defect, but the one place a new screen could have set the corrected precedent.
+- ⚠️ **No `PopScope`.** Half-completed state (box ticked, `DELETE` typed) is silently discarded by the
+  iOS edge-swipe. Low stakes here — losing progress on a deletion form is the safe direction — but it
+  is the same gap as N-9.
+- Low: `:214-215` `backgroundColor: _canSubmit ? context.hc.error : context.hc.grey` — the `grey` arm
+  never renders. `ElevatedButton.styleFrom` maps `backgroundColor` to the **enabled** state only;
+  with `onPressed: null` Material falls back to its own disabled colour because
+  `disabledBackgroundColor` is unset. Dead ternary; the visual outcome happens to be correct.
+- Low: `:203-206` sets a bare `border: OutlineInputBorder()` locally, contradicting the app's
+  `InputDecorationTheme` (radius 12, `theme.dart:280-283`). Theme `enabledBorder`/`focusedBorder` still
+  win in practice, so the override is inert — but it is the only field in the app that declares one.
 
 ---
 
@@ -92,684 +311,361 @@ Ranked; full evidence in the Findings section below.
 
 ## 1. Philosophy & First Principles
 
-### 1.1 The Calm Command Manifesto — Core Design Pillars
+### 1.1 Calm Command pillars
 
-- ⚠️ **Clarity over decoration — every element must earn its place** — the calm pass genuinely landed
-  (service rainbow retired, one accent enforced by gate check #7, true-black tonal dark). But the
-  chrome still carries up to **four** trailing icons plus a leading home button on a 375pt bar
-  (`lib/widgets/glass.dart:74-84`: custom → home → search → cart), and Home adds a fifth (SOS pill,
-  `lib/screens/home/home_screen.dart:483`). — **Impact:** the "decrowding" field round removed a
-  second cart but the bar is still the densest surface in the app. — **Fix:** move `home` into the
-  bottom-nav-only role on pushed screens (back already returns), leaving `[custom, search, cart]`.
-- ✅ **Consistency breeds confidence — same action, same result** *for the enforced layer* —
-  `GlassAppBar`'s trailing order is contract-tested: `test/widgets/glass_app_bar_test.dart:73-80`
-  asserts custom → home → search → **cart rightmost** by measured `dx`.
-- ⚠️ **Whitespace is not empty** — spacing is on a coherent 4pt sub-grid but with real off-grid noise:
-  `SizedBox(height: 6)` ×32, `height: 10` ×29, `height: 14` ×48 (plus `width:` 6 ×17, 10 ×31).
-  See §2.3.
-- ✅ **Hierarchy guides the eye** — verified structurally on the root tabs: each has a single dominant
-  CTA cluster and `SectionHeader` (16/w600) separates bands
-  (`lib/widgets/common_widgets.dart:388-442`).
+- ⚠️ **Clarity over decoration** — the calm pass holds (rainbow retired, one accent gate-enforced,
+  true-black tonal dark). But chrome density **increased**: `glass.dart:74-84` still packs up to four
+  trailing icons, My Care now uses all four (`my_care_screen.dart:86-95`), Home adds a fifth control,
+  and the banner adds a full-width band above all of it.
+- ✅ **Consistency breeds confidence** *(for the enforced layer)* — `GlassAppBar` trailing order is
+  contract-tested (`test/widgets/glass_app_bar_test.dart:73-80`, custom → home → search → cart by
+  measured `dx`). Note the dartdoc at `glass.dart:22` still documents the **wrong** order
+  (`cart, search, home`) — round-1 N-14, unfixed.
+- ⚠️ **Whitespace is not empty** — unchanged off-grid tail (§2.3).
+- ⚠️ **Hierarchy guides the eye** — *downgraded from ✅*. The banner makes 12pt caption text the
+  topmost element on all five tabs (§B-2).
 
 ### 1.2 The Ten First Principles
 
-#### Principle 1 — Immediate Recognition (3-second test)
+**P1 Immediate Recognition — ⚠️ (was ❌).** `/services` is fixed and verified (§A). The residual
+failure is the **More** tab: a `ListView` of undifferentiated `ListTile`s with no large title and two
+`Divider`s for structure (`settings_screen.dart:88-280`) — cover the 20pt title and nothing says
+"account & settings".
 
-❌ **FAIL.** `lib/main.dart:555-557`:
+**P2 Predictable Behavior — ❌.** Four independent breaks, three unchanged plus one new:
+- (a) chrome contract honoured on **8 of 46** screens; 38 `GlassAppBar` screens have no
+  `extendBodyBehindAppBar`, so `BackdropFilter` (`glass.dart:156`) has nothing to blur and the bar
+  degrades to a flat 55% fill. Two visibly different bar materials app-wide.
+- (b) `service_booking_screen.dart:325-336` — raw Material `AppBar`, hardcoded `Icons.arrow_back`,
+  back overloaded to step the wizard, **no `PopScope`**. iOS edge-swipe destroys a half-completed
+  priced booking; the arrow one pixel away steps back one page.
+- (c) `booking_confirmation_screen.dart:187-188` — `PopScope(canPop: false)` with no
+  `onPopInvokedWithResult`: the back gesture does nothing and says nothing.
+- (d) **NEW** — logout (`settings_screen.dart:452-460`) and account deletion
+  (`delete_account_screen.dart:82-83`) both leave the user inside the authenticated shell (§E).
 
-```dart
-case '/services':
-  return MaterialPageRoute(
-      builder: (_) => const Scaffold());
-```
+**P3 Information Hierarchy — ❌.** Four title idioms across five tabs, plus the banner above all of
+them (§C). ⚠️ Progressive disclosure remains good: 25 modal sheets carry tertiary detail.
 
-A named route resolves to an **empty Scaffold** — no app bar, no title, no content, no back button.
-It is *not* dead code: `lib/services/assistant_service.dart:185-193` routes the Hinglish utterances
-`services` / `service` / `dikhao` / `kholo` to `'/services'`, and `assistant_screen.dart:55-58`
-pushes it. A user who says "services dikhao" to Sahayak lands on a blank page whose only exit is the
-iOS edge-swipe (there is no rendered back affordance at all).
-This is `BUG-16` in `docs/KNOWN_ISSUES.md`, open since 2026-03-21, and still open at `803124d`.
-— **Impact:** blocker. Fails the 3-second test absolutely (nothing to recognise) and traps the user.
-— **Fix:** `case '/services': return MaterialPageRoute(builder: (_) => MainShell(key: MainShell.shellKey));`
-then `MainShell.switchToTab(2)` — or delete the case so it falls through to the existing
-`default:` branch, which already returns `MainShell`.
+**P4 Touch-First Design — ⚠️.** 44pt floors reserved at 11 sites; every zero-padding `IconButton`
+carries compensating `constraints`; nav items ≥64pt wide. **Unchanged failure:** SOS sits in the *top*
+trailing corner of Home (`home_screen.dart:483`) inside the `SingleChildScrollView` at `:110`, so it
+scrolls out of view; the comment at `:481-483` claims persistence the code does not deliver;
+`SOSButton` (`common_widgets.dart:586-648`, with `heavyImpact` + `Semantics`) is still instantiated
+**zero** times; there is no SOS on 4 of 5 tabs.
 
-⚠️ Everywhere else the principle holds: every other screen opens with either a large in-body display
-title or a `GlassAppBar` title, and the root tabs each have one obvious primary job.
+**P5 Meaningful Motion — ✅.** Durations 100–500ms for all UI animation; the three >500ms values are
+`Future.delayed` network simulations and a tracking sweep. No infinite pulses (`grep '\.repeat('` →
+one comment recording the removal).
 
-#### Principle 2 — Predictable Behavior (same gesture = same result; back always goes back)
+**P6 Accessible by Default — ❌.** See §5.2. Headline unchanged: three tokens documented as AA-passing
+measure 3.99 / 3.62 / 3.79, and nav unselected labels measure 1.82:1.
 
-❌ **FAIL — three independent breaks.**
+**P7 Error Prevention — ⚠️.**
+- (a) **Errors disguised as empty states, unchanged.** `paginated_list.dart:140-165` renders the
+  caller's `emptyWidget` on an initial-load *failure* when `showEmptyOnError: true`. Both opt-ins
+  survive: `transaction_log_screen.dart:60` (a failed fetch reads "you have no transactions" on a
+  **billing** screen) and `notifications_screen.dart:47` ("you're all caught up"). No retry offered;
+  the widget's own error branch at `:167-185` already has one.
+- (b) **Unconfirmed destructive actions, unchanged.** Emergency contact
+  (`patient_profile_screen.dart:145-150`) and care reminder (`care_calendar_screen.dart:1308-1313`)
+  delete straight through, each two rows from a sibling that *does* confirm; saved-for-later
+  (`cart_screen.dart:982`) likewise. The emergency-contact case remains the serious one — a single
+  mis-tap silently deletes a safety contact from a home-healthcare app, no undo.
+- (c) **NEW positive** — `delete_account_screen.dart` is the best-confirmed destructive path in the app
+  (§E), which makes the three silent ones stand out more, not less.
+- ✅ `AutovalidateMode.onUserInteraction` on 8 forms. ⚠️ 45 `TextFormField`s vs 32 `validator:`.
 
-**(a) Chrome contract honoured on 7 of 45 screens.** `CLAUDE.md` states glass screens *pair* with
-`extendBodyBehindAppBar` + scroll padding. Measured:
+**P8 Performance Perception — ⚠️.** Skeletons on 2 screens; everything else is a bare spinner
+(`CircularProgressIndicator` ×24, `LoadingWidget` on 10). Offline/optimistic behaviour is strong.
 
-```
-GlassAppBar files:               45
-extendBodyBehindAppBar: true:     7
-```
+**P9 Platform Authenticity — ❌ against the literal spec.** Unchanged inventory: 61 Material
+`SnackBar` sites vs 7 `showTopToast`; 40 `DropdownButton`; 14 `Switch`/`SwitchListTile`; 3
+`showDatePicker`/`showTimePicker`; 5 `FloatingActionButton` + the global `AssistantFab`; 3 underline
+`TabBar`s; Material icon set app-wide (`grep Cupertino lib` → 1 hit, a localization delegate).
+Mitigating: no `pageTransitionsTheme` override, so iOS gets Cupertino slide + edge-swipe free, and
+safe areas are otherwise respected. **New this round:** §B-1 means the safe-area claim no longer holds
+in the app's default state.
 
-The 7 that comply: `assistant_screen.dart:80`, `care_calendar_screen.dart:189`,
-`my_care_screen.dart:83`, `service_detail_screen.dart:48`, `care_team_screen.dart:77`,
-`billing_screen.dart:145` — plus `service_catalog_screen.dart:127` which *deliberately* opts out
-with a comment. The other **38** (full list obtainable via
-`for f in $(grep -rl GlassAppBar lib/screens); do grep -q extendBodyBehindAppBar $f || echo $f; done`)
-include `cart_screen.dart`, `payment_screen.dart`, `settings_screen.dart`,
-`universal_search_screen.dart`, `document_repository_screen.dart`, `my_orders_screen.dart`,
-`vitals_screen.dart`, `notifications_screen.dart`, `order_tracking_screen.dart`.
-On those 38 the `BackdropFilter` in `GlassSurface` (`lib/widgets/glass.dart:156`) has nothing behind
-it to blur, so the bar degrades to a flat 55%-opacity fill. — **Impact:** two visibly different app-bar
-materials across the app; content "glides under glass" on 7 screens and hard-stops on 38.
-— **Fix:** either set `extendBodyBehindAppBar: true` + the documented
-`MediaQuery.padding.top + kToolbarHeight` scroll padding on the remaining 38, or make `GlassSurface`
-fall back to an opaque `surface` fill when the bar is not extended, so the two states look identical.
-
-**(b) Wizard back is overloaded with no gesture parity.**
-`lib/screens/services/service_booking_screen.dart:325-336`:
-
-```dart
-appBar: AppBar(                       // ← raw Material AppBar, not GlassAppBar
-  title: Text(s.name),
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back),   // ← Material arrow, not the adaptive BackButton
-    onPressed: () {
-      if (_step > 0) { setState(() => _step--); } else { Navigator.pop(context); }
-```
-
-There is **no `PopScope`** on this screen (`grep -rn 'PopScope' lib` returns only
-`booking_confirmation_screen.dart:187`). So on iOS the edge-swipe pops the entire booking wizard from
-step 3, while the visible arrow one pixel away steps back to step 2. Same gesture intent, two
-different results. — **Impact:** users lose a half-completed priced booking. — **Fix:** wrap in
-`PopScope(canPop: _step == 0, onPopInvokedWithResult: (didPop, _) { if (!didPop) setState(() => _step--); })`
-and drop the hardcoded `Icons.arrow_back` so Flutter's adaptive `BackButtonIcon` renders the iOS chevron.
-
-**(c) Dead back gesture on the confirmation screen.**
-`lib/screens/services/booking_confirmation_screen.dart:187-188` is `PopScope(canPop: false, child: …)`
-with **no `onPopInvokedWithResult`**. Swiping back does literally nothing and says nothing. The screen
-does provide three explicit exits (`:404` Track order, `:420` popUntil first, `:432` a TextButton), so
-the intent is sound — the silence is not. — **Fix:** add an `onPopInvokedWithResult` that runs the same
-`Navigator.popUntil(context, (r) => r.isFirst)` as line 422.
-
-✅ Destructive-confirmation *helper* exists and is used at 7 call sites
-(`confirmDestructiveAction`, `lib/widgets/common_widgets.dart:501`) — but see Principle 7 for the gaps.
-
-#### Principle 3 — Information Hierarchy
-
-❌ **FAIL on root-tab consistency.** The five tabs use **four different header idioms**:
-
-| Tab | Idiom | Evidence |
-|---|---|---|
-| Home (0) | **No `AppBar` at all** — hand-rolled in-body header row (logo + bell + search + cart + SOS) that scrolls away | `home_screen.dart:103` (`Scaffold` with no `appBar:`), `:375-530` |
-| My Care (1) | `GlassAppBar` + in-body large title, bar title **fades in on scroll** (iOS large-title collapse) | `my_care_screen.dart:99-105`, `:44-48` |
-| Services (2) | `GlassAppBar` with a **static, non-collapsing** 28/w800 title inside `bottom:` + a 7-tab `TabBar` | `service_catalog_screen.dart:123-170` |
-| Billing (3) | `GlassAppBar` + in-body large title, bar title fades in on scroll | `billing_screen.dart:153-160` |
-| More (4) | `GlassAppBar` with a **plain 20pt title**, no large title at all | `settings_screen.dart:87-91` |
-
-— **Impact:** "most important information largest and highest" resolves differently on every tab; the
-display-title size a user sees on tab 1 vanishes on tab 4. This is the surface most exposed by the
-6→5 tab change (Services acquired its title-in-`bottom` treatment to make room for the tab strip).
-— **Fix:** pick one — the My Care/Billing collapsing large title is the strongest and already has two
-implementations to copy. Give Services the same treatment above its `TabBar`, and give More a large title.
-
-⚠️ Progressive disclosure is otherwise good: 25 modal sheets carry tertiary detail rather than pushing routes.
-
-#### Principle 4 — Touch-First Design (≥44pt, thumb zones, visual feedback)
-
-⚠️ **PARTIAL.**
-- ✅ 44pt floors are explicitly reserved at 11 sites (`grep -c 'minWidth: 44\|minHeight: 44\|Size(0, 32).*padded'` → 11), including every previously-flagged small control.
-- ✅ Every `IconButton` with `padding: EdgeInsets.zero` also declares `constraints: BoxConstraints(minWidth: 44, minHeight: 44)` — verified at `cart_screen.dart:862/979` and `common_widgets.dart:691`.
-- ✅ Bottom nav: 5 items across ≥320pt = ≥64pt each; `BottomNavigationBar` fixed-type default height 56pt inside `SafeArea` — `main_shell.dart:67-71`.
-- ⚠️ **Thumb-zone failure for the app's most urgent action.** SOS is in the *top* trailing corner of Home (`home_screen.dart:483`) — the hardest reach on a large iPhone — and, because `_buildHeader` is a child of the `SingleChildScrollView` at `home_screen.dart:110-120`, it **scrolls out of view**. The comment at `:481-483` claims it "lives in the persistent header so it's always one tap away"; the code contradicts it.
-  Worse, `grep -rn "'/sos'" lib` returns exactly **two** hits: the route case (`main.dart:439`) and that one push (`home_screen.dart:492`). There is no SOS on My Care, Services, Billing, or More, and the ready-made `SOSButton` widget (`lib/widgets/common_widgets.dart:586-648`, complete with `heavyImpact` haptic and a Semantics label) is **never instantiated anywhere**.
-  — **Impact:** `CLAUDE.md`'s "SOS is never blocked" is satisfied in the sense that nothing gates it, but it is effectively hidden from 4 of 5 tabs and from any scrolled Home. — **Fix:** pin the Home header (move `_buildHeader` out of the scroll view, or use a `SliverPersistentHeader`), and surface SOS from the shell so it survives a tab switch.
-
-#### Principle 5 — Meaningful Motion
-
-✅ **PASS.**
-- Durations: `100`(4), `120`(1), `150`(4), `200`(4), `220`(2), `250`(2), `300`(2), `400`(1), `450`(3), `500`(1). Micro-interactions and standard transitions land in spec; the three `450` and one `500` are celebrations (`booking_confirmation_screen.dart:95,104`, `payment_screen.dart:135`, `staff_otp_verification_screen.dart:66`) — at or under the 500ms "complex animation" ceiling and under `CLAUDE.md`'s ≤500ms celebration rule.
-- Two outliers are **not** animations: `Duration(milliseconds: 800)` at `payment_screen.dart:171` and `payment_service.dart:118` are `Future.delayed` simulated-network waits; `1200` at `order_tracking_screen.dart:109` is the tracking-progress sweep.
-- ✅ No infinite pulses: `grep -rn '\.repeat(' lib` returns a single **comment** at `order_tracking_screen.dart:103` recording that the unbounded pulse was removed.
-
-#### Principle 6 — Accessible by Default
-
-❌ **FAIL** — see §5.2 for the full contrast table. Headline: three tokens the codebase *documents* as
-AA-passing measure below 4.5:1, and the bottom nav's unselected labels measure 1.82:1.
-
-#### Principle 7 — Error Prevention
-
-⚠️ **PARTIAL — two real gaps.**
-
-**(a) Errors disguised as empty states.** `lib/widgets/paginated_list.dart:140-165` — when
-`showEmptyOnError: true`, an initial-load **failure** renders the caller's `emptyWidget` instead of
-the error/retry block. Two screens opt in:
-- `lib/screens/billing/transaction_log_screen.dart:60` → a failed transaction fetch reads as *"you have no transactions"* on a **billing** screen.
-- `lib/screens/notifications/notifications_screen.dart:47` → a failed notification fetch reads as *"you're all caught up"*.
-
-— **Impact:** the user cannot distinguish "nothing here" from "we couldn't load it", and is given no
-retry. Directly contradicts "when errors occur, explain clearly and offer recovery". — **Fix:** drop
-`showEmptyOnError` on both; the widget's own error branch (`:167-185`) already offers Retry.
-
-**(b) Two destructive actions with no confirmation, each inconsistent with a sibling that *does* confirm.**
-
-| Action | Confirms? | Evidence |
-|---|---|---|
-| Remove item from cart | ✅ yes | `cart_screen.dart:865-872` |
-| Remove item from **saved-for-later** | ❌ **no** | `cart_screen.dart:982` — `onPressed: () => cart.removeSaved(index)` |
-| Remove medication (profile) | ✅ yes | `patient_profile_screen.dart:225-233` |
-| Remove **emergency contact** (profile) | ❌ **no** | `patient_profile_screen.dart:145-150` — `setState` + `removeAt`, straight through |
-| Delete **care reminder** | ❌ **no** | `care_calendar_screen.dart:1308-1313` — `IconButton(Icons.close)` → `RemindersProvider.delete(r.id)` |
-
-— **Impact:** the emergency-contact case is the serious one — a single mis-tap on `Icons.remove_circle_outline`
-(`patient_profile_screen.dart:694`) silently deletes a safety contact from a home-healthcare app, with no
-undo. The inconsistency also breaks Principle 2: the same red minus glyph two rows apart behaves differently.
-— **Fix:** route all three through the existing `confirmDestructiveAction` helper (already imported in
-both files).
-
-✅ Real-time validation is present where it matters: `AutovalidateMode.onUserInteraction` on 8 forms
-(login, onboarding, add-patient, patient-profile, address, family-members, raise-concern, vitals).
-⚠️ 45 `TextFormField`s vs 32 `validator:` declarations → ~13 fields ship without validation.
-
-#### Principle 8 — Performance Perception
-
-⚠️ **PARTIAL.** Skeleton screens exist on exactly **2** screens
-(`article_list_screen.dart:101-102`, `notification_preferences_screen.dart:190,229` — both `Shimmer`).
-Every other loading state is a bare spinner: `CircularProgressIndicator` ×24, `LoadingWidget` on 10
-screens (`lib/widgets/common_widgets.dart:444`). ✅ Optimistic/offline behaviour is strong —
-`cache_service.dart`, `sync_service.dart`, provider-level offline fallbacks, and the assistant's local
-executor which "really executes add-to-cart / booking offline"
-(`assistant_executor.dart:319`). — **Fix:** the Shimmer dependency is already in `pubspec`; extend the
-skeleton pattern to My Care, Billing, and the Services tabs, which are the three longest first-paints.
-
-#### Principle 9 — Platform Authenticity (iOS: SF Symbols, safe areas, standard nav)
-
-❌ **FAIL against the literal spec — the app reads as Material on iOS.** Objective inventory:
-
-| Material idiom | Count | Note |
-|---|---|---|
-| `SnackBar` (bottom, Material) | **61** call sites across 35 files | vs 7 `showTopToast` — see N-12 |
-| `DropdownButton` | **40** (21 in `assessment_request_screen.dart` alone) | iOS uses picker wheels / action sheets |
-| `SwitchListTile` / `Switch` | 14 | M3 switch, not `CupertinoSwitch` |
-| `showDatePicker` / `showTimePicker` | 3 (`care_calendar_screen.dart:935,962`, `assessment_request_screen.dart:1367`) | Material calendar/clock dialogs on iOS |
-| `FloatingActionButton` | 5 screens + the global `AssistantFab` | pure Material affordance |
-| `TabBar` with 3pt underline indicator | 3 (`service_catalog_screen.dart:96` — 7 scrollable tabs, `vitals_screen.dart:136`, `my_orders_screen.dart:159`) | iOS uses a segmented control |
-| `ExpansionTile` | 5 | |
-| `Badge` (M3) on cart | 1 | `glass.dart:113` |
-| `Icons.*` (Material icon set) | app-wide | `grep -rn 'Cupertino' lib` → **1 hit**, and it is only `GlobalCupertinoLocalizations.delegate` (`main.dart:406`) |
-
-**Mitigating:** Flutter's default `pageTransitionsTheme` is not overridden in either theme
-(`lib/config/theme.dart` — no `pageTransitionsTheme` key), so iOS gets the Cupertino slide + edge-swipe
-for free. `BackButton()` (`otp_screen.dart:98`) and `AppBar`'s automatic leading are platform-adaptive
-and render the iOS chevron — the **one** hardcoded Material arrow is
-`service_booking_screen.dart:327` (`Icons.arrow_back`).
-✅ Safe areas are respected: 18 screens use `SafeArea`, `main_shell.dart:69` wraps the nav in
-`SafeArea(top: false)`, and the `extendBody: true` inset is regression-tested
-(`test/screens/main_shell_test.dart:224`).
-
-— **Impact:** none of this is a bug; it is a deliberate cross-platform Flutter posture. But measured
-against *this* checklist ("iOS: Use SF Symbols… Android: Material Design components"), the app ships
-Android components on an iOS-first product. — **Fix (scoped):** the cheapest high-yield swaps are
-(1) replace the 3 Material date/time pickers with Cupertino equivalents, (2) finish the
-`showTopToast` migration so the 61 bottom SnackBars stop reading as Android, (3) replace the 40
-`DropdownButton`s in the assessment form with an action-sheet picker.
-
-#### Principle 10 — Graceful Degradation
-
-✅ **PASS.** Demo mode is a first-class path: `DemoData` fallbacks across providers, `cache_service.dart`
-+ `sync_service.dart`, offline coupon handling (`cart_screen.dart:48`), and an offline assistant that
-genuinely executes bookings (`assistant_executor.dart:123-140`). `app_provider.dart:174` explicitly
-caches the dashboard. The only degradation hole is N-1 (`/services` → blank screen), reported under
-Principle 1.
+**P10 Graceful Degradation — ⚠️ (was ✅).** `/services`, the only degradation hole in round 1, is
+fixed. But the *new* degradation-signalling layer has two holes: `DemoMode.reset()` is keyed to one
+provider and can take the banner down while five others still serve sample data (§B-4), and
+`blog_provider.dart:38,68` never marks. A safety mechanism that can silently lie is worse than none.
 
 ---
 
 ## 2. Visual Standards
 
-### 2.1 Typography System
+### 2.1 Typography — unchanged
 
-The checklist specifies an SF-based scale: **Large Title 34/Bold · Title 1 28/Bold · Headline 17/Semibold ·
-Body 17/Regular · Caption 12/Regular.**
-
-Measured `fontSize` histogram, `lib/screens` + `lib/widgets` (from `scripts/check_design_consistency.sh`,
-which prints this informationally and never fails the build):
+Histogram re-run this round (`scripts/check_design_consistency.sh`, `lib/screens` + `lib/widgets`):
 
 ```
-  1  9.5      95  11     191  12     200  13     184  14      2  14.5
- 61  15      138  16      34  18      17  20       6  22       8  24
- 12  28        2  32       6  36
+  1 9.5   95 11  192 12  202 13  186 14   2 14.5
+ 61 15   141 16   34 18   17 20    6 22   8 24
+ 12 28     2 32    6 36
 ```
 
-- ❌ **Large Title 34pt** — not present. The app's display size is **28** (×12), plus `32` (×2) and `36` (×6) as ad-hoc numerics. `CLAUDE.md` names 28/w800 as the display canon — so 34 is deliberately not used, but 32 and 36 are unaccounted-for outliers (`billing_screen.dart:280`, `emi_screen.dart:56`; `payment_screen.dart:427,577`, `vitals_screen.dart:297`, `equipment_detail_screen.dart:1174`).
-- ✅/⚠️ **Title 1 28/Bold** — present and dominant as the display title (28 ×12, w800 rather than w700). Grade ⚠️: weight is heavier than spec.
-- ❌ **Headline 17/Semibold** — **17pt does not exist anywhere** in the codebase. The section-header role is 16/w600 (`SectionHeader`, `common_widgets.dart:415-417`).
-- ❌ **Body 17/Regular** — the app's body sizes are **13** (×200) and **14** (×184). At iOS default Dynamic Type, body copy is 3–4pt below the platform standard.
-- ⚠️ **Caption 12/Regular** — 12 is used ×191 ✅, but **11 is used ×95** — below the checklist's caption floor (though at the `CLAUDE.md` 11px minimum).
+- ❌ **Large Title 34/Bold** — absent. Display size is 28 (×12); 32 (×2) and 36 (×6) are unaccounted-for.
+- ⚠️ **Title 1 28/Bold** — present and dominant, but at w800.
+- ❌ **Headline 17/Semibold** — **17pt does not exist anywhere.** The role is 16/w600 (`SectionHeader`).
+- ❌ **Body 17/Regular** — the app's body sizes are 13 (×202) and 14 (×186), 3–4pt under platform standard.
+- ⚠️ **Caption 12/Regular** — 12 ×192 ✅, but 11 ×95 sits below the checklist floor.
 
-**Drift the project's own docs already flag:** `CLAUDE.md` calls 13/17/18/19/20/21/10 "smells to review".
-Present count of those smells: **13 ×200, 18 ×34, 20 ×17** = 251 occurrences. `18` alone appears in 34
-places across 24 files (`home_screen.dart` ×5, `service_booking_screen.dart` ×5,
-`staff_otp_verification_screen.dart` ×5, `billing_screen.dart` ×3, `article_detail_screen.dart` ×3, …).
-Two `14.5` values (`article_detail_screen.dart:149`, `active_service_card.dart:51`) are pure one-offs.
-
-— **Impact:** the scale is *converging* (11/12/13/14/15/16/28 covers 892 of 977 literals = 91%) but the
-remaining 85 literals span 9 distinct off-canon sizes. — **Fix:** the histogram is already printed by the
-gate; promote it from echo-only to a **ratchet** — record today's counts as a baseline and fail the build
-if any off-canon size *increases*. That freezes the drift without a big-bang refactor.
-
-- ✅ **Font family** — bundled `Archivo` + `NotoSansDevanagari` fallback applied to every style
-  (`theme.dart:146-148,156,337`); `google_fonts` is absent from `pubspec.yaml`.
+The new screen added **only on-canon** sizes (13/14/16) — the ratchet fix recommended in round 1 would
+now cost nothing to adopt. ✅ Bundled `Archivo` + `NotoSansDevanagari`; no `google_fonts`.
 
 ### 2.2 Color System
 
-#### Semantic colours (checklist hexes vs shipped)
-
 | Role | Checklist | Shipped (light) | Measured on white | Verdict |
 |---|---|---|---|---|
-| Primary Action | `#007AFF` | `#F39314` (brand orange) | — | ✅ *justified brand override; one-accent budget enforced by gate check #7* |
-| Success | `#34C759` | `#2E7D32` | **5.13:1** | ✅ (Apple's own `#34C759` is 2.2:1 on white — the app's darker green is objectively better) |
-| Warning | `#FF9500` | `#E65100` | **3.79:1** | ⚠️ documented as "4.6:1" at `theme.dart:87` — **wrong by 0.8**; used as a text colour at 73 sites in `lib/screens` |
-| Error | `#FF3B30` | `#D32F2F` | **4.98:1** | ✅ (doc says 4.7 — conservative, fine) |
-| Neutral | `#8E8E93` | `#6B6B6B` | **5.33:1** | ✅ (doc says 5.3 — accurate) |
+| Primary Action | `#007AFF` | `#F39314` | — | ✅ sanctioned brand override, one-accent budget gate-enforced |
+| Success | `#34C759` | `#2E7D32` | **5.13:1** | ✅ (Apple's own value is 2.2:1 on white — this is objectively better) |
+| Warning | `#FF9500` | `#E65100` | **3.79:1** | ❌ documented "4.6:1" at `theme.dart:87` |
+| Error | `#FF3B30` | `#D32F2F` | **4.98:1** | ✅ |
+| Neutral | `#8E8E93` | `#6B6B6B` | **5.33:1** | ✅ |
 
-❌ **The AA premise of the design system is off.** `scripts/check_design_consistency.sh:74-78` bans raw
-orange as text *because* `orangeText` "keeps AA (4.6:1)". Measured:
+❌ **The AA premise of the design system is still wrong.** `scripts/check_design_consistency.sh:74-78`
+bans raw orange as text *because* `orangeText` "keeps AA (4.6:1)". Re-measured this round:
 
-| Token | Documented claim | **Measured** | Delta |
+| Token | Documented | **Measured** | Delta |
 |---|---|---|---|
-| `orangeText #B86E00` on white | `theme.dart:62` "4.6:1 on white" | **3.99:1** | −0.6, **fails AA** |
-| `orangeText #B86E00` on app bg `#F8F9FA` | — | **3.78:1** | **fails AA** |
-| `orangeText #B86E00` on `orangeLight #FFF3E0` | — | **3.63:1** | **fails AA** |
-| `orangeDark #CC6E00` on white | `theme.dart:64` "4.5:1 on white" | **3.62:1** | −0.9, **fails AA** |
-| `warning #E65100` on white | `theme.dart:87` "4.6:1" | **3.79:1** | −0.8, **fails AA** |
+| `orangeText #B86E00` on white — `theme.dart:62` | 4.6:1 | **3.99:1** | −0.6, fails AA |
+| `orangeText` on app bg `#F8F9FA` | — | **3.78:1** | fails AA |
+| `orangeText` on `orangeLight #FFF3E0` | — | **3.63:1** | fails AA |
+| `orangeDark #CC6E00` on white — `theme.dart:64` | 4.5:1 | **3.62:1** | −0.9, fails AA |
+| `warning #E65100` on white — `theme.dart:87` | 4.6:1 | **3.79:1** | −0.8, fails AA |
 
-`orangeText` is not a corner case — it is the **default `TextButton` foreground app-wide**
-(`theme.dart:255-259`), the **chip label colour** (`theme.dart:312`), the `SectionHeader` "See All"
-action (`common_widgets.dart:433`), and the empty-state CTA label (`empty_state.dart:92`).
-— **Impact:** every secondary/link action in the app sits at ~3.8–4.0:1 while the codebase, the gate
-script, and the previous audit all assert it passes AA. All three passed 3:1 large-text, so this is a
-normal-text failure, not a catastrophic one. — **Fix:** darken to **`#9A5C00`** (measures **5.38:1** on white,
-**5.10:1** on `#F8F9FA`, **4.90:1** on `#FFF3E0` — AA on all three surfaces the token actually lands on)
-and re-derive `orangeDark`/`warning` the same way; then correct the four doc comments and the gate
-script's rationale.
+`orangeText` is the default `TextButton` foreground app-wide (`theme.dart:255-259`), the chip label
+(`:312`), `SectionHeader`'s "See All" (`common_widgets.dart:433`) and the empty-state CTA
+(`empty_state.dart:92`). All three clear the 3:1 large-text floor, so this is a normal-text failure,
+not a catastrophic one — but the codebase, the gate script and the round-1 fix list all assert it passes.
+— **Fix:** `orangeText → #9A5C00` (**5.38:1** on white, **5.10:1** on `#F8F9FA`, **4.90:1** on
+`#FFF3E0` — AA on all three surfaces it actually lands on); re-derive `orangeDark`/`warning`; correct
+the four comments and the gate's stated rationale.
 
-#### Owner override — measured, as instructed
+**Owner override, measured as instructed (not graded a defect):**
+`onOrange = #FFFFFF` on `#F39314` = **2.33:1** (`theme.dart:70`, `:32`). The documented mitigation
+(bold w600+, ≥14px — `theme.dart:65-69`) is honoured in the nav bar but enforced nowhere.
 
-- `onOrange = #FFFFFF` on brand orange `#F39314` = **2.33:1** (`theme.dart:70`, `theme.dart:32`).
-  Fails AA 4.5:1 for normal text **and** 3:1 for large text. Recorded per the brief as an explicit
-  owner decision (white bold on orange fills, both modes) — **not reported as a defect.** The mitigation
-  documented at `theme.dart:65-69` (keep text bold w600+ and ≥14px) is honoured in the nav bar
-  (`main.dart` label styles) but is **not** enforced anywhere.
-- ❌ **Not covered by that override:** the bottom nav's **unselected** items use
-  `context.hc.onOrange.withValues(alpha: 0.7)` (`lib/screens/main_shell.dart:79`). White@70% over
-  `#F39314` resolves to `#FBDFB8`, which measures **1.82:1** against the orange bar. At
-  `BottomNavigationBar`'s default `unselectedFontSize: 12`, four of the five tab labels are at
-  1.82:1 — below even the 3:1 large-text floor, and roughly **22% worse than** the already-overridden
-  full-white 2.33:1. — **Impact:** the primary navigation is the least legible text in the app.
-  — **Fix:** raise the unselected alpha to ~0.85 (≈2.05:1) or, better, distinguish selected/unselected
-  by **weight + filled-vs-outlined icon** (both already present via `activeIcon`) and keep all labels
-  at full white 2.33:1 — matching the owner's rule exactly.
+❌ **Not covered by that override:** `main_shell.dart:91` — unselected nav items are
+`onOrange.withValues(alpha: 0.7)`. White@70% over `#F39314` resolves to `#FBDFB8` = **1.82:1**,
+at `BottomNavigationBar`'s default 12pt unselected label. Four of five tab labels sit below even the
+3:1 large-text floor and ~22% worse than the already-overridden 2.33:1. The app's primary navigation
+is its least legible text. — **Fix:** keep all five labels at full white (matching the owner's rule
+exactly) and differentiate state by weight + the already-wired `activeIcon`.
 
-#### Dark mode
-
-- ✅ **Backgrounds `#000000` (pure black) or `#1C1C1E` (elevated)** — exact match:
-  `theme.dart:16-18` (`surface #000000`, `surfaceElevated #1C1C1E`, `surfaceHigh #2C2C2E`).
-- ✅ **Reduce pure white to off-white** — `textPrimary = #F2F2F2` (`theme.dart:23`), essentially the
-  checklist's `#F2F2F7`. Measures 7.85:1 for `textSecondary #B0B0B0` on the `#1C1C1E` card ✅.
-- ⚠️ **Semantic colours adapt automatically** — the `context.hc.*` resolver
-  (`lib/config/app_colors.dart:17-21`) is the right mechanism and is enforced inside `lib/screens`.
-  But the gate's `SCAN_DIR` is **`lib/screens` only** (`scripts/check_design_consistency.sh:18`), so
-  `lib/widgets` is unguarded — and two shared widgets are light-mode-only:
-  - `lib/widgets/paginated_list.dart` — 8 static `HousepitalColors.*` references
-    (`:117,129,145,157,172,189,222,236`). In dark mode the "No items found" (15pt) and "No more items"
-    (13pt) strings render `#6B6B6B` on the true-black page = **3.94:1**, or **3.19:1** on a `#1C1C1E`
-    card. Both fail AA. This widget backs **Report History, Attendance History, Notifications, and the
-    Billing Transaction Log**.
-  - `lib/widgets/document_attach_widgets.dart` — 15 static references including `infoLight #E3F2FD`
-    and `orangeLight #FFF3E0` used as **fills** (`:80,144,162,180,198,255`). In dark mode these render
-    as bright pastel cards on a true-black page — a light-mode island inside the tonal dark system.
-  - Also `HousepitalColorsDark.textDisabled #7A7A7A` is documented as "4.2:1 on card / 5.4:1 on bg"
-    (`theme.dart:25`); measured **3.96:1 / 4.89:1**.
-  — **Fix:** widen the gate to `SCAN_DIR="lib/screens lib/widgets"` (the fontSize histogram already
-  scans both — the scopes are inconsistent today) and migrate those 23 references to `context.hc.*`.
-- ✅ Dark-mode token flipping is regression-tested (`test/widgets/dark_mode_test.dart`,
-  `test/screens/dark_mode_sweep_test.dart`) and a user-facing Appearance picker exists
-  (`settings_screen.dart:231-237` → `ThemeProvider`).
+**Dark mode:** ✅ `#000000` page / `#1C1C1E` elevated / `#2C2C2E` high — an exact match to the
+checklist's dark spec. ✅ off-white `#F2F2F2` text. ⚠️ `lib/widgets` is still outside the gate's
+`SCAN_DIR` (`check_design_consistency.sh:18` = `lib/screens` only, while its own histogram scans both),
+so `paginated_list.dart` (8 static light-palette refs → grey text at 3.19–3.94:1 in dark, backing
+Report History / Attendance History / Notifications / Transaction Log) and
+`document_attach_widgets.dart` (15 refs, `#E3F2FD`/`#FFF3E0` pastel **fills** as light-mode islands on
+true black) remain unguarded. Also `HousepitalColorsDark.textDisabled #7A7A7A` is documented "4.2:1 on
+card"; measured **3.96:1**.
 
 ### 2.3 Spacing & Layout
 
-**8pt grid** (Micro 4 · Small 8 · Medium 16 · Large 24 · XLarge 32):
-
-```
-EdgeInsets.all(N):   4×7   8×16  12×38  14×2  16×107  20×16  24×16  32×3  48×1
-SizedBox(height:N):  2×49  3×2   4×93   6×32   8×162  10×29  12×110 14×48
-                    16×115 20×42 24×69  28×3  32×11  40×5   48×3
-SizedBox(width:N):   4×42  6×17   8×149 10×31 12×74  14×5   16×29
-```
-
-- ✅ **Micro 4pt** — 4 is the second-most-used value.
-- ✅ **Small 8pt** — 8 is the single most-used value (311 combined).
-- ✅ **Medium 16pt** — 16 is the dominant padding (107 `EdgeInsets.all(16)`).
-- ✅ **Large 24pt** — present and consistent (69 + 16).
-- ⚠️ **XLarge 32pt** — used only 14 times; screen-level padding is 16, not 32 (a reasonable phone-width
-  choice, but a spec divergence).
-- ⚠️ **Off-grid strays**: `6` (49), `10` (60), `14` (55), plus singletons `3`, `5`, `18`, `26`, `30`, `34`, `42`, `50`, `88`, `100`. ~170 occurrences are on a 2pt sub-grid rather than the 8pt (or even 4pt) grid. — **Fix:** define `Spacing.xs/sm/md/lg/xl` constants (see §6.4 — this is the one design-token category with **no** named constants) and mechanically map 6→8, 10→8 or 12, 14→12 or 16.
-- ⚠️ **Corner-radius spread** — 17 distinct values in `lib/screens` + `lib/widgets`:
-  `12`(137) `8`(79) `10`(53) `16`(35) `20`(24) `4`(14) `6`(6) `3`(3) `24`(2) `2`(2) `11`(2) `9`(1) `5`(1) `28`(1) `22`(1) `2.5`(1) `18`(1). The banned `14` is gone ✅, but `9`, `11`, `2.5`, `18`, `22` are unexplained one-offs.
-- ✅ **Safe areas respected** — `SafeArea` in 18 screens; `main_shell.dart:69` `SafeArea(top: false)` around the nav; `extendBody`/`extendBodyBehindAppBar` insets flow through `MediaQuery.padding` and are regression-tested; the six Services tabs each pad with `MediaQuery.padding.bottom`.
-- ✅ **Minimum 16pt horizontal margins** — `EdgeInsets.all(16)` ×107 and `EdgeInsets.symmetric(horizontal: 16)` ×76 are the app's default gutters.
-- ✅ **Tab bars ≥49pt** — `BottomNavigationBar` fixed type renders 56pt + safe-area inset.
-- ✅ **Navigation bars ≥44pt** — `GlassAppBar.preferredSize` = `kToolbarHeight` (56) + optional bottom (`glass.dart:52-53`).
+- ✅ Micro 4 · Small 8 · Medium 16 · Large 24 all present and dominant (8 is the single most-used value).
+- ⚠️ XLarge 32 used only 14×; screen padding is 16 (a reasonable phone-width choice, a spec divergence).
+- ⚠️ Off-grid strays: `6` ×49, `10` ×60, `14` ×55, plus singletons 3/5/18/26/30/34/42/50/88/100.
+- ⚠️ 17 distinct corner radii; the banned `14` stays gone ✅, but 9/11/2.5/18/22 are unexplained.
+- ✅ Minimum 16pt horizontal margins; ✅ tab bar ≥49pt (56 + inset); ✅ nav bar ≥44pt (`kToolbarHeight`).
+- ❌ **Safe areas — regressed.** `main_shell.dart:58-72` double-counts `MediaQuery.padding.top` on
+  every screen (§B-1), and triple-counts it on Billing (`:173`), My Care (`:141`) and Delete Account
+  (`:123`). Round 1 graded this ✅.
 
 ---
 
 ## 3. Interaction Patterns
 
-### 3.1 Touch Targets
+### 3.1 Touch Targets — unchanged
+✅ 44pt floors at 11 sites; no unguarded zero-padding `IconButton`.
+⚠️ 8pt inter-target spacing is not declared anywhere — `glass.dart:74-84` packs up to four 48pt
+`IconButton`s with zero inter-button padding; My Care now uses all four.
+✅ Primary actions in the thumb zone (nav, `AssistantFab`, sticky bottom CTAs) — **except SOS**.
 
-- ✅ **Minimum 44×44pt** — explicitly reserved at 11 sites; no `IconButton` was found with
-  `padding: EdgeInsets.zero` and no compensating `constraints`. `StarRatingInput`
-  (`common_widgets.dart:688-691`) keeps a 44pt box around a 24pt glyph.
-- ⚠️ **8pt minimum spacing between targets** — not systematically enforced. `GlassAppBar` packs up to
-  4 `IconButton`s (each 48pt wide, `IconButton`'s own default) with zero inter-button padding
-  (`glass.dart:74-84`); the visual gap comes from icon-inside-button whitespace only. On Home the
-  header adds a 5th control (`home_screen.dart:445-530`). Not a hard failure (48pt boxes are adjacent,
-  not overlapping) but no explicit gap is declared anywhere.
-- ✅ **Primary actions in the thumb zone** — bottom nav, `AssistantFab` (bottom-right,
-  `main_shell.dart:61`), and sticky bottom CTAs in cart/checkout/payment. **Exception:** SOS
-  (see Principle 4) is top-right and scrolls away.
+### 3.2 Animation — unchanged
+✅ micro 100–150ms (`HousepitalCard` 120ms), ✅ standard 200–300ms, ✅ complex 450–500ms,
+✅ reduced motion honoured at 17 sites / 11 files.
+⚠️ ~12 `AnimatedOpacity`/`AnimatedContainer` sites omit `curve:` and take `Curves.linear`
+(`my_care_screen.dart:99-104`, `billing_screen.dart:155-159` — the large-title cross-fades);
+no explicit `easeIn`/`easeInOut` outside controllers.
 
-### 3.2 Animation Guidelines
-
-- ✅ **Micro-interactions 100–150ms** — `HousepitalCard` press-scale is **120ms**
-  (`common_widgets.dart:187`); `100` ×4 and `150` ×4 elsewhere.
-- ✅ **Standard transitions 200–300ms** — `200` ×4, `220` ×2, `250` ×2, `300` ×2. Route transitions
-  use Flutter's platform default (no `pageTransitionsTheme` override) = iOS Cupertino ~350ms.
-- ✅ **Complex 300–500ms** — the four celebration/reveal controllers are 450/450/450/500ms.
-- ⚠️ **Enter: ease-out** — only partially explicit. `HousepitalCard` uses `Curves.easeOut`
-  (`common_widgets.dart:188`) ✅, but most `AnimatedOpacity`/`AnimatedContainer` calls omit `curve:`
-  and take the Flutter default `Curves.linear`, e.g. `my_care_screen.dart:99-104` and
-  `billing_screen.dart:155-159` (the large-title cross-fades).
-- ⚠️ **Exit: ease-in / Move: ease-in-out** — no explicit `Curves.easeIn` or `Curves.easeInOut` found
-  outside the animation controllers. — **Fix:** add `curve: Curves.easeOut` to the ~12 implicit
-  animations; it is a one-line change per site.
-- ✅ **Respect reduced motion** — `MediaQuery.disableAnimations` gates animations at **17 sites across
-  11 files** (`my_care_screen.dart`, `billing_screen.dart`, `payment_screen.dart`,
-  `booking_confirmation_screen.dart`, `order_tracking_screen.dart`, `care_calendar_screen.dart`,
-  `medications_screen.dart`, `medication_schedule_screen.dart`, `staff_otp_verification_screen.dart`,
-  `equipment_tab.dart`, `care_pulse_ring.dart`). Every file that owns an `AnimationController` is on
-  that list except `equipment_detail_screen.dart` (`:1690`, a 250ms sheet controller — under the
-  perceptual threshold, low risk).
-
-### 3.3 Feedback Patterns
-
-- ✅ **Visual** — press-scale 0.97 + `InkWell` ripple on `HousepitalCard`; `AnimatedScale`
-  (`common_widgets.dart:185-189`).
-- ⚠️ **Haptic — thin and semantically inverted vs spec.** Only **8** call sites app-wide:
-  `heavyImpact` ×3 (SOS in `home_screen.dart:491` and `common_widgets.dart:605`; payment in
-  `payment_screen.dart`), `mediumImpact` ×2 (payment, booking confirmation), `lightImpact` ×3
-  (calendar, medications, medication schedule). The checklist reserves **heavy for errors**; the app
-  uses heavy for the SOS *action*. Defensible for an emergency control, but it means errors carry no
-  haptic at all. Most confirmations, add-to-cart events, and toggles are silent.
-  — **Fix:** add `HapticFeedback.selectionClick()` to tab switches and toggles, `mediumImpact` to
-  add-to-cart, and `heavyImpact` to error toasts (`showTopToast(isError: true)` is the single choke point).
-- ⚠️ **Transient feedback is split between two competing systems.** `showTopToast`
-  (`common_widgets.dart:19-93`) was introduced *in this very commit* precisely because bottom
-  SnackBars "covered the primary CTA and couldn't be dismissed (field report: 'I can't select slot' /
-  'how do I cross it')". Adoption:
-
-  ```
-  showTopToast call sites:  7
-  showSnackBar call sites: 61   (35 files)
-  ```
-
-  Worst offenders: `document_repository_screen.dart` (7), `raise_concern_screen.dart` (5),
-  `service_booking_screen.dart` (5) — the last being exactly the booking wizard the field report was
-  about. — **Impact:** the same class of message appears at the top on 7 paths and at the bottom,
-  over the CTA, on 61. — **Fix:** finish the migration; the toast API is a drop-in
-  (`message`, `actionLabel`, `onAction`, `isError`).
+### 3.3 Feedback — unchanged
+✅ visual press-scale 0.97 + ripple.
+⚠️ **8 haptic sites app-wide**, and `heavyImpact` is used for the SOS *action* rather than for errors
+as the spec reserves; the new deletion commit has none.
+⚠️ **61 `showSnackBar` vs 7 `showTopToast`** across 35 files — the toast pattern landed specifically
+because bottom snackbars covered the primary CTA ("I can't select slot"), and 5 of the 61 are still in
+`service_booking_screen.dart`, the exact screen the field report named.
 
 ---
 
-## 4. Component Library
+## 4. Component Library — unchanged from round 1
 
-### 4.1 Buttons
-
-| Type | Spec | Shipped | Verdict |
-|---|---|---|---|
-| Primary | Filled system blue, **50pt height, 16pt radius** | `ElevatedButtonTheme`: brand orange fill, `vertical: 14` padding + 16pt/w600 label → **≈47pt**, radius **12** (`theme.dart:228-242`) | ⚠️ 3pt short, radius 4pt tight; brand fill is a sanctioned override |
-| Secondary | Outlined, gray border, 50pt, **1pt** border | `OutlinedButtonTheme`: orange border (default 1pt), `vertical: 14` → ≈47pt, radius 12 (`theme.dart:243-252`) | ⚠️ orange rather than gray border; same height/radius deltas |
-| Destructive | Filled system red, **requires confirmation** | `confirmDestructiveAction` builds `ElevatedButton` with `backgroundColor: context.hc.error, foregroundColor: Colors.white` (`common_widgets.dart:518-524`) — white on `#D32F2F` = **4.98:1** ✅ | ⚠️ the *style* is right; 3 destructive paths bypass it entirely (Principle 7b) |
-| Text | No background, blue text, **44pt min touch target** | `TextButtonTheme` → `orangeText` (`theme.dart:255-259`), measured **3.99:1** — see §2.2; Material `TextButton` default min size 64×40 with `padded` tap target → 48pt hit ✅ | ✅ touch target / ❌ contrast |
-
-### 4.2 Cards
-
-- ⚠️ **Corner radius 12 (standard) / 16 (large)** — the theme uses **16 for all cards**
-  (`RoundedSuperellipseBorder(16)`, `theme.dart:272-274` light, `:451-453` dark). Deliberate
-  ("continuous corners" — a genuinely more Apple-correct choice than a circular arc), but every card
-  is a "large card" by the checklist's rule.
-- ⚠️ **Shadow 0, 2, 8 blur, 10% black** — light theme ships `elevation: 3` with
-  `shadowColor: Colors.black.withValues(alpha: 0.35)` (`theme.dart:267-268`) — **3.5× the specified
-  opacity**. Dark theme uses `elevation: 0` and relies on tone (`:447`), which is correct for OLED.
-  Ad-hoc `BoxShadow`s elsewhere use `blurRadius` 8/10/12/16/24.
-- ✅ **16pt internal padding** — `HousepitalCard` defaults to `EdgeInsets.all(16)`
-  (`common_widgets.dart:166`).
-- ⚠️ **Tap state: scale to 0.98** — `HousepitalCard` scales to **0.97** @120ms
-  (`common_widgets.dart:186-188`) — right idiom, marginally stronger than spec. But it covers only
-  **49** of the app's card instances: raw `Card(` appears **127** times in `lib/screens`
-  (`report_history_screen.dart:38`, `attendance_history_screen.dart:39`, `active_service_card.dart:35`,
-  `service_detail_screen.dart:238,578`, `billing_summary_section.dart:43`,
-  `staff_otp_verification_screen.dart:150`, `equipment_deployed_section.dart:30`, …). Those inherit
-  the correct *geometry* from `CardThemeData`, so they look right — but tappable ones get only an
-  `InkWell` ripple, with **no press-scale**. ~72% of cards therefore have a different tap feel from
-  the other 28%. — **Fix:** convert the tappable raw `Card(child: ListTile(onTap:))` instances to
-  `HousepitalCard(onTap:)`.
-
-### 4.3 Forms
-
-- ⚠️ **Input height ≥50pt** — `InputDecorationTheme.contentPadding: symmetric(vertical: 14)`
-  (`theme.dart:292`, dark `:474`) + a 16pt label ≈ **48pt**. 2pt short.
-- ✅ **Label above field, 8pt spacing** — the 8 audited forms use `Text` label + `SizedBox(height: 8)`
-  + field (e.g. `add_patient_screen.dart`, `address_selection_screen.dart`).
-- ⚠️ **Error state: red border, error text below** — `errorBorder` and `focusedErrorBorder` are
-  **not declared** in either theme (`theme.dart:277-293`, `:456-476`); the app relies on Material's
-  fallback rather than its own `error` token. Error *text* below the field is provided by
-  `validator:` on 32 of 45 `TextFormField`s; `errorText:` is used explicitly only once.
-- ⚠️ **Focus state: blue border, 2pt** — 2pt width is correct (`theme.dart:290`, `:472`); colour is
-  brand orange, not blue (sanctioned one-accent override). Focused orange border on white is 2.33:1 —
-  a non-text UI-component contrast that falls under WCAG 1.4.11's 3:1 rule. — **Fix:** use
-  `orangeText`/a darkened orange for the focus ring specifically.
+- **4.1 Buttons** — ⚠️ primary ≈47pt / radius 12 vs spec 50pt / 16 (`theme.dart:228-242`);
+  ⚠️ secondary uses an orange border rather than gray; ⚠️ destructive *style* is correct
+  (white on `#D32F2F` = 4.98:1) but three paths bypass confirmation entirely and a fourth
+  (delete-account) hand-rolls its own; ✅/❌ text buttons have a 48pt hit target but a 3.99:1 label.
+- **4.2 Cards** — ⚠️ radius 16 for all cards (deliberate continuous-corner choice, but every card is a
+  "large card"); ⚠️ light shadow is `elevation: 3` + `black@0.35` (`theme.dart:267-268`) = **3.5×** the
+  spec'd 10%; ✅ 16pt internal padding; ⚠️ press-scale covers 49 `HousepitalCard` vs 127 raw `Card(` —
+  ~72% of cards have a different tap feel.
+- **4.3 Forms** — ⚠️ inputs ≈48pt vs 50; ✅ label above field + 8pt; ⚠️ `errorBorder`/`focusedErrorBorder`
+  undeclared in both themes; ⚠️ focus ring is 2pt ✅ but brand orange on white = 2.33:1, under
+  WCAG 1.4.11's 3:1 for UI components.
 
 ---
 
-## 5. QA & Validation Checklist
+## 5. QA & Validation
 
-### 5.1 Quick Tests (Pre-Flight)
-
-- ❌ **3-Second Test** — fails on `/services` (blank `Scaffold`, N-1). It also fails a weaker version on
-  the **More** tab, which is a `ListView` of undifferentiated `ListTile`s with no large title and no
-  visual grouping other than two `Divider`s (`settings_screen.dart:92-270`) — cover the app-bar title
-  and there is nothing that says "account & settings".
-- ⚠️ **Squint Test** — hierarchy is legible on Home / My Care / Billing (large title → section headers
-  → cards). Weakest surface is Services: seven scrollable tabs (`service_catalog_screen.dart:133-140`)
-  under a static title give no sense of "what do I do next".
-- ⚠️ **Grayscale Test** — mostly passes: `StatusBadge` supports an icon (`common_widgets.dart:247-249`),
-  `VitalCard` ships icon **and** word (`:363-378`), the SOS pill has an icon + the literal text "SOS".
-  Weak spot: attendance status relies on `AttendanceHelper.getStatusColor` for the leading icon tint
-  (`attendance_history_screen.dart:41-44`) — the accompanying `StatusBadge` does carry the status
-  **text**, so it degrades acceptably. — **Fix:** pass `icon:` to those `StatusBadge`s for parity with
-  `VitalCard`.
+### 5.1 Quick Tests
+- ⚠️ **3-Second Test (was ❌)** — `/services` no longer renders nothing. Residual: the **More** tab has
+  no large title and no grouping beyond two dividers; and on every tab the first thing read is now the
+  banner, not the screen's purpose.
+- ⚠️ **Squint Test** — legible on Home / My Care / Billing. Weakest is Services: seven scrollable tabs
+  under a static title (`service_catalog_screen.dart:133-140`).
+- ⚠️ **Grayscale Test** — mostly passes (`StatusBadge` carries text, `VitalCard` carries icon + word,
+  SOS pill carries the literal word, banner carries an icon). Weak spot: attendance status leans on
+  `AttendanceHelper.getStatusColor` for the leading tint.
 
 ### 5.2 Accessibility Checklist
 
-| Requirement | Standard | Measured | Pass? |
+| Requirement | Standard | Measured (round 2) | Pass? |
 |---|---|---|---|
-| Text contrast ratio | ≥4.5:1 | **Mixed.** Pass: `black #212121`/white 16.1 · `grey #3D3D3D`/`#F8F9FA` 10.30 · `greyLight`/white 5.33 · `success` 5.13 · `error` 4.98 · `info` 5.75 · dark `textSecondary`/card 7.85 · dark `success`/card 7.20 · dark `error`/card 4.88 · dark orange/black 8.99. **Fail:** `orangeText` 3.99 · `orangeDark` 3.62 · `warning` 3.79 · nav unselected label **1.82** · `paginated_list` grey on dark 3.19–3.94 · SOS subtitle `white70` on `#D32F2F` **3.10** (`common_widgets.dart:635`) · white on dark SOS `#EF5350` 3.49 · **owner-override** white on orange 2.33 | ❌ |
-| Large text contrast | ≥3:1 | 28pt display titles use `hc.black` (16.1:1) ✅. SOS screen's 28/w700 white on `#D32F2F` = 4.98 ✅. But nav labels (1.82) and white-on-orange (2.33) fail even this floor | ⚠️ |
-| Touch targets | ≥44pt | 11 explicit reservations; no unguarded zero-padding `IconButton` found | ✅ |
-| VoiceOver labels | All interactive | **72** `Semantics(` wrappers across **24 of 98** files in `lib/screens` + `lib/widgets`, plus 27 `tooltip:` and 17 `semanticLabel:`. Excellent where present (`home_screen.dart:401-404,446,454,463,484`, `common_widgets.dart:318,593,685`, `assistant_fab.dart:17-21`) — but ~75% of files carry none, relying on Flutter's inferred labels from `Text`/`Icon` children. Icon-only controls without `tooltip:` announce nothing useful | ⚠️ |
-| Color-blind safe | Non-color cues | `VitalCard` icon+word ✅; `StatusBadge` text always present, icon optional ✅; bottom nav pairs filled/outlined `activeIcon` with colour ✅ | ✅ |
-| Reduced motion support | Respects setting | `MediaQuery.disableAnimations` at 17 sites / 11 files, covering every screen with an `AnimationController` except one 250ms sheet | ✅ |
-| VoiceOver **tested** on device | — | Cannot verify from source | **BLOCKED-OWNER** |
+| Text contrast | ≥4.5:1 | **Pass:** black/white 16.1 · grey/`#F8F9FA` 10.30 · greyLight/white 5.33 · success 5.13 · error 4.98 · info 5.75 · dark textSecondary/card 7.85 · dark error/card 4.88 · **banner light 14.68 · banner dark 11.98**. **Fail:** `orangeText` **3.99** · `orangeDark` **3.62** · `warning` **3.79** · nav unselected **1.82** · `paginated_list` grey on dark 3.19–3.94 · SOS subtitle white70 on `#D32F2F` 3.10 · dark `textDisabled`/card 3.96 · *owner-override* white-on-orange 2.33 | ❌ |
+| Large text | ≥3:1 | 28pt titles at 16.1:1 ✅; nav labels (1.82) and white-on-orange (2.33) fail even this | ⚠️ |
+| Touch targets | ≥44pt | 11 explicit reservations; none unguarded | ✅ |
+| VoiceOver labels | All interactive | 72 `Semantics(` across 24 of 98 files, + 27 `tooltip:` + 17 `semanticLabel:`. **The new banner has none and is not a `liveRegion`** — it appears asynchronously and is silent | ⚠️ |
+| Color-blind safe | Non-colour cues | `VitalCard` icon+word ✅, `StatusBadge` text ✅, nav filled/outlined `activeIcon` ✅, banner icon ✅ | ✅ |
+| Reduced motion | Respects setting | 17 sites / 11 files | ✅ |
+| VoiceOver tested on device | — | not verifiable from source | **BLOCKED-OWNER** |
 
 ### 5.3 Design Review Sign-Off
 
-| ☐ | Item | Verdict |
+| ☐ | Item | Round-2 verdict |
 |---|---|---|
-| 1 | All screens pass 3-second test | ❌ — `/services` renders nothing (`main.dart:555`) |
-| 2 | Typography follows scale exactly | ❌ — 85 literals across 9 off-canon sizes; no 17pt Headline/Body; 18pt ×34 and 20pt ×17 are named smells in `CLAUDE.md` |
-| 3 | Colors use semantic system only | ⚠️ — semantic **naming** is excellent and gate-enforced in `lib/screens`, but `lib/widgets` is unscanned and 23 static light-palette references live there |
-| 4 | Dark mode tested | ✅ — `test/widgets/dark_mode_test.dart` + `test/screens/dark_mode_sweep_test.dart`; true-black tonal system matches the checklist's dark spec exactly |
-| 5 | Accessibility checklist complete | ⚠️ — 4 of 6 verifiable rows pass; contrast fails, Semantics coverage is partial |
-| 6 | Animation durations within spec | ✅ — every UI animation is 100–500ms; the 3 longer values are network simulations / progress sweeps |
-| 7 | **Error states designed** | ⚠️ — `ErrorRetryWidget` exists but is used on only **6** screens (`my_care_screen.dart:339`, `medications_screen.dart:92`, `medication_schedule_screen.dart:68`, `service_detail_screen.dart:55`, `staff_profile_screen.dart:171`, `daily_report_screen.dart:105`). `PaginatedListView` hand-rolls its own (`paginated_list.dart:167-185`), and 2 screens suppress it entirely via `showEmptyOnError` |
-| 8 | **Loading states designed** | ✅ — `LoadingWidget` on 10 screens, `CircularProgressIndicator` ×24, Shimmer skeletons on 2. Every screen that loads has *a* loading state; only the *quality* (spinner vs skeleton) varies — see Principle 8 |
-| 9 | **Empty states designed** | ⚠️ — `HousepitalEmptyState` (`lib/widgets/empty_state.dart`) is a genuinely well-specified primitive (icon tile + 15/w600 title + 13pt body + optional 44pt-tap CTA) but is used in only **5** files: `care_calendar_screen.dart`, `medications_screen.dart`, `my_orders_screen.dart`, `billing_screen.dart`, `services/widgets/empty_state.dart`. Elsewhere: `PaginatedListView` falls back to a bare `Center(Text('No items found'))` (`paginated_list.dart:124-132`), and `report_history_screen.dart:49` / `attendance_history_screen.dart:57` pass `Center(child: Text(l.t('no_data')))` — a single grey string, no icon, no explanation, no CTA. `care_team_screen.dart` (402 lines) has **no** loading, error, or empty branch at all |
+| 1 | All screens pass 3-second test | ⚠️ *(was ❌)* — `/services` fixed; More tab still undifferentiated; banner pre-empts every title |
+| 2 | Typography follows scale exactly | ❌ — no 17pt Headline/Body, no 34pt Large Title, 85 literals across 9 off-canon sizes |
+| 3 | Colors use semantic system only | ⚠️ — excellent and gate-enforced in `lib/screens`; `lib/widgets` unscanned, 23 static refs |
+| 4 | Dark mode tested | ⚠️ *(was ✅)* — token tests still pass, but the **launch screen is hardcoded white** (`LaunchScreen.storyboard:22`) and the icon set has no dark/tinted appearance |
+| 5 | Accessibility checklist complete | ⚠️ — 4 of 6 verifiable rows pass |
+| 6 | Animation durations within spec | ✅ |
+| 7 | Error states designed | ⚠️ — `ErrorRetryWidget` on 6 screens; `PaginatedListView` hand-rolls its own; 2 screens suppress it entirely |
+| 8 | Loading states designed | ✅ — every loading path has *a* state; only quality varies |
+| 9 | Empty states designed | ⚠️ — `HousepitalEmptyState` used in 5 files; `paginated_list.dart:124-132` falls back to bare `Center(Text('No items found'))`; `care_team_screen.dart` (402 lines) has no loading/error/empty branch at all |
 
-**Sheet / modal usage (called out in the brief).** 25 `showModalBottomSheet` sites. Geometry is
-inconsistent in two dimensions:
-- **Top corner radius: three values** — `28` (`home_screen.dart:1742`), `20` (9 sites:
-  `staff_profile_screen.dart:759`, `family_members_screen.dart:91`, `my_orders_screen.dart:462`,
-  `staff_role_card.dart:173`, `equipment_item_card.dart:284`, `universal_search_screen.dart:520`,
-  `transaction_log_screen.dart:207`, `payment_screen.dart:836`, `payment_methods_screen.dart:339`),
-  `16` (4 sites: `vitals_screen.dart:88`, `my_care_screen.dart:637`,
-  `document_attach_widgets.dart:127,228`). The remainder declare no `shape:` and inherit the M3
-  default (28) in light — while the **dark** `bottomSheetTheme` (`theme.dart:510-513`) sets a colour
-  but no shape, so light and dark sheets can differ.
-- **Drag handle: 19 of 25.** Missing on `my_care_screen.dart:633`, `my_orders_screen.dart:458`,
-  `lab_tests_tab.dart:123`, `vitals_screen.dart:84`, `document_attach_widgets.dart:124,224` — including
-  `my_orders_screen.dart:458`, which returns a `bool` (a confirmation sheet) and so most needs an
-  obvious dismiss affordance.
-- ✅ 15 of 25 set `isScrollControlled: true`; the 10 that don't are short fixed-height pickers, which
-  is correct.
-— **Fix:** add `showDragHandle: true` to the 6, and put a single `RoundedRectangleBorder(vertical top 20)`
-into **both** `bottomSheetTheme`s so no call site needs `shape:` at all.
+**Sheet geometry — unchanged.** 25 `showModalBottomSheet` sites; three top radii (16 / 20 / 28 + the M3
+default); 6 with no drag handle including `my_orders_screen.dart:458`, which returns a `bool`; neither
+`bottomSheetTheme` declares a `shape`.
 
 ---
 
 ## 6. Tool-Specific Guidelines
 
-- **6.1 Figma** (5 items) — **N/A.** No `.fig` files, no Figma tokens export, no design-file references in the repo.
-- **6.2 PowerPoint/Keynote** (4 items) — **N/A.** Not a presentation deliverable.
-- **6.3 Notion/Documentation** (5 items) — **N/A** as a *tool* rule. (For the record, the repo's own markdown does follow H1-once/H2-sections: `CLAUDE.md`, `docs/*.md`.)
-
-### 6.4 Code Implementation
-
-- ⚠️ **Use design tokens, not hardcoded values** — colour tokens: ✅ and gate-enforced in `lib/screens`;
-  ⚠️ unenforced in `lib/widgets` (23 static references). Radii/spacing: ❌ **no named constants exist** —
-  `lib/config/constants.dart` (88 lines) holds API/business constants only; every radius and gap is a
-  raw literal (17 distinct radii, ~10 off-grid spacings).
-- ✅ **Semantic color names (primary, error) not hex values** — `HousepitalColors.success/warning/error/info`,
-  `context.hc.*`. Raw hex in `lib/screens` is banned and the gate proves it (9-entry allowlist, each with
-  a written justification).
-- ❌→⚠️ **Spacing constants (`spacing.sm`, `spacing.md`)** — do not exist. This is the single highest-leverage
-  missing token category and is the root cause of the §2.3 off-grid tail. — **Fix:** add
-  `class Spacing { static const xs = 4.0, sm = 8.0, md = 16.0, lg = 24.0, xl = 32.0; }` to
-  `lib/config/constants.dart` and a gate rule banning new numeric literals in `SizedBox`/`EdgeInsets`.
-- ✅ **Typography scale via shared styles** — `ThemeData.textTheme` defines headline/title/body/label
-  (`theme.dart:169-216`, `:350-398`), `SectionHeader` centralises the 16/w600 role. ⚠️ but 977 inline
-  `fontSize:` literals bypass it — the shared styles exist, they are just not the primary channel.
-- ✅ **Component library with documented props** — `lib/widgets/common_widgets.dart`,
-  `empty_state.dart`, `glass.dart`, `paginated_list.dart` all carry substantive dartdoc explaining the
-  contract, the field report that motivated it, and the anti-pattern being replaced. This is genuinely
-  above average and is the reason the enforced layer holds up so well.
+- **6.1 Figma / 6.2 PowerPoint / 6.3 Notion (14 items)** — **N/A.** No design files in the repo.
+- **6.4 Code Implementation** — ⚠️ colour tokens excellent and gate-enforced in `lib/screens`,
+  unenforced in `lib/widgets`; ❌→⚠️ **no spacing or radius constants exist** (`lib/config/constants.dart`
+  is API/business only) — the root cause of the §2.3 tail; ✅ semantic colour names; ✅ typography scale
+  exists via `textTheme` though 977 inline `fontSize:` literals bypass it; ✅ component library with
+  genuinely substantive dartdoc (`common_widgets.dart`, `empty_state.dart`, `glass.dart`,
+  `paginated_list.dart`, and now `demo_mode.dart` + `delete_account_screen.dart`, both of which explain
+  *why* rather than *what*).
 
 ---
 
-## Blockers (must fix before release)
+# Blockers (must fix before release)
 
-1. **`/services` resolves to a blank `const Scaffold()`** — `lib/main.dart:555-557`. No app bar, no back
-   button, no content. Live-reachable: `assistant_service.dart:189` routes "services dikhao" here and
-   `assistant_screen.dart:57` pushes it. Fails the 3-second test, traps the user, and is `BUG-16` open
-   since 2026-03-21. **Fix:** return `MainShell` + `switchToTab(2)`, or delete the case (the `default:`
-   branch at `main.dart:750` already returns `MainShell`).
+1. **The sample-data banner double-counts the top safe-area inset on every screen.**
+   `main_shell.dart:58-72` — no `appBar:` on the shell `Scaffold`, so `body` keeps
+   `MediaQuery.padding.top`; the banner's own `SafeArea` removes padding only for its own child, and
+   the `Expanded(IndexedStack)` sibling still sees the full inset while already positioned ~80pt down.
+   Billing (`:173`), My Care (`:141`) and Delete Account (`:123`) add it a third time. This is the app's
+   **default** state — the backend does not resolve, so the banner is up for the whole session.
+   **Fix:** `MediaQuery.removePadding(removeTop: true)` around the stack, or move the notice into
+   `GlassAppBar`'s existing `bottom:` slot.
 2. **`orangeText` / `orangeDark` / `warning` fail WCAG AA while documented as passing** —
-   `lib/config/theme.dart:62,64,87`. Measured 3.99 / 3.62 / 3.79 vs claimed 4.6 / 4.5 / 4.6.
-   `orangeText` is the default `TextButton` foreground app-wide, the chip label, the `SectionHeader`
-   action, and the empty-state CTA. `scripts/check_design_consistency.sh:74-78` enforces its use on the
-   strength of the wrong number. **Fix:** `orangeText → #9A5C00` (5.38:1 on white, 5.10:1 on `#F8F9FA`,
-   4.90:1 on `#FFF3E0`); re-derive `orangeDark`/`warning`; correct the four comments and the gate rationale.
+   `theme.dart:62, 64, 87`. Measured **3.99 / 3.62 / 3.79** vs claimed 4.6 / 4.5 / 4.6. Carried over
+   unfixed from round 1; the file was not touched. `orangeText` is the default `TextButton` foreground
+   app-wide, and `check_design_consistency.sh:74-78` enforces its use on the strength of the wrong
+   number. **Fix:** `orangeText → #9A5C00`; re-derive the other two; correct four comments + the gate.
+3. **The app icon is not submission-quality** — blurry upscaled raster, ~25% self-imposed white margin
+   so it reads small on the home screen, the cap's cross illegible at 40×40, pure-white background, and
+   **zero** iOS 18+ dark/tinted `appearances` in `Contents.json`. Plus the launch screen is hardcoded
+   white (`LaunchScreen.storyboard:22`), so every cold start on a dark-mode device flashes full white
+   before the true-black app. **Fix:** re-export full-bleed from vector at 1024², on brand orange, with
+   dark + tinted variants; make the launch background a light/dark colour set.
 
-## High
+# High
 
-3. **Bottom-nav unselected labels at 1.82:1** — `lib/screens/main_shell.dart:79`. White@70% over
-   `#F39314` = `#FBDFB8`. 12pt text on the app's primary navigation, worse than the already-overridden
-   full-white 2.33:1, and **not** covered by the owner's white-on-orange decision. **Fix:** full-white
-   labels for all five, differentiating selected state by weight + `activeIcon` (already wired).
-4. **GlassAppBar chrome contract broken on 38 of 45 screens** — no paired `extendBodyBehindAppBar`, so
-   the backdrop blur has nothing to blur and the bar degrades to a flat translucent fill. Two visibly
-   different app-bar materials app-wide.
-5. **Four root-tab header idioms across five tabs** — Home (no app bar, scrolling hand-rolled header) ·
-   My Care & Billing (collapsing large title) · Services (static large title in `bottom:`) ·
-   More (plain 20pt title). Most-exposed regression surface of the 6→5 tab change.
-6. **SOS: one entry point, and it scrolls away** — `home_screen.dart:483-530` inside the
-   `SingleChildScrollView` at `:110`; the `SOSButton` widget (`common_widgets.dart:586`) is never used;
-   no SOS on 4 of 5 tabs. The code comment claims persistence the code does not deliver.
-7. **Errors rendered as empty states on Billing → Transaction Log and Notifications** —
-   `showEmptyOnError: true` at `transaction_log_screen.dart:60` and `notifications_screen.dart:47`
-   (`paginated_list.dart:140-165`). No retry offered; "load failed" is indistinguishable from "no data"
-   on a billing surface.
-8. **Two unconfirmed destructive actions** — delete care reminder (`care_calendar_screen.dart:1312`)
-   and remove **emergency contact** (`patient_profile_screen.dart:145`). Both have sibling actions two
-   rows away that *do* confirm via `confirmDestructiveAction`.
-9. **Booking wizard back is unpredictable** — `service_booking_screen.dart:325-336`: raw Material
-   `AppBar`, hardcoded `Icons.arrow_back`, back overloaded to step backwards, **no `PopScope`** — so the
-   iOS edge-swipe destroys a half-completed priced booking while the adjacent arrow steps back one page.
+4. **Nav unselected labels at 1.82:1** — `main_shell.dart:91`. Not covered by the white-on-orange
+   owner override; below even the 3:1 large-text floor, on the app's primary navigation.
+5. **GlassAppBar chrome contract broken on 38 of 46 screens** — no paired `extendBodyBehindAppBar`;
+   two visibly different bar materials app-wide. Unchanged ratio since round 1.
+6. **Header idiom inconsistency worsened** — still four title treatments across five tabs, now with a
+   sixth chrome layer above all of them and My Care's trailing group grown to four icons.
+7. **SOS: one entry point, and it scrolls away** — `home_screen.dart:483-530` inside the scroll view at
+   `:110`; `SOSButton` (`common_widgets.dart:586`) instantiated zero times; no SOS on 4 of 5 tabs.
+8. **Errors rendered as empty states** — `transaction_log_screen.dart:60`,
+   `notifications_screen.dart:47`, via `paginated_list.dart:140-165`. No retry; "load failed" is
+   indistinguishable from "no data" on a billing surface.
+9. **Two unconfirmed destructive actions** — emergency contact (`patient_profile_screen.dart:145`) and
+   care reminder (`care_calendar_screen.dart:1312`), each two rows from a sibling that confirms.
+10. **Booking wizard back is unpredictable** — `service_booking_screen.dart:325-336`: raw `AppBar`,
+    hardcoded `Icons.arrow_back`, overloaded back, **no `PopScope`**.
+11. **NEW — logout and account deletion leave the user inside the authenticated app** —
+    `delete_account_screen.dart:82-83` and `settings_screen.dart:452-460` both end on the Home tab of a
+    fully working shell, because `main.dart:417`'s auth-gated `home:` is commented out.
+12. **NEW — the demo-mode flag can lie** — `DemoMode.reset()` fires from one provider
+    (`app_provider.dart:247`) but is set by six, so the banner can drop while sample vitals and
+    medication schedules are still on screen; `blog_provider.dart:38,68` serves `DemoData` without
+    marking at all.
 
-## Medium / Low
+# Medium / Low
 
-10. **`lib/widgets` is outside the design gate** (`scripts/check_design_consistency.sh:18` scans
-    `lib/screens` only, while its own fontSize histogram scans both). Consequence:
-    `paginated_list.dart` (8 static refs — grey text at 3.19–3.94:1 in dark mode, on Report History /
-    Attendance History / Notifications / Transaction Log) and `document_attach_widgets.dart`
-    (15 refs — `#E3F2FD`/`#FFF3E0` pastel fills as light-mode islands on true black).
-11. **Sheet geometry drift** — three top radii (16 / 20 / 28 + theme default), 6 of 25 sheets with no
-    drag handle, and no `shape` in either `bottomSheetTheme`.
-12. **Transient feedback split 61 SnackBar / 7 showTopToast** across 35 files — the top-toast pattern
-    landed in this commit specifically to stop bottom snackbars covering CTAs; 5 of the 61 are in
-    `service_booking_screen.dart`, the exact screen the field report named.
-13. **`PopScope(canPop: false)` with no callback** — `booking_confirmation_screen.dart:187-188`; the
-    back gesture is silently inert.
-14. **Empty-state fragmentation** — `HousepitalEmptyState` used in 5 files; `PaginatedListView` falls
-    back to bare `Center(Text('No items found'))` (`paginated_list.dart:124-132`);
-    `report_history_screen.dart:49` and `attendance_history_screen.dart:57` show a single grey word;
-    `care_team_screen.dart` (402 lines) has no loading/error/empty branch at all.
-15. **No spacing constants** — `lib/config/constants.dart` holds no design tokens; ~170 off-8pt-grid
-    literals (6 ×49, 10 ×60, 14 ×55) and 17 distinct corner radii follow from that.
-16. **Card press-feedback split** — 49 `HousepitalCard` (0.97 @120ms `easeOut`) vs 127 raw `Card(`
-    (ripple only). Geometry matches; tap *feel* does not.
-17. **Card shadow 3.5× spec opacity** — `theme.dart:267-268` `elevation: 3` + `black@0.35` vs the
-    checklist's 10%.
-18. **Button/input heights 2–3pt under spec** — 47pt buttons (`theme.dart:233`) and 48pt inputs
-    (`theme.dart:292`) vs 50pt; button radius 12 vs 16.
-19. **Implicit animations default to `Curves.linear`** — ~12 `AnimatedOpacity`/`AnimatedContainer` sites
-    omit `curve:` (e.g. `my_care_screen.dart:99-104`, `billing_screen.dart:155-159`); spec wants
-    ease-out on enter.
-20. **Haptics: 8 sites total**, and `heavyImpact` is used for the SOS *action* rather than for errors.
-21. **Semantics coverage: 24 of 98 files** in `lib/screens` + `lib/widgets`.
-22. **Stale documentation contradicting shipped code (Low, but corrosive):**
-    - `lib/widgets/glass.dart:22` documents trailing order `[custom…, cart, search, home]`; the code
-      (`:74-84`) and the guard test (`test/widgets/glass_app_bar_test.dart:73-80`) both implement
-      `[custom…, home, search, cart]`.
-    - `test/screens/main_shell_test.dart:3-9` describes a "floating-pill / DETACHED capsule, radius 32"
-      nav bar; the assertions (`:189-234`) correctly test the fixed full-width orange bar. Header only.
-    - `lib/config/theme.dart:159`, `:231`, `:325`, `:416` all say "dark ink on orange" / "white on
-      orange fails AA" while the value shipped is `onOrange = #FFFFFF`. `lib/config/app_colors.dart:63-64`
-      says "both modes use the same dark ink" — also false.
-    - `lib/config/theme.dart:10` says surface is `#1A1A1A`; `:16` sets `#000000`. The dark-orange ratio
-      comment at `:28` ("6.32:1 vs surface #1A1A1A") is therefore stale — the real value on `#000000`
-      is 8.99:1.
-    - `lib/screens/services/service_catalog_screen.dart:128` says "6 tab bodies"; there are **7**
-      (`:133-140`).
+13. **New user-facing strings are not localized** — the banner (`main_shell.dart:153-154`) and ~22
+    strings in `delete_account_screen.dart`. Breaks the CLAUDE.md i18n contract; `i18n_sync_test.dart`
+    cannot catch a string that never became a key.
+14. **The banner has no `Semantics(liveRegion: true)` and no regression test** — it appears
+    asynchronously and is silent to VoiceOver; `main_shell_test.dart` has zero banner assertions.
+15. **A third destructive-confirmation idiom** — `delete_account_screen.dart:92-118` hand-rolls an
+    `AlertDialog` instead of `confirmDestructiveAction` (8 existing call sites). Three behaviours now
+    exist for "about to destroy something": helper · bespoke · silence.
+16. **`lib/widgets` is outside the design gate** (`check_design_consistency.sh:18`) —
+    `paginated_list.dart` (8 static refs, 3.19–3.94:1 in dark) and `document_attach_widgets.dart`
+    (15 refs, pastel fills on true black).
+17. **Sheet geometry drift** — three top radii, 6 of 25 without a drag handle, no `shape` in either
+    `bottomSheetTheme`.
+18. **Transient feedback split 61 SnackBar / 7 showTopToast** across 35 files.
+19. **`PopScope(canPop: false)` with no callback** — `booking_confirmation_screen.dart:187-188`.
+20. **Empty-state fragmentation** — `HousepitalEmptyState` in 5 files; bare `Center(Text(…))` elsewhere;
+    `care_team_screen.dart` has no loading/error/empty branch.
+21. **No spacing or radius constants** — ~170 off-8pt-grid literals and 17 distinct radii follow.
+22. **Card press-feedback split** — 49 `HousepitalCard` vs 127 raw `Card(`.
+23. **Card shadow 3.5× spec opacity** (`theme.dart:267-268`); **button/input heights 2–3pt under spec**;
+    **~12 implicit animations default to `Curves.linear`**; **8 haptic sites total**;
+    **Semantics on 24 of 98 files**.
+24. **`_RootTabRedirect` paints a visible frame** despite its comment claiming otherwise
+    (`main.dart:806-807`) — a blank page slides in and back out. Use a zero-duration transparent route.
+25. **Stale documentation contradicting shipped code** — all unfixed: `glass.dart:22` documents the
+    wrong trailing order; `theme.dart:159,231,325,416` and `app_colors.dart:63-64` still say "dark ink
+    on orange"; `theme.dart:9-10` says surface is `#1A1A1A` while `:16` sets `#000000` (making the
+    `:28` ratio comment stale — the real value on black is 8.99:1);
+    `service_catalog_screen.dart:128` says "6 tab bodies" where there are 7;
+    `main_shell_test.dart:3-9`'s header describes a floating-pill nav the assertions correctly reject.
 
-## BLOCKED-OWNER
+# BLOCKED-OWNER
 
-| Item | What I'd need |
+| Item | What I would need |
 |---|---|
-| VoiceOver actually tested on device | A device/simulator VoiceOver pass. Source can prove `Semantics` nodes exist (72 of them) but not that the spoken order, grouping, and focus traversal are sensible. |
-| "3-Second Test" / "Squint Test" with real users | The checklist defines these as *human* tests (§5.1). My grades are structural proxies. |
-| Rendered contrast at runtime | All ratios above are computed from declared token hexes. The `GlassSurface` bar (`glass.dart:145-152`) composites 55%-opacity fill over live scrolling content, so **text on the app bar has a variable, content-dependent contrast** that only a runtime capture can measure. Recommend a screenshot pass over the 7 `extendBodyBehindAppBar` screens. |
-| Whether the 4-icon app bar is acceptable to the owner | §1.1 flags density; `CLAUDE.md` records the owner explicitly *asked* for home + search + cart on every screen. Reported as a measured fact, not a defect. |
-| Dynamic Type / large-text layout at 1.4× | `overflow_smoke_test.dart` covers 320/375/414 widths but with the Ahem font at scale 1. The 1.4× clamp (`main.dart:417`) is untested at the layout level. |
+| Exact pixel cost of the banner inset bug (Blocker 1) | A simulator screenshot of any tab with `DemoMode.isServingDemoData == true`, or a widget test asserting `tester.getTopLeft(find.text('My Care'))`. The *mechanism* is certain from the code; the precise gap depends on device inset |
+| Whether the icon passes App Review | An actual TestFlight upload. Source proves it is a soft upscale with no dark/tinted variants; only Apple decides 2.3.8 |
+| VoiceOver actually tested on device | A device/simulator VoiceOver pass. Source proves 72 `Semantics` nodes exist, not that traversal order is sensible |
+| "3-Second" / "Squint" tests with real users | The checklist defines these as *human* tests (§5.1); my grades are structural proxies |
+| Rendered contrast at runtime | All ratios are computed from declared token hexes. `GlassSurface` composites 55% opacity over live scrolling content, so app-bar text has content-dependent contrast only a runtime capture can measure |
+| Dynamic Type at 1.4× | `overflow_smoke_test.dart` covers 320/375/414 at scale 1 with Ahem. The `main.dart:417` clamp is untested at layout level — and the banner now consumes vertical space that grows with text scale |
 
 ---
 
-*Read-only audit. No files under `lib/`, `test/`, or `scripts/` were modified.*
+*Read-only audit. No files under `lib/`, `test/`, `scripts/`, or `ios/` were modified.*

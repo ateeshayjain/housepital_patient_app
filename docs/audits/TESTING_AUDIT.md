@@ -1,11 +1,45 @@
-# Software Testing & Code Quality Checklist (App-Agnostic) — Audit vs commit `803124d`
+# Software Testing & Code Quality Checklist (App-Agnostic) — Audit **round 2** vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** Testing & Code Quality agent
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
 **Checklist:** `Testing Checklist - App Agnostic.txt` (sections 1–9)
-**Method:** static read of the full test tree + `grep`/`rg` + AST-ish brace-matching scripts over
-`test/**/*_test.dart`. Per instruction I did **not** run `flutter test` (a central run was in
-flight); `flutter analyze` was already reported CLEAN by the caller. Every verdict below cites a
-file:line or a command output.
+**Method:** static read of the full test tree + `git diff 803124d..820060b` + `grep`/`rg` +
+brace-matching scripts over `test/**/*_test.dart`. Per the brief I did **not** run `flutter test`,
+`flutter build` or `flutter analyze`. Every verdict cites `file:LINE` or a command with output.
+
+---
+
+## Changed since round 1
+
+`git diff 803124d..820060b --stat -- test/` touched exactly **three** test files:
+
+```
+ test/providers/patient_scope_isolation_test.dart | 189 +++++++++++++++++++  (new)
+ test/screens/main_shell_test.dart                |  28 ++--
+ test/services/payment_service_test.dart          |  42 +++--
+```
+
+Nine production files landed with **zero** accompanying tests. That asymmetry is the headline of
+round 2: the fix commit added 189 lines of test for the PHI leak and 0 lines for the migrator that
+will run against real user data.
+
+| Round-1 finding | Status now | Evidence |
+|---|---|---|
+| 4 payment tests asserted the bug (`skippedDemo → onSuccess`) | **✅ 1 genuinely fixed, ⚠️ 1 over-loosened, ✅ 2 latch-only edits** | `test/services/payment_service_test.dart:474-523`, `:607-654`, `:779-785`, `:819-825` — see §8-M |
+| PHI leak: patient switch cleared nothing | **⚠️ partially fixed, and the new tests do not guard the part that broke** | `lib/utils/session_scope.dart` untested; `test/providers/patient_scope_isolation_test.dart` — see §8-N |
+| `main_shell_test` asserted six tabs incl. Calendar | **✅ fixed** | `test/screens/main_shell_test.dart:228,233,242` — now `hasLength(5)` + `expect(barLabel('Calendar'), findsNothing)` |
+| `_priceMultiplier` untested | **❌ unchanged** | `grep -rn "ultiplier" test` → 1 unrelated hit (`billing_screen_test.dart:341`) |
+| Live manpower pricing rule untested; dead rule encoded | **❌ unchanged** | `test/screens/services/service_booking_test.dart:182-278` untouched by the diff |
+| Token refresh untestable (`FirebaseAuth.instance` direct) | **❌ unchanged** | `lib/providers/auth_provider.dart:93` still `FirebaseAuth.instance.currentUser` |
+| 17 payment tests skipped on bare `flutter test` | **❌ unchanged** | `grep -rn "skip:" test` → still 8 groups, all `_skipReason` |
+| 120 tests execute zero production code | **❌ unchanged** | 7 mirror files still 0 `testWidgets`, 0 (or 1 model-only) `housepital_patient` imports; 26+20+18+17+17+12+10 = **120** |
+| 24 P0 tests guard orphan `booking_state_machine.dart` | **❌ unchanged** | `grep -rn "BookingStateMachine\|canTransition" lib` → only the file's own `:40,:51` |
+| 3 tests with no assertion at all | **❌ unchanged** | `notification_router_test.dart:91,97`; `payment_service_test.dart:281` |
+| 6 orphan `lib/` files | **❌ unchanged** | scripted re-check: all 6 still have zero importers outside themselves |
+| 45% of widget tests inert | **❌ unchanged (94/215)** | recomputed below; round 1 said 97 — the 3-test delta is script tolerance, **not** improvement (no inert-heavy file was touched) |
+| Docs assert six tabs | **❌ unchanged** | `docs/ARCHITECTURE.md:68`, `docs/SCREEN_MAP.md:6`, `README.md:166` |
+
+**Nothing regressed in the sense of a previously-passing guard being deleted.** The one direction of
+travel that got *worse* is assertion strictness in `payment_service_test.dart:649` (§8-M).
 
 ---
 
@@ -17,758 +51,575 @@ file:line or a command output.
 | 2. Input Validation & Sanitization | 2 | 2 | 3 | 2 |
 | 3. Concurrency / Resource Cleanup (test scope) | 2 | 3 | 1 | 1 |
 | 4. Security (auth, secrets, API, data, deps) | 3 | 3 | 5 | 2 |
-| 5. Database & Data Integrity | 0 | 1 | 2 | 4 |
+| 5. Database & Data Integrity | 0 | 1 | 3 | 4 |
 | 6. Error Handling | 4 | 2 | 1 | 0 |
 | 7. Logging & Observability | 3 | 1 | 2 | 0 |
-| **8. Testing (primary scope)** | **11** | **9** | **10** | **1** |
+| **8. Testing (primary scope)** | **12** | **10** | **15** | **1** |
 | 9. Release Readiness | 3 | 2 | 2 | 0 |
-| **TOTAL** | **31** | **27** | **29** | **10** |
+| **TOTAL** | **32** | **28** | **35** | **10** |
+
+Round 1 was 31 / 27 / 29 / 10. The ❌ column grew by six: five newly-shipped production files with
+no tests (`store_migrator.dart`, `session_scope.dart`, `demo_mode.dart`, `delete_account_screen.dart`,
+plus the untested `clearPatientScopedData` **wiring**), and one new data-integrity failure
+(order persistence is not patient-scoped, §8-N.4).
 
 ---
 
-## Where the mass sits vs where the risk sits
+## Where the mass sits vs where the risk sits (re-measured)
 
-Measured (`grep -rhE "^\s*(test|testWidgets)\(" test/<dir>`):
+| Metric | Round 1 | Round 2 |
+|---|---:|---:|
+| Test files | 99 | **100** |
+| `test(` + `testWidgets(` call sites | 1,372 | **1,380** |
+| `testWidgets` | 215 | **215** |
+| Test LOC | 23,530 | **24,093** |
+| `lib/` LOC | 54,295 | **55,067** |
 
-| Area | Test files | Test call sites | `expect(` calls | Test LOC | `lib/` LOC guarded |
-|---|---:|---:|---:|---:|---:|
-| `test/screens/` | 47 | 504 | 1,132 | 10,964 | 40,185 |
-| `test/models/` | 13 | 276 | 793 | 3,832 | 2,754 |
-| `test/providers/` | 13 | 236 | 533 | 3,640 | 2,073 |
-| `test/utils/` | 8 | 177 | 300 | 1,398 | 821 |
-| `test/services/` | 8 | 130 | 262 | 2,512 | 3,547 |
-| `test/widgets/` | 6 | 34 | 71 | 618 | 1,905 |
-| `test/integration/` | 4 | 15 | 101 | 566 | — |
-| **Total** | **99** | **1,372** | **3,192** | **23,530** | **54,295** |
-
-Plus 3 non-test helpers: `test/_mocks/fake_auth_api_service.dart`,
-`test/_mocks/fake_firebase_service.dart`, `test/providers/mock_api_service.dart`.
-
-1,372 static call sites expand to ~1,789 at runtime (parameterized guard loops, e.g.
-`test/screens/overflow_smoke_test.dart` 37 screens × 3 widths). Ratio: **2.33 `expect(` per test**.
-
-**The imbalance:** `test/models/` carries 276 tests for 2,754 LOC (1 test per 10 LOC) while
-`test/services/` carries 130 tests for 3,547 LOC (1 per 27 LOC) — and services is where payments,
-Firebase, sync and token refresh live. `test/screens/` looks well covered by file count (47 files)
-but 120 of its tests never execute a single line of `lib/screens/` (see §8-B).
+The commit added **772 LOC of production code and 8 tests**, all 8 in one new file. Nine new/changed
+production files, one new test file. `lib/services/`, `lib/utils/` and `lib/data/` each gained a file
+that no test imports.
 
 ---
 
 ## Findings
 
-### 8. Testing — Unit Tests
+### 8-M. The four rewritten payment tests — adversarial reading
 
-- ✅ **Test names describe behaviour, not implementation** — sampled across the suite, names read
-  as sentences with expected outcomes, e.g. `test/services/payment_service_test.dart:419`
-  `'when backend verification throws, onFailure (NOT onSuccess) is called with verification message'`
-  and `test/providers/cart_provider_test.dart:135` `'setting quantity to 0 removes item'`.
-  This is a genuine strength.
+The brief asked whether the rewrite pins the fail-closed contract or was loosened until it passed.
+`git diff 803124d..820060b -- test/services/payment_service_test.dart` shows four edits. They are
+not equivalent in quality.
 
-- ✅ **Dependencies mocked/stubbed (no real network/DB calls)** — `grep -rn "http.Client()\|HttpClient()"
-  test --include="*_test.dart"` returns **zero** hits. `test/services/api_service_test.dart:36-58`
-  injects `MockClient` from `package:http/testing.dart`; Razorpay is stubbed at the
-  `MethodChannel` level (`test/services/payment_service_test.dart:107-133`). No test opens a socket.
+**1. `openCheckout — unverifiable success (skippedDemo)` (`:474-523`) — ✅ genuinely fixed.**
+This is the one that mattered and it was done properly. Old assertions:
 
-- ✅ **Edge cases tested (empty inputs, nulls, boundaries)** — strongest in the pure-logic modules:
-  `test/utils/pricing_test.dart:123` (`GST on ₹0`), `:127` (fractional `₹999 → ₹179.82`), `:131`
-  (negative price throws), `:217` (over-consumed refund), `:226` (below minimum non-refundable);
-  `test/providers/cart_provider_test.dart:135,141,147` (quantity 0 / negative / out-of-bounds);
-  `test/utils/vital_ranges_test.dart:39-45` (ordering invariants per vital, table-driven).
+```dart
+expect(successCalled, isTrue, reason: 'demo-mode payments should still call onSuccess');
+expect(failureMessage, isNull);
+```
 
-- ✅ **All model encoding/decoding tested** — round-trips present across 13 model files, e.g.
-  `test/models/cart_item_test.dart:335` `'toJson/fromJson round-trip'`,
-  `test/screens/checkout/address_test.dart:26` `SavedAddress` round-trip,
-  `test/models/service_models_test.dart:138` (`basePriceMin` null when absent).
+New (`:511-518`):
 
-- ⚠️ **All business logic tested** — the *pure* logic is covered well (`lib/utils/pricing.dart`
-  34 tests, `lib/utils/permissions.dart` 49, `lib/utils/vital_classifier.dart` 23,
-  `lib/utils/validators.dart` 17). But the business logic embedded in screens is not — see the
-  `_priceMultiplier` finding below. `Validators.numberInRange` (`lib/utils/validators.dart:88`)
-  has **no test group** despite being the validator used on the vitals-entry form
-  (`lib/screens/reports/vitals_screen.dart:679`) — the one place a bad number is a clinical risk.
+```dart
+expect(successCalled, isFalse,
+    reason: 'an unverifiable payment must NOT be confirmed when a real key is configured');
+expect(failureMessage, isNotNull, reason: 'the user must be told verification is pending');
+expect(fakeApi.verifyCalls, isEmpty);
+```
 
-- ❌ **All business logic tested — `_priceMultiplier` has zero tests** — evidence:
-  `grep -rn "ultiplier" test` returns exactly one unrelated hit
-  (`test/screens/billing/billing_screen_test.dart:341` `'handles quantity multiplier'`, a cart-line
-  test). `lib/screens/services/service_booking_screen.dart:151-156`:
-  ```dart
-  int get _priceMultiplier {
-    if (_isIvVisit) return _ivSessions;
-    if (_isOngoingManpower) return int.parse(_servicePeriod);
-    if (_isPhysio) return int.parse(_physioPeriod);
-    return 1;
-  }
-  ```
-  It is applied at `:2126` and `:2477` (`final subtotal = price * _priceMultiplier`).
-  **Impact:** this is the arithmetic that turns a ₹1,500/day caretaker rate into a ₹45,000
-  30-day charge. An off-by-one, a wrong branch, or an `int.parse` on a non-numeric period would
-  mis-bill every manpower and physio booking, and nothing in 1,789 tests would fail.
-  **Fix:** extract the multiplier to `lib/utils/pricing.dart` as
-  `int bookingMultiplier({required String serviceId, required int ivSessions, required String servicePeriod, required String physioPeriod})`
-  and add a table-driven test per branch plus the `int.parse` failure case.
+All three are positive, specific, and falsifiable. If `payment_service.dart:171-182` were reverted to
+unconditional `onSuccess`, `expect(successCalled, isFalse)` fails immediately. The group name and test
+name were both corrected. This is a real regression guard, not a rename.
 
-- ❌ **All business logic tested — the LIVE manpower pricing rule is untested; only the DEAD one is**
-  — `test/screens/services/service_booking_test.dart:205-278` is the only widget test of the booking
-  wizard. It constructs a manpower item with **no price**
-  (`:216-221` `ServiceItem(id: 'mp-caretaker-basic-12', …, category: 'manpower', bookingType: 'scheduled')`
-  — no `basePriceMin`) and then asserts `expect(find.textContaining('₹'), findsNothing)` (`:238`,
-  `:246`, `:257`), `expect(order['totalAmount'], 0)` (`:275`) and `quoteStatus == 'pending'` (`:274`).
-  That is correct for a price-less item — but the test is *named* `'manpower runs the FULL wizard …
-  shows no ₹ anywhere'` and grouped under `'Manpower booking — quote-first wizard'` (`:182`), which
-  encodes the rule the owner reversed on 2026-06-11. `grep -rn "basePriceMin" test` shows **no test
-  anywhere constructs a priced manpower item and runs the wizard**.
-  **Impact:** the current inviolable rule ("Manpower prices ARE shown and directly bookable",
-  CLAUDE.md) has zero regression protection, while the suite reads as if the opposite rule is
-  enforced. A future agent reading this file will re-hide prices and the suite will go greener, not
-  redder. **Fix:** rename the group to `'price-less service → quote-pending'`, and add a sibling
-  widget test with `basePriceMin: 1500`, `_servicePeriod = '30'`, asserting `₹45,000` on the review
-  step and that the item lands in the cart (not `OrdersProvider`).
+**2. `openCheckout() does not throw synchronously…` (`:607-654`) — ⚠️ over-loosened. This is the one
+to push back on.** New assertion (`:649`):
 
-- ❌ **All service/repository methods tested** — four services have **zero** test files:
-  `lib/services/firebase_service.dart` (396 LOC), `lib/services/sync_service.dart` (120 LOC),
-  `lib/services/payment_reminder_service.dart` (167 LOC), `lib/services/voice_service.dart` (120 LOC).
-  `lib/providers/billing_provider.dart` (64 LOC) likewise. Confirmed by `ls lib/services` vs
-  `find test/services`. `docs/TEST_MAP.md:126,131,132` already admits firebase/sync/payment-reminder
-  are MISSING and marks firebase + sync `Critical? YES` — so this is a known, unclosed P1.
+```dart
+expect(successCalled || failure != null, isTrue,
+    reason: 'openCheckout must always resolve to one callback');
+```
 
-- ⚠️ **Error paths tested (not just happy paths)** — good in `test/services/api_service_test.dart`
-  (401/404/500 → `ApiException` at `:204-213`, `SocketException` and `TimeoutException` retried then
-  rethrown) and in provider tests via `MockApiService.shouldThrowApiException`
-  (`test/providers/mock_api_service.dart:24-27`). Weak everywhere in `test/screens/`: of 215
-  `testWidgets`, none asserts a rendered error state produced by a thrown dependency.
+- **Is it a tautology?** Strictly, no. It is falsifiable: it fails when *neither* callback fires,
+  which is exactly the silent-checkout failure mode documented in this test's own header
+  (`:610-615`). As a liveness assertion it has content.
+- **But it was loosened further than the code required.** The outcome here is *deterministic*, not
+  ambiguous. The stub returns `_demoSuccessResponse()` (no `order_id`, no signature, `:481`/`:623`),
+  the group is `skip: _skipReason` so it only ever runs with a non-placeholder key, therefore
+  `isDemoPayments == false`, therefore `_handleSuccess` → `skippedDemo` → `else` branch →
+  `onFailure` (`lib/services/payment_service.dart:163-182`). The tightest correct assertion —
+  `expect(successCalled, isFalse); expect(failure, isNotNull);` — was available and would have
+  passed. The comment at `:645-648` ("Any outcome is fine here") asserts an ambiguity that does not
+  exist in this configuration.
+- **What it now fails to catch:** a regression of the exact bug test #1 guards. If
+  `payment_service.dart:171` were changed back to unconditional `_onSuccessCallback?.call()`, this
+  test stays green (`successCalled` becomes true, disjunction still satisfied). The suite would lose
+  one of its two witnesses. It is redundant coverage that was silently converted into non-coverage.
+- **Two further defects in this test, both pre-existing and both untouched by the rewrite:**
+  (a) the test is named *"even when channel will fail"* but the channel never fails — `openError` is
+  not passed, and `:620-621` says so explicitly. The name describes a scenario the body does not
+  create. (b) `:643` `await Future<void>.delayed(const Duration(milliseconds: 30))` is a wall-clock
+  race in the one test whose entire job is to detect "no callback ever fires". A loaded CI runner
+  that dispatches at 35 ms produces a false failure; the `_CallbackLatch` at `:845` exists precisely
+  for this and is not used.
+- **Verdict:** ⚠️. Not a tautology, but a strictly weaker assertion than the code supports, in a test
+  whose name does not match its body. **Fix:** split it — keep `expect(returnsNormally)` as the
+  synchronous contract, and assert `successCalled == false && failure != null` for the outcome;
+  latch on `_CallbackLatch` instead of 30 ms.
 
-### 8-A. Assertion quality (quantified)
+**3 & 4. The two options-payload tests (`:779-785`, `:819-825`) — ✅ correct, mechanical.**
+These only added `onFailure: (_) => completer.fire()` so the latch resolves under the fail-closed
+contract. No assertion was weakened; the payload expectations (`:790-796`, `:830-833`) are unchanged
+and still specific. One cosmetic wart: `:792` still carries `reason: 'order_id must be omitted in
+demo mode'` — the suite is not in demo mode when this runs. Stale reason string, no functional
+impact.
 
-Scripted analysis over all 1,372 test bodies (brace-matched, comments and string literals stripped):
+**5. ❌ The demo half of the contract is now covered by nothing.** `payment_service.dart:171-172`:
 
-| Category | Count | % of 1,372 |
-|---|---:|---:|
-| Tests with **no** `expect`/`verify` at all | **3** | 0.2% |
-| Tests where **every** assertion is a `finds*` matcher (render-only) | **111** | 8.1% |
-| …of those, where every finder is `find.text` (pure string presence) | **63** | 4.6% |
-| `testWidgets` that are **inert** — no `tap`/`enterText`/`drag`/`longPress` **and** only `finds*` assertions | **97 of 215** | **45% of widget tests** |
+```dart
+if (isDemoPayments) {
+  _onSuccessCallback?.call();
+```
 
-- ❌ **Tests with no behavioural assertion** — 3 tests contain no assertion whatsoever:
-  2 in `test/utils/notification_router_test.dart`, 1 in `test/services/payment_service_test.dart`
-  (the `dispose()` loop at `:280-287`, which only checks "does not throw"). These pass
-  unconditionally. **Fix:** add `expect(…)` or delete.
+is **structurally unreachable**. `openCheckout` returns at `:113-122` when `isDemoPayments` is true
+and never calls `_razorpay.open`, so `_handleSuccess` can only fire when a real key is configured —
+in which case `isDemoPayments` is false. The branch cannot execute in production or in any test.
+Meanwhile every group that could probe it is `skip: _skipReason`, i.e. skipped in exactly the demo
+configuration it describes. **Fix:** delete the dead branch (the fail-closed `else` is the only live
+path), or, if it is retained as defence-in-depth, document that it is unreachable so nobody writes a
+test expecting to hit it.
 
-- ⚠️ **45% of widget tests are inert** — the largest single concentration is
-  `test/screens/my_care/my_care_widgets_test.dart` (28 of its 34 tests). The pattern
-  (`:94-98`):
-  ```dart
-  testWidgets('renders manager name', (tester) async {
-    final manager = _makeHealthManager(name: 'Priya Sharma');
-    await tester.pumpWidget(_host(HealthManagerBanner(manager: manager)));
-    expect(find.text('Priya Sharma'), findsOneWidget);
-  });
-  ```
-  This is not worthless — it *does* verify the constructor argument reaches the tree — but it is the
-  weakest useful assertion available, and 28 near-identical variants of it inflate the count without
-  adding risk coverage. `ActiveServiceCard` has computed state (days remaining, progress ratio,
-  vital-status colour) and none of it is asserted numerically.
-  Next largest: `care_team_screen_test.dart` 7/7, `quote_pending_surfaces_test.dart` 6/6,
-  `staff_role_sheet_test.dart` 5/6, `home_layout_test.dart` 4/5, `booking_confirmation_test.dart` 4/8,
-  `sos_screen_test.dart` 3/9.
-  **Fix (cheap, high leverage):** for each inert test that renders a *computed* value, assert the
-  computed number/colour rather than the input string; for screens with actions, add one
-  `tester.tap` + state assertion per screen.
+### 8-N. `test/providers/patient_scope_isolation_test.dart` — judged hard
 
-- ✅ **Not everything is inert — the guards are excellent.** `test/screens/overflow_smoke_test.dart`
-  asserts `tester.takeException()` is null after pumping 37 screens at 320/375/414 with demo data
-  populated (`:1-28` explains exactly why the older 1080×4000 tests could never catch the bug that
-  shipped). `test/utils/i18n_sync_test.dart:27-59` asserts real key-set and placeholder-set equality
-  against the actual JSON files with actionable `reason:` strings. These are the two highest-value
-  test files in the repo.
+New file, 8 tests, 189 LOC. It is better than most of the suite and it still does not guard the bug
+it was written for.
 
-### 8-B. Tests that assert a *copy* of production (tautologies)
+**1. ✅ The five per-provider clear tests (`:63-84`, `:125-170`) are real.** They construct the
+provider, load until non-empty (`expect(p.activeServices, isNotEmpty)` at `:128` is a genuine
+precondition guard, not decoration), call `clearPatientScopedData()`, then assert emptiness field by
+field. `AppProvider`'s test (`:63-84`) checks all seven fields including `amountDue == 0` with a
+reason that explains why that field matters clinically. If a future edit adds a field to `AppProvider`
+and forgets it in `clearPatientScopedData`, *this test will not catch it* (it asserts a fixed list),
+but for the fields that exist today it is a correct contract test.
 
-**11 test files openly declare that they replicate production data or logic** rather than invoke it.
-Found via `grep -rniE "re-?implement|replicate|mirror|canonical data|duplicated" test`:
+**2. ⚠️ `switchPatient clears before adopting the new patient` (`:86-106`) — the name is a promise the
+body does not keep.** Its own comment (`:97-104`) admits this. What it actually asserts:
 
-| File | Tests | `testWidgets` | Imports the screen it mirrors? | Executes production code? |
-|---|---:|---:|---|---|
-| `test/screens/services/assessment_form_test.dart` | 26 | 0 | no | **no** |
-| `test/screens/services/booking_history_test.dart` | 20 | 0 | no | **no** |
-| `test/screens/settings/notification_prefs_test.dart` | 18 | 0 | no | **no** |
-| `test/screens/cart/cart_coupon_test.dart` | 17 | 0 | no | **no** |
-| `test/screens/services/equipment_detail_test.dart` | 17 | 0 | no | **no** |
-| `test/screens/settings/help_faq_test.dart` | 12 | 0 | no | **no** |
-| `test/screens/services/service_catalog_test.dart` | 10 | 0 | no | **no** |
-| `test/screens/checkout/address_test.dart` | 19 | 0 | yes (model only) | partial |
-| `test/screens/services/service_booking_test.dart` | 17 | 1 | yes | 1 of 17 |
-| `test/screens/auth/login_screen_test.dart` | 19 | 8 | yes | 8 of 19 |
-| `test/screens/dark_mode_sweep_test.dart` | 7 | 7 | yes | yes (fixtures duplicated only) |
+```dart
+expect(app.currentPatient?.id, isNot(firstPatientId));
+expect(app.currentPatient?.id, 'pat_other_sunita');
+expect(app.lastUpdatedText, 'Demo data');
+```
 
-- ❌ **120 tests execute zero production code** — the seven files in the top block have no
-  `testWidgets` and never import the screen they claim to test. They import only
-  `package:flutter_test/flutter_test.dart` and then declare their own copy. Example,
-  `test/screens/cart/cart_coupon_test.dart:12-32`:
-  ```dart
-  // ── Coupon logic replicated from _CartScreenState._applyCoupon ──────────────
-  int? applyWelcome10(String code, int subtotal) {
-    if (code != 'WELCOME10') return null;
-    int discount = (subtotal * 10 / 100).round();
-    if (discount > 500) discount = 500;
-    return discount;
-  }
-  ```
-  All 17 tests exercise `applyWelcome10`. The real implementation at
-  `lib/screens/cart/cart_screen.dart:49-60` is never called.
-  **Impact:** if the ₹500 cap moves to ₹300 in production, all 17 tests still pass. Same structure
-  for the FAQ list (18 entries duplicated), the notification-preference matrix (9 keys including the
-  five `forced: true` safety alerts), the IV infusion price table, the equipment discount helpers and
-  the NCR city list.
-  *I checked for drift that has already happened and found none* — production and test copies still
-  match for FAQ (18 vs 18 `question:` entries), notification keys (identical 9-key sets), the coupon
-  formula, `_cities` (`lib/screens/checkout/address_selection_screen.dart:410`) and the IV table. The
-  defect is structural, not yet live.
-  **Fix:** make the data public and import it (`static const faqs`, `static const notifPrefs`,
-  `static const ivInfusionTypes`), or move it to `lib/data/`. One-line change per file; the tests
-  then become real.
+Delete `clearPatientScopedData(notify: false)` from `lib/providers/app_provider.dart:163` and **all
+three assertions still pass** — `switchPatient` still assigns `_currentPatient`, and `loadDashboard`
+→ `_seedDemoDataIfEmpty` still sets `lastUpdatedText = 'Demo data'` (`app_provider.dart:268`)
+because the deployment field is non-null either way. The test cannot fail for the reason its name
+gives.
 
-- ❌ **A whole policy group tests logic that does not exist in production** —
-  `test/screens/services/booking_history_test.dart:153-199`, group `'Booking history — Refund policy'`:
-  ```dart
-  test('>24 hours before service gives full (100%) refund', () {
-    final scheduledDate = DateTime.now().add(const Duration(hours: 48));
-    final now = DateTime.now();
-    final hoursUntil = scheduledDate.difference(now).inHours;
-    final refundPercent = hoursUntil > 24 ? 100 : 50;
-    expect(refundPercent, 100);
-  });
-  ```
-  The policy, the branch and the user-facing strings (`:182-198`) are all authored inside the test.
-  `grep -rn "refundPercent\|hoursUntil" lib` returns **nothing** — there is no 24-hour refund policy
-  in `lib/` at all. **Impact:** the suite reports a cancellation-refund policy as tested when the
-  product does not implement one. **Fix:** delete the group, or implement
-  `calculateCancellationRefund()` in `lib/utils/pricing.dart` and point the tests at it.
-  Bonus bug: `:172-180` `'exactly 24 hours before service gives 50% refund'` passes for the wrong
-  reason — the second `DateTime.now()` is microseconds later so `.inHours` truncates to **23**, not
-  24; the comment "24 is not > 24" describes a branch the test never reaches.
+Is the comment honest documentation or should the test be deleted? **Neither — it should be made
+assertable, and the reason it isn't is the test harness, not the production code.** `_UnreachableApi`
+(`:31-47`) makes *every* fetch throw, so both patients fall back to the same fixed `DemoData` blob and
+become indistinguishable. Give the fake per-patient data and the test becomes the strongest test in
+the file:
 
-### 8-C. Tests that guard code the app cannot reach
+```dart
+class _PerPatientApi extends ApiService {
+  @override Future<Deployment?> getActiveDeployment(String id) async =>
+      id == 'pat_demo_rajesh' ? _deploymentFor(id) : throw Exception('unreachable');
+}
+// switch to a patient whose fetch FAILS, then:
+expect(app.activeDeployment?.patientId, isNot('pat_demo_rajesh'),
+    reason: 'the outgoing patient must not survive a failed load for the incoming one');
+```
 
-- ❌ **24 P0-labelled tests guard an orphan module.** `lib/utils/booking_state_machine.dart` exports
-  `canTransition`, `transition`, `validNextStatuses` (`:40,50,62`). `grep -rn "BookingStateMachine\|
-  canTransition\|booking_state_machine" lib` returns **zero hits outside the file itself** — the only
-  references are the 24 assertions in `test/models/booking_state_machine_test.dart`.
-  Meanwhile the actual status mutation, `lib/providers/orders_provider.dart:96-102`, applies
-  **no validation at all**:
-  ```dart
-  void updateOrderStatus(String orderId, String newStatus) {
-    final index = _orders.indexWhere((o) => o['id'] == orderId);
-    if (index >= 0) {
-      _orders[index] = {..._orders[index], 'status': newStatus};
-  ```
-  …and `grep -rn "updateOrderStatus" lib` shows it has **zero callers**.
-  **Impact:** `docs/TEST_STRATEGY.md:157` lists *"Booking status transitions are strictly enforced —
-  no skipping steps, no going backwards"* as a key business rule encoded in tests, and
-  `docs/TEST_MAP.md:45` marks it `Critical? YES`. Both are false: nothing enforces it in the running
-  app. **Fix:** call `canTransition()` inside `updateOrderStatus` and throw/no-op on an invalid
-  transition, then add a provider-level test — that converts 24 dead tests into 24 live ones.
+That is the actual leak shape: patient A loads, patient B's fetch fails, A's record renders under B's
+name. As written the file never constructs that scenario. Keeping the honest comment *and* the
+misleading test name is the worst combination — the comment is buried in the body while the name is
+what shows in the test report and in `docs/TEST_MAP.md`. At minimum rename to
+`'switchPatient adopts the new patient and flags the reload as demo data'`.
 
-- ❌ **19 tests guard an unreachable screen.** `lib/screens/auth/login_screen.dart` is referenced
-  nowhere: `grep -rn "LoginScreen\|'/login'" lib` matches only the file's own declaration
-  (`:11,12,15,18`); it has no `onGenerateRoute` case in `lib/main.dart:425-500`.
-  `test/screens/auth/login_screen_test.dart` has 19 tests including the "audit M-7" T&C-consent and
-  Indian-mobile fixes.
+**3. ❌ The wiring — which is where the bug actually was — has no test at all.**
+`lib/utils/session_scope.dart` is imported by **no test file** (`grep -rl "SessionScope\|session_scope"
+test` → nothing). The original defect was not "providers lack a clear method"; it was "the switch site
+and the logout site clear nothing." Those sites are `lib/screens/home/home_screen.dart:1771` and
+`lib/screens/settings/settings_screen.dart:457`. Delete either line and **all 8 new tests still pass.**
+The regression guard does not guard the regression. A `MultiProvider` widget test that pumps the
+patient-switch sheet, taps a patient, and asserts `MyCareProvider.activeServices` is empty would; so
+would a direct `SessionScope.clearPatientData(context)` test under a `Builder`. `SessionScope` also
+has an untested crash mode: it `context.read`s six providers (`:29-35`), so any screen that calls it
+from a subtree missing one of them throws at runtime.
 
-- ⚠️ **The whole auth flow is behind a disabled gate.** `lib/main.dart:408-410`:
-  ```dart
-  // NOTE: Auth gate disabled for demo mode. Enable before production release.
-  // home: Consumer<AuthProvider>(...),
-  home: const SplashScreen(),
-  ```
-  and `lib/screens/splash_screen.dart:17` does `pushReplacementNamed('/home')`. So 45 auth tests
-  (`auth_provider_test` 18 + `login_screen_test` 19 + `otp_screen_test` 8) currently guard a path no
-  user traverses. This is expected for demo mode, but it means "authentication flows tested
-  end-to-end" is untrue of the shipped build.
+**4. ❌ And the leak is only half-fixed: order history is not patient-scoped in storage.**
+`OrdersProvider.clearPatientScopedData()` (`lib/providers/orders_provider.dart:212-216`) clears
+`_orders` and `_assessments` **in memory only** — it does not touch SharedPreferences, and the keys
+are global singletons (`:11-12` `'housepital_orders'`, `'housepital_assessments'` — no patient id).
+Two consequences, neither tested:
+- **The PHI leak survives a restart.** Switch from patient A to B, force-quit, relaunch:
+  `_loadFromStorage()` (`:175`) reads the same global key and patient A's order history renders under
+  patient B. The in-memory clear is erased by the next cold start.
+- **The fix introduced a data-loss path.** After the in-memory clear, the first order placed for
+  patient B calls `_persistAndNotify()` (`:163-172`), which writes the now-one-element `_orders` over
+  the global key — **destroying patient A's persisted order history**. Before the fix, `_orders` still
+  held A's orders so the write was non-destructive.
+  **Fix:** key persistence per patient (`housepital_orders_$patientId`) and add a migration step
+  (see §8-P), or persist the clear explicitly and accept the loss knowingly.
 
-- ⚠️ **Other orphans** (never imported by any `lib` file): `lib/services/sync_service.dart` (also
-  untested), `lib/screens/my_care/widgets/billing_summary_section.dart`,
-  `lib/screens/my_care/widgets/quick_actions_row.dart`,
-  `lib/screens/services/widgets/catalog_search_bar.dart`.
+**5. ⚠️ `demo data is announced, not silently substituted` (`:173-188`) is correct but the flag it
+asserts is globally imprecise.** `DemoMode.isServingDemoData` is a process-wide static
+`ValueNotifier` (`lib/data/demo_mode.dart:16`). `AppProvider.loadDashboard` calls `DemoMode.reset()`
+on a *successful* live load (`app_provider.dart:247`) — which takes the banner down for the whole app
+even if `MyCareProvider`, `MedicationProvider` or `OrdersProvider` are still serving sample records.
+A false "all clear" on a clinical banner is worse than no banner. Untested. Also, five `DemoData`
+fallback sites never set the flag at all: `lib/providers/blog_provider.dart`,
+`lib/screens/calendar/care_calendar_screen.dart`, `lib/screens/settings/patient_profile_screen.dart`,
+`lib/screens/my_care/widgets/doctor_advice_card.dart`, `lib/screens/care_team/care_team_screen.dart`
+(compare `grep -rln "DemoData\." lib` — 16 files — against the 8 `markServingDemoData()` sites).
+The care-team and doctor-advice screens are precisely where sample content reads as clinical fact.
+- Test isolation note: `isServingDemoData` is mutable global state that only `:178` resets. Any test
+  file that trips the flag leaks it into every later file in the same shard.
+- **No test renders `_DemoDataBanner`** (`lib/screens/main_shell.dart:64,132-138`). The banner
+  widget itself — the entire user-visible half of the fix — is unexercised.
 
-### 8-D. Coverage gaps ranked by risk (not by percentage)
+**Would these tests catch a regression of the PHI leak? Partially.** They catch a regression *inside*
+any of the five `clearPatientScopedData` methods. They do not catch removal of the call sites, do not
+catch a newly-added patient-scoped field, do not catch the storage-level leak, and the one test named
+for `switchPatient` cannot fail for its stated reason.
 
-| Risk area | Status | Evidence |
-|---|---|---|
-| Quote-vs-priced booking maths (`_priceMultiplier`) | ❌ none | `service_booking_screen.dart:151`; `grep "ultiplier" test` → 1 unrelated hit |
-| Priced manpower booking end-to-end | ❌ none | no test builds a manpower `ServiceItem` with `basePriceMin` and pumps the wizard |
-| Rate card values (`catalog_seeds.dart`) | ❌ none | only referenced by `overflow_smoke_test.dart`; no assertion on ₹800–1,500/day etc. |
-| Token refresh — 401 → refresh → retry | ❌ none | `grep "onUnauthorized" test/services/api_service_test.dart` → none; `lib/services/api_service.dart:88-98` untested |
-| Token refresh — `AuthProvider._refreshToken` / `handleUnauthorized` | ❌ none, and untestable as written | `lib/providers/auth_provider.dart:91-116` reaches `FirebaseAuth.instance.currentUser` directly (`:93`) instead of the injected `_firebaseService`, so `FakeFirebaseService` cannot drive it |
-| 50-min periodic refresh timer | ❌ none | `lib/providers/auth_provider.dart:76-86` |
-| Payment screen (`lib/screens/billing/payment_screen.dart`, 900 LOC) | ❌ none | `grep -rl "PaymentScreen" test` → no hits |
-| Payment failure paths (service level) | ⚠️ good but **skipped by default** | 8 groups / 17 tests gated on `--dart-define`, see §8-F |
-| Firestore security rules (156 LOC) | ❌ none | no rules-test harness anywhere in the repo |
-| Cloud Function `functions/index.js` (197 LOC, Claude endpoint) | ❌ none | `functions/package.json` has no test script or dev-deps |
-| Role/permission gating **at the 31 call sites** | ⚠️ matrix ✅, gates mostly ❌ | `canUserPerform` matrix has 49 tests; only 3 gates are exercised at widget level (`my_care_screen_test.dart:170` caretaker, `home_layout_test.dart:200` patient-self, `assistant_executor_test.dart:168,180,294`). Untested gates include `billing_screen.dart:135` (`canPay`), `cart_screen.dart:437,459` (pay vs request), `patient_profile_screen.dart:442`, `family_members_screen.dart:266`, `service_catalog_screen.dart:233`, `staff_role_card.dart:283`, `equipment_item_card.dart:246,300` |
-| PDF generation | ✅ strongest service coverage | `invoice_pdf_service_test.dart` inspects uncompressed bytes for the PRO-FORMA / zero-amount policy (`:93`), amounts+GST on priced orders (`:114`), and determinism modulo `/ID` (`:142`) |
-| Handover PDF | ⚠️ thin | 4 tests (`handover_report_service_test.dart`) for 308 LOC; determinism + filename only, no content-policy assertion, and no test that the `share_handover` role gate blocks a CARETAKER |
-| SOS | ✅ good | `sos_screen_test.dart` covers 4 option tiles, clipboard copy, missing/empty address, and all three `tel:` launches (`:263,279,296`) plus the `/raise-concern` soft fallback |
-| Offline/demo fallback | ⚠️ partial | `DemoData` referenced in 15 `lib` files and 19 test files, but no test asserts the *transition* (live fetch fails → demo data serves the UI); `sync_service.dart` untested and unused |
-| Cart edge cases | ✅ strong | quantity 0 / negative / out-of-bounds (`cart_provider_test.dart:135,141,147`), rental subtotal (`:220`), delivery boundary at exactly ₹1,000 (`:248`), save-for-later merges |
-| Cart rental-months clamp | ⚠️ | `lib/providers/cart_provider.dart:117` (`if (months < 1) months = 1`) has no test; only one happy-path call at `test/integration/cart_flow_test.dart:181` |
+### 8-O. Three new production files with zero tests
 
-### 8-E. Mock fidelity
+`grep -rl "StoreMigrator\|SessionScope\|DemoMode\|store_migrator\|session_scope\|demo_mode" test` →
+**one** file, `patient_scope_isolation_test.dart`, and it only imports `DemoMode` to reset it.
 
-Three fakes, all hand-written (no mockito/mocktail — a deliberate, documented choice):
-`test/_mocks/fake_firebase_service.dart` (119 LOC), `test/_mocks/fake_auth_api_service.dart` (56),
-`test/providers/mock_api_service.dart` (179).
-
-- ✅ **Fakes fail loudly when under-configured** — `mock_api_service.dart:111,143,157` throw
-  `StateError('… not configured in mock')` rather than returning null. Good practice.
-- ✅ **`api_service_test` uses a genuinely high-fidelity harness** — `MockClient` from
-  `package:http/testing.dart` means the real `ApiService` code path (headers, URI building, JSON
-  decode, status mapping, `_withRetry`) executes. This is the best mock in the repo.
-- ❌ **The fakes model exactly one failure shape.** `mock_api_service.dart:49-57`:
-  ```dart
-  void _maybeThrow() {
-    if (shouldThrowApiException) throw ApiException(statusCode: …, message: …);
-    if (shouldThrowGenericError) throw Exception('generic error');
-  }
-  ```
-  There is **no** timeout, no `SocketException`, no latency/ordering control, no malformed-payload
-  case, and no 401→refresh path — even though the real `ApiService` handles all of them
-  (`lib/services/api_service.dart:71-82` retries `SocketException`/`TimeoutException`, `:95-97`
-  refreshes on 401). Every fake method resolves synchronously, so no provider test can observe a
-  loading state, a cancelled request, or two in-flight calls resolving out of order.
-  **Impact:** provider error-handling is verified only against an immediate synchronous throw — the
-  easiest possible failure. **Fix:** add `Duration? latency` and
-  `Object? throwOnCall(int n)` to the fakes, plus a `TimeoutException` flag.
-- ❌ **`FakeFirebaseService` cannot model token refresh.** It overrides `getIdToken()` (`:85`) but
-  there is no `getIdToken(true)` force-refresh, matching the fact that production bypasses the
-  service entirely (`auth_provider.dart:93`). The fake faithfully reproduces an untestable design.
-- ⚠️ **`_FakeApiService` in `payment_service_test.dart:53` extends rather than implements
-  `ApiService`** — deliberate and documented (`:48-52`), but it means any method PaymentService
-  starts calling in future silently hits the *real* implementation against `https://fake.test`.
-
-### 8-F. Skipped / gated tests — what does NOT run on a bare `flutter test`
-
-`grep -rn "skip:" test` → 8 occurrences, all in `test/services/payment_service_test.dart`
-(`:288, 360, 412, 468, 514, 643, 683, 818`), all gated on `_skipReason`
-(`:185-191`), which is non-null unless `--dart-define=RAZORPAY_KEY=<non-placeholder>` is passed.
-
-| Gated group | Line | Tests | What stops running without the define |
+| File | LOC | Tests | Failure mode if wrong |
 |---|---:|---:|---|
-| `PaymentService construction` | 264 | 3 | ctor + dispose-leak safety |
-| `createOrder` | 293 | 4 | order-id happy path, `referenceType` pass-through, backend-throw → null, missing-field → null |
-| `openCheckout — verified success` | 365 | 1 | backend `verifyPayment` called with the right payment/order/signature |
-| `openCheckout — verification failure (M-2 regression)` | 417 | 1 | **the regression guard that a failed verify must NOT confirm the booking** |
-| `openCheckout — demo mode (skippedDemo)` | 473 | 1 | demo success without calling `verifyPayment` |
-| `openCheckout — error handling` | 519 | 3 | cancel message pass-through, null-message fallback `'Payment failed'`, sync-throw contract |
-| `openCheckout — external wallet` | 648 | 1 | wallet event fires neither callback and does not verify |
-| `openCheckout — options payload` | 688 | 3 | amount / currency / `order_id` omission / brand theme `#E8820E` / prefill assembly |
-| **Total silently skipped** | | **17** | |
+| `lib/services/store_migrator.dart` | 148 | **0** | **silent, permanent loss of a patient's order history** |
+| `lib/utils/session_scope.dart` | 44 | **0** | PHI leak (the bug it was written to fix) / runtime `ProviderNotFoundException` |
+| `lib/data/demo_mode.dart` | 28 | **0** | sample clinical data presented as the patient's own |
+| `lib/screens/settings/delete_account_screen.dart` | 247 | **0** | irreversible destruction of user data on a mis-tap |
 
-Only the 2-test `'PaymentService — demo payments contract'` group (`:225`) runs in both configs —
-and one of those two self-skips at runtime via `markTestSkipped` (`:240`) when a real-ish key *is*
-configured, so no single invocation exercises both branches.
+### 8-P. ❌ `StoreMigrator` — the one that matters. Never executed, and it already has two defects.
 
-- ✅ **CI does pass the define** — `.github/workflows/ci.yml` runs
-  `flutter test --coverage --reporter=expanded --dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key`,
-  with an explicit comment (`ci.yml`, "Test" step) explaining that without it "they silently skip and
-  CI looks green while never exercising payment payload/status logic". Correctly handled.
-- ⚠️ **The default local command does not.** A developer running plain `flutter test` sees green
-  while the entire payment-failure surface — including the M-2 regression — is skipped.
-  CLAUDE.md documents the correct command, but nothing enforces it.
-  **Fix:** add a `dart_test.yaml` default or a `tool/test.sh` wrapper that always injects the define.
+This is code that runs on **every** launch, **before any provider reads storage**
+(`lib/main.dart:174`), against **real user data on the first upgrade**, whose stated purpose is to
+prevent silent data loss — and it has never been executed by a test. Reading it statically I found
+two defects a first-hour test would have caught:
 
-### 8-G. Determinism
+**Defect 1 — the pre-versioning path never writes the stamp.** `run()` (`:74-78`) calls
+`_migrateFrom(prefs, 1)`. With `currentVersion == 1` (`:33`), `_migrateFrom` is
+`while (version < currentVersion)` (`:100`) → `1 < 1` → **loop body never runs, `setInt` never
+executes**. A device with pre-versioning data stays permanently unstamped: the
+`Log.warn('Local store has data but no version stamp')` (`:75`) fires on every cold start forever,
+and the store's actual state is indistinguishable from "never migrated". The fresh-install branch
+(`:71`) stamps correctly; the branch that handles *real upgrading users* does not.
 
-- ✅ **No real network, no real DB, no real filesystem writes** — verified above; the only real file
-  reads are `assets/i18n/*.json` in `i18n_sync_test.dart:21-24` (intentional and correct).
-- ⚠️ **60 `DateTime.now()` occurrences across 23 test files** (`grep -rc "DateTime.now()" test`).
-  Highest: `billing_screen_test.dart` (10), `booking_history_test.dart` (6), `helpers_test.dart` (5),
-  `cache_service_test.dart` (5), `orders_provider_refund_test.dart` (5). Most are benign relative
-  offsets (`DateTime.now().subtract(Duration(days: 10))`), but `booking_history_test.dart:172-180`
-  is a demonstrated wrong-reason pass (see §8-B) and `billing_screen_test.dart:233-270` builds
-  30/15/10/8/7/3-day windows off the wall clock — a run straddling midnight or a month boundary can
-  shift which bucket a fixture lands in.
-- ⚠️ **Wall-clock sleeps used as synchronisation.** `grep -rhoE "Duration\((milliseconds|seconds): [0-9]+\)" test`
-  → 36 × 100 ms, 10 × 1 s, 2 × 200 ms, 1 × 1200 ms, plus `runAsync` in 16 files.
-  Worst offenders: `payment_service_test.dart:254` (`await Future.delayed(Duration(milliseconds: 1200))`
-  to wait for a simulated checkout), `service_booking_test.dart:227` (200 ms for localisation to
-  settle), `sos_screen_test.dart` (18 `runAsync` blocks). On a loaded CI runner these are the
-  most likely flake sources in the suite. **Fix:** replace fixed delays with a completer/latch —
-  `payment_service_test.dart:825-848` already contains a perfectly good `_CallbackLatch` that the
-  1200 ms wait ignores.
-- ⚠️ **`api_service_test.dart` sleeps ~18 s of real time.** Seven groups carry
-  `timeout: const Timeout(Duration(seconds: 30))` (`:248, 266, 281, 328, 344, 361, 514`) because
-  `_withRetry` uses real `Future.delayed(_retryDelay * attempt)` (`lib/services/api_service.dart:67,76,81`).
-  **Fix:** make `_retryDelay` injectable and pass `Duration.zero` in tests.
-- ⚠️ **Shared static `GlobalKey`.** `lib/screens/main_shell.dart:16-17` exposes
-  `static final GlobalKey<MainShellState> shellKey`, reused by every test that pumps `MainShell`
-  (`main_shell_test.dart`, `overflow_smoke_test.dart`, `dark_mode_sweep_test.dart`). Sequential
-  pumps within a file are safe only because the previous tree is torn down first — it is a latent
-  cross-test coupling, not a current failure.
-- ✅ **Isolation hygiene is otherwise sound** — 36 `setUp(` vs only 2 `setUpAll(`;
-  49 `addTearDown(` (correctly scoped, e.g. `service_booking_test.dart:211-212` resetting
-  `tester.view`); `SharedPreferences.setMockInitialValues` called in 38 files. Only two file-scope
-  mutable declarations exist (`address_test.dart:16`, `staff_role_sheet_test.dart:40`), both
-  effectively const.
+**Defect 2 — a failed migration step still advances the version stamp.** `_migrateFrom` `:106-117`:
 
-### 8-H. Integration Tests
+```dart
+try { await step(prefs); }
+catch (e, st) { Log.error('Migration v$version → v${version+1} failed', …);
+  // Deliberately continue…
+}
+version++;
+await prefs.setInt(_versionKey, version);
+```
 
-- ❌ **`test/integration/` is not integration testing.** Four files, 15 tests total, and three of
-  them contain exactly **one** test each (`assessment_to_orders_test.dart:17`,
-  `billing_from_orders_test.dart:50`, `checkout_flow_test.dart:41`). All four drive providers
-  directly in-process — `cart_flow_test.dart` is 12 `CartProvider` method-call tests. No widget
-  tree, no navigation, no service boundary, no persistence round-trip across a restart.
-- ❌ **Service-to-database flows tested** — no database in the test path at all; `firestore.rules`
-  (156 LOC) and `database/schema.sql` have no harness.
-- ✅ **API endpoint request/response tested** — genuinely covered by
-  `test/services/api_service_test.dart` (50 tests, `MockClient`, per-method happy + error path).
-- ❌ **Authentication flows tested end-to-end** — provider-level only, and the flow is disabled in
-  the app (`lib/main.dart:408-410`).
-- ⚠️ **Cross-module data flow tested (change in A reflects in B)** — partially:
-  `billing_from_orders_test.dart:50` asserts billing totals derive from orders, and
-  `orders_persistence_test.dart` asserts demo orders are never written to storage. Good, but only
-  two such links for 11 providers.
-- ✅ **External service integrations tested (with mocks)** — Razorpay via `MethodChannel` stub,
-  HTTP via `MockClient`, Firebase via manual fake.
+The `setInt` is outside the `catch`, so a step that threw halfway leaves the data in the **old** shape
+while the store is **labelled** as the new version. The next launch sees `stamped == currentVersion`
+and returns at `:81` — the failed step is never retried, and the tolerant readers
+(`orders_provider.dart:175-207`, which responds to a decode failure by logging and moving on) will
+quietly serve an empty order list. The file's own contract says *"A migration NEVER deletes data it
+cannot parse"* (`:22`) — but `quarantine()` (`:126`) is only ever called *by* a step, and the step is
+the thing that failed. This is the exact silent-data-loss mode the file exists to prevent, and it is
+reachable in the failure case only.
 
-### 8-I. Security Tests
+**Defect 3 (lower) — `run()` promises "Never throws" (`:61-62`) but is unguarded.**
+`SharedPreferences.getInstance()` at `:64` can throw (platform-channel failure, corrupt store). It is
+awaited at `lib/main.dart:174` inside the startup sequence; the `runZonedGuarded` boundary catches it,
+but the app reaches the error screen rather than starting — which is precisely the boot loop the
+comment at `:112-113` says it is avoiding.
 
-- ❌ **Authentication bypass attempts tested** — none.
-- ❌ **Authorization escalation attempts tested** — the *matrix* is exhaustively tested
-  (`permission_test.dart`, 49 tests, all 4 roles × all 9 actions plus unknown-role defaults at
-  `:277`), but no test attempts to reach a gated action *through the UI* as a lower-privileged role.
-  The 31 `canUserPerform` call sites in 14 screens are almost all unguarded by tests (§8-D).
-- ❌ **SQL injection payloads tested** — none. `grep -rniE "injection|drop table|'; --" test` returns
-  only unrelated hits (`'Injection (IV/IM)'`, `'IM Injection Visit'`).
-- ❌ **XSS payloads tested** — none.
-- ❌ **Rate limiting verified / CSRF protection verified** — none; no rate-limit or CSRF code exists
-  client-side either. Server-side is BLOCKED-OWNER.
-- ⚠️ **Invalid token handling tested** — partially: `api_service_test.dart:204` asserts a bare 401
-  becomes `ApiException(401)`, and `:458` covers a 401 from `verifyOtp`. The *recovery* path
-  (`onUnauthorized` → refresh → retry once, `lib/services/api_service.dart:88-98`) has **zero**
-  tests. **Impact:** the single mechanism that keeps a 60-minute session alive is unverified.
-  **Fix:** inject a `MockClient` that returns 401 then 200, set `onUnauthorized: () async => true`,
-  and assert exactly two requests with the second carrying the new bearer token.
+**Defect 4 (lower) — logout deletes the stamp.** `AuthProvider.logout()` does `prefs.clear()`, which
+removes `housepital_schema_version` along with everything else. Benign at v1; at v2+ combined with
+Defect 1 it means a logged-out-then-logged-in device writes new data with no stamp and relies on the
+frozen `_v1Keys` heuristic (`:40-50`) to re-detect it. That heuristic is FROZEN by design, so if all
+future data lives under new key names, such a device is misclassified as a fresh install and its data
+is stamped at `currentVersion` **without ever being migrated**.
 
-### 8-J. Regression Tests
+**Exactly the tests it needs** (a new `test/services/store_migrator_test.dart`, all driven by
+`SharedPreferences.setMockInitialValues`, no widget tree required — this is a 30-minute file):
 
-- ✅ **Previously fixed bugs have regression tests** — 16 test files carry explicit provenance
-  markers. `grep -rhoiE "BUG-[0-9]+|audit M-[0-9]+|audit R[0-9]+" test` →
-  `BUG-08 BUG-09 BUG-10 audit M-1 M-4 M-5 M-6 M-7 M-12 M-14 R2`. Best example:
-  `payment_service_test.dart:417` names the M-2 defect and asserts `onSuccess` must not fire.
-  `overflow_smoke_test.dart:1-28` documents the exact shipped bug and why the old tests missed it.
-  This is above-average discipline.
-- ✅ **Critical paths have automated tests** — cart→checkout→order→billing chain is covered
-  end-to-end at provider level.
-- ⚠️ **Smoke tests cover auth, core CRUD, key features** — screens ✅ (37-screen overflow sweep,
-  dark-mode sweep), auth ⚠️ (tested but the flow is disabled), payments ❌ by default (gated).
+| # | Scenario | Setup | Assertions |
+|---|---|---|---|
+| 1 | **Fresh install** | `setMockInitialValues({})` | after `run()`: `getInt(versionKeyForTest) == currentVersion`; `prefs.getKeys()` contains *only* the version key (nothing else written); a second `run()` is idempotent and writes nothing new |
+| 2 | **Pre-versioning install with data** | `{'housepital_orders': '[{"id":"o1"}]', 'theme_mode': 'dark'}`, no stamp | after `run()`: **`getInt(versionKeyForTest) == currentVersion`** (fails today — Defect 1); `getString('housepital_orders')` byte-identical to input; `theme_mode` untouched |
+| 3 | **Pre-versioning detection uses the frozen key list** | one test per entry of `_v1Keys`, each alone | each is detected as legacy (not stamped as fresh); a store holding only an *unknown* key is treated as fresh |
+| 4 | **Already current** | `{versionKey: currentVersion, 'housepital_orders': '…'}` | `run()` performs zero writes (assert via a `SharedPreferences` spy or by comparing the full key/value map before and after) |
+| 5 | **Downgrade** | `{versionKey: currentVersion + 3, 'housepital_orders': '…'}` | stamp is left at `currentVersion + 3`, **not** rewritten downward; no key is modified or deleted; the warn is emitted |
+| 6 | **Forward migration runs each step once, in order** | seed `_migrations` with two recording steps via an `@visibleForTesting` injection point (one is needed — the map is `private static final` today); stamp at 1, `currentVersion` 3 | steps run in order 1→2 then 2→3; stamp ends at 3; each step invoked exactly once |
+| 7 | **Failing step must not advance the stamp** | step 1→2 throws | **assert `getInt(versionKey) == 1`, i.e. the failure is retried next launch** — fails today (Defect 2). If the "keep booting" behaviour is deliberate, the assertion becomes: stamp stays at 1 **and** a `__failed_v1` marker is written **and** the raw data is quarantined, so the state is recoverable rather than mislabelled |
+| 8 | **Missing step is not silently skipped past data** | `_migrations` has no entry for the current version | the warn fires and the stamp advances only if the gap is intentional; assert the data is untouched |
+| 9 | **Quarantine copies, never destroys** | `quarantine(prefs, 'housepital_orders', 1)` on a String, an int, a bool, a double and a `List<String>` | for each type: `__quarantine_v1_housepital_orders` holds the original value **and the original key still holds it too** (`quarantine` must not be a move); round-trip equality per type |
+| 10 | **Quarantine of an absent key is a no-op** | key not present | no `__quarantine_*` key is created, no warn claiming a quarantine happened |
+| 11 | **Quarantine of an unsupported type does not log a false success** | value whose runtime type falls through `:131-141` | either it is copied or the warn at `:142` is **not** emitted — today the log claims a quarantine that did not happen |
+| 12 | **`run()` never throws** | a `SharedPreferences` stub whose `getInstance` throws | `expect(StoreMigrator.run(), completes)` — asserts the documented contract at `:61-62` (fails today, Defect 3) |
+| 13 | **Ordering guarantee against providers** | integration-style: seed a v1 blob, run `main`'s startup order | the migrator's write happens strictly before `OrdersProvider._loadFromStorage` reads — today this is guaranteed only by the line ordering in `main.dart:174` and nothing asserts it |
 
-### 8-K. Test Infrastructure
+Test 2 and test 7 are the two that pay for the file. Both fail against the current implementation.
 
-- ✅ **Tests run in CI on every PR** — `.github/workflows/ci.yml`, `on: pull_request: branches: [main]`;
-  Flutter pinned to `3.41.2` with a comment explaining why drift matters.
-- ✅ **Code coverage tracked (minimum threshold enforced)** — `ci.yml` "Coverage gate" step parses
-  `lcov.info` and fails below `COVERAGE_THRESHOLD: "50.0"`, uploads the artifact on every run with
-  14-day retention. Genuinely enforced, not decorative.
-- ⚠️ **Threshold is below the documented target** — `docs/TEST_STRATEGY.md:148` states 60% overall
-  and 95%/80%/80% for utils/providers/models; CI enforces a flat 50% with a comment promising 70%
-  "by next quarter". No per-module gate exists, so the 40%-target screens layer (40,185 LOC, the
-  bulk of the codebase) can drag the global number while `lib/utils/` regressions hide inside it.
-- ⚠️ **Tests are deterministic** — see §8-G; no known flakes, but ~20 s of wall-clock sleeping and
-  60 `DateTime.now()` uses are unforced risk.
-- ✅ **Test data is isolated** — per-test `setUp` + `SharedPreferences.setMockInitialValues`
-  in 38 files; only 2 `setUpAll`.
-- ⚠️ **Tests run fast (< 5 min for unit suite)** — cannot time it (instructed not to run the suite,
-  and the central run's wall time was not provided to me). Static evidence: ≥18 s of deliberate
-  sleeping in `api_service_test.dart` alone plus ~7 s across 100 ms/1 s delays elsewhere; 215 widget
-  tests including a 111-permutation overflow sweep. Plausibly 2–4 min. **BLOCKED-OWNER** for the
-  exact figure — I need the central run's reported duration.
+### 8-Q. ❌ `delete_account_screen.dart` — destructive by design, zero tests
 
-### 8-L. Docs vs the actual test tree
+247 LOC, routed at `lib/main.dart:745-747`, reachable from Settings
+(`settings_screen.dart:278`), and it calls `SessionScope.clearSession(context)` +
+`AuthProvider.logout()` → `prefs.clear()` (`:64-65`). No test file references `DeleteAccountScreen`.
+The suite has 215 widget tests, and none of them covers the one screen whose purpose is irreversible
+destruction. Specifically untested:
+- **The double gate holds.** `_canSubmit` (`:48-51`) requires the checkbox **and** the literal word
+  `DELETE` (case-insensitive, trimmed). Assert the button is disabled for `''`, `'delete '` → enabled,
+  `'DELET'` → disabled, checkbox off + correct word → disabled. Today a one-character edit to `:50`
+  could arm the button on any input and nothing would fail.
+- **Cancel is safe.** Tapping "Keep my account" (`:102`) must pop without calling `logout()` — assert
+  against a spy `AuthProvider` that `logout` was never invoked and `SharedPreferences` is unchanged.
+  This is the highest-value single test on the screen.
+- **Confirm actually wipes.** Assert `SessionScope.clearSession` ran (all providers empty) *and*
+  `prefs.getKeys()` is empty afterwards.
+- **The copy does not overclaim.** The class doc (`:17-24`) is explicit that server data is *not*
+  erased. Assert the dialog text (`:73-78`) still says "scheduled for deletion … within 30 days" and
+  never "deleted" — a golden-string test is appropriate here because the honesty of this string is a
+  legal position (DPDP Act §12 / App Store 5.1.1(v)), not cosmetic copy.
+- **`_isSubmitting` is set at `:54` and never reset.** If the user backs out of the final dialog, the
+  button is permanently a spinner. Untested, minor.
+- **Async ordering hazard, untested:** `settings_screen.dart:457-458` calls
+  `SessionScope.clearSession(context)` (which triggers `CartProvider.clear()` → async `_persist()`)
+  and then `logout()` (async `prefs.clear()`) **without awaiting either**. The two writes race; a
+  `_persist` that lands after `prefs.clear()` resurrects a key post-wipe. Harmless today (the cart is
+  empty), latent once anything else persists on that path.
 
-`docs/TEST_MAP.md` and `docs/TEST_STRATEGY.md` are both stale and, in three places, actively wrong.
+### 8-R. Coverage gaps ranked by risk — round 2, new code included
 
-- ✅ File count correct — `TEST_MAP.md:6` claims 99, `find test -name "*_test.dart" | wc -l` → **99**.
-- ⚠️ Call-site count off by 2 — `:4` claims 1,370, actual **1,372**. Runtime claim ~1,771 vs the
-  central run's ~1,789.
-- ❌ **`TEST_MAP.md:156` self-contradicts** — the section is titled *"Existing Test Files (complete
-  inventory — 86 files, 2026-06-11)"* inside a document whose header says 99. **13 files are absent
-  from the inventory:** `reminders_provider_test`, `dark_mode_sweep_test`, `main_shell_test`,
-  `medication_schedule_screen_test`, `service_detail_screen_test`, `quote_pending_surfaces_test`,
-  `vitals_screen_test`, `equipment_rail_classification_test`, `reserve_flow_negative_test`,
-  `validators_test`, `care_pulse_ring_test`, `day_part_header_test`, `glass_app_bar_test`.
-- ❌ **Per-file counts are wrong in both directions** — `cart_provider_test` listed 48, actual 36;
-  `permission_test` listed 25, actual 49; `pricing_test` 22 → 26; `vital_classification` 26 → 23;
-  `cart_item_test` 24 → 19; `cart_screen_test` 27 → 31; `billing_screen_test` 23 → 26;
-  `my_care_provider_test` 18 → 21; `orders_persistence_test` 11 → 10.
-- ❌ **`TEST_MAP.md:286` misattributes the skips** — *"17 are skipped (Firebase-init-dependent
-  scenarios that need an emulator harness)"*. They are not Firebase-related: all 17 are the Razorpay
-  `--dart-define` gate in `payment_service_test.dart` (§8-F). A reader would go looking for an
-  emulator harness that has nothing to do with it.
-- ❌ **`TEST_STRATEGY.md:154` states the DEAD business rule as fact** — *"Manpower services
-  (caretaker, nursing_deployment, japa, nanny) have NO commission — users reject if they see prices
-  upfront."* The second clause was reversed by the owner on 2026-06-11 and CLAUDE.md now lists the
-  opposite as inviolable. (The *commission* half may still be correct — `pricing_test.dart:60-96`
-  tests zero commission for manpower — but the justification clause must go, and Japa/Nanny are no
-  longer Housepital offerings per CLAUDE.md.)
-- ❌ **`TEST_STRATEGY.md:5-15` describes a testing stack that does not exist.** Claimed:
-  `integration_test` package (no `integration_test/` directory; not in `pubspec.yaml`),
-  Patrol E2E (`grep patrol pubspec.yaml` → 0), Firestore Security Rules unit tests via the Emulator
-  Suite (no such harness anywhere), Razorpay webhook simulation (no webhook test).
-  `dev_dependencies` is exactly `flutter_test`, `flutter_lints`, `plugin_platform_interface`,
-  `url_launcher_platform_interface`.
-- ⚠️ `TEST_STRATEGY.md:26` lists only three roles for permission tests; `CARETAKER` was added later
-  (`lib/utils/permissions.dart:23`) and is tested (`permission_test.dart:133`).
+| Risk area | Round 1 | Round 2 | Evidence |
+|---|---|---|---|
+| **`StoreMigrator` — runs against real data, fails silently** | *(did not exist)* | **❌ none** | `lib/services/store_migrator.dart`; 2 defects found by reading (§8-P) |
+| **Order history persistence is not patient-scoped** | *(masked)* | **❌ none** | `orders_provider.dart:11-12,163-172,212-216` — restart-survivable PHI leak + destructive overwrite |
+| **`SessionScope` wiring (the actual PHI fix)** | *(did not exist)* | **❌ none** | `session_scope.dart` imported by 0 tests; call sites `home_screen.dart:1771`, `settings_screen.dart:457` |
+| **Account deletion (irreversible)** | *(did not exist)* | **❌ none** | `delete_account_screen.dart`; `grep -rl DeleteAccountScreen test` → 0 |
+| **Demo-data banner + flag correctness** | *(did not exist)* | **⚠️ 1 flag test, 0 UI tests** | `patient_scope_isolation_test.dart:173`; `main_shell.dart:132` unrendered by any test; 5 fallback sites don't set the flag |
+| Quote-vs-priced booking maths (`_priceMultiplier`) | ❌ | **❌ unchanged** | `service_booking_screen.dart:151`; `grep "ultiplier" test` → 1 unrelated hit |
+| Priced manpower booking end-to-end | ❌ | **❌ unchanged** | no test builds a manpower `ServiceItem` with `basePriceMin` and pumps the wizard |
+| Token refresh 401→refresh→retry | ❌ | **❌ unchanged** | `auth_provider.dart:93` still `FirebaseAuth.instance`; `api_service.dart:88-98` untested |
+| Payment fail-closed (`skippedDemo`, real key) | ❌ asserted the bug | **✅ fixed** | `payment_service_test.dart:511-518` |
+| Payment demo branch (`payment_service.dart:171`) | ⚠️ | **❌ unreachable + untestable** | §8-M.5 |
+| `PaymentScreen` (900 LOC) | ❌ | **❌ unchanged** | `grep -rl "PaymentScreen" test` → 0 |
+| 17 payment tests skipped on bare `flutter test` | ⚠️ | **⚠️ unchanged** | 8 `skip: _skipReason` groups |
+| Firestore rules (156 LOC) / `storage.rules` (new) | ❌ | **❌ and now worse** | `storage.rules` shipped this commit; still no rules-test harness anywhere |
+| Cloud Function `functions/index.js` | ❌ | **❌ unchanged** | no test script in `functions/package.json` |
+| Four untested services + `BillingProvider` | ❌ | **⚠️ improved for `BillingProvider` only** | `billing_provider.clearPatientScopedData` now has one test (`patient_scope_isolation_test.dart:148`); `firebase_service`, `sync_service`, `payment_reminder_service`, `voice_service` still 0 |
+| Role gates at 31 call sites | ⚠️ 3/31 | **⚠️ unchanged** | |
+| PDF generation | ✅ | **✅ unchanged** | |
+| SOS | ✅ | **✅ unchanged** | |
+| Cart edge cases | ✅ | **✅ unchanged** | |
+| Five-tab nav contract | *(six-tab, stale)* | **✅ fixed** | `main_shell_test.dart:233,242,247-251` |
+
+### 8-A. Assertion quality (re-measured)
+
+Scripted over all test bodies (brace-matched, comments stripped):
+
+| Category | Round 1 | Round 2 |
+|---|---:|---:|
+| `testWidgets` total | 215 | **215** |
+| **Inert** — no `tap`/`enterText`/`drag`/`longPress` **and** only `finds*` assertions | 97 | **94** (44%) |
+| Tests with no `expect`/`verify` at all | 3 | **3** |
+
+The 97→94 delta is script tolerance, not progress: `git diff --stat` shows only `main_shell_test.dart`
+changed among widget-test files, and none of its tests are in either count. Largest inert
+concentrations unchanged: `my_care_widgets_test.dart` **28**, `care_team_screen_test.dart` 7,
+`quote_pending_surfaces_test.dart` 6, `staff_role_sheet_test.dart` 5,
+`assistant_screen_test.dart`/`home_layout_test.dart`/`booking_confirmation_test.dart`/`day_part_header_test.dart` 4 each.
+
+The three assertion-free tests are unchanged: `notification_router_test.dart:91`
+(`'null type does not crash'`), `:97` (`'empty data does not crash'`), and
+`payment_service_test.dart:281` (`'dispose() can be called across multiple constructions safely'`).
+All three pass unconditionally.
+
+### 8-B. Tests that assert a *copy* of production — unchanged, 120 tests
+
+Re-verified per file (`test( count` / `testWidgets count` / `housepital_patient` import count):
+
+```
+assessment_form_test.dart      26 / 0 / 0
+booking_history_test.dart      20 / 0 / 1   (model import only)
+notification_prefs_test.dart   18 / 0 / 0
+cart_coupon_test.dart          17 / 0 / 0
+equipment_detail_test.dart     17 / 0 / 0
+help_faq_test.dart             12 / 0 / 0
+service_catalog_test.dart      10 / 0 / 0
+                              ───
+                              120 tests, 0 widget tests, ~0 production imports
+```
+
+Unchanged from round 1 and unaddressed. The refund-policy group
+(`booking_history_test.dart:153-199`) still tests a 24-hour refund policy that does not exist in
+`lib/` (`grep -rn "refundPercent\|hoursUntil" lib` → nothing), and `:172-180` still passes for the
+wrong reason (`.inHours` truncates to 23).
+
+### 8-C. Tests that guard code the app cannot reach — unchanged
+
+Re-verified with a scripted importer check; all six orphans still have zero importers outside
+themselves: `booking_state_machine.dart` (24 tests, `TEST_MAP.md:45` `Critical? YES`),
+`sync_service.dart`, `login_screen.dart` (19 tests), `billing_summary_section.dart`,
+`quick_actions_row.dart`, `catalog_search_bar.dart`. `grep -n "'/login'\|LoginScreen" lib/main.dart`
+→ no match; the auth gate is still commented out.
+
+### 8-F. Skipped / gated tests — unchanged
+
+`grep -rn "skip:" test` → still **8**, all `payment_service_test.dart`, all `_skipReason`
+(`:189-192`). 17 tests silently skip on a bare `flutter test`, including the M-2 regression **and the
+newly-rewritten fail-closed test at `:474`**. That is the sharp edge of round 2: the single most
+important new assertion in the commit does not run in the default local command. CI passes
+`--dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key` and is correct.
+
+### 8-G. Determinism — unchanged, one new sleep
+
+`payment_service_test.dart:255` (1200 ms), `:643` (30 ms), `:685` (50 ms) remain wall-clock waits.
+`patient_scope_isolation_test.dart:162` adds one more:
+`await Future<void>.delayed(const Duration(milliseconds: 20))` to wait for `OrdersProvider`'s
+constructor microtask, with a comment explaining it. 20 ms is generous today but it is a race against
+a `SharedPreferences` platform-channel round trip on a loaded runner; exposing a
+`Future<void> get ready` on the provider would make it deterministic. `api_service_test.dart` still
+sleeps ~18 s of real time behind seven 30 s group timeouts.
+
+### 8-H/8-I/8-J/8-K — unchanged from round 1
+
+`test/integration/` is still 4 files / 15 tests, all provider-level. No security tests of any kind
+(auth bypass, authz escalation, injection, XSS, CSRF, rate limit) — and `storage.rules` shipping this
+commit adds a second untested rules file next to `firestore.rules`. CI coverage gate still
+`COVERAGE_THRESHOLD: "50.0"`, global-only, below the documented 60%.
+
+### 8-L. Docs vs the actual test tree — one new class of staleness
+
+Every round-1 item stands (`TEST_MAP.md` inventory says 86 files inside a document claiming 99 — now
+100; 9 wrong per-file counts; the 17 skips misattributed to Firebase; `TEST_STRATEGY.md:154` states
+the reversed manpower rule as fact; `TEST_STRATEGY.md:5-15` describes four testing tiers that do not
+exist). New:
+- ❌ `docs/ARCHITECTURE.md:68` — "main_shell.dart # Fixed solid-orange bottom nav bar (**6 tabs**:
+  Home/My Care/Services/**Calendar**/Billing/More)" — stale, now five.
+- ❌ `docs/SCREEN_MAP.md:6` — "MainShell -- **6 tabs**" — stale.
+- ⚠️ `README.md:166` — "services/ # catalog (6 tabs)" — refers to the catalog's own tab bar, not the
+  root nav; verify before editing.
+- ✅ `docs/CHANGELOG.md:64` is a dated historical entry — correct as history, leave it.
+- ❌ Neither `TEST_MAP.md` nor `TEST_STRATEGY.md` mentions `patient_scope_isolation_test.dart`, and
+  neither records that `store_migrator.dart` / `session_scope.dart` / `demo_mode.dart` /
+  `delete_account_screen.dart` are uncovered. The documents' own "MISSING / Critical? YES" columns
+  are the right place for that and were not updated by the commit that created the gap.
 
 ---
 
-## Sections 1–7 and 9 (secondary scope — sibling audits cover these in depth)
+## Sections 1–7 and 9 (secondary scope)
+
+Unchanged from round 1 except where noted.
 
 ### 1. Code Quality & Architecture
-- ✅ **Dependency Inversion in the data layer** — `lib/services/i_api_service.dart` exists and
-  `AuthProvider` depends on `IApiService` (`lib/providers/auth_provider.dart:44`), which is what
-  makes the fakes possible without a mocking framework.
-- ✅ **Dead code — no commented-out blocks** — `grep -rnE "^\s*// *(final|const|return|if \(|await|setState|Widget )" lib`
-  → **2** hits. Very clean.
-- ✅ **No `print()` in production** — `grep -rn "^\s*print(" lib` → **0**; a `Log` wrapper is used
-  (`lib/utils/logger.dart`).
-- ❌ **"Ensure that files are never [un]referenced"** — 6 orphan files (§8-C), one of which
-  (`booking_state_machine.dart`) carries 24 tests and a `Critical? YES` label.
-- ❌ **Views should never directly call the data layer** — the booking wizard holds pricing
-  arithmetic (`_priceMultiplier`), the catalog data (`_ivInfusionTypes`, `_concernCategories`) and
-  the coupon rule (`cart_screen.dart:49-60`) inside `State` classes. This is *the direct cause* of
-  the 120 mirror-tests: the tests physically cannot reach the logic. Fixing the layering fixes the
-  test problem.
-- ⚠️ **Single Responsibility** — `service_booking_screen.dart` is 3,032 LOC,
-  `equipment_detail_screen.dart` 1,923, `home_screen.dart` 1,904, `care_calendar_screen.dart` 1,811.
-- ⚠️ **DRY / single source of truth for constants** — violated by construction in 11 test files
-  (§8-B), plus `_cities` duplicated between `address_selection_screen.dart:410` and
-  `address_test.dart:13`.
-- ⚠️ **Centralize validation logic** — `lib/utils/validators.dart` exists and is good, but
-  `login_screen.dart` re-implements Indian-mobile validation inline (per
-  `login_screen_test.dart:23-28`) instead of calling `Validators.indianMobile`.
+- ✅ **`StoreMigrator`, `SessionScope` and `DemoMode` are good architecture** — each is a single
+  `abstract final class` with one responsibility, no UI dependency (except `SessionScope`, which takes
+  a `BuildContext` by necessity), and each carries a genuinely useful doc comment stating *why* it
+  exists and what the failure mode is. `store_migrator.dart:20-25`'s "migration literals are FROZEN"
+  rule is the kind of constraint most codebases learn the hard way. The problem is coverage, not design.
+- ⚠️ **`SessionScope` couples a utility to `provider` and `BuildContext`** (`:1-2`), so it can only be
+  called from a widget and can only be tested with a widget test. A `clearPatientData(List<Clearable>)`
+  overload would make it unit-testable and would also let a future non-widget caller (a push handler,
+  a deep link) use it.
+- ❌ **New DRY violation:** `AppProvider.clearSession` (`app_provider.dart:189-194`) and
+  `SessionScope.clearSession` (`session_scope.dart:40-43`) share a name and differ in scope — one
+  clears one provider, the other clears six. `delete_account_screen.dart:64` and
+  `settings_screen.dart:457` call the second; nothing prevents a future caller reaching for the first
+  and clearing only `AppProvider`. Untested either way.
+- ❌ Round-1 items stand: 6 orphan files; views hold the data layer (`_priceMultiplier`, coupon rule,
+  catalog data inside `State` classes); `service_booking_screen.dart` 3,032 LOC.
 
-### 2. Input Validation & Sanitization
-- ✅ **Client-side text/email/pincode/name/age validation** — `lib/utils/validators.dart:26-113`,
-  17 tests in `test/utils/validators_test.dart` covering accept/reject/required-vs-optional per rule.
-- ✅ **Description length cap tested** — `validators_test.dart:137` `'enforces the raise-concern DoS
-  cap (default 1000)'`.
-- ⚠️ **Bounds numeric inputs** — `Validators.numberInRange` exists (`:88`) and is used on the vitals
-  form (`vitals_screen.dart:679`) but has **no test group**.
-- ⚠️ **Limit the size of array/collection inputs** — cart has no maximum item count or maximum
-  quantity; `updateQuantity` only clamps the lower bound (`cart_provider.dart:104-112`).
-- ❌ **File uploads validated for type/size/content** — no upload validation tests found.
-- ❌ **AI/LLM: user content sanitized before prompts; prompt-injection patterns filtered; AI output
-  sanitized; token/cost limits per user** — `functions/index.js` (197 LOC, `@anthropic-ai/sdk`) has
-  no tests of any kind and no test harness configured in `functions/package.json`. The local
-  Hinglish intent matcher (`assistant_service.dart`, 14 tests; `assistant_executor.dart`, 28 tests)
-  is well covered, but none of those tests feed adversarial input.
-- ❌ **Server-side re-validation / SQLi / XSS / CSRF / path traversal / body-size limits** — no tests.
-- N/A **Command injection** — no shell execution in a Flutter client.
-- N/A **Content-Type validation on uploads** — no upload endpoint in the client.
-
-### 3. Concurrency & Resource Cleanup
-- ✅ **Async operations awaited** — `flutter analyze` clean with `unawaited_futures`-class lints
-  from `flutter_lints ^6.0.0`.
-- ✅ **Timers invalidated** — `auth_provider.dart:83-86` `_stopTokenRefreshTimer`;
-  `payment_service_test.dart` disposes the service in every test.
-- ⚠️ **Subscriptions/observers removed during cleanup** — only 2 `tearDown(` in the whole suite
-  (49 `addTearDown` compensate), so listener-leak regressions are largely unguarded;
-  `cart_provider_test.dart:97` and `auth_provider_test.dart:308` are the only listener-contract tests.
-- ⚠️ **Debounced operations capture state at invocation time** — no debounce tests found.
-- ⚠️ **Race conditions in read-modify-write** — no concurrency test exists; every fake resolves
-  synchronously, so interleaving is unreachable (§8-E).
-- ❌ **Task cancellation checked in long operations** — no test cancels an in-flight request;
-  `ApiService` exposes no cancellation token.
-- N/A **UI updates dispatched to main thread / lock ordering** — Dart is single-isolate here.
-
-### 4. Security
-- ✅ **No credentials in source** — `AppConstants.razorpayKey` defaults to the placeholder
-  `rzp_test_XXXXXXXXXX` and is injected via `--dart-define`; CI passes a static dummy
-  (`ci.yml`, "Test" step, explicitly annotated "Static dummy, never a real credential").
-- ✅ **Secrets loaded from environment / secret manager** — `ANTHROPIC_API_KEY` is server-side only
-  (`functions/index.js`); Firebase plists gitignored per CLAUDE.md.
-- ✅ **Lockfile committed** — `pubspec.lock` present.
-- ⚠️ **Token expiration enforced / refresh rotation implemented** — implemented
-  (`auth_provider.dart:76-116`) but **untested and untestable** (§8-D).
-- ⚠️ **Authorization checked on every request (not just UI hiding)** — client-side gating is
-  UI-hiding by construction (`canUserPerform` guards `if` blocks in widget trees);
-  server-side enforcement lives in `firestore.rules` (156 LOC) with no tests.
-- ⚠️ **Dependencies pinned** — `pubspec.yaml` uses caret ranges (`^6.0.0` etc.), resolved by
-  `pubspec.lock`. Acceptable, not strict pinning.
-- ❌ **Failed login attempts rate-limited** — no client-side attempt counter, no test.
-- ❌ **Dependencies scanned for known vulnerabilities** — no `dart pub outdated --mode=security`,
-  Dependabot config, or audit step in `ci.yml`.
-- ❌ **Rate limiting on expensive operations (AI calls)** — no test; `functions/index.js` untested.
-- ❌ **Audit logging for security-relevant actions** — no logging test; `logger.dart:63` carries a
-  `TODO(observability)` for Crashlytics forwarding.
-- ❌ **Sensitive data encrypted at rest** — no test asserts that tokens are not written to
-  `SharedPreferences` in plaintext.
-- N/A **Passwords hashed / password strength** — phone+OTP auth, no passwords in the app.
-- N/A **CORS** — no browser-origin API surface under test.
-
-### 5. Database & Data Integrity
-- ⚠️ **Large result sets paginated** — `lib/widgets/paginated_list.dart` exists with 6 tests
-  (`test/widgets/paginated_list_test.dart`), but no test drives a large backend page set.
-- ❌ **Foreign keys / unique / NOT NULL / check constraints / cascading deletes / no orphaned
-  records** — `database/schema.sql` exists but has **no test harness**; `firestore.rules` likewise.
-- ❌ **Migrations are reversible** — no migration tooling or test in the repo.
-- N/A **Parameterized statements / indexes / N+1 / connection pooling / query timeouts** — the
-  Flutter client issues HTTP calls, not SQL; these belong to the backend audit. **BLOCKED-OWNER.**
+### 5. Database & Data Integrity — **downgraded**
+- ❌ **NEW: "Migrations are reversible" is now materially worse than "no migration tooling".** Round 1
+  graded this ❌ because nothing existed. Round 2 has a migrator whose downgrade branch
+  (`store_migrator.dart:83-93`) deliberately does nothing — a defensible choice, clearly reasoned —
+  but which is untested, never exercised, and which advances its version stamp past failed steps
+  (§8-P Defect 2). An untested migrator is a strictly larger liability than no migrator, because the
+  app now *relies* on it having run.
+- ❌ **NEW: no data isolation between patients at the storage layer** (§8-N.4).
+- ❌ `database/schema.sql` and `firestore.rules` still have no harness; `storage.rules` joins them.
 
 ### 6. Error Handling
-- ✅ **Global error boundary exists** — `lib/main.dart:98` `runZonedGuarded`, `:114`
-  `FlutterError.onError`, `:116` `PlatformDispatcher.instance.onError`.
-- ✅ **Retry logic with backoff for transient failures** — `lib/services/api_service.dart:19-82`
-  (`_maxRetries = 2`, `_retryDelay * attempt`), covering `SocketException`, `TimeoutException` and
-  5xx; tested in `api_service_test.dart`.
-- ✅ **Error types/enums used (not string-based)** — `ApiException(statusCode:, message:)` used
-  consistently; `AuthState` enum for auth.
-- ✅ **Graceful degradation when dependencies unavailable** — the `DemoData` fallback across 15
-  `lib` files is the whole demo-mode design.
-- ⚠️ **User-facing error messages helpful and non-technical** — spot-checked as good
-  (`'Payment failed'`, `'Invalid or expired coupon code'`, `'Please enter a coupon code'`), but the
-  coupon strings are only asserted against the test's own copy (§8-B).
-- ⚠️ **All errors caught and handled** — `payment_service_test.dart:601-608` documents a
-  **known unfixed limitation**: `openCheckout` wraps `_razorpay.open()` in try/catch, but the call is
-  internally async, so a platform-channel throw becomes an unhandled future error and **no callback
-  fires** — the user sees a checkout that silently does nothing. The test only asserts the
-  synchronous contract. This is a real, self-documented payment-path defect.
-- ❌ **Circuit breakers for external service calls** — none; `_withRetry` retries and gives up but
-  never opens a circuit.
-
-### 7. Logging & Observability
-- ✅ **Structured logging, not `print`** — `lib/utils/logger.dart` with `Log.debug/warn/error` and a
-  `tag:` parameter; zero `print(` in `lib`.
-- ✅ **Log levels used appropriately** — `Log.debug` for retries (`api_service.dart:65,74,80`),
-  `Log.warn` for refresh failure (`auth_provider.dart:100`).
-- ✅ **No sensitive data in logs** — spot-checked: tokens are never interpolated into log strings.
-- ⚠️ **18 files still use `debugPrint`** alongside the `Log` wrapper — two logging paths.
-- ❌ **Request tracing / correlation IDs** — none.
-- ❌ **Performance metrics tracked / alerts for error spikes** — none in-app;
-  `logger.dart:63` `// TODO(observability): forward warn/error to FirebaseCrashlytics.recordError`.
-  **BLOCKED-OWNER** for whether alerting exists outside the repo.
+- ✅ `store_migrator.dart:106-114` catches per-step and keeps booting — correct instinct.
+- ⚠️ …but the recovery is incomplete (stamp advances anyway) and untested (§8-P).
+- ⚠️ `payment_service_test.dart:610-615` still documents the unfixed async-`open()` swallow.
 
 ### 9. Release Readiness
-- ✅ **No TODO/FIXME/HACK blocking release** — exactly **3** in 54,295 LOC
-  (`app_provider.dart:171` persistence, `logger.dart:63` observability,
-  `staff_role_card.dart:300` backend wiring). All scoped and non-blocking.
-- ✅ **Environment variables documented** — `docs/ENVIRONMENT_SETUP.md` present; CLAUDE.md documents
-  the `RAZORPAY_KEY` define and the `ANTHROPIC_API_KEY` server-side rule.
-- ✅ **Known issues documented and accepted** — `docs/KNOWN_ISSUES.md` present and referenced from
-  `ci.yml` (tree-shake-icons workaround).
-- ⚠️ **Rollback plan exists** — `docs/DEPLOYMENT_GUIDE.md` present; contents not verified against a
-  real rollback drill. **BLOCKED-OWNER.**
-- ⚠️ **Monitoring/alerting configured** — see §7. **BLOCKED-OWNER.**
-- ❌ **No debug/demo mode enabled by default** — the app ships with the auth gate commented out
-  (`lib/main.dart:408-410`, *"Auth gate disabled for demo mode. Enable before production release."*)
-  and payments in simulated mode with the placeholder key. Both are intentional for demo, both are
-  release blockers, and **no test asserts they are off** — a `flutter test` after re-enabling the gate
-  would not tell you whether it stayed enabled.
-- ❌ **Runbook exists for common failure modes** — `docs/TROUBLESHOOTING.md` exists but no runbook
-  keyed to the failure modes this audit surfaces (payment verify failure, token refresh failure,
-  demo-fallback activation).
+- ✅ **`delete_account_screen.dart` closes a genuine App Store 5.1.1(v) / DPDP §12 blocker** and its
+  copy is honest about what it cannot do (`:17-27`, `:73-78`). Shipping the honest version rather
+  than claiming server-side erasure is the right call.
+- ⚠️ New TODO count: round 1 found 3 TODOs in 54,295 LOC; `delete_account_screen.dart:56`
+  (`TODO(backend): POST /account/delete`) makes 4 in 55,067. Scoped and documented, not blocking —
+  but it is a TODO on the one screen the App Store reviewer will exercise.
+- ❌ Auth gate still commented out; demo payments still default; no test asserts either is off.
+- ❌ `docs/TROUBLESHOOTING.md` still has no runbook entry for the two newest failure modes:
+  "migration failed on upgrade" and "demo banner stuck on / off".
 
 ---
 
 ## Blockers (must fix before release)
 
-1. **`_priceMultiplier` has no test** (`lib/screens/services/service_booking_screen.dart:151-156`,
-   applied at `:2126`, `:2477`). The multiplication that converts a per-day rate into a booking
-   total is unverified. Extract to `lib/utils/pricing.dart` and table-drive every branch.
-2. **The live manpower pricing rule has no test; only the reversed rule is encoded**
-   (`test/screens/services/service_booking_test.dart:182-278`). Add a priced-manpower wizard test
-   asserting ₹ appears, the multiplier applies, and the item goes to the cart.
-3. **Token-refresh recovery is untested and untestable.** `lib/providers/auth_provider.dart:93`
-   uses `FirebaseAuth.instance.currentUser` instead of the injected `_firebaseService`; the
-   `onUnauthorized` 401→refresh→retry path (`lib/services/api_service.dart:88-98`) has zero tests.
-   Route the refresh through `FirebaseService.getIdToken(forceRefresh: true)`, then add the
-   401-then-200 `MockClient` test.
-4. **17 payment tests — including the M-2 "failed verification must not confirm the booking"
-   regression — are silently skipped on a bare `flutter test`** (§8-F). CI is correct; make the
-   local default match via `dart_test.yaml` or a `tool/test.sh` wrapper.
-5. **Auth gate and demo payments are on by default with no test asserting they are off**
-   (`lib/main.dart:408-410`). Add a release-guard test that fails when `home:` is `SplashScreen`
-   under a `--dart-define=RELEASE=true`, and one asserting
-   `PaymentService.isDemoPayments == false` for a production key.
+1. **`StoreMigrator` has never been executed** (`lib/services/store_migrator.dart`) and reading it
+   surfaces two defects: the pre-versioning path never writes the version stamp (`:74-78` +
+   `:98-100`), and a failed migration step still advances the stamp (`:106-117`), permanently
+   mislabelling un-migrated data as migrated. Add `test/services/store_migrator_test.dart` per the
+   13-case table in §8-P; cases 2 and 7 fail today.
+2. **Order history persistence is not patient-scoped** (`lib/providers/orders_provider.dart:11-12`).
+   The PHI fix is in-memory only — patient A's orders return under patient B after a restart, and the
+   first order B places overwrites A's history. Key per patient, migrate, and test both directions.
+3. **The PHI fix's wiring is untested.** `lib/utils/session_scope.dart` is imported by no test;
+   deleting `home_screen.dart:1771` or `settings_screen.dart:457` leaves all 8 new tests green. Add a
+   `MultiProvider` widget test per call site.
+4. **`_priceMultiplier` still has no test** (`service_booking_screen.dart:151-156`, applied `:2126`,
+   `:2477`). Unchanged from round 1.
+5. **17 payment tests — now including the newly-written fail-closed guard (`:474`) — are silently
+   skipped on a bare `flutter test`.** The most valuable assertion added this commit does not run in
+   the default local command. Add `dart_test.yaml` defaults or a `tool/test.sh` wrapper.
+6. **Token-refresh recovery is still untested and untestable** (`auth_provider.dart:93`).
 
 ## High
 
-6. **120 tests execute zero production code** (§8-B). Seven files test a hand-copied duplicate of
-   FAQ data, notification preferences, coupon maths, IV price tables, equipment discounts, catalog
-   invariants and address cities. No drift has occurred *yet* — I diffed all of them — but nothing
-   would detect it. Make the constants public and import them.
-7. **The booking state machine is enforced only in tests.**
-   `lib/utils/booking_state_machine.dart` has zero production callers;
-   `lib/providers/orders_provider.dart:96-102` mutates status with no validation and has zero
-   callers itself. Wire `canTransition` into `updateOrderStatus`.
-8. **A refund policy is "tested" that does not exist in production**
-   (`test/screens/services/booking_history_test.dart:153-199`). Delete or implement.
-9. **`openCheckout` swallows async platform-channel failures** — self-documented at
-   `test/services/payment_service_test.dart:601-608`: the user gets no callback at all. Await the
-   future or attach a `.catchError` that routes to `onFailure`.
-10. **Role gates are untested at 28 of 31 call sites** — notably `billing_screen.dart:135` (`canPay`),
-    `cart_screen.dart:437,459` and the handover-export gate. Add one widget test per gate with a
-    CARETAKER/FAMILY_MEMBER role.
-11. **Four services and one provider have no tests at all** — `firebase_service.dart` (396 LOC),
-    `sync_service.dart`, `payment_reminder_service.dart`, `voice_service.dart`,
-    `billing_provider.dart`. `firestore.rules` (156 LOC) and `functions/index.js` (197 LOC, the
-    Claude endpoint) likewise — the latter is the app's prompt-injection surface.
-12. **No security tests of any kind** — no auth-bypass, authz-escalation, injection, XSS, CSRF or
-    rate-limit test exists (§8-I).
+7. **`payment_service_test.dart:649` was loosened further than the code required.**
+   `expect(successCalled || failure != null, isTrue)` is not a tautology but it accepts the exact
+   regression the sibling test forbids; the deterministic assertion was available. Split the test,
+   assert `successCalled == false && failure != null`, drop the 30 ms sleep for `_CallbackLatch`, and
+   fix the name ("even when channel will fail" — the channel never fails).
+8. **`patient_scope_isolation_test.dart:86-106` cannot fail for the reason its name gives.** Rename
+   it, and add the assertable version using a per-patient fake API (§8-N.2).
+9. **`delete_account_screen.dart` has no test and is destructive by design.** Minimum: the double
+   gate, the cancel path, the wipe, and the honesty of the dialog copy (§8-Q).
+10. **`payment_service.dart:171-172` is unreachable dead code** — `openCheckout` returns early in demo
+    mode, so `_handleSuccess` never runs with `isDemoPayments == true`. Delete or document.
+11. **`DemoMode` is globally imprecise and five fallback sites don't set it** — `AppProvider` can take
+    the banner down while other providers still serve sample data (`app_provider.dart:247`);
+    `blog_provider`, `care_calendar_screen`, `patient_profile_screen`, `doctor_advice_card` and
+    `care_team_screen` never call `markServingDemoData()`. The banner widget
+    (`main_shell.dart:132`) is rendered by no test.
+12. **120 tests still execute zero production code** (§8-B) — unchanged.
+13. **The booking state machine is still enforced only in tests**; the refund policy still does not
+    exist in `lib/`; four services + `firestore.rules` + the new `storage.rules` + `functions/index.js`
+    still have no tests; no security tests of any kind.
 
 ## Medium / Low
 
-13. **45% of widget tests are inert** (97 of 215) — pump-and-assert-a-string with no interaction.
-    Highest concentration `my_care_widgets_test.dart` (28/34). Assert computed values, not inputs.
-14. **3 tests contain no assertion at all** — `notification_router_test.dart` ×2,
-    `payment_service_test.dart:280-287`.
-15. **~20 s of wall-clock sleeping used as synchronisation** — `api_service_test.dart` 7×30 s
-    timeouts around real retry delays; `payment_service_test.dart:254` 1200 ms; 36×100 ms elsewhere.
-    Make `_retryDelay` injectable; use the existing `_CallbackLatch`.
-16. **`booking_history_test.dart:172-180` passes for the wrong reason** — `.inHours` truncates to 23,
-    so the "exactly 24 hours" boundary is never actually exercised.
-17. **60 `DateTime.now()` uses across 23 test files**; `billing_screen_test.dart:233-270` builds
-    day-window fixtures off the wall clock. Inject a fixed clock (the PDF services already do —
-    `handover_report_service_test.dart:19` `'is deterministic for a fixed "now"'`).
-18. **`test/integration/` is misnamed** — 4 files, 15 tests, three with a single test each, all
-    provider-level. Either rename to `test/flows/` or add real widget-navigation integration tests.
-19. **`i18n_sync_test.dart` cannot catch the bug it was written for.** Its header (`:5-6`) cites
-    `"today_report"` shipping as raw text because "the key existed in code but not in en.json", but
-    the test only compares `en.json` ↔ `hi.json` key sets — a key missing from *both* passes. I ran
-    the missing check manually: 161 keys referenced in `lib`, **0 missing** from `en.json` (no live
-    bug), but **160 of 321 keys (50%) are unused**. Add a third assertion that every `t('…')` literal
-    in `lib` resolves, and flag orphan keys.
-20. **`Validators.numberInRange` untested** despite guarding vitals entry
-    (`lib/screens/reports/vitals_screen.dart:679`).
-21. **`cart_provider.dart:117` rental-months clamp (`months < 1`) untested.**
-22. **Coverage gate (50%) is below the documented target (60%)** and is global-only — the 40,185-LOC
-    screens layer can mask regressions in `lib/utils/`. Add per-module gates.
-23. **6 orphan files in `lib`** — `booking_state_machine.dart`, `sync_service.dart`,
-    `login_screen.dart`, `billing_summary_section.dart`, `quick_actions_row.dart`,
-    `catalog_search_bar.dart`.
-24. **`docs/TEST_MAP.md` and `docs/TEST_STRATEGY.md` are stale and in three places wrong** (§8-L):
-    the "complete inventory" lists 86 files in a 99-file document; 9 per-file counts are wrong; the
-    17 skips are misattributed to Firebase; `TEST_STRATEGY.md:154` states the reversed manpower rule
-    as fact; `TEST_STRATEGY.md:5-15` claims four testing tiers (integration_test, Patrol, Firestore
-    rules emulator, webhook simulation) that do not exist in `pubspec.yaml` or the repo.
+14. 94 of 215 widget tests (44%) are inert; `my_care_widgets_test.dart` alone is 28.
+15. 3 tests contain no assertion at all — unchanged.
+16. `docs/ARCHITECTURE.md:68` and `docs/SCREEN_MAP.md:6` still assert six tabs / a Calendar tab.
+17. `TEST_MAP.md` / `TEST_STRATEGY.md` were not updated for the new test file or the four new
+    uncovered production files; all round-1 staleness stands.
+18. `patient_scope_isolation_test.dart:162` adds a 20 ms sleep as a synchronisation primitive; expose
+    a `ready` future on `OrdersProvider` instead.
+19. `DemoMode.isServingDemoData` is mutable process-global state reset by only one test — cross-file
+    leakage hazard.
+20. `settings_screen.dart:457-458` fires `SessionScope.clearSession` and `logout()` without awaiting
+    either; their `SharedPreferences` writes race. Harmless today, latent.
+21. `delete_account_screen.dart:54` sets `_isSubmitting` and never clears it.
+22. Round-1 Medium/Low items 15–24 all stand: ~20 s of wall-clock sleeping, 60 `DateTime.now()` uses,
+    `test/integration/` misnamed, `i18n_sync_test` cannot catch its own founding bug (160 of 321 keys
+    unused), `Validators.numberInRange` untested, cart rental-months clamp untested, 50% coverage gate
+    below the 60% target, 6 orphan files.
 
 ## BLOCKED-OWNER
 
-- **Suite wall-clock time (<5 min target)** — I was instructed not to run `flutter test`.
-  Need: the central run's reported duration.
-- **Coverage percentage per module** — needs `coverage/lcov.info` from the central run; I could not
-  generate it without running the suite.
-- **Backend/database items (§5)** — foreign keys, indexes, migrations, connection pooling, query
-  timeouts, server-side re-validation, CORS, HTTPS enforcement, rate limiting. `database/schema.sql`
-  and `firestore.rules` are in-repo but the live backend is unreachable in demo mode. Need: backend
-  repo access or a Firebase emulator run.
-- **Monitoring/alerting and error-spike alerts (§7, §9)** — need Firebase Crashlytics / console
-  access to confirm what is configured outside the repo.
-- **Dependency vulnerability status (§4)** — need a `dart pub outdated --mode=security` run against
-  the live pub.dev advisory database (network-dependent).
-- **Rollback plan validity (§9)** — `docs/DEPLOYMENT_GUIDE.md` exists; confirming it works needs a
-  drill against App Store Connect / Play Console.
+- **Suite wall-clock time (<5 min target)** — instructed not to run `flutter test`. Need the central
+  run's reported duration.
+- **Coverage percentage, global and per module** — needs `coverage/lcov.info` from the central run.
+  Specifically needed now: the line coverage of `lib/services/store_migrator.dart`, which I assert is
+  0% on static grounds (no test imports it) but cannot prove numerically.
+- **Backend/database items (§5)** — schema constraints, indexes, migrations, pooling, server-side
+  re-validation, CORS, rate limiting. Need backend repo access or a Firebase emulator run.
+- **Whether `storage.rules` / `firestore.rules` are deployed** — the brief states storage rules are
+  NOT yet deployed; live posture unknown without Firebase console access.
+- **Monitoring/alerting** — needs Crashlytics / Firebase console access.
+- **Dependency vulnerability status** — needs `dart pub outdated --mode=security` against the live
+  advisory database.
+- **Rollback plan validity** — needs a drill against App Store Connect / Play Console.
 
 ---
 
-*Read-only audit. No files under `lib/` or `test/` were modified.*
+*Read-only audit. No files under `lib/` or `test/` were modified; only this report was rewritten.*

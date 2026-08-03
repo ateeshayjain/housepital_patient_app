@@ -178,4 +178,14 @@ class AssistantProvider extends ChangeNotifier {
     _isListening = false;
     notifyListeners();
   }
+  /// Clears the conversation. The assistant transcript is a symptom log — the
+  /// patient describes what is wrong with them in it — so it is PHI and must
+  /// not survive a patient switch or a logout.
+  void clearPatientScopedData() {
+    _messages.clear();
+    _pendingConfirmation = null;
+    _isThinking = false;
+    notifyListeners();
+  }
+
 }

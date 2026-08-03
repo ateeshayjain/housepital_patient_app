@@ -136,6 +136,10 @@ class AppProvider extends ChangeNotifier {
     if (_patients.isEmpty) {
       _currentPatient = DemoData.patient;
       _patients = [DemoData.patient];
+      // The patient's own IDENTITY is sample data here — the most misleading
+      // fallback in the app, because every other screen is then correctly
+      // labelled with a fabricated name.
+      DemoMode.markServingDemoData(DemoMode.sourcePatientIdentity);
       notifyListeners();
     }
 
@@ -145,7 +149,15 @@ class AppProvider extends ChangeNotifier {
           .timeout(const Duration(seconds: 5));
       if (apiPatients.isNotEmpty) {
         _patients = apiPatients;
-        _currentPatient = apiPatients.first;
+        // This is a SECOND patient-switch path — it runs on every Home mount
+        // (home_screen.dart) and used to reassign the current patient with no
+        // clear at all, which quietly defeated the switch path wired in the
+        // UI. Only clear when the identity actually changes.
+        final incoming = apiPatients.first;
+        if (_currentPatient?.id != incoming.id) {
+          clearPatientScopedData(notify: false);
+        }
+        _currentPatient = incoming;
         notifyListeners();
       }
     } catch (e) {
@@ -173,11 +185,20 @@ class AppProvider extends ChangeNotifier {
   /// surviving into the next session is a PHI leak, not a caching nicety.
   ///
   /// Pass [notify] false when the caller will notify immediately afterwards.
+  /// CONTRACT: every field in this class that describes ONE PATIENT is reset
+  /// here. When you add a patient-scoped field, add it here in the same edit —
+  /// the round-1 audit named `_vitalsHistory` by line number and the round-2
+  /// fix still missed it, because that fix was written from a list of
+  /// symptoms rather than from this class's field list.
+  ///
+  /// Device- and account-scoped state (locale, role, theme) deliberately
+  /// survives; see clearSession for the logout teardown.
   void clearPatientScopedData({bool notify = true}) {
     _activeDeployment = null;
     _todayAttendance = null;
     _latestVitals = null;
     _todayReport = null;
+    _vitalsHistory.clear(); // manually entered readings — PHI
     _amountDue = 0;
     _dueDate = null;
     _dashboardError = null;
@@ -190,6 +211,10 @@ class AppProvider extends ChangeNotifier {
     clearPatientScopedData(notify: false);
     _currentPatient = null;
     _patients = [];
+    // Identity-adjacent state that must not survive into the next person's
+    // session on a shared phone.
+    _profilePhotoPath = null;
+    _currentUserRole = 'PRIMARY_CONTACT';
     notifyListeners();
   }
 
@@ -243,8 +268,9 @@ class AppProvider extends ChangeNotifier {
 
       _dashboardError = null;
       _lastUpdatedText = 'Last updated: just now';
-      // Live data arrived — take the sample-data banner down.
-      DemoMode.reset();
+      // Live dashboard arrived — clear ONLY this source. Other providers
+      // may still be serving samples; they speak for themselves.
+      DemoMode.markServingLiveData(DemoMode.sourceDashboard);
       await cache.cache(cacheKey, billing);
       notifyListeners();
     } catch (e) {
@@ -257,7 +283,7 @@ class AppProvider extends ChangeNotifier {
   void _seedDemoDataIfEmpty() {
     if (_activeDeployment == null) {
       _activeDeployment = DemoData.icuDeployment;
-      DemoMode.markServingDemoData();
+      DemoMode.markServingDemoData(DemoMode.sourceDashboard);
       _todayAttendance = DemoData.todayAttendance;
       _latestVitals = DemoData.vitalsHistory.last;
       _todayReport = DemoData.todayReport;

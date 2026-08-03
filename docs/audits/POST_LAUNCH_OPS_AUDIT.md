@@ -1,10 +1,44 @@
-# Post-Launch Operations Checklist (App-Agnostic) — Audit vs commit `803124d`
+# Post-Launch Operations Checklist (App-Agnostic) — Audit round 2 vs commit `820060b`
 
-**Date:** 2026-08-03 · **Auditor:** post-launch-ops agent · **Repo:** `/Users/ateeshayjain/WIPApps/Housepital/housepital_patient_app`
+**Date:** 2026-08-03 · **Previous round:** commit `803124d` · **Branch:** `fix/five-tab-nav`
+**Auditor:** post-launch-ops agent · **Repo:** `/Users/ateeshayjain/WIPApps/Housepital/housepital_patient_app`
 
-The app has **not launched**. Every item is therefore graded as *readiness to operate on day 1*, not
-as operational history. "No crash reports reviewed yet" is not a failure; "no working way to review
+The app has **not launched**. Every item is graded as *readiness to operate on day 1*, not as
+operational history. "No crash reports reviewed yet" is not a failure; "no working way to review
 them" is.
+
+---
+
+## Changed since round 1
+
+| Round-1 finding | Status now | Evidence |
+|---|---|---|
+| B1 · Clinical demo data silently substituted | ⚠️ **partially fixed — coverage is incomplete and the flag is racy** | `lib/data/demo_mode.dart:14-27` + banner `lib/screens/main_shell.dart:64,132-172`; 6 of 6 API providers mark, but **11 further demo-serving sites do not** and the banner does not render on pushed routes. See §A. |
+| B2 · Placeholder support numbers | ❌ **unchanged** | `lib/screens/settings/help_faq_screen.dart:352` `tel:+919999999999`, `:365` `wa.me/919999999999`; `lib/screens/my_care/staff_otp_verification_screen.dart:352` `tel:+918888888888` |
+| B3 · Android release signed with the DEBUG keystore | ❌ **unchanged (re-verified)** | `android/app/build.gradle.kts:33-37` `signingConfig = signingConfigs.getByName("debug")`; `android/key.properties` does not exist (`ls` → No such file) |
+| B4 · Payments never verified server-side | ✅ **genuinely fixed** | `lib/screens/billing/payment_screen.dart:226-252` calls `createOrder` and **fails closed** when it returns null; `lib/services/payment_service.dart:163-180` `skippedDemo` only succeeds when `isDemoPayments` |
+| B5 · Auth gate disabled | ❌ **unchanged (re-verified)** | `lib/main.dart:416-418` `// NOTE: Auth gate disabled for demo mode. Enable before production release.` → `home: const SplashScreen()`; `lib/screens/splash_screen.dart:15-18` pushes straight to `/home` |
+| B6 · No iOS dSYM upload phase | ❌ **unchanged** | `ios/Runner.xcodeproj/project.pbxproj:280-390` — six `PBXShellScriptBuildPhase` entries, none is Crashlytics `upload-symbols` |
+| B7 · iOS crashes on camera/photo | ✅ **fixed** | `ios/Runner/Info.plist:73-76` `NSCameraUsageDescription` + `NSPhotoLibraryUsageDescription` now present |
+| H8 · Zero analytics | ❌ **unchanged** | `grep -rniE "firebase_analytics\|logEvent\|amplitude\|mixpanel"` over `lib/ functions/ pubspec.yaml` → **no matches** |
+| H9 · No flag / kill switch / force-upgrade | ❌ **unchanged** | `grep -rniE "remote_config\|killSwitch\|forceUpgrade\|minimumVersion\|maintenanceMode"` over `lib/ functions/ pubspec.yaml` → **no matches** |
+| H10 · Non-fatals never reported (`logger.dart:63`) | ❌ **unchanged** | `lib/utils/logger.dart:63-65` TODO still verbatim. Every `Log.warn`/`Log.error` — including the new `StoreMigrator` failure paths — stops at `debugPrint` |
+| H11 · Android `<queries>` missing for `tel:`/`mailto:`/`https:` | ❌ **unchanged** | `android/app/src/main/AndroidManifest.xml:43-48` — only the `PROCESS_TEXT` intent |
+| H12 · Background-isolate errors uncaptured | ❌ **unchanged** | `grep -rn "addErrorListener" lib/` → no matches |
+| H13 · No account/data deletion path | ⚠️ **screen shipped, obligation lands nowhere** | `lib/screens/settings/delete_account_screen.dart` + `lib/main.dart:745` + `lib/screens/settings/settings_screen.dart:276-278`. The 30-day promise is delivered by a `Future.delayed(600ms)`. See §C. |
+| H14 · Server-side prerequisites unverified | ❌ **unchanged, and one more added** | `.firebaserc` still `{"projects":{},"targets":{},"etags":{}}`; `docs/KNOWN_ISSUES.md:25` BUG-33 rules deploy still pending; `:26` BUG-34 still Open; **new**: `storage.rules` + `firebase.json` `storage` block added but undeployed. See §D. |
+| H15 · No user-symptom playbooks | ❌ **unchanged** | `docs/TROUBLESHOOTING.md` headings at `:9,99,129,180,226,251,316,384,420,435,482` are all developer-facing |
+| M16 · Hardcoded version, no build number | ❌ **unchanged** | `lib/screens/settings/about_screen.dart:11,69`; `lib/screens/settings/settings_screen.dart:258`; `package_info_plus` absent from `pubspec.yaml` |
+| M17 · No in-app "What's new" | ❌ **unchanged** | `grep -rni "what's new\|changelog"` over `lib/ assets/i18n/` → no matches |
+| M18 · `KNOWN_ISSUES.md` stale | ❌ **unchanged** | `docs/KNOWN_ISSUES.md:5` still "Last updated: 2026-05-28 (audit batch 4)"; `:53` BUG-14 still claims the invoice PDF is a stub |
+| M19 · `DEPLOYMENT_GUIDE.md` drift | ❌ **unchanged** | `docs/KNOWN_ISSUES.md:26` still instructs restricting package `in.housepital.patient`; real id is `com.housepital.housepital_patient` (`android/app/build.gradle.kts:23`) |
+| M22 · Severity ladder / SLA inert | ❌ **unchanged** | `docs/KNOWN_ISSUES.md:90` TD-11; `lib/config/constants.dart:52-57` |
+| §6.1(c) · No app-side schema stamp | ✅ **fixed** | `lib/services/store_migrator.dart:33,35` `currentVersion = 1` / `housepital_schema_version`, run at `lib/main.dart:174` — but see §B for its operational risk |
+
+**Net:** 3 of 23 tracked items genuinely fixed (payments, iOS camera strings, schema stamp).
+1 partially fixed (demo banner). 1 new-code risk introduced (`StoreMigrator`). 1 new obligation
+created with no receiver (account deletion). Nothing regressed in the sense of previously-working
+code breaking.
 
 ---
 
@@ -13,12 +47,15 @@ them" is.
 | Section | ✅ | ⚠️ | ❌ | N/A |
 |---|---|---|---|---|
 | 1. Release mechanics | 0 | 3 | 2 | 1 |
-| 2. Monitoring cadence | 0 | 0 | 4 | 0 |
+| 2. Monitoring cadence | 0 | 1 | 3 | 0 |
 | 3. Incident response | 0 | 3 | 2 | 0 |
 | 4. Support readiness | 0 | 1 | 3 | 1 |
 | 5. Feedback → roadmap | 0 | 3 | 1 | 0 |
-| 6. Data stewardship | 1 | 1 | 2 | 0 |
-| **Total (28)** | **1** | **11** | **14** | **2** |
+| 6. Data stewardship | 1 | 2 | 1 | 0 |
+| **Total (28)** | **1** | **13** | **12** | **2** |
+
+Round 1 was 1 ✅ / 11 ⚠️ / 14 ❌ / 2 N/A. Two ❌ moved to ⚠️ (§2.3 demo signal now partially
+exists; §6.3 deletion path now partially exists). Nothing moved to ✅.
 
 ---
 
@@ -26,558 +63,547 @@ them" is.
 
 ### 1. Release mechanics (before pressing the button)
 
-- ❌ **Phased release ON unless there is a written reason.** — evidence: no release automation of any
-  kind in the repo (`.github/workflows/ci.yml` runs analyze/design-gate/test/coverage only; no
-  `fastlane/`, no release job). More decisively, `android/app/build.gradle.kts:36-40` still signs
-  release with the debug keystore:
-  ```kotlin
-  release {
-      // TODO: Add your own signing config for the release build.
-      signingConfig = signingConfigs.getByName("debug")
-  }
-  ```
-  A debug-signed AAB cannot be uploaded to Play at all, so there is no phased rollout to switch on.
-  **Impact:** the primary rollback lever named in `docs/DEPLOYMENT_GUIDE.md:§9` ("Use Google Play
-  Console staged rollout, halt rollout") does not exist for the Android track.
-  **Fix:** create `android/key.properties` + a real `signingConfigs.release`, then enable a 1%→100%
-  staged rollout on the Play track and a phased release on App Store Connect. **BLOCKED-OWNER** for
-  the store-side toggle.
+- ❌ **Phased release ON unless there is a written reason.** — evidence: `android/app/build.gradle.kts:33-37`
+  still signs release with the debug keystore and `android/key.properties` does not exist. A
+  debug-signed AAB is rejected at upload, so there is no Play track to stage. No `fastlane/`, no
+  release job in `.github/workflows/ci.yml` (analyze → design gate → test → coverage only).
+  **Impact:** the rollback lever named at `docs/DEPLOYMENT_GUIDE.md:479` ("Use Google Play Console
+  staged rollout, halt rollout") does not exist for Android. **Fix:** add `android/key.properties`
+  + a real `signingConfigs.release`. **BLOCKED-OWNER** for the store-side toggle.
 
-- ⚠️ **Halt criteria decided IN ADVANCE.** — evidence: `docs/DEPLOYMENT_GUIDE.md:§7a.5` names
-  numbers — "Velocity alerts: trigger when a fatal issue affects > 0.1% of users in 1h", "app start
-  > 5s p95, HTTP > 3s p95". Those are *alerting* thresholds to be configured in the Firebase console,
-  and they are written as future work ("Once builds are flowing crashes"). No document states *what
-  pauses the rollout* — no report-count trigger, no data-loss signal.
-  **Fix:** add a 4-line "Halt criteria" block to `DEPLOYMENT_GUIDE.md §9`: halt if crash-free
-  sessions < 99.0%, or ≥3 independent reports of wrong medication/vitals display, or any payment
-  captured without a backend record.
+- ⚠️ **Halt criteria decided IN ADVANCE.** — evidence: `grep -n "halt\|Halt" docs/DEPLOYMENT_GUIDE.md`
+  returns exactly one line, `:479`, and it names the *mechanism*, not a threshold. The alerting
+  numbers in §7a.5 are console configuration written as future work. Nothing states what pauses a
+  rollout. **Fix:** a 4-line block in §9 — halt if crash-free sessions < 99.0%, or ≥3 independent
+  reports of wrong medication/vitals, or any payment captured without a backend record.
 
-- ⚠️ **The rollback story for THIS release is named.** — evidence: `docs/DEPLOYMENT_GUIDE.md:§9`
-  documents three generic rollbacks (Cloud Functions redeploy from git, MySQL manual restore,
-  Play staged-rollout halt / iOS "submit a new version"). It is honest that iOS has no rollback.
-  What is missing is the third option in the checklist's triad — **there is no flag to flip.** See
-  §"Remote control" below: zero feature flags, zero kill switches, zero force-upgrade in the binary.
-  So for every release the rollback story reduces to "halt the phase (Android only) or hotfix".
-  **Fix:** name the story per release in the commit/PR description; add Remote Config (below) so the
-  option actually exists.
+- ⚠️ **The rollback story for THIS release is named.** — unchanged from round 1 and now
+  measurably worse in one respect: the release adds `StoreMigrator` (§B), which writes a version
+  stamp on first run. A user who installs v1 and is then rolled back has a stamp the older binary
+  handles correctly (`store_migrator.dart:83-93` leaves newer stores alone — good), but there is
+  still **no flag to flip**: `grep -rniE "remote_config|killSwitch|forceUpgrade|maintenanceMode"`
+  over `lib/`, `functions/`, `pubspec.yaml` → no matches. The triad reduces to "halt the phase
+  (Android, once signing is fixed) or hotfix".
 
 - ❌ **Server-side prerequisites verified done — not remembered as done.** — evidence: three
-  prerequisites are recorded in the repo as *pending*, not verified:
-  - `docs/KNOWN_ISSUES.md:26` BUG-33 — hardened `firestore.rules` is "Resolved 2026-05-28 (file
-    hardened — **deployment to console pending**)".
-  - `docs/KNOWN_ISSUES.md:27` BUG-34 — Firebase API key restrictions "Open (console action required)".
-  - `.firebaserc` is **empty** (`{"projects":{},"targets":{},"etags":{}}`) — every `firebase deploy`
-    command in `DEPLOYMENT_GUIDE.md` §1.2/§1.3/§3.3 will fail from this repo without an explicit
-    `--project housepital-patient`. The guide's own commands `cd` to a different repo path
-    (`/Users/ateeshayjain/housepital-backend`) that is not in this working tree.
-  **Impact:** the prerequisite list is remembered, not verified — exactly the red flag the checklist
-  names ("a schema deploy done from memory").
-  **Fix:** `firebase use --add housepital-patient` to populate `.firebaserc`; then run
-  `firebase firestore:rules get --project housepital-patient` and paste the output + timestamp into
-  BUG-33 before release.
+  prerequisites are recorded as pending and a fourth was added this round:
+  - `docs/KNOWN_ISSUES.md:25` BUG-33 — hardened `firestore.rules` "deployment to console pending".
+  - `docs/KNOWN_ISSUES.md:26` BUG-34 — API key restrictions "Open (console action required)".
+  - **New:** `storage.rules` exists and `firebase.json` now carries `"storage": {"rules": "storage.rules"}`,
+    but nothing in the repo shows a deploy. See §D.
+  - `.firebaserc` is still `{"projects":{},"targets":{},"etags":{}}`, so every `firebase deploy`
+    in this repo fails without an explicit `--project housepital-patient` — including the command
+    `storage.rules:10` tells the operator to run.
+  **Fix:** `firebase use --add housepital-patient`, then paste `firebase firestore:rules get` and
+  the Storage rules console timestamp into `KNOWN_ISSUES.md` before release.
 
-- ⚠️ **Release notes are honest.** — evidence: `docs/CHANGELOG.md` is thorough and dated but is
-  engineer-facing (commit SHAs, file paths, "`_priceMultiplier` in `service_booking_screen.dart`").
-  No store-facing release-notes artifact exists in the repo, and no "update-together" callout — which
-  matters here because the patient app pairs with a staff app and a backend (`SyncService` pulls
-  attendance/vitals written by the staff app, `lib/services/sync_service.dart:46-62`).
-  **BLOCKED-OWNER** for the actual store listing text. **Fix:** add a `docs/RELEASE_NOTES.md` with a
-  user-language section per version.
+- ⚠️ **Release notes are honest.** — unchanged. `docs/CHANGELOG.md` is engineer-facing (its newest
+  entry, `:7`, is dated 2026-06-13 and headed with a commit SHA). No `docs/RELEASE_NOTES.md`
+  exists. No "update-together" callout, which matters because this app reads staff-app writes via
+  `lib/services/sync_service.dart`. **BLOCKED-OWNER** for the store listing text.
 
-- N/A **Previous release's archive retained and installable.** — no prior release exists
-  (`pubspec.yaml:4` `version: 1.0.0+1`, first build). **BLOCKED-OWNER** to confirm the App Store
-  Connect / Play archive retention policy from build 1 onward.
+- N/A **Previous release's archive retained and installable.** — no prior release
+  (`pubspec.yaml:4` `version: 1.0.0+1`). **BLOCKED-OWNER** to confirm archive retention from
+  build 1.
 
 ---
 
 ### 2. Monitoring cadence (no telemetry required)
 
-- ❌ **Crash reports checked DAILY for the first week, with a written trigger threshold.** — the
-  *mechanism* is half-built and would under-report on the primary (iOS-first) platform.
+- ❌ **Crash reports checked DAILY with a written trigger threshold.** — the capture matrix is
+  unchanged from round 1 and still fails on the primary platform:
 
-  What is correctly wired, in `lib/main.dart`:
-  - `main.dart:98` — whole app wrapped in `runZonedGuarded`, uncaught zone errors reach
-    `main.dart:274-284` → `FirebaseCrashlytics.instance.recordError(error, stack, fatal: true)`.
-  - `main.dart:114-115` — `FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError`
-    (Flutter framework errors ✅).
-  - `main.dart:116-119` — `PlatformDispatcher.instance.onError` → `recordError(..., fatal: true)`
-    (async errors on the root isolate ✅).
-  - `main.dart:110` — the web guard the repo history refers to is present and correct: the guard axis
-    is `kIsWeb`, not `kDebugMode`, with the reason documented at `main.dart:104-109` (touching
-    `FirebaseCrashlytics.instance` on web aborted `main()` before `runApp()` → blank white Chrome
-    screen). The zone handler repeats the guard at `main.dart:278`. ✅ correct.
-  - `main.dart:120-131` — collection explicitly enabled in release, disabled in debug.
+  | Error class | Captured? | Evidence |
+  |---|---|---|
+  | Flutter framework errors | ✅ | `lib/main.dart:115-116` |
+  | Async errors, root isolate | ✅ | `lib/main.dart:117-120` |
+  | Uncaught zone errors | ✅ | `lib/main.dart:100` `runZonedGuarded` |
+  | Background/spawned isolate errors | ❌ | no `addErrorListener` in `lib/` |
+  | Non-fatal handled failures | ❌ | `lib/utils/logger.dart:63-65` TODO |
+  | iOS symbolication | ❌ | no `upload-symbols` phase in `ios/Runner.xcodeproj/project.pbxproj:280-390` |
+  | Android mapping upload | ❌ | `com.google.firebase.crashlytics` absent from `android/app/build.gradle.kts:1-6` |
+  | Web | N/A by design | `lib/main.dart:111` `if (!kIsWeb)` — correct axis |
 
-  What is missing:
-  1. **Background isolate errors are not captured.** There is no
-     `Isolate.current.addErrorListener` anywhere (`grep -rn "addErrorListener" lib/` → no matches).
-     Any crash inside a `compute()`/spawned isolate is lost.
-  2. **iOS crash reports will be unsymbolicated.** `ios/Runner.xcodeproj/project.pbxproj` contains
-     four `PBXShellScriptBuildPhase` entries (lines 280-390): Thin Binary, `[CP] Embed Pods
-     Frameworks`, `[CP] Check Pods Manifest.lock`, `[CP] Copy Pods Resources`, and the Flutter build
-     script. **There is no Crashlytics `upload-symbols` run script.** `DEBUG_INFORMATION_FORMAT =
-     "dwarf-with-dsym"` is set (`pbxproj:472,653`) so dSYMs are produced but never uploaded.
-     `DEPLOYMENT_GUIDE.md:§7a.5` even says "Verify Crashlytics dSYM upload is working on iOS (Run
-     Script phase in Xcode). Without dSYMs, all iOS crash reports are obfuscated and useless" — the
-     doc claims the check; the project file shows it was never done.
-  3. **Android has no Crashlytics Gradle plugin.** `android/app/build.gradle.kts:1-6` applies only
-     `com.android.application`, `kotlin-android`, `dev.flutter.flutter-gradle-plugin`. Neither
-     `com.google.gms.google-services` nor `com.google.firebase.crashlytics` is applied, so no mapping
-     /symbol upload happens on Android either.
-  4. **Non-fatals are never reported.** `lib/utils/logger.dart:63-65` is an explicit unfinished hook:
-     ```dart
-     // TODO(observability): forward warn/error to FirebaseCrashlytics.recordError
-     // here once a non-fatal reporting policy is decided.
-     ```
-     Every `Log.warn(...)` in the app — including *every backend outage* (`app_provider.dart:215`,
-     `my_care_provider.dart:85`, `medication_provider.dart:205`, `sync_service.dart:69`,
-     `payment_service.dart:195`) — goes to `debugPrint` and nowhere else. On a release build nobody
-     sees it.
-  5. No cadence document anywhere: `grep -rni "daily\|cadence" docs/DEPLOYMENT_GUIDE.md` finds no
-     review schedule.
-  **Fix (highest value, ~10 lines):** add the Crashlytics run-script phase in Xcode; apply the
-  Crashlytics + google-services Gradle plugins; add `Isolate.current.addErrorListener` in `main()`;
-  and complete the `logger.dart:63` TODO so `Log.warn`/`Log.error` call
-  `FirebaseCrashlytics.instance.recordError(..., fatal: false)`.
-  **BLOCKED-OWNER** for the console-side velocity/new-issue alert configuration
-  (`DEPLOYMENT_GUIDE.md:§7a.5` steps 2-4) and for who reads them each morning.
+  **Newly aggravated:** `StoreMigrator` (this release's riskiest new code, §B) reports failure
+  exclusively through `Log.warn`/`Log.error` — `store_migrator.dart:75,88,103,109,142`. Every one
+  of those lands in the dead chokepoint at `logger.dart:63`. A migration that quarantines or fails
+  on a user's phone produces **zero** signal anywhere the team can see. The one-line fix in
+  `logger.dart` is now worth strictly more than it was in round 1.
+  **BLOCKED-OWNER** for console alert configuration and the person who reads it each morning.
 
-- ❌ **Store reviews and beta feedback read on a schedule, triaged bug/confusion/request/noise.** —
-  evidence: no triage doc, no review-response template, no reviewer rota in the repo.
-  `docs/KNOWN_ISSUES.md` is an engineering defect list, not a feedback intake.
-  **BLOCKED-OWNER:** needs a named owner + a weekly slot; nothing in code can substitute.
+- ❌ **Store reviews and beta feedback read on a schedule.** — unchanged: no triage doc, no
+  reply template, no rota. `docs/` gained nothing this round (`ls docs/` shows the same 15 files
+  plus `audits/`). **BLOCKED-OWNER.**
 
-- ❌ **User-visible failure surfaces are treated as monitoring.** — **the app has no user-visible
-  failure surface for a backend outage at all.** This is the finding that matters most; see the
-  dedicated analysis in §"Demo mode vs a real outage" below.
+- ⚠️ **User-visible failure surfaces are treated as monitoring.** — upgraded from ❌. A failure
+  surface now exists: the sample-data banner at `lib/screens/main_shell.dart:64,132-172`. It is
+  correctly non-dismissible and its copy is honest ("Showing sample data — we can't reach
+  Housepital right now, so this is not your live record."). It is **not yet trustworthy** as a
+  monitoring signal because it both under- and over-reports — see §A. Week-one attention must
+  include asking testers *when* they saw it, not just whether.
 
-- ❌ **A "first 48 hours" smoke pass on a production install (top three flows, real device, store
-  build).** — evidence: `test/screens/overflow_smoke_test.dart` is a *widget* smoke test
-  (37 screens × 320/375/414), not a device pass; `docs/TEST_STRATEGY.md` and `docs/TEST_MAP.md`
-  describe the automated suite only. No manual smoke script exists naming the top-3 flows.
-  **Fix:** add `docs/SMOKE_PASS.md` with the three flows that define this product — (1) SOS →
-  dialer opens, (2) book a caretaker → cart → pay → order appears in My Orders, (3) open My Care →
-  today's vitals + medication schedule — each with the expected result on a *store* build.
-  **BLOCKED-OWNER** to run it.
+  Secondary risk on the same widget: the banner is a `Column` child above the `IndexedStack`
+  (`main_shell.dart:58-70`) and takes the status-bar inset itself via `SafeArea(bottom: false)`.
+  Each root screen below it still reserves `MediaQuery.padding.top + kToolbarHeight` per the
+  glass-chrome contract, and `MediaQuery` is not re-scoped, so while the banner is visible every
+  root tab is pushed down by roughly the status-bar height twice. Cosmetic, but it appears
+  precisely when the app is already degraded — verify on a notched device before release.
+
+- ❌ **A "first 48 hours" smoke pass on a production install.** — unchanged. No `docs/SMOKE_PASS.md`;
+  `test/screens/overflow_smoke_test.dart` is a widget test, not a device pass. **BLOCKED-OWNER** to run.
 
 ---
 
 ### 3. Incident response
 
-- ⚠️ **A severity ladder exists and is written down.** — evidence: `docs/KNOWN_ISSUES.md:19,31,47,63`
-  provides four buckets — "Critical (Blocks Release)", "High (Fix Before Launch)", "Medium (Fix After
-  Launch)", "Low (Nice to Have)". That is a *backlog priority* ladder keyed to launch, not an
-  *incident* ladder keyed to user harm. Nothing maps a live symptom to a severity, and there is no
-  S1 "data loss/corruption" tier — which for a healthcare app should read "wrong dosage, wrong
-  vitals, or wrong patient displayed → drop everything".
-  **Fix:** add a 5-line severity table to `KNOWN_ISSUES.md` with healthcare-specific S1 wording.
+- ⚠️ **A severity ladder exists and is written down.** — unchanged. `docs/KNOWN_ISSUES.md:19,31,47,63`
+  are launch-priority buckets, not incident severities keyed to user harm. No S1 "wrong dosage /
+  wrong vitals / wrong patient displayed" tier — which §A shows is now a live class of incident.
 
-- ⚠️ **Each severity has a target response: acknowledge, workaround comms, fix.** — evidence: a real
-  SLA exists but it is the *patient concern* SLA, not an engineering one:
-  `lib/config/constants.dart:52-57` `concernSla = {emergency: 2, high: 12, medium: 24, low: 72}` (hours).
-  And `docs/KNOWN_ISSUES.md:96` TD-11 says it is inert: "Concern SLA tracking exists in constants but
-  is **not enforced or alerted on the backend**". So the SLA is a constant no clock enforces.
-  **Impact:** a 2-hour emergency-concern promise with no timer behind it.
+- ⚠️ **Each severity has a target response.** — unchanged. `lib/config/constants.dart:52-57`
+  `concernSla` is a constant no clock enforces (`docs/KNOWN_ISSUES.md:90` TD-11).
 
-- ❌ **Known-issue communication path exists.** — evidence: no review-reply template, no TestFlight
-  notes template, no support-reply template anywhere in `docs/`. `grep -rni "template" docs/` returns
-  nothing relevant. Silence is the current default.
+- ❌ **Known-issue communication path exists.** — unchanged. No review-reply, TestFlight-notes, or
+  support-reply template anywhere in `docs/`.
 
-- ❌ **Expedited-review criteria known in advance.** — evidence: no mention of expedited review in
-  `docs/DEPLOYMENT_GUIDE.md` or any other doc. **Fix:** one paragraph in `DEPLOYMENT_GUIDE.md §9`
-  naming what qualifies (SOS broken, wrong dosage rendered, payment double-charge) and the Apple/Google
-  request URLs.
+- ❌ **Expedited-review criteria known in advance.** — unchanged. No mention in
+  `docs/DEPLOYMENT_GUIDE.md`.
 
-- ⚠️ **Post-incident: the cause becomes a checklist line or a test.** — evidence: the *practice* is
-  visibly real. Field-round regressions carry their cause into tests and comments, e.g.
-  `lib/providers/my_care_provider.dart:82-95` documents the "tapping those cards opened nothing"
-  field report and its fallback, and `docs/CHANGELOG.md` records each round. Test files reference
-  their originating defects (`test/services/api_service_test.dart`, `test/providers/auth_provider_test.dart`,
-  `test/screens/sos/sos_screen_test.dart` — 16 test files mention a BUG-/audit- id). But there is no
-  written *policy*, and `docs/KNOWN_ISSUES.md:40` BUG-07 records 3 known-failing widget tests in
-  `test/screens/my_care/my_care_widgets_test.dart` still "Open — cause unknown, needs triage", which
-  erodes the signal a red suite is supposed to carry.
+- ⚠️ **Post-incident: the cause becomes a checklist line or a test.** — the practice is real and
+  visible in this round's commit: `lib/providers/my_care_provider.dart:91-98` still carries its
+  field report, and `test/providers/patient_scope_isolation_test.dart:172-189` pins the demo-banner
+  behaviour. But the practice was applied **thinly** to the new code: across the whole `test/` tree
+  (103 files), `grep -rln "DemoMode\|StoreMigrator\|DeleteAccount"` returns exactly **one** file,
+  and it exercises only `AppProvider`'s dashboard path. There is **no test at all** for
+  `StoreMigrator` (a cold-start-blocking migration engine), **no test** for
+  `DeleteAccountScreen`, and **no widget test** asserting `_DemoDataBanner` actually renders in
+  `MainShell` — `test/screens/main_shell_test.dart` never mentions it.
+  `docs/KNOWN_ISSUES.md:39` BUG-07 still lists 3 failing widget tests as "cause unknown" while the
+  central result for this commit is 1,797 passing — the tracker entry is stale either way.
 
 ---
 
 ### 4. Support readiness
 
 - ❌ **The support channel published in the store listing is real, monitored, and answered within a
-  stated window.** — **BLOCKER.** Three in-app support entry points still carry placeholder numbers:
-  - `lib/screens/settings/help_faq_screen.dart:352` — `_launchUrl('tel:+919999999999')` ("Call")
-  - `lib/screens/settings/help_faq_screen.dart:364-365` — `https://wa.me/919999999999?text=…` ("WhatsApp")
-  - `lib/screens/my_care/staff_otp_verification_screen.dart:352-353` — `tel:+918888888888`, with the
-    comment `// NOTE: Support number to be updated with production contact details.`
+  stated window.** — **re-verified unchanged, still a blocker.**
+  - `lib/screens/settings/help_faq_screen.dart:352` — `_launchUrl('tel:+919999999999')`
+  - `lib/screens/settings/help_faq_screen.dart:365` — `https://wa.me/919999999999?text=…`
+  - `lib/screens/my_care/staff_otp_verification_screen.dart:352` — `tel:+918888888888`
 
-  The real number exists two files away — `lib/config/constants.dart:17,19`
-  `emergencyPhone = supportPhone = '9990911911'` — and is used correctly by SOS, Home and the
-  assistant. Only the Help/FAQ screen and the staff-OTP fallback were missed. The email
-  (`mailto:wecare@housepital.in`, `help_faq_screen.dart:358`) is plausible but unverified —
-  **BLOCKED-OWNER** to confirm it is monitored and to state the answer window.
+  The real number is one import away — `lib/config/constants.dart:19` `supportPhone = '9990911911'`,
+  used correctly by SOS (`sos_screen.dart:66`), Home (`home_screen.dart:821,874`), Care Team
+  (`care_team_screen.dart:41,54,70`) and article footers (`article_detail_screen.dart:305`).
+  **Compounding, also unchanged:** `android/app/src/main/AndroidManifest.xml:43-48` declares only a
+  `PROCESS_TEXT` `<queries>` block, so on API 30+ `canLaunchUrl` returns false for `tel:`,
+  `mailto:` and `https:` and the entire non-SOS support surface degrades to its failure branch.
 
-  **Compounding Android defect:** `android/app/src/main/AndroidManifest.xml` declares only a
-  `PROCESS_TEXT` `<queries>` block (lines 39-46). On Android 11+ (API 30), `canLaunchUrl` for
-  `tel:`, `mailto:` and `https:` returns **false** without matching `<queries>` entries, so every
-  `canLaunchUrl`-guarded support path degrades to its failure branch:
-  `help_faq_screen.dart:406-413` shows "Could not open link"; `sos_screen.dart:251-288` shows the
-  "Could not auto-dial" dialog. SOS degrades gracefully (copy-number dialog — good design), but the
-  *whole support surface* is a dead end on modern Android.
-  **Fix:** replace the placeholders with `AppConstants.supportPhone`, and add to the main manifest:
-  ```xml
-  <queries>
-    <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="tel"/></intent>
-    <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="mailto"/></intent>
-    <intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>
-  </queries>
-  ```
+  **New this round:** `delete_account_screen.dart:78` and `:181` publish `9990-911-911` as the
+  contact for cancelling a deletion and for closing a running service — the correct number, but
+  hand-typed in a third format rather than derived from `AppConstants.supportPhone`. Three
+  literals now exist for one number.
 
-- ❌ **Diagnostic playbooks exist for the top three failure symptoms of THIS app.** — evidence:
-  `docs/TROUBLESHOOTING.md` is 14 KB and entirely developer-facing. Its section headings
-  (lines 9, 99, 129, 180, 226, 251, 316, 384, 420, 435, 482) are: Flutter Build Failures, Firebase
-  Auth Issues, Cloud Functions Deployment Errors, MySQL Connection Issues, Bottom Sheet Navigation,
-  Razorpay Issues, Service Worker Caching (Web), Port Conflicts, Cart Issues, Test Failures,
-  Environment-Specific Issues. Not one entry starts from a *user symptom*.
-  **Impact:** when a family member says "my mother's vitals are from last week" or "the app says I
-  have medicines I never had", there is no path from symptom to cause. Given the silent demo
-  fallback (below), those are the two most likely first tickets.
-  **Fix:** add a user-symptom section to `TROUBLESHOOTING.md` covering the three most probable:
-  (a) "data looks wrong / not mine" → is the app on demo fallback? ask for the Last-updated string
-  (once it is rendered — see below); (b) "staff didn't show as checked-in" → staff-app side, attendance
-  sync; (c) "I paid but the order shows unpaid" → payment verification outcome.
+- ❌ **Diagnostic playbooks exist for the top three failure symptoms of THIS app.** — unchanged;
+  `docs/TROUBLESHOOTING.md` is entirely developer-facing. §A makes this worse, not better: the
+  banner gives support a *question to ask* ("do you see an orange strip at the top?") but no
+  document tells anyone to ask it, and §A.2 shows the answer can be "no" while the data on screen
+  is still sample data.
 
-- ⚠️ **A user can produce diagnostics without engineering.** — evidence: a version string is readable
-  in two places, but both are hand-typed constants that will drift from the build:
-  `lib/screens/settings/about_screen.dart:11` `static const _appVersion = '1.0.0';` (rendered at
-  `about_screen.dart:69`) and `lib/screens/settings/settings_screen.dart:257` `'Housepital v1.0.0'`.
-  Neither shows a **build number**, so "1.0.0" cannot distinguish build 1 from build 40 — the single
-  most useful thing a caller can read aloud. `package_info_plus` is not a dependency
-  (`pubspec.yaml` has no entry). There is no log export and no diagnostics screen.
-  **Fix:** add `package_info_plus`, render `"$version ($buildNumber)"` from
-  `PackageInfo.fromPlatform()` in both places, and delete the two constants.
+- ⚠️ **A user can produce diagnostics without engineering.** — unchanged.
+  `lib/screens/settings/about_screen.dart:11,69` and `lib/screens/settings/settings_screen.dart:258`
+  hand-type `1.0.0` with no build number; `package_info_plus` is still absent from `pubspec.yaml`.
+  With `StoreMigrator` now shipping, the *store schema version* becomes a second thing support will
+  need to ask for, and it is not displayed anywhere either.
 
-- N/A **Destructive advice appears only with its data consequences spelled out.** — there is no
-  user-facing playbook containing destructive advice, because there is no user-facing playbook at
-  all (see above). The developer-facing `flutter clean` / "Clear all browsing data" instructions in
-  `docs/TROUBLESHOOTING.md:20,331` are not user advice. Re-grade once 4.2 is written.
+- N/A **Destructive advice appears only with its data consequences spelled out.** — still no
+  user-facing playbook. Worth noting the one place destructive copy now exists in the app itself,
+  `delete_account_screen.dart:136-183`, does this well: it lists what is deleted, what is retained
+  (tax invoices), and tells the user to call before deleting if a service is running.
 
-- ❌ **Household/multi-user apps: playbooks cover the OTHER person's phone too.** — this app is
-  squarely multi-user: `lib/screens/settings/family_members_screen.dart`, `add_patient_screen.dart`,
-  a four-way role model (`lib/utils/permissions.dart`, roles patient-self / primary contact / family
-  / caretaker), and a companion staff app whose writes this app reads via
-  `lib/services/sync_service.dart`. The reporter ("my daughter's phone doesn't show the report") is
-  routinely not the affected device. No playbook covers this.
+- ❌ **Household/multi-user playbooks cover the OTHER person's phone.** — unchanged. The app is
+  squarely multi-user (`family_members_screen.dart`, `add_patient_screen.dart`,
+  `lib/utils/permissions.dart` four-way roles, staff-app writes via `sync_service.dart`). No
+  playbook. **New wrinkle:** §A.2's demo-flag race is *per device and per session*, so two family
+  members on two phones can legitimately see different banner states for the same patient at the
+  same moment — the exact scenario a household playbook has to handle, and it now has a
+  non-obvious cause.
 
 ---
 
 ### 5. Feedback → roadmap loop
 
 - ⚠️ **Every confirmed user-reported bug becomes a regression test before the fix ships.** —
-  evidence for the practice: 102 test files (`find test -name "*.dart" | wc -l` → 102), with
-  regression intent stated in-file, e.g. `test/services/payment_service_test.dart:14` ("createOrder
-  happy path returns order_id; backend failure returns null"), and CI enforces the suite plus a
-  coverage floor (`.github/workflows/ci.yml`, Test + coverage-gate steps, threshold 50%).
-  Evidence against a *guarantee*: no written policy, and `docs/KNOWN_ISSUES.md:40` BUG-07 leaves 3
-  widget tests failing with "cause unknown".
+  unchanged in policy (none written), and this round is the counter-example: five new
+  operational surfaces landed with one test between them (§3.5).
 
-- ⚠️ **User words are preserved in the tracker.** — partially. `docs/CHANGELOG.md` and code comments
-  do preserve some verbatim reports (`my_care_provider.dart:88` "so tapping those cards 'opened
-  nothing' (field report)"; `payment_service.dart:39-40` quotes the on-device error text
-  "Error" seen 2026-06-11). But `docs/KNOWN_ISSUES.md` entries are uniformly engineer-paraphrased
-  ("Vitals chart Y-axis may not auto-scale for extreme edge cases"), which is exactly the phrasing
-  that will fail to match the next duplicate report.
+- ⚠️ **User words are preserved in the tracker.** — unchanged. Verbatim reports survive in code
+  comments (`my_care_provider.dart:91-97`) but `docs/KNOWN_ISSUES.md` remains engineer-paraphrased.
 
-- ❌ **A visible changelog closes the loop.** — evidence: `grep -rni "what's new|changelog|release
-  notes" lib/ assets/i18n/` returns **no matches**. `docs/CHANGELOG.md` (50 KB) never reaches a user.
-  The About screen (`lib/screens/settings/about_screen.dart`) shows version, company, CIN, Terms and
-  Privacy links — no "What's new". A reporter cannot see their bug fixed.
+- ❌ **A visible changelog closes the loop.** — unchanged. `grep -rni "what's new\|changelog"` over
+  `lib/` and `assets/i18n/` → no matches. `docs/CHANGELOG.md` never reaches a user.
 
-- ⚠️ **Requests triaged against the roadmap on a cadence.** — evidence: `docs/KNOWN_ISSUES.md`
-  has dated priority buckets with `Found` dates — real triage structure. But its header says
-  **"Last updated: 2026-05-28 (audit batch 4)"** while HEAD is `803124d` dated ~2026-08; five field
-  rounds and a business-rule reversal landed since (see `docs/CHANGELOG.md` entries for 2026-06-13).
-  The tracker is ~2 months stale, and several entries are already wrong — e.g. BUG-14 "Invoice PDF
-  download is a stub" contradicts `lib/services/invoice_pdf_service.dart:96,261` and
-  `test/services/invoice_pdf_service_test.dart`.
+- ⚠️ **Requests triaged against the roadmap on a cadence.** — worse than round 1 in staleness
+  terms: `docs/KNOWN_ISSUES.md:5` still reads "Last updated: 2026-05-28" while HEAD is `820060b`
+  (2026-08-03) and this commit closed ten items none of which are reflected. `:53` BUG-14 ("Invoice
+  PDF download is a stub") remains false against `lib/services/invoice_pdf_service.dart`.
+  BUG-33/34 status lines are now two release-gating console actions tracked in a document nobody
+  has updated in ten weeks.
 
 ---
 
 ### 6. Data stewardship (standing duties)
 
-- ⚠️ **The schema-deploy runbook is a living document, executable by a stressed human at midnight.**
-  — evidence: `docs/DEPLOYMENT_GUIDE.md` §2.2/§2.3 gives literal, copy-pasteable commands
-  (`cloud-sql-proxy housepital-patient:asia-south1:housepital-db --port=3306`, then
-  `mysql -h 127.0.0.1 -u housepital -p housepital < sql/001_initial_schema.sql`) and §1 names the
-  environment (`housepital-patient`, `asia-south1`). That is genuinely good. Three things break it
-  at midnight: (a) every command `cd`s to `/Users/ateeshayjain/housepital-backend`, a path not in
-  this repo and not guaranteed on the operator's machine; (b) `.firebaserc` is empty so no default
-  project is set — the `firebase deploy` lines need `--project housepital-patient` appended;
-  (c) there is **no app-side schema stamp to bump** — no schema/version constant exists in
-  `lib/config/constants.dart`, so nothing in the app records which schema it expects.
-  Header says "Last updated: 2026-05-28"; the pinned versions inside it
-  (`firebase_crashlytics: 4.3.10`, `firebase_performance: 0.10.1+10`, §7a.5) already disagree with
-  `pubspec.yaml` (`^4.3.5`, `^0.10.1+5`), and §7a step 1 restricts package
-  `in.housepital.patient` while the actual id is `com.housepital.housepital_patient`
-  (`android/app/build.gradle.kts:12,25`) — a key restriction applied to the wrong package would lock
-  the real app out.
+- ⚠️ **The schema-deploy runbook is a living document.** — upgraded from ⚠️ with one genuine
+  improvement. The round-1 gap "(c) there is no app-side schema stamp to bump" is **closed**:
+  `lib/services/store_migrator.dart:33,35` defines `currentVersion` and `housepital_schema_version`,
+  and the doc comment at `:15-30` is an unusually good contract (migration literals frozen, never
+  delete unparseable data, quarantine instead). Still broken at midnight: `.firebaserc` is empty,
+  every `DEPLOYMENT_GUIDE.md` command `cd`s to `/Users/ateeshayjain/housepital-backend` which is
+  not in this tree, and `docs/KNOWN_ISSUES.md:26` names the wrong package id. And the migrator
+  itself carries operational risk — §B.
 
-- ✅ **Export/backup is verified WORKING in every release.** — evidence: the two on-device export
-  paths are real and covered by tests that run on every CI push —
-  `lib/services/invoice_pdf_service.dart:96` `buildInvoicePdf(...)` / `:261` `shareInvoice(...)`
-  with `test/services/invoice_pdf_service_test.dart`, and `lib/services/handover_report_service.dart`
-  with `test/services/handover_report_service_test.dart`. `.github/workflows/ci.yml` runs the full
-  suite on every push/PR to `main`, so these cannot silently rot. (Caveat, not a failure of this
-  line: these are *document* exports; there is no full "export all my data" path — see 6.3.)
+- ✅ **Export/backup is verified WORKING in every release.** — unchanged and still true:
+  `lib/services/invoice_pdf_service.dart` + `test/services/invoice_pdf_service_test.dart`,
+  `lib/services/handover_report_service.dart` + `test/services/handover_report_service_test.dart`,
+  both run by `.github/workflows/ci.yml` on every push. **Caveat that is now a finding, not a
+  footnote:** the handover PDF's *contents* are 100% sample data — see §A.3.
 
-- ❌ **Account/data deletion paths are re-verified each release, including server copies.** —
-  evidence: `grep -rni "delete account|deleteAccount|delete_account" lib/` → **no matches**. The
-  Settings screen (`lib/screens/settings/settings_screen.dart:185-257`) offers My Orders, Add
-  Patient, Medical Documents, Appearance, Refer & Earn, About — no account or data deletion. There
-  is therefore nothing to re-verify, and no server-copy deletion story.
-  **Impact:** beyond the standing duty, this is an App Store Guideline 5.1.1(v) rejection risk for
-  an app that creates accounts (phone OTP, `lib/screens/auth/otp_screen.dart`), and a DPDP Act
-  erasure gap for health data.
-  **Fix:** add a "Delete my account" row in Settings that calls a backend endpoint deleting the
-  MySQL rows + Firestore documents + Storage objects, with an in-app confirmation naming what is lost.
+- ⚠️ **Account/data deletion paths are re-verified each release, including server copies.** —
+  upgraded from ❌ because a path now exists, but see §C: the server half of the promise is
+  delivered by a 600 ms `Future.delayed` and reaches nobody.
 
-- ❌ **Privacy labels and policy re-read whenever a release adds a data type.** — evidence: the app
-  collects a lot and declares little.
-  - `ios/Runner/Info.plist` contains **only two** usage strings (`grep -n "NS[A-Za-z]*UsageDescription"`
-    → lines 69 `NSMicrophoneUsageDescription`, 71 `NSSpeechRecognitionUsageDescription`). There is
-    **no `NSCameraUsageDescription` and no `NSPhotoLibraryUsageDescription`**, yet `image_picker` is
-    invoked from six places: `settings_screen.dart:54,59`, `patient_profile_screen.dart:190,195`,
-    `rental/return_screen.dart:316`, `chat/chat_screen.dart:122`,
-    `support/raise_concern_screen.dart:77,85`, `documents/document_repository_screen.dart:614`.
-    iOS **terminates the app** when a camera/photo API is called without the string — so the primary
-    support flow ("Raise a concern" with evidence photos) crashes on first use on iOS.
-  - No `PrivacyInfo.xcprivacy` exists (`find ios -name "PrivacyInfo.xcprivacy" -not -path "*/Pods/*"`
-    → no matches), required for App Store submission given `shared_preferences` (UserDefaults) usage.
-  - The privacy policy is a remote URL only (`about_screen.dart:98,103` →
-    `https://housepital.in/terms`, `/privacy`), so app/policy drift cannot be detected from the repo.
-  **Fix:** add the two Info.plist strings and a `PrivacyInfo.xcprivacy` before the first submission.
-  **BLOCKED-OWNER** to re-read the published policy against the current data set (health vitals,
-  medication names, photos, voice, location-free address, phone).
+- ❌ **Privacy labels and policy re-read whenever a release adds a data type.** — partially
+  improved: `ios/Runner/Info.plist:73-76` now declares `NSCameraUsageDescription` and
+  `NSPhotoLibraryUsageDescription`, closing round-1 blocker B7. Still failing:
+  `find ios -name "PrivacyInfo.xcprivacy" -not -path "*/Pods/*"` → **no matches**, and the privacy
+  policy remains a remote URL only (`about_screen.dart:98,103`) so drift cannot be detected from
+  the repo. **This release adds a data type in the other direction** — a deletion *request* is now
+  collected as a user action; the published policy must describe the 30-day commitment the app
+  makes at `delete_account_screen.dart:75-77`. **BLOCKED-OWNER.**
 
 ---
 
 ## Directed analysis (as briefed)
 
-### Crash reporting — is it real on all platforms?
+### §A — The banner fix: is coverage complete?
 
-| Error class | Captured? | Evidence |
-|---|---|---|
-| Flutter framework build/layout errors | ✅ | `lib/main.dart:114-115` `FlutterError.onError = recordFlutterFatalError` |
-| Async errors on the root isolate | ✅ | `lib/main.dart:116-119` `PlatformDispatcher.instance.onError` |
-| Uncaught zone errors (unawaited futures, timers) | ✅ | `lib/main.dart:98` `runZonedGuarded` → `:274-284` |
-| Background/spawned isolate errors | ❌ | no `Isolate.current.addErrorListener` anywhere in `lib/` |
-| Non-fatal handled failures (every API outage) | ❌ | `lib/utils/logger.dart:63` TODO — `Log.warn`/`Log.error` stop at `debugPrint` |
-| iOS symbolication | ❌ | no `upload-symbols` run-script phase in `ios/Runner.xcodeproj/project.pbxproj` |
-| Android symbol/mapping upload | ❌ | `com.google.firebase.crashlytics` plugin absent from `android/app/build.gradle.kts:1-6` |
-| Web | N/A by design | `main.dart:110` `if (!kIsWeb)` — correct; Crashlytics has no web implementation |
-| Debug builds | ✅ suppressed | `main.dart:113,124-131` collection off in debug |
+**No.** The mechanism is sound; the coverage is not. Three distinct gaps.
 
-The web guard referenced in the repo history is present, correct, and correctly reasoned
-(`main.dart:104-109`) — it guards on platform, not build mode, in both the setup block and the zone
-handler. That is the right axis.
+#### A.1 · Eleven demo-serving sites never set the flag
 
-**Net:** the app will report *crashes* on Android, will report crashes on iOS in an unreadable form,
-and will report *nothing at all* about backend failures on either.
+Marked correctly (5 providers, 6 call sites): `app_provider.dart:260`, `my_care_provider.dart:50,98`,
+`medication_provider.dart:191,236`, `billing_provider.dart:43`, `orders_provider.dart:199`.
 
-### Analytics — could the team answer "did anyone complete a booking yesterday?"
+Not marked — a patient can be on each of these screens seeing sample records with **no banner**:
 
-**No.** There is no analytics SDK and no event instrumentation of any kind:
-`firebase_analytics` is absent from `pubspec.yaml`; `grep -rni "analytics|logEvent|amplitude|mixpanel|posthog|sentry" lib/`
-returns only false positives (`_buildCareGuidesEntry` in `home_screen.dart`). `firebase_performance`
-is initialised (`main.dart:122-123`) and will give automatic app-start and HTTP traces, but
-`FirebasePerformance` records latency, not funnels — it cannot answer whether a booking completed.
-
-Zero of the flows that define the business are instrumented: cart add, checkout start, payment
-success/failure, booking confirmed, SOS tapped, concern raised, assistant used.
-
-**Impact:** on day 1 the only feedback channels are crash reports (degraded, above) and phone calls.
-A booking funnel that silently breaks — say `_priceMultiplier` mis-multiplying, or the payment
-success path never firing — produces no signal until a customer calls.
-
-**Fix (small):** add `firebase_analytics`, and log six events at the existing call sites:
-`sos_opened` (`sos_screen.dart:56`), `booking_started` / `booking_confirmed`
-(`service_booking_screen.dart`, `booking_confirmation_screen.dart`), `payment_succeeded` /
-`payment_failed` (`payment_screen.dart:222,236`), `concern_raised`
-(`raise_concern_screen.dart:342`). That is enough to answer the question above.
-
-### Remote control — flags, kill switch, force upgrade
-
-**None exist.** `grep -rni "remote_config|RemoteConfig|featureFlag|killSwitch|forceUpgrade|minimumVersion|maintenanceMode"`
-across `lib/`, `functions/`, `android/`, `ios/` matches only transitive CocoaPods entries
-(`ios/Podfile.lock:1271,1314-1329` — `FirebaseRemoteConfigInterop` pulled in by
-`firebase_performance`, never used from Dart). There is no `firebase_remote_config` dependency in
-`pubspec.yaml`, no minimum-version check, no maintenance screen, no per-feature toggle.
-
-The only "switches" are **compile-time**: `String.fromEnvironment` for `RAZORPAY_KEY` and
-`ASSISTANT_API_URL` (`lib/config/constants.dart:11,25`). Changing either requires a new binary and a
-store review.
-
-**For a healthcare app, the concrete answer to "what if a dosage-display bug ships":** today the
-options are (1) halt the Android staged rollout — which does not exist yet, since the release build
-is debug-signed; (2) hotfix and wait for review — 24h+ on iOS, with no expedited-review process
-documented (§3.4); (3) phone every patient. Users already on the bad build keep seeing the bad
-dosage the entire time. `lib/screens/my_care/medication_schedule_screen.dart` and
-`medications_screen.dart` render dosage text with no server-side gate.
-
-**Fix:** add `firebase_remote_config` with three keys — `min_supported_build` (force-upgrade wall),
-`maintenance_mode` (message + read-only), and `feature_medications_enabled` (hide the medication
-surface without a release). Fetch in `main()` next to the Crashlytics block, cache with a 1h
-`minimumFetchInterval`, and default every key to the safe value so a Remote Config outage cannot
-brick the app. This single change also gives §1.3 the missing rollback lever.
-
-### Support — how does a distressed user reach a human, and how fast?
-
-The **SOS path is the strongest thing in this audit** and should be protected:
-- No permission gate and no confirmation friction (`lib/screens/sos/sos_screen.dart` — a tap on any
-  row calls `_makeCall` directly at `:56,66,77`), honouring the CLAUDE.md inviolable rule.
-- Four routes: Housepital medical emergency (`9990911911`), staff emergency → ops, national `112`,
-  and ambulance → `/raise-concern` with the fallback honestly documented at `sos_screen.dart:186-194`.
-- The dispatch address is shown up front with a copy action (`:101-155`), and prompts for one when
-  missing — good under stress.
-- Dialer failure does **not** fail silently: `:262-288` shows a dialog with the number in plain text
-  plus a Copy Number action. That is exactly right for an emergency surface.
-
-Time-to-human on the SOS path: one tap. ✅
-
-**Everything below SOS is weaker.** The non-emergency support surface (`help_faq_screen.dart:337-373`
-Call / Email / WhatsApp) points at placeholder numbers (§4.1) and, on Android 11+, cannot launch at
-all for lack of `<queries>`. The in-app concern ticket (`raise_concern_screen.dart:342-420`) is
-well-built — it surfaces failures honestly (`:406-413` "Failed to submit: ${e.message}") rather than
-faking success, and it warns when photo upload fails but the concern went through (`:356-362`) — but
-with `api.housepital.in` unreachable **every** concern submission fails today, and on iOS the photo
-attach path crashes for the missing `NSCameraUsageDescription`. The Health Manager phone shortcut on
-Home (`home_screen.dart:819-820,1870`) uses the correct `AppConstants.supportPhone`.
-
-### Backend / ops dependencies — and what happens when each is down
-
-| Dependency | Used for | Behaviour when down | Assessment |
+| # | Site | What the user sees | Severity |
 |---|---|---|---|
-| `api.housepital.in/v1` (`constants.dart:3`) | patients, dashboard, vitals, meds, orders, billing, concerns | Silent fallback to `DemoData` in ~25 places; `Log.warn` only | ❌ see below |
-| Firebase Auth (phone OTP) | login | **Bypassed entirely** — `main.dart:408-410` "Auth gate disabled for demo mode. Enable before production release."; `splash_screen.dart:15-18` pushes straight to `/home` | ❌ blocker |
-| Firestore | chat, attendance, vitals streams | `firestore.rules` hardened but **not deployed** (BUG-33); TD-05 records no listener-retry — "page refresh needed to reconnect" | ⚠️ |
-| FCM | push notifications | `firebase_service.dart:217-222` catches and logs `subscribeToTopic` failure; app continues | ✅ degrades |
-| Assistant Cloud Function | Sahayak AI | Best-in-repo degradation: `assistant_service.dart:56-69` returns `AssistantResponse.degraded(...)` on non-2xx, bad shape, or throw, with an honest Hinglish message ("Connection issue — abhi jawab nahi mil paya"); when `ASSISTANT_API_URL` is unset it uses the local intent matcher that really executes cart/booking offline (`main.dart:237-258`) | ✅ |
-| Razorpay + payment verify | money | Verification correctly returns `failed` on backend error and surfaces "Payment under verification — we'll confirm in 24 hours" (`payment_service.dart:196-198`, `:167-171`) — good. **But** `createOrder` is dead code: `grep -rn "createOrder" lib/` finds only its definition (`payment_service.dart:70`) and doc comments — nothing calls it. `payment_screen.dart:220-224` calls `openCheckout` with **no `orderId`**, so `response.orderId` is always null → `_verifyPaymentOnBackend` returns `skippedDemo` (`:179-185`) → success callback fires **unverified**. With a live `rzp_live_` key this means real charges confirmed client-side with zero server record | ❌ blocker |
-| `ANTHROPIC_API_KEY` | assistant | Server-side only — `functions/index.js:21` `defineSecret("ANTHROPIC_API_KEY")`, `:114` `secrets: [ANTHROPIC_API_KEY]`, `:153` used only inside the function. `grep -rn "ANTHROPIC_API_KEY\|sk-ant"` over `lib/` → **no matches**; only docs and `functions/`. Never in the binary | ✅ verified |
+| 1 | `lib/providers/app_provider.dart:137-138` | `_currentPatient = DemoData.patient; _patients = [DemoData.patient]` — the seed runs before the API and the `catch` at `:151-154` only logs. The **patient identity in the header** is sample data with no mark. | High |
+| 2 | `lib/services/handover_report_service.dart:100-108` | The **doctor handover PDF** — patient, medical history, active medications, vitals history, today's report, services, staff on duty, appointments — is built unconditionally from `DemoData`. Exported and handed to a clinician. See A.3. | **Blocker** |
+| 3 | `lib/screens/settings/patient_profile_screen.dart:898` | `_buildMedicalHistory(DemoData.medicalHistory)` — **allergies and conditions**, unconditional, under a subtitle reading "Recorded by your supervisor at deployment · synced" (`:889`). | **Blocker** |
+| 4 | `lib/models/care_event.dart:57,71,97,105-106,118` | The entire Care Calendar feed — dose counts, adherence percentages, staff-present rows, appointments — is computed from `DemoData` unconditionally, not as a fallback. | High |
+| 5 | `lib/screens/calendar/care_calendar_screen.dart:1324` | Staff-on-duty list from `DemoData.icuServiceDetail`. | Medium |
+| 6 | `lib/screens/care_team/care_team_screen.dart:29,31,162-164` | Supervisor and past-staff list always `DemoData`; `:29` falls back to `DemoData.patient` for the patient itself. | Medium |
+| 7 | `lib/screens/my_care/widgets/doctor_advice_card.dart:46` | Doctor recommendations default to `DemoData.doctorRecommendations` — clinical advice, rendered inside the My Care tab. | High |
+| 8 | `lib/providers/blog_provider.dart:38` | Article list falls back to `DemoData.articles` on API failure, marks nothing, and logs via bare `debugPrint` (`:37`) rather than `Log.warn`, so it is invisible even to the console policy. | Low |
+| 9 | `lib/providers/blog_provider.dart:68` | Same for a single article (`:67` `debugPrint`). | Low |
 
-### Demo mode vs a real outage — the finding that matters
+Items 2, 3, 4, 5, 6 and 7 are all **clinical or identity** surfaces. Item 8/9 are content and are
+low-risk, but they are the only two that were plausibly *forgotten* rather than *out of scope* —
+`blog_provider` is the one API provider in `lib/providers/` with a demo fallback and no
+`DemoMode` import.
 
-The demo-mode fallback is a deliberate, well-executed design decision for a pre-launch demo. The
-problem is that **nothing in the shipped UI distinguishes it from live data**, so on launch day it
-converts a backend outage into a silent data-integrity incident.
+#### A.2 · The banner does not render on pushed routes — including the screen that motivated it
 
-The mechanism, in the app's own words (`lib/providers/app_provider.dart:174-233`): seed demo first
-so the UI is never blank, then try the API in the background and overwrite on success; on failure,
-"Demo data already loaded — no action needed" (`:216`).
+`_DemoDataBanner` is a child of `MainShell`'s body `Column` (`lib/screens/main_shell.dart:58-70`).
+Every screen reached by `Navigator.pushNamed` is a `MaterialPageRoute` on the root navigator
+(`lib/main.dart:436-762`) and covers the shell completely. So the banner is **absent** from, among
+others:
 
-The provider *does* compute a signal — `app_provider.dart:232` sets `_lastUpdatedText = 'Demo data'`
-versus `:212` `'Last updated: just now'`, exposed via the getter at `:60`. But
-`grep -rn "lastUpdatedText" lib/` returns **only** `app_provider.dart:53,60,212,232`. **No screen
-renders it.** The one distinguishing signal the codebase computes is dead.
+- `/medication-schedule` (`main.dart:580`) — **the exact screen in round 1's insulin scenario**,
+  and the screen whose provider path `medication_provider.dart:236` was wired to set the flag.
+  The flag is set; nothing draws it.
+- `/medications` (`:577`), `/vitals` (`:464`), `/report-detail` (`:469`),
+  `/attendance-history` (`:593`), `/report-history` (`:588`)
+- `/care-calendar` (`:748`), `/care-team` (`:751`), `/patient-profile` (`:455`)
 
-The same silent-substitution pattern repeats for clinical data:
-- `lib/providers/medication_provider.dart:189-208` — on API failure the patient's medication list
-  becomes `DemoData.medications`; `:225-235` does the same for today's schedule, with the comment
-  explaining a field bug where the real error ("Couldn't load data") was replaced by demo content.
-- `lib/providers/app_provider.dart:228-231` — `_latestVitals = DemoData.vitalsHistory.last`,
-  `_todayReport = DemoData.todayReport`.
-- `lib/providers/my_care_provider.dart:82-95` — any unknown deployment id serves
-  `DemoData.icuServiceDetail` and explicitly clears `_detailError = null`.
+Home entry points push straight into these (`home_screen.dart:344,353` →
+`/medication-schedule`). A family member checking today's insulin therefore takes the one path
+where sample data is served *and* the banner is structurally unreachable.
 
-**Concrete failure story:** the backend has a 20-minute outage. A family member opens the app to
-check whether today's insulin was given. They see a fully populated medication schedule and today's
-vitals — belonging to the demo patient. Nothing on screen says otherwise; the `'Demo data'` string is
-never drawn; `Log.warn` fires to a console nobody is watching (`logger.dart:63` TODO); and
-Crashlytics is not told because non-fatals are not forwarded. The user acts on someone else's chart,
-and ops learns nothing.
+**Fix:** move the banner out of `MainShell` — either into a `MaterialApp.builder` wrapper (it
+already exists at `main.dart:420-433` for text scaling) so it sits above every route, or into
+`GlassAppBar`'s bottom slot so every screen inherits it.
 
-This does not require abandoning demo mode. Two small changes make it safe:
-1. **Render the signal.** Show `AppProvider.lastUpdatedText` in the My Care / Home headers, and when
-   it is `'Demo data'` render an unmissable banner ("Sample data — we can't reach Housepital right
-   now") instead of a neutral timestamp.
-2. **Gate clinical demo data on build type.** Let `DemoData` back catalogue/marketing surfaces
-   anywhere, but for medications, vitals and daily reports fall back to demo **only** when
-   `kDebugMode || AppConstants.razorpayKey` is a placeholder — i.e. in demo builds. A production
-   build should show a real empty/error state, never another patient's chart.
-3. Complete `logger.dart:63` so the outage itself is a non-fatal Crashlytics event.
+#### A.3 · `DemoMode.reset()` is called by one provider on behalf of six
+
+`lib/providers/app_provider.dart:247` is the **only** reset call site, and it fires when the
+*dashboard* `Future.wait` succeeds. Six independent sources can be on demo data. Two concrete
+failure modes:
+
+- **False negative (banner hidden while sample data is on screen).** Partial outage: dashboard
+  endpoints healthy, medications endpoint down. `home_screen.dart:59-63` runs
+  `loadPatients → loadDashboard → loadMedications`. `medication_provider.dart:189-192` seeds
+  `DemoData.medications` and marks. Dashboard resolves, `app_provider.dart:247` calls
+  `DemoMode.reset()`. The medications call then times out at 5 s (`:200`) and takes no action —
+  the mark lives in the pre-API seed block, so it is never re-set. The user is left with the
+  sample patient's medication list and **no banner**. Pull-to-refresh on Home
+  (`home_screen.dart:111` `onRefresh: () => app.loadDashboard()`) reproduces this on demand.
+- **False positive (banner shown while all data is live).** `my_care_provider.dart:48-53` marks
+  during its pre-API seed and **never resets** on success; neither do medication, billing or
+  orders. So a healthy backend + a visit to the My Care tab leaves the banner asserting "we can't
+  reach Housepital" over live records until the next successful `loadDashboard`. A banner that
+  cries wolf on the happy path is a banner users learn to ignore — which costs the fix its value
+  in exactly the incident it was built for.
+
+**Fix:** make the flag a set, not a boolean — `DemoMode.mark(source)` / `DemoMode.clear(source)`,
+banner visible while the set is non-empty. Each provider clears only its own key on success.
+
+#### A.4 · Test coverage of the fix
+
+One test, `test/providers/patient_scope_isolation_test.dart:172-189`, covers `AppProvider`'s
+dashboard path only. Nothing tests the other five marking providers, the reset race, or that
+`MainShell` renders the banner at all (`test/screens/main_shell_test.dart` never mentions it).
+Every gap in A.1–A.3 is invisible to the suite.
+
+**Verdict on the round-1 blocker: ⚠️ partially fixed.** The honest, non-dismissible banner is the
+right design and the copy is right. But a patient can still be on `/medication-schedule`,
+`/patient-profile`, `/care-calendar` or a handover PDF reading sample clinical data with no
+warning, and the flag can be cleared while five other providers are still serving demo.
+
+---
+
+### §B — `StoreMigrator` as an operational risk
+
+`lib/services/store_migrator.dart`, run at `lib/main.dart:174`, **before** `runApp()` at `:191`.
+The design is careful: frozen literals, quarantine-not-delete, refusal to downgrade
+(`:83-93`), continue-on-step-failure (`:106-114`). The operational exposure is elsewhere.
+
+**Blast radius: the whole app, on every cold start.** `run()` is not gated by version, platform
+or build mode — every launch awaits at least one `SharedPreferences.getInstance()` (`:64`) before
+`runApp()`. Anything that throws or hangs there means the user never reaches a first frame.
+
+1. **The "never throws" contract is not enforced at the boundary.** The doc comment at `:60-62`
+   says "Never throws", but only the *step* loop is wrapped (`:106-114`). `SharedPreferences.getInstance()`
+   at `:64` is bare, and so is every `prefs.setInt` at `:71,117` and every `prefs.set*` in
+   `quarantine()` (`:131-141`). A platform-channel failure or a corrupt `NSUserDefaults` plist —
+   rare per device, certain across a user base — propagates out of `run()`, out of the `await` at
+   `main.dart:174`, and `runApp()` never executes. The user gets a **blank screen on every launch,
+   permanently**, with no in-app path to recovery. `runZonedGuarded` (`main.dart:100`) catches it
+   and records a fatal to Crashlytics, so it is *visible* — but on iOS it is unsymbolicated (§2.1),
+   and the app is a brick until a store update ships. There is no kill switch (§1.3).
+2. **No timeout.** `getInstance()` awaits a platform channel with no `.timeout(...)`, unlike every
+   API call in the app (`app_provider.dart:232`, `medication_provider.dart:200` all use 5 s). A
+   hung channel is an indefinite splash, not a crash — and an indefinite splash produces **no**
+   crash report at all, only ANRs and one-star reviews.
+3. **Boot loop:** no. There is no restart-on-failure path, and the version stamp advances
+   monotonically (`:117`). The realistic bad outcome is a *permanent blank screen* or a
+   *permanent hang*, not a loop — arguably worse, because neither is self-healing.
+4. **A failed step is still recorded as successful.** `:107-117` — when a step throws, the error is
+   logged and `version` is incremented and stamped anyway. The store is then half-migrated and
+   *labelled* fully migrated, so no later run will retry it. Combined with (5) this means a
+   migration failure is silently permanent.
+5. **Quarantine is aspirational.** `quarantine()` (`:126-144`) is a helper migrations must call;
+   with `_migrations` empty (`:57-58`) nothing calls it. `grep -rn "StoreMigrator.quarantine" lib/`
+   → no matches. The comment at `:111-113` ("quarantine (below) preserves the original bytes")
+   describes a guarantee no code currently provides.
+6. **Observability is zero.** Every failure path — `:75`, `:88`, `:103`, `:109`, `:142` — reports
+   via `Log.warn`/`Log.error`, which stops at `debugPrint` (`logger.dart:63-65`). On a release
+   build nobody ever learns that a migration was skipped, a store was quarantined, or a downgrade
+   was detected. This is the single highest-leverage line in the audit: wiring `logger.dart:63`
+   makes `StoreMigrator` observable for free.
+7. **Zero tests.** `grep -rln "StoreMigrator" test/` → no matches, despite `:147` exposing
+   `versionKeyForTest` specifically so it could be tested. Fresh install, legacy-data install,
+   downgrade, and step-failure are four cheap unit tests that do not exist.
+
+**Fix (≈8 lines):** wrap the whole body of `run()` in `try/catch` that swallows and logs; add
+`.timeout(const Duration(seconds: 3))` to `getInstance()` and skip migration on timeout; only
+stamp `version + 1` when the step did not throw; wire `logger.dart:63`. Grade: ⚠️ — good design,
+unsafe boundary, unobservable, untested, on the critical path of every cold start.
+
+---
+
+### §C — The deletion flow's operational obligation: who receives the request?
+
+**Nobody.** `lib/screens/settings/delete_account_screen.dart:53-89`:
+
+```dart
+// TODO(backend): POST /account/delete once api.housepital.in exists…
+await Future<void>.delayed(const Duration(milliseconds: 600));
+…
+SessionScope.clearSession(context);
+await context.read<AuthProvider>().logout();   // → prefs.clear()
+```
+
+The 600 ms delay is the entire "request". Then `:68-88` shows a dialog promising:
+
+> "Your Housepital records are scheduled for deletion and will be removed within 30 days."
+
+Traced end to end:
+- **No network call.** `grep -rn "account/delete\|deleteAccount" lib/` matches only this file's
+  TODO. `lib/services/api_service.dart` has no deletion endpoint.
+- **No local record.** `AuthProvider.logout()` runs `prefs.clear()`, so even if a request had been
+  queued to `SharedPreferences` it would be erased in the same breath.
+- **No email, no ticket, no analytics event** — there is no analytics SDK at all (§H8).
+- **No inbound path either.** The dialog's remedy — "call us on 9990-911-911" (`:78`) — reaches a
+  phone line with no ticket system behind it (`docs/KNOWN_ISSUES.md:90` TD-11: the concern SLA is
+  "not enforced or alerted on the backend").
+
+So the app makes a dated, statutory-flavoured promise (DPDP Act 2023 §12 erasure, cited in the
+file's own header at `:13-14`) to a recipient that does not exist. **Treating "nobody" as the
+finding:** this is not a missing feature, it is an **unowned commitment**. Thirty days after the
+first user taps Delete, Housepital is in breach of a promise it has no record of having made,
+and cannot even enumerate who is owed what.
+
+Credit where due: the screen is otherwise the most honest surface in the app. `:17-24` explicitly
+refuses to overstate ("It does not claim the server data is gone"), `:146-177` separates what is
+deleted from what is retained for tax law, `:185-208` uses a checkbox plus a typed `DELETE`
+confirmation. The *UI* is right; the *operations* behind it are absent — and the user-facing copy
+at `:74-77` is more confident than `:17-24` admits, which is exactly the gap.
+
+**Fix, in order of cost:** (a) until a backend exists, make the request durable and reachable —
+write it to Firestore (`deletion_requests/{uid}` with a timestamp, before `prefs.clear()`) so it
+survives the wipe and lands somewhere a human can query; (b) name an owner and a weekly check in
+`docs/` — a deletion queue nobody reads is the same failure with extra steps; (c) soften the copy
+to what is actually guaranteed until (a) ships. **BLOCKED-OWNER** for who owns the 30-day clock.
+
+---
+
+### §D — `storage.rules`: repo state vs live posture
+
+`storage.rules` (86 lines) and `firebase.json:6-8` `"storage": {"rules": "storage.rules"}` are new
+and the rules themselves are well-constructed: default-deny at `:82-84`, two allowed prefixes
+matching the two real `uploadFile` call sites, signed-in + own-patient + image + 10 MB checks,
+`update, delete: if false` on both. The file even documents its own risk at `:7-11`
+("!! CRITICAL !! THIS FILE MUST BE DEPLOYED").
+
+**The gap between repo state and live posture is total, and the repo cannot close it:**
+- Nothing in the repo records a deploy. `git log --oneline -3` shows `820060b` added the file; no
+  deploy log, no console screenshot, no timestamp in `docs/`.
+- `.firebaserc` is `{"projects":{},"targets":{},"etags":{}}`, so the very command the file
+  prescribes at `:10` (`firebase deploy --only storage --project housepital-patient`) is the only
+  form that can work from this tree — and there is no evidence anyone has run it.
+- `docs/KNOWN_ISSUES.md` was not updated to track it (still "Last updated: 2026-05-28"), so this
+  new console prerequisite joins BUG-33 and BUG-34 in an untracked state.
+- Until it is deployed, the live posture is **whatever the console happens to hold**, which for a
+  project that has never had Storage rules in the repo is most likely the default
+  `allow read, write: if request.auth != null` — i.e. any authenticated user can read any other
+  patient's chat and concern-evidence photographs.
+
+**What would confirm it (BLOCKED-OWNER, none of it doable from the repo):**
+1. `firebase deploy --only storage --project housepital-patient` and the CLI's success output
+   pasted into `KNOWN_ISSUES.md` with a date.
+2. The rules body and "Last published" timestamp read from
+   `https://console.firebase.google.com/project/housepital-patient/storage/rules`, compared
+   line-for-line against `storage.rules`.
+3. A negative test from a second authenticated account: fetch a download URL for
+   `chat/{otherPatientId}/…` and confirm a 403.
+
+Same three-step confirmation applies to `firestore.rules` (BUG-33) and the API-key restrictions
+(BUG-34), neither of which moved this round.
+
+### §E — Re-verification of the two items that were *not* on the fix list
+
+- ❌ **Android release is debug-signed.** `android/app/build.gradle.kts:33-37` is byte-identical to
+  round 1, TODO comment included. `ls android/key.properties` → No such file or directory. No
+  `signingConfigs { create("release") … }` block exists. **Unchanged.** Consequence for this
+  checklist: §1.1 phased release and §1.3's "halt the phase" rollback remain unavailable on
+  Android, and §1.6's "previous archive installable" cannot begin.
+- ❌ **Auth gate disabled.** `lib/main.dart:416-418` — the commented-out `Consumer<AuthProvider>`
+  gate and the note "Enable before production release" are unchanged; `home: const SplashScreen()`
+  and `lib/screens/splash_screen.dart:15-18` `pushReplacementNamed('/home')` after 2 seconds.
+  **Unchanged.** Consequence for this checklist: it silently invalidates §A and §C. With no
+  session, `request.auth` is null on every device, so `storage.rules`/`firestore.rules`
+  (`ownsPatient()`, `request.auth.uid == patientId`) deny **everything** — which is safe but means
+  the demo-mode fallback is not a degraded state, it is the *only* state. And the deletion flow's
+  `AuthProvider.logout()` signs out a user who was never signed in, so §C's "record the request
+  against the uid" fix has no uid to use until this is re-enabled.
 
 ---
 
 ## Blockers (must fix before release)
 
-1. **Clinical demo data silently substitutes for real patient data during a backend outage** —
-   `app_provider.dart:216,228-231`, `medication_provider.dart:189-208,225-235`,
-   `my_care_provider.dart:82-95`; the one distinguishing signal (`app_provider.dart:232`
-   `'Demo data'`) is computed and never rendered. Fix per the three steps above.
-2. **Support numbers are placeholders** — `help_faq_screen.dart:352,364` (`+919999999999`),
-   `staff_otp_verification_screen.dart:352` (`+918888888888`). Replace with
-   `AppConstants.supportPhone`.
-3. **Android release is debug-signed and cannot be uploaded, so the staged-rollout rollback lever
-   does not exist** — `android/app/build.gradle.kts:36-40`.
-4. **Payments are never verified server-side** — `createOrder` is dead code
-   (`payment_service.dart:70`, zero callers); `payment_screen.dart:220` opens checkout with no
-   `orderId`, forcing the `skippedDemo` branch (`payment_service.dart:179-185`). With a live key,
-   real money is captured with no backend record.
-5. **Auth is disabled** — `main.dart:408-410`, `splash_screen.dart:15-18`. Anyone who installs the
-   app lands inside a patient's chart.
-6. **iOS crash reports will be unsymbolicated** — no `upload-symbols` run-script phase in
-   `ios/Runner.xcodeproj/project.pbxproj` (four script phases present, none Crashlytics), on an
-   iOS-first app.
-7. **iOS will crash on any camera/photo action** — no `NSCameraUsageDescription` /
-   `NSPhotoLibraryUsageDescription` in `ios/Runner/Info.plist` (only lines 69, 71 exist) against six
-   `image_picker` call sites, including the Raise-a-Concern support flow.
+1. **The sample-data banner does not cover the screens that matter** — `_DemoDataBanner` lives
+   inside `MainShell` (`lib/screens/main_shell.dart:58-70`), so it is structurally absent from
+   every pushed route, including `/medication-schedule` (`lib/main.dart:580`) — the exact screen
+   in round 1's insulin scenario. Move it above the router.
+2. **Six clinical/identity surfaces serve `DemoData` and never set the flag** —
+   `handover_report_service.dart:100-108` (the doctor handover PDF, exported to a clinician),
+   `patient_profile_screen.dart:898` (allergies/conditions, under a "synced" subtitle),
+   `care_event.dart:57,71,97,105-106,118` (the whole Care Calendar),
+   `doctor_advice_card.dart:46` (clinical advice), `app_provider.dart:137-138` (patient identity),
+   `care_team_screen.dart:29,31`.
+3. **`DemoMode.reset()` clears a global flag on behalf of five providers it does not own** —
+   `app_provider.dart:247`. Produces both a hidden banner over sample medication data and a
+   spurious banner over live data (§A.3).
+4. **Support numbers are still placeholders** — `help_faq_screen.dart:352,365`,
+   `staff_otp_verification_screen.dart:352`. Unchanged from round 1.
+5. **Android release is debug-signed** — `android/app/build.gradle.kts:33-37`. Unchanged.
+6. **Auth is disabled** — `lib/main.dart:416-418`, `splash_screen.dart:15-18`. Unchanged.
+7. **iOS crash reports will be unsymbolicated** — no `upload-symbols` phase in
+   `ios/Runner.xcodeproj/project.pbxproj:280-390`, on an iOS-first app. Unchanged.
+8. **The 30-day deletion promise reaches nobody** — `delete_account_screen.dart:53-89` is a
+   600 ms delay followed by `prefs.clear()`; the promise at `:75-77` has no recipient, no record
+   and no owner.
 
 ## High
 
-8. **No analytics at all** — the booking funnel is unobservable; a broken checkout produces no signal.
-9. **No feature flag, kill switch, or force-upgrade** — for a healthcare app, a shipped dosage-display
-   bug has no remote remedy.
-10. **Non-fatal errors are never reported** — `logger.dart:63` TODO; every backend outage is invisible.
-11. **Android `<queries>` missing** — `canLaunchUrl` fails for `tel:`/`mailto:`/`https:` on API 30+,
-    breaking the entire non-SOS support surface.
-12. **Background-isolate errors uncaptured** — no `Isolate.current.addErrorListener` in `main()`.
-13. **No account/data deletion path** — `grep` finds none; standing duty impossible, plus store and
-    DPDP exposure.
-14. **Server-side prerequisites unverified** — `firestore.rules` deployment pending (BUG-33), API key
-    restrictions pending (BUG-34), `.firebaserc` empty.
-15. **No user-symptom diagnostic playbooks** — `docs/TROUBLESHOOTING.md` is entirely developer-facing.
+9. **`StoreMigrator` can brick a cold start** — unguarded `SharedPreferences.getInstance()`
+   (`store_migrator.dart:64`) and unguarded `prefs.setInt` (`:71,117`) on the pre-`runApp()` path
+   (`main.dart:174`), with no timeout. §B.
+10. **`logger.dart:63` still unwired** — now the sole reporting path for `StoreMigrator`'s five
+    failure branches as well as every backend outage. Highest value-per-line fix in the audit.
+11. **`storage.rules` undeployed** — `.firebaserc` empty; no deploy evidence; live posture
+    unknown and probably permissive. §D.
+12. **No analytics** — the booking funnel remains unobservable.
+13. **No flag / kill switch / force-upgrade** — a shipped dosage-display bug still has no remote
+    remedy, and now neither does a bad `StoreMigrator`.
+14. **Android `<queries>` missing** — `AndroidManifest.xml:43-48`; the whole non-SOS support
+    surface fails `canLaunchUrl` on API 30+.
+15. **Background-isolate errors uncaptured** — no `addErrorListener` in `lib/`.
+16. **New operational code shipped untested** — zero tests for `StoreMigrator`, zero for
+    `DeleteAccountScreen`, zero widget tests asserting the banner renders; one test covers one of
+    six marking providers.
+17. **No user-symptom diagnostic playbooks** — and now there is a diagnostic question worth
+    asking ("do you see the orange strip?") that no document tells support to ask.
+18. **Firestore rules + API-key restrictions still pending** — `KNOWN_ISSUES.md:25,26`.
 
 ## Medium / Low
 
-16. **Version string is hardcoded twice and has no build number** — `about_screen.dart:11`,
-    `settings_screen.dart:257`; add `package_info_plus`. (Medium — it is the diagnostic a caller reads aloud.)
-17. **No in-app "What's new"** — reporters cannot see their bug fixed. (Medium)
-18. **`KNOWN_ISSUES.md` is ~2 months stale** ("Last updated: 2026-05-28" vs HEAD ~2026-08) and
-    contains at least one already-false entry (BUG-14 vs `invoice_pdf_service.dart:96`). (Medium)
-19. **`DEPLOYMENT_GUIDE.md` drift** — pinned plugin versions disagree with `pubspec.yaml`; §7a step 1
-    restricts package `in.housepital.patient` while the real id is `com.housepital.housepital_patient`
-    (`android/app/build.gradle.kts:12,25`) — a restriction applied to the wrong package locks out the
-    real app. (Medium)
-20. **Android app label is `housepital_patient`** — `android/app/src/main/AndroidManifest.xml:7`;
-    iOS is correct (`Info.plist:10` "Housepital Patient"). (Low)
-21. **`INTERNET` permission is not declared in the main Android manifest** — present only in the
-    `debug`/`profile` variants. Firebase's transitive manifests very likely merge it in, but this
-    should be confirmed against a merged release manifest rather than assumed. (Low, verify)
-22. **Incident severity ladder and concern SLA are inert** — `KNOWN_ISSUES.md` buckets are
-    launch-priority not incident-severity; `constants.dart:52-57` `concernSla` has no enforcement
-    (`KNOWN_ISSUES.md:96` TD-11). (Medium)
-23. **3 known-failing widget tests left open** — `KNOWN_ISSUES.md:40` BUG-07; a suite that is allowed
-    to be red stops being a signal. (Medium)
+19. `docs/KNOWN_ISSUES.md:5` ten weeks stale; BUG-14 (`:53`) still false; BUG-07 (`:39`)
+    contradicts the current green suite. (Medium)
+20. `docs/KNOWN_ISSUES.md:26` still names package `in.housepital.patient`; the real id is
+    `com.housepital.housepital_patient` (`android/app/build.gradle.kts:23`) — a key restriction
+    applied to the wrong package locks out the real app. (Medium)
+21. Version string hardcoded in two places with no build number
+    (`about_screen.dart:11,69`, `settings_screen.dart:258`); `package_info_plus` absent. The store
+    schema version (`StoreMigrator.currentVersion`) is likewise invisible to support. (Medium)
+22. No in-app "What's new". (Medium)
+23. Halt criteria and expedited-review criteria still absent from `DEPLOYMENT_GUIDE.md`. (Medium)
+24. Incident severity ladder and `concernSla` still inert (`constants.dart:52-57`,
+    `KNOWN_ISSUES.md:90`). (Medium)
+25. `blog_provider.dart:37,67` use bare `debugPrint` instead of `Log.warn`, bypassing even the
+    console-level policy the rest of the app follows. (Low)
+26. The support phone now has three separate literals — `constants.dart:19`,
+    `delete_account_screen.dart:78`, `:181`. (Low)
+27. Banner + `extendBodyBehindAppBar` double top inset while the banner is visible
+    (`main_shell.dart:58-70`). (Low, verify on a notched device)
+28. `android/app/src/main/AndroidManifest.xml:7` app label is still `housepital_patient`. (Low)
+29. No `PrivacyInfo.xcprivacy` in `ios/`. (Medium — submission requirement)
 
 ## BLOCKED-OWNER
 
 | Item | What is needed |
 |---|---|
-| Phased release ON (§1.1) | Owner to enable staged rollout on the Play track and phased release in App Store Connect, and to confirm the halt percentages — after the signing config is fixed |
-| Previous-release archive retained (§1.6) | N/A for v1; owner to confirm archive retention from build 1 onward in both consoles |
+| Storage / Firestore rules live posture (§D) | `firebase deploy --only storage --project housepital-patient`, then the console "Last published" timestamp + a cross-account 403 test, pasted into `KNOWN_ISSUES.md` |
+| API-key restrictions (BUG-34) | Console action against the **correct** package id, then verification output |
+| Phased release ON (§1.1) | Play staged rollout + App Store Connect phased release — after the signing config is fixed |
 | Store release-notes text (§1.5) | Owner-written user-facing notes for v1.0.0 |
-| Crashlytics velocity + new-issue alerts (§2.1) | Console access to configure `DEPLOYMENT_GUIDE.md §7a.5` steps 2-4, plus a named person who reads them daily for week 1 |
-| Store review / beta feedback triage (§2.2) | Named owner + weekly slot + the four-way triage rubric |
-| First-48h smoke pass (§2.4) | Owner to run the (to-be-written) `docs/SMOKE_PASS.md` on a real device from the store build |
-| Support channel is monitored, with a stated answer window (§4.1) | Confirm `wecare@housepital.in` is a real monitored inbox; confirm `9990911911` staffing hours; publish the window in the store listing |
-| Firestore rules deployed + API key restrictions (§1.4) | Console actions per BUG-33 / BUG-34, then paste the verification output into `KNOWN_ISSUES.md` |
-| Privacy policy re-read against the shipped data set (§6.4) | Owner to check `housepital.in/privacy` covers vitals, medication names, photos, voice, phone, address |
-| Expedited-review criteria (§3.4) | Owner sign-off on what qualifies as an expedited-review request |
+| Crashlytics alerts + a daily reader (§2.1) | Console config per `DEPLOYMENT_GUIDE.md §7a.5`, plus a named person for week 1 |
+| Store review / beta triage (§2.2) | Named owner, weekly slot, four-way rubric |
+| First-48h smoke pass (§2.4) | Owner to run a to-be-written `docs/SMOKE_PASS.md` on a real device from the store build |
+| Support channel monitored, window published (§4.1) | Confirm `wecare@housepital.in` is monitored; confirm `9990911911` staffing hours |
+| **Deletion-request owner and 30-day clock (§C)** | Who receives a deletion request today, where it is recorded, and who is accountable on day 30 |
+| Privacy policy vs shipped data set (§6.4) | Owner to check `housepital.in/privacy` covers vitals, medication names, photos, voice, phone, address — **and the new 30-day deletion commitment** |
+| Expedited-review criteria (§3.4) | Owner sign-off on what qualifies |
+| Previous-release archive retention (§1.6) | N/A for v1; confirm retention policy from build 1 |

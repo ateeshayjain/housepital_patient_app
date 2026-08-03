@@ -196,7 +196,7 @@ class OrdersProvider extends ChangeNotifier {
       // transacts.
       if (_orders.isEmpty) {
         _orders = DemoData.orders;
-        DemoMode.markServingDemoData();
+        DemoMode.markServingDemoData(DemoMode.sourceOrders);
       }
 
       notifyListeners();
@@ -212,7 +212,10 @@ class OrdersProvider extends ChangeNotifier {
   void clearPatientScopedData() {
     _orders = [];
     _assessments = [];
-    notifyListeners();
+    // MUST persist: an in-memory-only clear looked correct and then
+    // _loadFromStorage() restored the previous patient's entire order history
+    // on the next cold start.
+    _persistAndNotify();
   }
 
 }

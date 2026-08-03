@@ -44,6 +44,13 @@ class _PaymentScreenState extends State<PaymentScreen>
   // Payment result state
   bool _showResult = false;
   bool _paymentSuccess = true;
+
+  /// True when Razorpay reported success but we could not verify it.
+  ///
+  /// This is NOT a failure and must never be rendered as one: the charge has
+  /// probably already happened. Showing "Payment Failed" with a Retry button
+  /// here invites a second debit for the same bill.
+  bool _pendingVerification = false;
   String? _transactionId;
   String? _failureMessage;
 
@@ -273,11 +280,16 @@ class _PaymentScreenState extends State<PaymentScreen>
       },
       onFailure: (message) {
         if (!mounted) return;
+        // PaymentService uses this message for the one case where checkout
+        // SUCCEEDED but verification was impossible. Money has likely left the
+        // patient's account, so it must not be presented as a failed payment.
+        final unverified = message.contains('under verification');
         setState(() {
           _isProcessing = false;
           _showResult = true;
           _paymentSuccess = false;
-          _transactionId = null;
+          _pendingVerification = unverified;
+          _transactionId = unverified ? _transactionId : null;
           _failureMessage = message;
         });
         HapticFeedback.heavyImpact();
@@ -346,6 +358,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     setState(() {
       _showResult = false;
       _paymentSuccess = true;
+      _pendingVerification = false;
       _transactionId = null;
       _failureMessage = null;
     });
@@ -455,10 +468,16 @@ class _PaymentScreenState extends State<PaymentScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isSuccess ? Icons.check_circle : Icons.cancel,
+                      isSuccess
+                          ? Icons.check_circle
+                          : _pendingVerification
+                              ? Icons.schedule
+                              : Icons.cancel,
                       color: isSuccess
                           ? context.hc.success
-                          : context.hc.error,
+                          : _pendingVerification
+                              ? context.hc.warning
+                              : context.hc.error,
                       size: 72,
                     ),
                   ),
@@ -469,13 +488,20 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Text(
                   isSuccess
                       ? l.t('payment_successful')
-                      : 'Payment Failed',
+                      : _pendingVerification
+                          ? l.t('payment_pending_verification_title')
+                          : l.t('payment_failed'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: isSuccess
                         ? context.hc.success
-                        : context.hc.error,
+                        : _pendingVerification
+                            // 24pt w700 is "large text", so the 3:1 floor
+                            // applies: warning measures 3.79:1 on the light
+                            // surface and far more on true black.
+                            ? context.hc.warning
+                            : context.hc.error,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -581,6 +607,29 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ),
                       ),
                     ],
+                  ),
+                ] else if (_pendingVerification) ...[
+                  // Deliberately NO retry: paying again would debit twice for
+                  // the same bill. The only useful action is to reach a human.
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      // '/support' does not exist; help-faq carries the real
+                      // contact numbers.
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/help-faq'),
+                      child: Text(l.t('payment_pending_contact_us')),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Go Back'),
+                    ),
                   ),
                 ] else ...[
                   SizedBox(
