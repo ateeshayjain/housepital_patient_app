@@ -4,22 +4,27 @@ import 'package:flutter/semantics.dart';
 import '../config/app_colors.dart';
 import '../data/demo_mode.dart';
 import '../utils/app_localizations.dart';
+import 'glass.dart';
 
-/// Wraps the whole app so the sample-data notice appears on EVERY route.
+/// Floating sample-data notice, shown over EVERY route.
 ///
-/// Installed from `MaterialApp.builder`, above the Navigator. The first
-/// version lived inside `MainShell`, which meant it covered only the five root
-/// tabs and was structurally absent from every pushed clinical screen —
-/// including `/medication-schedule` and `/vitals`, the exact screens where
-/// mistaking sample data for a real record does harm.
+/// Installed from `MaterialApp.builder`, above the Navigator.
 ///
-/// It also has to own the top inset. The shell version sat above the body of a
-/// Scaffold with no `appBar:`, so screens kept their full
-/// `MediaQuery.padding.top` while already being pushed down by the banner —
-/// a phantom notch on every screen, applied twice on screens that add their
-/// own. Here the banner consumes the status-bar inset itself and hands the
-/// child a MediaQuery with the top padding removed, so the app below is
-/// laid out exactly as it would be with no banner.
+/// TWO EARLIER SHAPES, BOTH WRONG — don't go back to either:
+///  1. Inside `MainShell`: covered only the five root tabs, so it was
+///     structurally absent from every pushed clinical screen, including
+///     `/medication-schedule` and `/vitals` — the screens where mistaking
+///     sample data for a real record actually does harm.
+///  2. A full-width strip in a Column above the app: it consumed the status
+///     bar, pushed every glass app bar down, and screens still added their own
+///     `padding.top + kToolbarHeight` on top — roughly a quarter of the first
+///     screen lost to dead space (owner: "why is there so much space wasted
+///     here").
+///
+/// So it is an OVERLAY, not a layout participant. It floats in a Stack over
+/// the app, displaces nothing, and no screen needs any inset maths. Adding or
+/// removing it cannot change any other screen's layout — which is the property
+/// that made both previous versions regress.
 class DemoDataBannerHost extends StatelessWidget {
   const DemoDataBannerHost({super.key, required this.child});
 
@@ -31,17 +36,16 @@ class DemoDataBannerHost extends StatelessWidget {
       valueListenable: DemoMode.isServingDemoData,
       builder: (context, serving, _) {
         if (!serving) return child;
-        return Column(
+        return Stack(
           children: [
-            const _DemoDataBanner(),
-            // The banner has eaten the status-bar inset; without this the
-            // child would reserve it a second time.
-            Expanded(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeTop: true,
-                child: child,
-              ),
+            child,
+            // Bottom of the app-bar band, centred: clear of the status bar and
+            // of the app bar's own controls, without pushing anything.
+            Positioned(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 4,
+              left: 12,
+              right: 12,
+              child: const Center(child: _DemoDataPill()),
             ),
           ],
         );
@@ -50,25 +54,23 @@ class DemoDataBannerHost extends StatelessWidget {
   }
 }
 
-/// The notice itself: persistent, non-dismissible, and announced.
-///
-/// Not dismissible on purpose — the condition it reports (no backend) persists,
-/// and a patient must never be one dismissed snackbar away from mistaking
-/// sample vitals for their own.
-class _DemoDataBanner extends StatefulWidget {
-  const _DemoDataBanner();
+/// The notice itself: a compact glass pill. Persistent and non-dismissible —
+/// the condition it reports (no backend) persists, and a patient must never be
+/// one dismissed snackbar away from mistaking sample vitals for their own.
+class _DemoDataPill extends StatefulWidget {
+  const _DemoDataPill();
 
   @override
-  State<_DemoDataBanner> createState() => _DemoDataBannerState();
+  State<_DemoDataPill> createState() => _DemoDataPillState();
 }
 
-class _DemoDataBannerState extends State<_DemoDataBanner> {
+class _DemoDataPillState extends State<_DemoDataPill> {
   @override
   void initState() {
     super.initState();
     // A silent warning is no warning to a VoiceOver user, who by then has
-    // already heard the fake vitals read out. `liveRegion` alone only
-    // re-announces on change, so announce once on appearance too.
+    // already heard the fake vitals read out. `liveRegion` only re-announces
+    // on change, so announce once on appearance too.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final l = AppLocalizations.of(context);
@@ -85,27 +87,41 @@ class _DemoDataBannerState extends State<_DemoDataBanner> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // Measured both appearances: #212121 on #FFF3E0 = 14.68:1 (light),
-    // #F2F2F2 on #3A2D14 = 11.98:1 (dark).
-    return Material(
-      color: context.hc.warningLight,
-      child: SafeArea(
-        bottom: false,
-        child: Semantics(
-          liveRegion: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Semantics(
+      liveRegion: true,
+      // The short pill label is a summary; the full sentence is what a screen
+      // reader should say.
+      label: l?.t('demo_banner_message'),
+      child: ExcludeSemantics(
+        child: GlassSurface(
+          borderRadius: BorderRadius.circular(999),
+          // Higher fill than chrome glass: this is a warning over arbitrary
+          // content, so legibility beats translucency.
+          opacity: 0.92,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: context.hc.warningLight.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                  color: context.hc.warning.withValues(alpha: 0.35), width: 1),
+            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info_outline, size: 18, color: context.hc.black),
-                const SizedBox(width: 8),
-                Expanded(
+                Icon(Icons.info_outline, size: 15, color: context.hc.black),
+                const SizedBox(width: 6),
+                Flexible(
                   child: Text(
-                    l?.t('demo_banner_message') ??
-                        'Showing sample data — this is not your live record.',
+                    l?.t('demo_banner_short') ??
+                        'Sample data — not your live record',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      // #212121 on #FFF3E0 = 14.68:1 light; #F2F2F2 on
+                      // #3A2D14 = 11.98:1 dark. Both measured.
                       color: context.hc.black,
                     ),
                   ),

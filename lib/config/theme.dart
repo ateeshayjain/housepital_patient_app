@@ -51,6 +51,8 @@ class HousepitalColorsDark {
   /// foreground that flips with appearance" rule; the white-on-orange owner
   /// decision is specific to orange and does not extend to error surfaces.
   static const Color onError = Color(0xFF212121);
+  /// Dark mode: brand orange already measures 8.99:1 on true black.
+  static const Color orangeStrong = orange;
   static const Color info = Color(0xFF64B5F6);         // 7.6:1 on surface
   static const Color infoLight = Color(0xFF1A2735);    // tint bg
 
@@ -96,6 +98,9 @@ class HousepitalColors {
   static const Color errorLight = Color(0xFFFFEBEE);
   /// Text/icons ON an error fill. Measured: #FFFFFF on #D32F2F = 4.98:1. ✅
   static const Color onError = Color(0xFFFFFFFF);
+  /// Brand orange darkened for SMALL text on light surfaces: 5.38:1 on white,
+  /// where `orangeText` measures only 3.99:1. Use for 11-14px orange labels.
+  static const Color orangeStrong = Color(0xFF9A5C00);
   static const Color info = Color(0xFF1565C0); // darker blue, 5.1:1
   static const Color infoLight = Color(0xFFE3F2FD);
 

@@ -60,6 +60,8 @@ class HcPalette {
   // Orange family (orange itself is constant; text/dark/tint variants differ)
   final Color orange;
   final Color orangeText;
+  /// Brand orange safe for SMALL text on light surfaces (5.38:1).
+  final Color orangeStrong;
   final Color orangeDark;
   final Color orangeLight;
   // Text/icons ON an orange fill. White on orange fails AA (~2.3:1), so both
@@ -93,6 +95,7 @@ class HcPalette {
         infoLight = HousepitalColors.infoLight,
         orange = HousepitalColors.orange,
         orangeText = HousepitalColors.orangeText,
+        orangeStrong = HousepitalColors.orangeStrong,
         orangeDark = HousepitalColors.orangeDark,
         orangeLight = HousepitalColors.orangeLight,
         onOrange = HousepitalColors.onOrange,
@@ -122,6 +125,7 @@ class HcPalette {
         infoLight = HousepitalColorsDark.infoLight,
         orange = HousepitalColorsDark.orange,
         orangeText = HousepitalColorsDark.orange,
+        orangeStrong = HousepitalColorsDark.orangeStrong,
         orangeDark = HousepitalColorsDark.orange,
         orangeLight = HousepitalColorsDark.orangeMuted,
         onOrange = HousepitalColorsDark.onOrange,

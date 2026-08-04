@@ -350,5 +350,6 @@
   "delete_account_done_login": "हो गया: आपका Housepital लॉगिन हटा दिया गया है।",
   "delete_account_done_login_pending": "बाकी है: हम आपका लॉगिन अपने-आप नहीं हटा सके। हमें कॉल करें, हम इसे हटा देंगे।",
   "delete_account_done_server": "अनुरोध किया गया — अभी बाकी है: Housepital के पास रखे आपके रिकॉर्ड हमारी टीम को हटाने हैं। पुष्टि के लिए नीचे दिए संदर्भ के साथ 9990-911-911 पर कॉल करें।",
-  "delete_account_reference": "संदर्भ"
+  "delete_account_reference": "संदर्भ",
+  "demo_banner_short": "नमूना जानकारी — आपका असली रिकॉर्ड नहीं"
 }

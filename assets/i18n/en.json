@@ -350,5 +350,6 @@
   "delete_account_done_login": "Done: your Housepital login has been deleted.",
   "delete_account_done_login_pending": "Pending: we could not remove your login automatically. Call us and we will do it.",
   "delete_account_done_server": "Requested — not yet done: your records held by Housepital still need to be deleted by our team. Call 9990-911-911 with the reference below to confirm.",
-  "delete_account_reference": "Reference"
+  "delete_account_reference": "Reference",
+  "demo_banner_short": "Sample data — not your live record"
 }

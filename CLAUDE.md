@@ -57,6 +57,12 @@ task "waiting for the test suite" — run targeted files, report results.
 
 ## Design system contract
 
+- **Demo-data notice:** `DemoDataBannerHost` (installed from `MaterialApp.builder`) shows
+  a compact glass **pill OVERLAY** while any `DemoMode` source serves sample data. It is a
+  Stack overlay, never a layout participant — two earlier shapes (inside `MainShell`; a
+  full-width strip in a Column) each regressed, the strip by stealing the status bar and
+  pushing every glass app bar down. Adding or removing it must not change any screen's
+  layout.
 - **Colors:** every brightness-sensitive color goes through `context.hc.*`
   (`lib/config/app_colors.dart`, `HcPalette` light/dark). Raw `Colors.*`, hex literals,
   and `Colors.grey.shade*` are banned by `scripts/check_design_consistency.sh`
@@ -79,9 +85,16 @@ task "waiting for the test suite" — run targeted files, report results.
 - **Cards:** `HousepitalCard` (squircle `RoundedSuperellipseBorder(16)`, press-scale
   0.97 @ 120ms). Do not hand-roll `Container(radius: 12, border: …)` cards, and do not
   wrap cards in bare `GestureDetector` — use `HousepitalCard(onTap:)`.
-- **Bottom nav:** `MainShell` renders a **FIXED full-width solid-orange bar** anchored
-  to the bottom edge (owner iterated floating-glass → pill → fixed), white icons/labels,
-  `SafeArea`-padded. **FIVE root tabs:** Home (0), My Care (1), Services (2),
+- **Bottom nav:** `MainShell` renders a **FLOATING LIQUID-GLASS PILL** — 16px side
+  insets, floating above the home indicator, `GlassSurface` radius 32, transparent
+  `BottomNavigationBar` inside it. Owner iterated floating-glass → pill → fixed orange
+  bar (round 5) → **back to the pill (round 8)**, matching the reference app they use
+  daily. Round 5's objection ("the pill covered content") is answered structurally: the
+  pill lives in the Scaffold's `bottomNavigationBar` slot, so the body's bottom
+  MediaQuery inset still covers its full footprint and `extendBody: true` lets content
+  glide underneath. Selected item uses `orangeStrong` (5.38:1), not `orangeText`
+  (3.99:1) — a 12px label needs the AA floor, and the white-on-orange owner rule governs
+  orange FILLS, not glass. **FIVE root tabs:** Home (0), My Care (1), Services (2),
   Billing (3), More (4). The **care calendar is not a tab** — the owner moved it to the
   My Care app bar (`'/care-calendar'`, custom action left of search) to get back to five
   icons. Indices 1/2/3 are referenced externally via `MainShell.switchToTab` — do not
