@@ -1,5 +1,17 @@
 # Housepital Patient App — 11-Checklist Audit Synthesis
 
+> **SUPERSEDED — read this first.**
+> This synthesis describes **round 1**, against commit `0a62955`. Since then the
+> ten blockers below were fixed (`820060b`), an eleven-checklist **round 2**
+> re-audited that work and found several of those fixes were surfaces rather
+> than fixes, and those were repaired in turn (`5fa6d95`).
+>
+> The individual reports in this directory have been **rewritten in place for
+> round 2** — round 1's graded versions are recoverable at commit `9c39dc1`.
+> Treat the blocker table below as history, not as a to-do list. What round 2
+> found, and what is still open, lives in the individual reports.
+
+
 **Date:** 2026-08-03 · **Commit:** `0a62955` (branch `fix/five-tab-nav`)
 **Source:** eleven independent read-only audits against the owner's app-agnostic checklists.
 Individual reports live beside this file in `docs/audits/`.

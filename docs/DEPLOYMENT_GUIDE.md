@@ -44,6 +44,7 @@ Deploy the security rules:
 ```bash
 cd /Users/ateeshayjain/housepital-backend
 firebase deploy --only firestore:rules
+firebase deploy --only storage          # storage.rules — chat + concern photos
 ```
 
 Rules file: `firestore.rules` (5 collection rules + default deny)

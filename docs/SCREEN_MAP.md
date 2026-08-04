@@ -3,7 +3,7 @@
 ## Navigation Structure
 
 ```
-Bottom Tab Bar (MainShell -- 6 tabs, FIXED full-width solid-orange bar)
+Bottom Tab Bar (MainShell -- 5 tabs, FIXED full-width solid-orange bar)
   |-- [0] Home        -> HomeScreen (Dashboard)
   |-- [1] My Care     -> MyCareScreen (Active services hub)
   |-- [2] Services    -> ServiceCatalogScreen (Marketplace)
@@ -206,7 +206,8 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 | `/package-detail`    | `CarePackage`             | PackageDetailScreen        |
 | `/search`            | none                      | UniversalSearchScreen      |
 | `/documents`         | none                      | DocumentRepositoryScreen   |
-| `/services`          | none                      | Scaffold (placeholder)     |
+| `/services`          | none                      | -> root tab 2 (redirect)   |
+| `/delete-account`    | none                      | DeleteAccountScreen        |
 | `/service-detail`    | `ActiveService`           | ServiceDetailScreen        |
 | `/medications`       | none                      | MedicationsScreen          |
 | `/medication-schedule`| none                     | MedicationScheduleScreen   |

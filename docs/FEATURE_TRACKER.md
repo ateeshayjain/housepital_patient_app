@@ -140,7 +140,7 @@ Legend: Done = feature is shipped and working | In Progress = partially built | 
 
 | # | Feature                            | Frontend                 | Backend              | Status         | Notes                                        |
 |---|-------------------------------------|--------------------------|----------------------|----------------|----------------------------------------------|
-| 0 | Calendar root bottom-tab            | MainShell                | --                   | Done (2026-06-11) | Care Calendar added as root tab at **index 3** (Home/My Care/Services/**Calendar**/Billing/More = SIX tabs); indices 1/2 referenced externally |
+| 0 | Care Calendar entry point           | MyCareScreen app bar     | --                   | Done (2026-08-03) | Owner moved the calendar OUT of the bottom nav ('five icons below'): tabs are Home (0) / My Care (1) / Services (2) / Billing (3) / More (4), and the calendar is a GlassAppBar action on My Care routed to `/care-calendar`. Side effect: home_screen's 'Pay Now' and upcoming-payment card call switchToTab(3) and land on Billing again — they had been silently opening the Calendar tab. |
 | 1 | Care Calendar (Day/Week/Month)      | CareCalendarScreen       | demo/CareEvent       | Done (2026-06) | /care-calendar; segmented Day-Week-Month views |
 | 2 | Dose groups + mark taken            | CareCalendarScreen       | MedicationProvider   | Done (2026-06) | Med quick-actions; future-day "N doses scheduled" cards |
 | 3 | Staff attendance + mark present     | CareCalendarScreen       | --                   | Done (2026-06) | Patient-side attendance confirmations        |

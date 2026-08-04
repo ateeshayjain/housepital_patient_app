@@ -145,21 +145,21 @@ Available services for booking.
 | booking_type        | ENUM          | 'instant', 'scheduled', 'assessment' -- NOT NULL   |
 | description         | TEXT          |                                                    |
 | description_hi      | TEXT          |                                                    |
-| base_price_min      | INT           | In paise. NULL = hide price (manpower)             |
+| base_price_min      | INT           | In paise. NULL = no price yet -> quote-pending      |
 | base_price_max      | INT           | In paise                                           |
 | duration_minutes    | INT           |                                                    |
 | preparation_notes   | TEXT          |                                                    |
 | preparation_notes_hi| TEXT          |                                                    |
 | lead_time_hours     | INT           | DEFAULT 24                                         |
 | is_active           | BOOLEAN       | DEFAULT TRUE                                       |
-| hide_price          | BOOLEAN       | DEFAULT FALSE -- Never show price to user          |
+| hide_price          | BOOLEAN       | DEAD COLUMN -- ignored by the client since 2026-06 |
 | icon_name           | VARCHAR(50)   |                                                    |
 | display_order       | INT           | DEFAULT 0                                          |
 | created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                          |
 
 **Indexes:** `idx_category (category)`, `idx_active (is_active)`, `idx_booking_type (booking_type)`
 
-**Business rule:** When `hide_price = TRUE`, the API returns `base_price_min` and `base_price_max` as `null` to the client. This applies to caretaker, nursing, japa, and nanny services.
+**Business rule (current):** manpower prices **ARE shown and directly bookable** — caretaker, nurse and physio all carry rate-card prices and go through the normal cart/payment path. `hide_price` is a dead column: the client ignores it entirely and decides quote-pending purely from whether a price exists (`price == null || price == 0`). The pre-2026-06 rule that this table used to describe (hide prices for manpower) was reversed by the owner on 2026-06-11 and must not be reintroduced.
 
 ---
 

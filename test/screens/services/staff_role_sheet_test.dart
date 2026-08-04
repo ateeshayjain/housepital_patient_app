@@ -165,7 +165,15 @@ void main() {
       expect(find.text('Recommended: Advanced Caretaker'), findsNothing);
     });
 
-    testWidgets('sheet shows no prices for manpower', (tester) async {
+    // NOTE ON THIS TEST'S NAME: it used to be called 'sheet shows no prices
+    // for manpower', which read as though it enforced the DEAD "never show
+    // manpower prices" rule. It does not — manpower prices ARE shown and
+    // directly bookable (owner, re-confirmed 2026-06-11). What this asserts
+    // is a LAYOUT fact: the price lives on the role CARD, and the tier sheet
+    // deliberately carries only the task list, so a price does not appear
+    // twice in two places that can drift apart.
+    testWidgets('tier sheet carries tasks only — price stays on the card',
+        (tester) async {
       await openSheet(tester);
       expect(find.textContaining('₹'), findsNothing);
     });

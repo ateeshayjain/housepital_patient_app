@@ -382,7 +382,7 @@ Single report detail.
 
 ### `GET /services`
 
-Active service catalog. Prices are hidden (null) for manpower services where `hide_price = true`.
+Active service catalog. **Manpower prices ARE returned and are directly bookable** (owner rule, re-confirmed 2026-06-11 — the old `hide_price` / 'never show' behaviour is DEAD). A null price means the item genuinely has no price yet, which the client renders as quote-pending (`isQuote = price == null || price == 0`) — never as ₹0, and never by category.
 
 **Auth:** Bearer token
 
