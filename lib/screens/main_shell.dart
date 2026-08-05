@@ -82,38 +82,45 @@ class MainShellState extends State<MainShell> {
           // Float above the home indicator; min 8 on devices without one.
           math.max(MediaQuery.of(context).padding.bottom, 8.0),
         ),
-        // The pill needs a VISIBLE material. GlassSurface paints a white fill
-        // with a white edge in light mode (glass.dart) — over the app's near-
-        // white pages that renders as nothing at all, which is exactly what
-        // the owner saw ("white on white is a bit off"). So the pill carries
-        // its own warm tint, an orange hairline, and a soft lift; the glass
-        // blur underneath still does its job over scrolling content.
+        // The pill needs a VISIBLE material. GlassSurface's default paints a
+        // white fill at 55% with a white edge in light mode (glass.dart) —
+        // over this app's near-white pages that renders as nothing, which is
+        // what the owner saw ("white on white is a bit off").
+        //
+        // Owner's call: no border — read it as FROST instead. So the material
+        // does the work: a stronger blur, a milkier fill, and a soft lift to
+        // separate the pill from a white page. The faint warm tint keeps it
+        // on-brand without becoming an orange chip.
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: context.hc.orange.withValues(alpha: 0.30),
-              width: 1,
-            ),
             boxShadow: [
               // Warm, low-alpha shadow rather than neutral black: it reads as
-              // lift on white and stays invisible on true black.
+              // lift on white and stays invisible on true black. With the
+              // border gone this is the only thing separating the pill from a
+              // white page, so it carries a little more weight than before.
               BoxShadow(
-                color: context.hc.orange.withValues(alpha: 0.16),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+                color: context.hc.orange.withValues(alpha: 0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: GlassSurface(
             borderRadius: BorderRadius.circular(32),
+            // Heavier frost than chrome glass: 36 blur over 24, and a 0.78
+            // fill over 0.55, so the pill reads as frosted material rather
+            // than a transparent pane.
+            sigma: 36,
+            opacity: 0.78,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
-                // Measured on the full-strength tint (worst case): selected
-                // label #9A5C00 = 4.90:1, unselected grey = 4.86:1, and in dark
-                // brand orange on #3D2A12 = 5.85:1. All clear AA.
-                color: context.hc.orangeLight.withValues(alpha: 0.55),
+                // Barely-there warmth over the frost. Composited worst case —
+                // frost over a white page, then this tint — resolves to
+                // #FFFCF8: selected #9A5C00 = 5.26:1, unselected grey =
+                // 5.21:1. Dark composites to #1F1A16, brand orange = 7.39:1.
+                color: context.hc.orangeLight.withValues(alpha: 0.22),
               ),
               child: MediaQuery.removePadding(
                 // The outer Padding already clears the safe area — without this
