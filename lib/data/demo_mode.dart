@@ -32,6 +32,7 @@ abstract final class DemoMode {
   static const String sourceCareCalendar = 'care-calendar';
   static const String sourceProfile = 'profile';
   static const String sourceHandover = 'handover-report';
+  static const String sourceVitals = 'vitals-trend';
 
   static final Set<String> _activeSources = <String>{};
 

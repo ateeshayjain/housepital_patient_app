@@ -53,6 +53,20 @@ class AppProvider extends ChangeNotifier {
   String? _dashboardError;
   String? _lastUpdatedText;
 
+  /// Fired whenever the ACTIVE PATIENT changes, by any path.
+  ///
+  /// AppProvider cannot reach the other providers, and round 3 found the
+  /// consequence: the guard added to [loadPatients] cleared this class only,
+  /// while medications, orders, cart, the assistant transcript, reminders,
+  /// addresses, ratings and the disk cache all survived that path. The shell
+  /// wires this to SessionScope so every switch path fans out identically.
+  void Function(String? patientId)? onPatientChanged;
+
+  void _announcePatient(String? id) {
+    final cb = onPatientChanged;
+    if (cb != null) cb(id);
+  }
+
   AppProvider(IApiService api) : _apiService = api {
     _loadLanguage();
     _loadProfilePhoto();
@@ -154,11 +168,14 @@ class AppProvider extends ChangeNotifier {
         // clear at all, which quietly defeated the switch path wired in the
         // UI. Only clear when the identity actually changes.
         final incoming = apiPatients.first;
-        if (_currentPatient?.id != incoming.id) {
+        final changed = _currentPatient?.id != incoming.id;
+        if (changed) {
           clearPatientScopedData(notify: false);
         }
         _currentPatient = incoming;
         notifyListeners();
+        // Fan out AFTER adopting, so listeners read the new identity.
+        if (changed) _announcePatient(incoming.id);
       }
     } catch (e) {
       Log.warn('Patients API unavailable, using demo data',
@@ -175,6 +192,7 @@ class AppProvider extends ChangeNotifier {
     clearPatientScopedData(notify: false);
     _currentPatient = patient;
     notifyListeners();
+    _announcePatient(patient.id);
     loadDashboard();
   }
 
@@ -216,6 +234,7 @@ class AppProvider extends ChangeNotifier {
     _profilePhotoPath = null;
     _currentUserRole = 'PRIMARY_CONTACT';
     notifyListeners();
+    _announcePatient(null);
   }
 
   /// Add a new patient to the current user's care list.

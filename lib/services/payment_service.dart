@@ -52,7 +52,7 @@ class PaymentService {
   static bool get isDemoPayments => _placeholderKeys.contains(_testKey);
 
   VoidCallback? _onSuccessCallback;
-  void Function(String)? _onFailureCallback;
+  void Function(String, PaymentFailure)? _onFailureCallback;
 
   PaymentService({IApiService? apiService})
       : _apiService = apiService ?? ApiService() {
@@ -102,7 +102,7 @@ class PaymentService {
     String? prefillPhone,
     String? prefillEmail,
     VoidCallback? onSuccess,
-    void Function(String)? onFailure,
+    void Function(String message, PaymentFailure kind)? onFailure,
   }) {
     _onSuccessCallback = onSuccess;
     _onFailureCallback = onFailure;
@@ -143,7 +143,8 @@ class PaymentService {
       _razorpay.open(options);
     } catch (e) {
       Log.warn('Razorpay open error', error: e, tag: 'PaymentService');
-      _onFailureCallback?.call('Failed to open payment gateway');
+      _onFailureCallback?.call(
+          'Failed to open payment gateway', PaymentFailure.notStarted);
     }
   }
 
@@ -178,12 +179,14 @@ class PaymentService {
               tag: 'PaymentService');
           _onFailureCallback?.call(
             "Payment under verification — we'll confirm in 24 hours",
+            PaymentFailure.unverified,
           );
         }
         break;
       case _VerificationOutcome.failed:
         _onFailureCallback?.call(
           "Payment under verification — we'll confirm in 24 hours",
+          PaymentFailure.unverified,
         );
         break;
     }
@@ -217,7 +220,8 @@ class PaymentService {
 
   void _handleError(PaymentFailureResponse response) {
     Log.warn('Payment error: ${response.code}', tag: 'PaymentService');
-    _onFailureCallback?.call(response.message ?? 'Payment failed');
+    _onFailureCallback?.call(
+        response.message ?? 'Payment failed', PaymentFailure.declined);
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
@@ -230,6 +234,27 @@ class PaymentService {
 }
 
 /// Internal outcome of backend payment signature verification.
+/// Why a payment did not complete.
+///
+/// This exists because the caller USED to distinguish "charged but
+/// unverifiable" from "declined" by string-matching an English message
+/// literal (`message.contains('under verification')`). That branch decides
+/// whether the user is shown a Retry button, so localising the message — which
+/// the project's i18n rule requires — would have silently restored a
+/// double-debit path on a paid invoice. The signal is now typed and the
+/// message is free to be translated.
+enum PaymentFailure {
+  /// Checkout never opened. No money moved. Retrying is safe.
+  notStarted,
+
+  /// The gateway declined or the user cancelled. No money moved. Retry is safe.
+  declined,
+
+  /// Checkout reported SUCCESS but we could not verify it. Money has probably
+  /// left the patient's account. NEVER offer a retry here.
+  unverified,
+}
+
 enum _VerificationOutcome {
   verified,
   failed,

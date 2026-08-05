@@ -48,6 +48,13 @@ class _UnreachableApi extends ApiService {
       throw Exception('unreachable');
 }
 
+CartItem _cartItem() => const CartItem(
+      equipmentId: 'eq1',
+      name: 'Oxygen Concentrator',
+      brand: 'Philips',
+      unitPrice: 25000,
+    );
+
 EquipmentItem _equipment({String id = 'eq1'}) => EquipmentItem(
       id: id,
       name: 'Oxygen Concentrator',
@@ -260,19 +267,70 @@ void main() {
       expect(prefs.getString('housepital_saved_items'), '[]');
     });
 
-    test('orders clear reaches DISK, not just memory', () async {
+    test('a patient switch PRESERVES each patient\'s own order history',
+        () async {
+      // This test replaces one that asserted the opposite. Round 2 made the
+      // clear persist `[]`, which stopped a cold start restoring the previous
+      // patient — by DESTROYING their history, because storage was one global
+      // key. The old test asserted that destruction as the contract.
+      //
+      // Per-patient keys make a switch a read of a different key, so the
+      // contract is now: switching away and back returns your own orders.
       SharedPreferences.setMockInitialValues({});
-      final orders = OrdersProvider();
+      final orders = OrdersProvider(patientId: 'pat_a');
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      expect(orders.orders, isNotEmpty);
+      orders.addOrder(
+        items: [_cartItem()],
+        totalAmount: 25000,
+        bookingNumber: 'HPL-BOOK-A1',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      final aCount = orders.orders.length;
+      expect(aCount, greaterThan(0));
+
+      // Switch to B: A's orders must leave the screen...
+      await orders.setPatient('pat_b');
+      expect(orders.orders.any((o) => o['id'] == null), isFalse);
+      final bOrders = orders.orders.length;
+
+      // ...and switching back must return A's own history intact.
+      await orders.setPatient('pat_a');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(orders.orders.length, aCount,
+          reason: "patient A's order history must survive a switch away and "
+              'back — a switch is a read, not a write');
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('housepital_orders_pat_a'), isNotNull,
+          reason: 'orders are keyed per patient');
+      expect(bOrders, isNot(aCount),
+          reason: "B must not inherit A's orders");
+    });
+
+    test('clearPatientScopedData does NOT write over stored orders', () async {
+      SharedPreferences.setMockInitialValues({});
+      final orders = OrdersProvider(patientId: 'pat_a');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      orders.addOrder(
+        items: [_cartItem()],
+        totalAmount: 3000,
+        bookingNumber: 'HPL-BOOK-A2',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      final stored = (await SharedPreferences.getInstance())
+          .getString('housepital_orders_pat_a');
+      expect(stored, isNotNull);
 
       orders.clearPatientScopedData();
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('housepital_orders'), '[]',
-          reason: 'an in-memory-only clear looked right and then '
-              '_loadFromStorage restored the previous patient on next launch');
+      expect(orders.orders, isEmpty, reason: 'memory is cleared');
+      expect(
+          (await SharedPreferences.getInstance())
+              .getString('housepital_orders_pat_a'),
+          stored,
+          reason: 'DISK IS UNTOUCHED — clearing the screen must never erase '
+              "the outgoing patient's history");
     });
 
     test('reminders are cleared from memory AND disk', () async {

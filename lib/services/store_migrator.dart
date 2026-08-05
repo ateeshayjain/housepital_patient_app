@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/logger.dart';
@@ -30,7 +31,7 @@ import '../utils/logger.dart';
 /// pre-versioning (v1) install and runs every step from 1.
 abstract final class StoreMigrator {
   /// Bump when any persisted shape changes, and add the matching step below.
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
 
   static const String _versionKey = 'housepital_schema_version';
 
@@ -44,11 +45,63 @@ abstract final class StoreMigrator {
 
   /// Ordered migration steps. `_migrations[n]` upgrades version n → n+1.
   ///
-  /// Empty today because v1 is the first stamped version. The value of this
-  /// file before the first migration exists is the STAMP: without it, v2 has
-  /// nothing to branch on.
+  /// FROZEN LITERALS ONLY — see the contract above. A step must never
+  /// reference a key constant or model class from the app; those change under
+  /// it and a migration whose meaning drifts is worse than no migration.
+  /// Builds the shipped step table. A FUNCTION, not a field initialiser, so
+  /// the test hooks below cannot capture a mutated map through Dart's lazy
+  /// static initialisation.
+  static Map<int, Future<void> Function(SharedPreferences)>
+      _buildShippedMigrations() =>
+          <int, Future<void> Function(SharedPreferences)>{
+            // v1 → v2: order and assessment storage became per-patient.
+            //
+            // The v1 keys were global, so their contents cannot be attributed
+            // to a patient after the fact — this account may since have had
+            // several. So we do NOT guess an owner and do NOT delete: the
+            // blobs are quarantined, which is exactly what quarantine()
+            // exists for. Support can recover a patient's order history from
+            // `__quarantine_v1_*`.
+            1: (prefs) async {
+              const legacyOrders = 'housepital_orders';
+              const legacyAssessments = 'housepital_assessments';
+              for (final key in <String>[legacyOrders, legacyAssessments]) {
+                if (!prefs.containsKey(key)) continue;
+                await quarantine(prefs, key, 1);
+                await prefs.remove(key);
+              }
+            },
+          };
+
+  /// Ordered migration steps. `_migrations[n]` upgrades version n → n+1.
+  ///
+  /// FROZEN LITERALS ONLY — see the contract above. A step must never
+  /// reference a key constant or model class from the app; those change under
+  /// it, and a migration whose meaning drifts is worse than no migration.
   static final Map<int, Future<void> Function(SharedPreferences)> _migrations =
-      <int, Future<void> Function(SharedPreferences)>{};
+      _buildShippedMigrations();
+
+  /// Test-only hook so the migration LOOP itself is reachable.
+  ///
+  /// Round 3 found the loop body — the failed-step guard, the early return,
+  /// the version increment — was executed by no test, because `_migrations`
+  /// was empty and private. Those three lines are the ones that prevent
+  /// silent data loss, so they must be exercisable.
+  @visibleForTesting
+  static void debugSetMigrations(
+      Map<int, Future<void> Function(SharedPreferences)> steps) {
+    _migrations
+      ..clear()
+      ..addAll(steps);
+  }
+
+  /// Test-only: restores the shipped steps after [debugSetMigrations].
+  @visibleForTesting
+  static void debugResetMigrations() {
+    _migrations
+      ..clear()
+      ..addAll(_buildShippedMigrations());
+  }
 
   /// Runs any pending migrations and records the resulting version.
   /// Never throws: a migration failure must not stop the app from starting —

@@ -249,7 +249,7 @@ void main() {
         amount: 10000,
         description: 'demo',
         onSuccess: () => succeeded = true,
-        onFailure: (m) => failure = m,
+        onFailure: (m, _) => failure = m,
       );
       // Simulation completes on a short timer.
       await Future<void>.delayed(const Duration(milliseconds: 1200));
@@ -392,7 +392,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -447,7 +447,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -495,7 +495,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -551,7 +551,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -590,7 +590,7 @@ void main() {
         amount: 1000,
         description: 'Test',
         orderId: 'ord_x',
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -634,7 +634,7 @@ void main() {
           description: 'Test',
           orderId: 'ord_x',
           onSuccess: () => successCalled = true,
-          onFailure: (m) => failure = m,
+          onFailure: (m, _) => failure = m,
         ),
         returnsNormally,
       );
@@ -677,7 +677,7 @@ void main() {
         description: 'Test',
         orderId: 'ord_x',
         onSuccess: () => successCalled = true,
-        onFailure: (_) => failureCalled = true,
+        onFailure: (_, _) => failureCalled = true,
       );
 
       // Wallet events are handled but don't trigger user callbacks in the
@@ -727,7 +727,7 @@ void main() {
         prefillPhone: '9999911911',
         prefillEmail: 'fam@example.com',
         onSuccess: completer.fire,
-        onFailure: (_) => completer.fire(),
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();
@@ -782,7 +782,7 @@ void main() {
         // Fail-closed contract: with a real key and no order_id the outcome is
         // onFailure, not onSuccess. This test is about the options payload, so
         // latch on either callback.
-        onFailure: (_) => completer.fire(),
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();
@@ -822,7 +822,7 @@ void main() {
         // Fail-closed contract: with a real key and no order_id the outcome is
         // onFailure, not onSuccess. This test is about the options payload, so
         // latch on either callback.
-        onFailure: (_) => completer.fire(),
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();

@@ -41,8 +41,10 @@ void main() {
 
   group('pre-versioning install (data, no stamp)', () {
     test('is stamped — the case that silently never was', () async {
+      // Deliberately NOT 'housepital_orders': that key is now rewritten by the
+      // v1->v2 step, so it cannot also serve as the "untouched" fixture.
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': '[]',
+        'housepital_cart_items': '[]',
       });
 
       await StoreMigrator.run();
@@ -50,8 +52,8 @@ void main() {
       final p = await prefs();
       expect(p.getInt(versionKey), StoreMigrator.currentVersion,
           reason: 'without a stamp this device re-runs migration forever');
-      expect(p.getString('housepital_orders'), '[]',
-          reason: 'existing data must survive untouched');
+      expect(p.getString('housepital_cart_items'), '[]',
+          reason: 'data no migration claims must survive untouched');
     });
 
     test('is detected from ANY key, not a curated list', () async {
@@ -171,4 +173,102 @@ void main() {
       expect(p.getStringList('__quarantine_v2_a_list'), ['a', 'b']);
     });
   });
+  group('the migration LOOP itself', () {
+    // Round 3: the loop body — the failed-step guard, the early return, the
+    // version increment — was executed by NO test, because `_migrations` was
+    // empty and private. Those three lines are the ones that prevent silent
+    // data loss. debugSetMigrations makes them reachable.
+    tearDown(StoreMigrator.debugResetMigrations);
+
+    test('a FAILING step stops at the last good version and does not advance',
+        () async {
+      SharedPreferences.setMockInitialValues({versionKey: 1});
+      StoreMigrator.debugSetMigrations({
+        1: (p) async => throw StateError('step 1 blew up'),
+        2: (p) async => p.setString('step2_ran', 'yes'),
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), 1,
+          reason: 'a failed step must leave the LAST GOOD version so the '
+              'migration is retried next launch — advancing it labels '
+              'un-migrated data as migrated, which is silent data loss');
+      expect(p.containsKey('step2_ran'), isFalse,
+          reason: 'later steps must not run on top of a failed one');
+    });
+
+    test('the failed step is RETRIED on the next launch', () async {
+      SharedPreferences.setMockInitialValues({versionKey: 1});
+      var attempts = 0;
+      StoreMigrator.debugSetMigrations({
+        1: (p) async {
+          attempts++;
+          if (attempts == 1) throw StateError('transient');
+          await p.setString('step1_ran', 'yes');
+        },
+      });
+
+      await StoreMigrator.run();
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(attempts, 2, reason: 'the stamp must not mark it done');
+      expect(p.getString('step1_ran'), 'yes');
+    });
+
+    test('steps run IN ORDER and each one advances the stamp', () async {
+      // Start below v1 so more than one step is in range: the loop runs while
+      // version < currentVersion (2), i.e. steps 0 then 1.
+      SharedPreferences.setMockInitialValues({versionKey: 0});
+      final order = <int>[];
+      StoreMigrator.debugSetMigrations({
+        0: (p) async => order.add(0),
+        1: (p) async => order.add(1),
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(order, [0, 1], reason: 'ordered forward migration');
+      expect(p.getInt(versionKey), StoreMigrator.currentVersion);
+    });
+  });
+
+  group('v1 -> v2: order storage became per-patient', () {
+    test('legacy global keys are QUARANTINED, never deleted outright',
+        () async {
+      // They cannot be attributed to a patient after the fact, so guessing an
+      // owner would be worse than preserving them for support.
+      SharedPreferences.setMockInitialValues({
+        versionKey: 1,
+        'housepital_orders': '[{"id":"HPL-BOOK-1"}]',
+        'housepital_assessments': '[{"id":"A-1"}]',
+      });
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), 2);
+      expect(p.getString('__quarantine_v1_housepital_orders'),
+          '[{"id":"HPL-BOOK-1"}]',
+          reason: "a patient's order history must stay recoverable");
+      expect(p.getString('__quarantine_v1_housepital_assessments'),
+          '[{"id":"A-1"}]');
+      expect(p.containsKey('housepital_orders'), isFalse,
+          reason: 'the un-scoped key must not keep shadowing per-patient keys');
+    });
+
+    test('is a no-op when there were no legacy keys', () async {
+      SharedPreferences.setMockInitialValues({versionKey: 1});
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getInt(versionKey), 2);
+      expect(p.getKeys().where((k) => k.startsWith('__quarantine')), isEmpty);
+    });
+  });
+
 }

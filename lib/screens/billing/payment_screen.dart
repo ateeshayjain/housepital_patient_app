@@ -278,12 +278,14 @@ class _PaymentScreenState extends State<PaymentScreen>
         HapticFeedback.mediumImpact();
         _playResultAnimations();
       },
-      onFailure: (message) {
+      onFailure: (message, kind) {
         if (!mounted) return;
-        // PaymentService uses this message for the one case where checkout
-        // SUCCEEDED but verification was impossible. Money has likely left the
-        // patient's account, so it must not be presented as a failed payment.
-        final unverified = message.contains('under verification');
+        // Typed, not string-matched. This branch decides whether a Retry
+        // button appears; deciding it by `message.contains('under
+        // verification')` meant translating that message — which the i18n
+        // rule requires — would silently restore a double-debit path on a
+        // paid invoice.
+        final unverified = kind == PaymentFailure.unverified;
         setState(() {
           _isProcessing = false;
           _showResult = true;

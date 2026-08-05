@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../config/app_colors.dart';
 import '../utils/app_localizations.dart';
 import '../widgets/assistant_fab.dart';
+import '../utils/session_scope.dart';
 import '../widgets/glass.dart';
 import 'home/home_screen.dart';
 import 'my_care/my_care_screen.dart';
@@ -28,6 +29,17 @@ class MainShell extends StatefulWidget {
 
 class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Wire the patient-change fan-out once, above every tab. Done here rather
+    // than in a screen because HomeScreen.initState triggers loadPatients(),
+    // which is one of the two switch paths this has to cover.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) SessionScope.install(context);
+    });
+  }
 
   // FIVE tabs (owner field round: 'move the calendar to My Care so that there
   // are five icons below'). The calendar is now reached from the My Care app

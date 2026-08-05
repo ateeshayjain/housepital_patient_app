@@ -8,8 +8,31 @@ import '../models/models.dart';
 import '../utils/logger.dart';
 
 class OrdersProvider extends ChangeNotifier {
-  static const _ordersKey = 'housepital_orders';
-  static const _assessmentsKey = 'housepital_assessments';
+  /// Storage is keyed PER PATIENT.
+  ///
+  /// It used to be two global keys, which made the patient-scoped clear
+  /// destructive: clearing wrote `[]` over the ONE key, so switching patients
+  /// permanently erased the outgoing patient's order history — and the
+  /// regression test asserted that erasure as the contract. Per-patient keys
+  /// make a switch a READ of a different key, which destroys nothing.
+  ///
+  /// The pre-versioning global keys are quarantined by StoreMigrator's v1->v2
+  /// step: they cannot be attributed to a patient after the fact, so they are
+  /// preserved for support rather than guessed at or deleted.
+  static const _ordersKeyPrefix = 'housepital_orders_';
+  static const _assessmentsKeyPrefix = 'housepital_assessments_';
+
+  /// Legacy un-scoped keys. FROZEN — referenced by the migration.
+  static const legacyOrdersKey = 'housepital_orders';
+  static const legacyAssessmentsKey = 'housepital_assessments';
+
+  /// Whose orders are currently loaded. Null before a patient is known.
+  String? _patientId;
+  String? get patientId => _patientId;
+
+  String get _ordersKey => '$_ordersKeyPrefix${_patientId ?? '_none'}';
+  String get _assessmentsKey =>
+      '$_assessmentsKeyPrefix${_patientId ?? '_none'}';
 
   List<Map<String, dynamic>> _orders = [];
   List<Map<String, dynamic>> _assessments = [];
@@ -17,8 +40,23 @@ class OrdersProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get orders => List.unmodifiable(_orders);
   List<Map<String, dynamic>> get assessments => List.unmodifiable(_assessments);
 
-  OrdersProvider() {
+  OrdersProvider({String? patientId}) : _patientId = patientId {
     _loadFromStorage();
+  }
+
+  /// Points this provider at a patient and loads THEIR orders.
+  ///
+  /// A no-op when the id is unchanged. When it changes, in-memory state is
+  /// dropped first so the outgoing patient's orders can never render under
+  /// the incoming patient's name, then the incoming patient's own key is
+  /// read. Nothing is written, so neither patient's history is touched.
+  Future<void> setPatient(String? patientId) async {
+    if (patientId == _patientId) return;
+    _patientId = patientId;
+    _orders = [];
+    _assessments = [];
+    notifyListeners();
+    await _loadFromStorage();
   }
 
   /// True when [order] is a quote-pending order — booked without a price,
@@ -209,13 +247,19 @@ class OrdersProvider extends ChangeNotifier {
   /// Clears in-memory orders and assessments. Orders are scoped to the
   /// patient they were placed for, so they must not survive a patient switch
   /// or a logout on a shared phone.
+  /// Drops the current patient's orders from MEMORY ONLY, and forgets which
+  /// patient they belonged to.
+  ///
+  /// Deliberately does NOT persist. Round 2 made this persist, to stop a cold
+  /// start restoring the previous patient — but with one global key that
+  /// wrote `[]` over the outgoing patient's real history, destroying it. With
+  /// per-patient keys the cold-start problem is gone by construction: the
+  /// data sits under the outgoing patient's key and is simply not read.
   void clearPatientScopedData() {
     _orders = [];
     _assessments = [];
-    // MUST persist: an in-memory-only clear looked correct and then
-    // _loadFromStorage() restored the previous patient's entire order history
-    // on the next cold start.
-    _persistAndNotify();
+    _patientId = null;
+    notifyListeners();
   }
 
 }

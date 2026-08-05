@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +13,7 @@ import '../providers/my_care_provider.dart';
 import '../providers/orders_provider.dart';
 import '../providers/reminders_provider.dart';
 import '../services/cache_service.dart';
+import '../services/medication_reminder_service.dart';
 import '../utils/logger.dart';
 
 /// One place that knows which state belongs to a single patient, and clears
@@ -50,6 +53,29 @@ abstract final class SessionScope {
   /// Prefix for the per-day rating keys written by my_care_screen.
   static const String _dailyRatingPrefix = 'daily_rating_';
 
+  /// Wires [AppProvider] so EVERY patient-switch path fans out here.
+  ///
+  /// There are two: the switch sheet, and `loadPatients()` adopting a
+  /// different patient from the API — the latter runs on every Home mount and
+  /// round 3 found it cleared `AppProvider` only. Call once, high in the tree.
+  static void install(BuildContext context) {
+    final app = context.read<AppProvider>();
+    if (app.onPatientChanged != null) return;
+    app.onPatientChanged = (patientId) {
+      if (!context.mounted) return;
+      // Re-point per-patient stores at the incoming patient. Orders are keyed
+      // per patient, so this is a READ of a different key — it destroys
+      // nothing belonging to either patient.
+      unawaited(_adopt(context, patientId));
+    };
+  }
+
+  static Future<void> _adopt(BuildContext context, String? patientId) async {
+    await clearPatientData(context);
+    if (!context.mounted) return;
+    await context.read<OrdersProvider>().setPatient(patientId);
+  }
+
   /// Clears patient-scoped state while keeping the user signed in.
   /// Use when the ACTIVE PATIENT changes.
   static Future<void> clearPatientData(BuildContext context) async {
@@ -65,6 +91,18 @@ abstract final class SessionScope {
     // Async stores. Awaited so a caller that immediately loads the next
     // patient cannot race the wipe.
     await context.read<RemindersProvider>().clearPatientScopedData();
+
+    // Scheduled OS notifications outlive the app. Without this, patient A's
+    // drug name and dose fires on the lock screen after the phone has been
+    // handed to someone else — the only PHI leak here that escapes the app
+    // entirely. cancelAllReminders() already existed; nothing called it.
+    try {
+      await MedicationReminderService().cancelAllReminders();
+    } catch (e) {
+      Log.warn('Failed to cancel scheduled medication reminders',
+          error: e, tag: 'SessionScope');
+    }
+
     await _clearPatientScopedStorage();
   }
 
