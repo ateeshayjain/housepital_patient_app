@@ -43,14 +43,14 @@ abstract final class StoreMigrator {
   // future migration. `prefs.getKeys().isEmpty` cannot go stale, so it is the
   // inference we use instead — see _hasAnyStoredData.
 
-  /// Ordered migration steps. `_migrations[n]` upgrades version n → n+1.
+  /// Builds the shipped step table.
+  ///
+  /// A FUNCTION, not a field initialiser, so the test hooks below cannot
+  /// capture a mutated map through Dart's lazy static initialisation.
   ///
   /// FROZEN LITERALS ONLY — see the contract above. A step must never
   /// reference a key constant or model class from the app; those change under
-  /// it and a migration whose meaning drifts is worse than no migration.
-  /// Builds the shipped step table. A FUNCTION, not a field initialiser, so
-  /// the test hooks below cannot capture a mutated map through Dart's lazy
-  /// static initialisation.
+  /// it, and a migration whose meaning drifts is worse than no migration.
   static Map<int, Future<void> Function(SharedPreferences)>
       _buildShippedMigrations() =>
           <int, Future<void> Function(SharedPreferences)>{
