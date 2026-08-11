@@ -65,7 +65,11 @@ class HcPalette {
   final Color orangeDark;
   final Color orangeLight;
   // Text/icons ON an orange fill. White on orange fails AA (~2.3:1), so both
-  // modes use the same dark ink (6.3:1 on orange).
+  /// Text/icons ON an orange fill. WHITE in both appearances by explicit owner
+  /// decision — measured 2.33:1, recorded as an accepted risk. The older
+  /// comment here claimed dark ink at 6.3:1, which described a palette that no
+  /// longer exists and read as a standing justification to revert the owner's
+  /// call. Do not.
   final Color onOrange;
 
   // Misc semantic

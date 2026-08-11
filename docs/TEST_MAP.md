@@ -3,7 +3,7 @@
 **Last updated:** 2026-06-15
 **Total test count:** ~1,771 at runtime (1,370 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
 **Pass rate:** all passing (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
-**Test file count:** 99 (`find test -name "*_test.dart" | wc -l`)
+**Test file count:** 101 (`find test -name "*_test.dart" | wc -l`) — 1,819 tests at runtime
 
 ### How to update this count
 
@@ -301,3 +301,16 @@ flutter test --coverage
 genhtml coverage/lcov.info -o coverage/html
 open coverage/html/index.html
 ```
+
+## 2026-08-03 (audit rounds 1–3)
+
+| File | Guards |
+|---|---|
+| `test/providers/patient_scope_isolation_test.dart` | The PHI wipe. Every store `SessionScope` clears, plus the `loadPatients` switch path. **Add an assertion here whenever `SessionScope` gains a store.** |
+| `test/services/store_migrator_test.dart` | Storage versioning. Includes the migration LOOP itself via `debugSetMigrations` — the failed-step guard, early return and version increment were previously executed by no test and could each be deleted with the suite green. |
+
+**Known test-quality gaps carried from round 3** (not yet closed): `SessionScope`
+itself is imported by zero tests despite three call sites; `session_scope.dart`,
+`demo_mode.dart`, `demo_data_banner.dart` and `delete_account_screen.dart` have no
+tests; ~120 tests assert copies of production data rather than production; 17 payment
+tests skip without `--dart-define=RAZORPAY_KEY`.

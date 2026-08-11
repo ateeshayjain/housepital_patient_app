@@ -2,7 +2,7 @@
 
 Step-by-step guide to deploy the full Housepital Patient App stack.
 
-**Last updated:** 2026-05-28 (audit batch 4 — added Firebase Console hardening checklist)
+**Last updated:** 2026-08-03 (audit round 3 — storage-rules deploy added to the pre-launch rules block, not just initial setup)
 
 ---
 
@@ -391,9 +391,19 @@ The repo's `firestore.rules` file is the source of truth. After every change:
 # From this repo (or from housepital-backend if firebase.json lives there):
 firebase deploy --only firestore:rules --project housepital-patient
 
-# Verify the deployed rules match the file:
+# STORAGE RULES ARE A SEPARATE DEPLOY and are easy to forget — chat and
+# concern-evidence photos are unprotected until this runs:
+firebase deploy --only storage --project housepital-patient
+
+# Verify the deployed rules match the files:
 firebase firestore:rules get --project housepital-patient
 ```
+
+**`storage.rules` caveat — read the file header before relying on it.** It is
+authenticated-only, not per-patient: the client never reads a Firebase uid, so
+a `request.auth.uid == patientId` rule would deny 100% of uploads. Real
+isolation needs a `user_patients` custom claim from the backend. Do not
+describe the current rules as per-patient isolation.
 
 **Audit trail:** every deploy is logged at
 https://console.firebase.google.com/project/housepital-patient/firestore/rules

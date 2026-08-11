@@ -99,6 +99,11 @@ task "waiting for the test suite" — run targeted files, report results.
   My Care app bar (`'/care-calendar'`, custom action left of search) to get back to five
   icons. Indices 1/2/3 are referenced externally via `MainShell.switchToTab` — do not
   reorder them.
+- **Paired foregrounds:** `onOrange` is white (owner decision, 2.33:1 — measured, accepted).
+  `onError` FLIPS with appearance (white on light error = 4.98:1; dark ink on the lighter
+  dark-mode error = 4.62:1) — white on dark-mode error is 3.49:1 and fails. `orangeStrong`
+  (#9A5C00, 5.38:1) is for SMALL orange text where `orangeText` (3.99:1 measured, despite
+  its comment) would fail.
 - **Type:** bundled `Archivo` (+ `NotoSansDevanagari`) — google_fonts was removed; never
   re-add it. 11px minimum text size. Large iOS-style display titles. The typography scale
   is converging on a canon (28/w800 display • 16/w600 section header • etc.); the design
@@ -108,7 +113,30 @@ task "waiting for the test suite" — run targeted files, report results.
 - **Motion:** gate animations on `MediaQuery.disableAnimations`; celebrations ≤500ms;
   no infinite pulses; nothing animated on SOS/payment/vitals paths.
 - **i18n:** every new user-facing string gets a key in BOTH `assets/i18n/en.json` and
-  `hi.json` (guard test enforces sync).
+  `hi.json` (guard test enforces sync). **Never branch control flow on a user-facing
+  string** — translating it silently changes behaviour. The payment retry decision used to
+  be `message.contains('under verification')`; it is now a typed `PaymentFailure`.
+
+## Storage & session contracts
+
+- **Orders/assessments are keyed PER PATIENT** (`housepital_orders_<patientId>`). A
+  patient switch is a READ of a different key, so `OrdersProvider.clearPatientScopedData()`
+  is memory-only and must never persist — the previous global-key version wrote `[]` over
+  the outgoing patient's real history and destroyed it.
+- **Every patient-switch path fans out through `SessionScope`**, via
+  `AppProvider.onPatientChanged`, wired once by `SessionScope.install()` in
+  `MainShell.initState`. There are two paths: the switch sheet and `loadPatients()`, which
+  runs on every Home mount. A third must use the hook, not clear by hand.
+- **`SessionScope` enumerates STORES, not symptoms** — provider fields, prefs keys, cache
+  entries, and OS-scheduled notifications (`cancelAllReminders`, since they outlive the
+  app). New patient-scoped state gets added there and asserted in
+  `test/providers/patient_scope_isolation_test.dart` in the SAME edit.
+- **`StoreMigrator` is at v2** with one shipped step. Bump `currentVersion`, add to
+  `_buildShippedMigrations()`, use FROZEN literals (never a key constant or model class),
+  `quarantine()` rather than overwrite, and never stamp success on a failed step.
+- **`DemoMode` is a set of sources**; a source may clear only itself. Declare a `source*`
+  constant and wire its call in the same edit — an unused constant is invisible to the
+  analyzer and makes the list read complete when it isn't.
 
 ## Architecture notes
 

@@ -1,5 +1,29 @@
 # Housepital Patient App -- Changelog
 
+## 2026-08-03 — audit rounds 1–3 and the fixes they forced
+
+- **Nav:** six tabs → five; care calendar moved to the My Care app bar. Side effect:
+  `switchToTab(3)` (Pay Now, upcoming-payment card) reaches **Billing** again after
+  silently opening the Calendar tab. Nav then went fixed-orange-bar → **floating
+  liquid-glass pill** (owner, reversing field round 5).
+- **Payments:** unverified payments no longer confirm (`skippedDemo` fails closed with a
+  real key); `createOrder` is actually called; the second unguarded path in
+  `billing_screen` now routes through `PaymentScreen`; the pending-verification state is
+  its own outcome with no Retry; the retry branch is a typed `PaymentFailure`, not a
+  string match.
+- **PHI:** `SessionScope` clears every patient-scoped store — providers, prefs keys, the
+  dashboard cache, and OS-scheduled medication notifications. Both switch paths fan out
+  via `AppProvider.onPatientChanged`. Order storage is keyed per patient, so a switch
+  destroys nothing.
+- **Storage versioning:** `StoreMigrator` added, now at v2 with one shipped step
+  (quarantines the pre-per-patient order keys).
+- **Honesty:** sample data is announced app-wide via `DemoMode` + an overlay pill; the
+  doctor handover PDF carries a SAMPLE DATA band; fabricated vitals are no longer merged
+  with real readings.
+- **Release hygiene:** iOS camera/photo usage strings; real app icon and launch image;
+  `/services` no longer a blank dead end; `/delete-account` added; `storage.rules` written.
+- **Docs:** three rounds of drift corrected — see `docs/audits/` and `docs/KNOWN_ISSUES.md`.
+
 **Format:** `## [Date] -- [Summary]` with bullet points for each change.
 
 ---

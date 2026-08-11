@@ -67,9 +67,14 @@ class HousepitalColorsDark {
 class HousepitalColors {
   // Brand Primary - Pantone 1375 C (WCAG AA compliant)
   static const Color orange = Color(0xFFF39314);
-  static const Color orangeText = Color(0xFFB86E00); // 4.6:1 on white — use for text
+  // MEASURED 3.99:1 on white — the comment here used to claim 4.6:1, and the
+  // design gate enforces this token BECAUSE of that wrong figure. It clears the
+  // 3:1 large-text floor but FAILS 4.5:1 for body text. For small text use
+  // `orangeStrong` (#9A5C00, 5.38:1).
+  static const Color orangeText = Color(0xFFB86E00);
   static const Color orangeLight = Color(0xFFFFF3E0);
-  static const Color orangeDark = Color(0xFFCC6E00); // 4.5:1 on white
+  static const Color orangeDark = Color(0xFFCC6E00); // MEASURED 3.62:1 on white
+                                                     // (comment claimed 4.5:1)
   // ON-orange text/icons: WHITE, by explicit owner decision (2026-06-11) —
   // the brand look wins over the AA ratio here (white on #F39314 is ~2.3:1;
   // Apple ships white-on-orange too). Keep text on orange fills BOLD (w600+)
@@ -92,7 +97,9 @@ class HousepitalColors {
   // Status Colors (WCAG AA compliant for text)
   static const Color success = Color(0xFF2E7D32); // darker green, 5.1:1
   static const Color successLight = Color(0xFFE8F5E9);
-  static const Color warning = Color(0xFFE65100); // dark orange instead of yellow, 4.6:1
+  // MEASURED 3.79:1 on white (comment claimed 4.6:1). Large text / non-text
+  // only; it clears the 3:1 floor, not the 4.5:1 body-text floor.
+  static const Color warning = Color(0xFFE65100);
   static const Color warningLight = Color(0xFFFFF3E0);
   static const Color error = Color(0xFFD32F2F); // 4.7:1
   static const Color errorLight = Color(0xFFFFEBEE);
@@ -241,7 +248,10 @@ class HousepitalTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: HousepitalColors.orange,
-          // Dark text on orange — 6.3:1 vs white's ~2.3:1 (brand fill kept).
+          // NOTE: this comment described the PRE-2026-06 palette. `onOrange`
+          // is now WHITE in both appearances by explicit owner decision,
+          // measured at 2.33:1. Recorded as accepted risk — do not "fix" it
+          // back to dark ink.
           foregroundColor: HousepitalColors.onOrange,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -264,7 +274,7 @@ class HousepitalTheme {
         ),
       ),
       // Raw brand orange on white is only ~2.3:1 — TextButtons use the
-      // darkened orangeText (4.6:1, AA) instead.
+      // darkened orangeText — MEASURED 3.99:1, not the 4.6:1 once claimed.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: HousepitalColors.orangeText,

@@ -3,16 +3,19 @@
 ## Navigation Structure
 
 ```
-Bottom Tab Bar (MainShell -- 5 tabs, FIXED full-width solid-orange bar)
+Bottom Tab Bar (MainShell -- 5 tabs, FLOATING liquid-glass pill)
   |-- [0] Home        -> HomeScreen (Dashboard)
   |-- [1] My Care     -> MyCareScreen (Active services hub)
   |-- [2] Services    -> ServiceCatalogScreen (Marketplace)
-  |-- [3] Calendar    -> CareCalendarScreen (Day/Week/Month care calendar)
-  |-- [4] Billing     -> BillingScreen (Payments & invoices)
-  |-- [5] More        -> SettingsScreen (Profile, settings, support)
+  |-- [3] Billing     -> BillingScreen (Payments & invoices)
+  |-- [4] More        -> SettingsScreen (Profile, settings, support)
 ```
 
-Tab switching is managed via `IndexedStack` in `MainShell` for state preservation. A global key (`MainShell.shellKey`) allows programmatic tab switching from any screen via `MainShell.switchToTab(index)`. **Calendar was added as a root tab at index 3** (field round 4-5); indices 1/2 (My Care, Services) are referenced externally by `switchToTab` calls and must not be reordered.
+Tab switching is managed via `IndexedStack` in `MainShell` for state preservation. A global key (`MainShell.shellKey`) allows programmatic tab switching from any screen via `MainShell.switchToTab(index)`.
+
+**The care calendar is NOT a tab.** It was a root tab at index 3 during field rounds 4-5; the owner moved it to the My Care app bar (`'/care-calendar'`, custom action left of search) to get back to five icons. Indices **1, 2 and 3** are referenced externally by `switchToTab` calls and must not be reordered — in particular `home_screen`'s "Pay Now" button and upcoming-payment card call `switchToTab(3)` expecting **Billing**, which is what they silently stopped doing while Calendar occupied that index.
+
+**Chrome:** the bar is a detached `GlassSurface` pill (16px side insets, radius 32, floating above the home indicator), not the fixed edge-to-edge orange bar of field round 5. It lives in the Scaffold's `bottomNavigationBar` slot so the body's bottom `MediaQuery` inset still covers its full footprint.
 
 **Nav bar:** FIXED full-width solid-orange bar anchored to the bottom edge (owner iterated floating-glass → pill → fixed), white icons/labels, SafeArea-padded.
 
@@ -74,7 +77,7 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 
 | Screen        | Route           | Widget             | Data Source                    | Actions                                   | Permissions |
 |---------------|-----------------|--------------------|--------------------------------|-------------------------------------------|-------------|
-| Care Calendar | (tab) / /care-calendar | CareCalendarScreen | CareEvent + MedicationProvider | Day/Week/Month views; single-tap mark-taken (timestamped log); staff attendance mark-present; future-day "N doses scheduled" cards | All roles |
+| Care Calendar | /care-calendar (My Care app bar) | CareCalendarScreen | CareEvent + MedicationProvider | Day/Week/Month views; single-tap mark-taken (timestamped log); staff attendance mark-present; future-day "N doses scheduled" cards | All roles |
 
 ---
 

@@ -374,7 +374,13 @@ class AssistantExecutor {
 
   /// Books / renews a service: backend first (short timeout), then the local
   /// demo path — a quote-pending OrdersProvider order, the same shape the
-  /// quote-first booking flow creates. No price is ever shown (manpower rule).
+  /// quote-first booking flow creates.
+  ///
+  /// NOTE: this used to say "no price is ever shown (manpower rule)". That
+  /// rule is DEAD — manpower prices ARE shown and directly bookable (owner,
+  /// re-confirmed 2026-06-11). Quote-pending applies only to items that
+  /// genuinely lack a price (`price == null || price == 0`), never by
+  /// category.
   Future<ExecutorResult> _submitServiceRequest({
     required String category,
     required bool renewal,

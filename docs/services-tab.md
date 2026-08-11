@@ -71,7 +71,7 @@ ServiceCatalogScreen.switchToSubTab(1); // jump to Equipment tab
 
 ### Key Service IDs
 
-**Manpower** (all `bookingType: 'assessment'`, no prices shown):
+**Manpower** (rate-card prices ARE shown and directly bookable — the old "no prices shown" rule was reversed by the owner on 2026-06-11):
 - `mp-nurse-basic-12`, `mp-nurse-basic-24`, `mp-nurse-adv-12`, `mp-nurse-adv-24`, `mp-nurse-crit-12`, `mp-nurse-crit-24`
 - `mp-caretaker-basic-12` through `mp-caretaker-crit-24` (6 variants)
 - `mp-japa-24`, `mp-nanny-12`
@@ -149,7 +149,7 @@ The Review step provides `_savedAddresses` (mock data: Home, Parent's Home, Offi
 
 ### Pricing Display Rules
 
-- `basePriceMin` is nullable — if null, no price row is shown
+- `basePriceMin` is nullable — if null the item has NO PRICE YET and renders as quote-pending. This is never decided by category: manpower carries rate-card prices.
 - If `basePriceMax` differs from `basePriceMin`, a range is displayed (e.g. "3,500 - 5,000")
 - **Never show prices for manpower services** (nurse, caretaker, japa, nanny) — users reject without speaking to sales
 - Equipment pricing is monthly (minimum 15 days = 1 month)

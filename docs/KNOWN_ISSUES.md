@@ -2,7 +2,49 @@
 
 Running list of bugs, workarounds, technical debt, and things that work but are not right.
 
-**Last updated:** 2026-05-28 (audit batch 4)
+**Last updated:** 2026-08-03 (audit round 3)
+
+## Open — from the eleven-checklist audits (rounds 1–3, `docs/audits/`)
+
+Full evidence in `docs/audits/round3/`. Listed here so this file stops being the
+one place that doesn't know.
+
+**Blockers**
+- `api.housepital.in` does not resolve. Every provider serves `DemoData`; the app
+  ships a demo-data build.
+- Demo clinical data seeds on every fresh install. Three rounds have improved the
+  LABELLING; no round has gated the seed. There is no `DEMO_DATA` build flag.
+- App icon is an upscale of a 143×182 raster (ink fills 50.2%×64.0%, no iOS 18
+  dark/tinted variants). Needs the designer's vector before submission.
+- `storage.rules` is written but **undeployed**; live posture unknown.
+- No account-deletion request reaches any server — the record is written locally
+  and read by nothing.
+- Android release signs with the **debug** keystore; the auth gate at
+  `main.dart` is commented out; no dSYM upload phase; no kill switch.
+
+**High**
+- The demo-notice overlay pill absorbs touches and occludes the first content row
+  on several screens; `maxLines: 1` truncates the warning in Hindi and at the
+  1.4× text ceiling.
+- `DemoMode` has one `markServingLiveData` call site for eleven sources, so the
+  notice does not clear; `sourceCareTeam`/`sourceCareCalendar`/`sourceProfile`
+  are declared and never wired.
+- `logger.dart:63` is an unwired TODO — ~45 warn/error sites reach no remote sink,
+  including every `StoreMigrator` failure path.
+- 40.3 MiB of unreferenced product images ship (238 of 439 files). Pure delete.
+- Four `BackdropFilter` surfaces per frame (~22% of screen) since the pill nav.
+- Dynamic Type clamped at 1.4×, untested; 17 of 54 icon buttons unlabelled;
+  zero contrast assertions in `test/`.
+- `theme.dart` tokens measure 3.99/3.62/3.79:1 (comments now corrected); the
+  design gate still enforces `orangeText` on the basis of the old wrong figure.
+- Backend: the two databases define the same six nouns incompatibly;
+  `family_members.user_id` is `UNIQUE`, so the server structurally cannot return
+  two patients and the patient-switch feature would 403.
+
+**Accepted risks (owner decisions, not defects)**
+- White on Housepital orange = 2.33:1 — explicit owner decision, measured and accepted.
+- Manpower prices shown and directly bookable.
+- Floating liquid-glass pill nav (reverses field round 5).
 
 ---
 
