@@ -67,7 +67,14 @@ abstract final class StoreMigrator {
               const legacyAssessments = 'housepital_assessments';
               for (final key in <String>[legacyOrders, legacyAssessments]) {
                 if (!prefs.containsKey(key)) continue;
-                await quarantine(prefs, key, 1);
+                final preserved = await quarantine(prefs, key, 1);
+                if (!preserved) {
+                  // Leaving the legacy key in place is harmless — it is simply
+                  // not read. Deleting it when the copy failed is not.
+                  throw StateError(
+                      'Quarantine of "$key" failed; aborting v1->v2 so the '
+                      'migration is retried rather than losing the data.');
+                }
                 await prefs.remove(key);
               }
             },
@@ -201,24 +208,44 @@ abstract final class StoreMigrator {
   /// Call this from a migration step before overwriting anything it could not
   /// parse. Quarantined entries are never read by the app; they exist so a
   /// patient's order history is recoverable rather than gone.
-  static Future<void> quarantine(
+  /// Returns TRUE only if the copy is known to have been written.
+  ///
+  /// This used to discard the `bool` every setter returns. SharedPreferences
+  /// does not revert its in-memory cache when the platform write fails, so a
+  /// disk-full or protected-data-locked device produced: copy silently fails →
+  /// caller deletes the original → version stamped success → log line reads
+  /// "Quarantined". Data destroyed, log says preserved — the exact inverse of
+  /// this function's purpose. Callers MUST check the result before removing
+  /// anything.
+  static Future<bool> quarantine(
       SharedPreferences prefs, String key, int version) async {
     final value = prefs.get(key);
-    if (value == null) return;
+    if (value == null) return true; // nothing to preserve
     final target = '__quarantine_v${version}_$key';
+    bool ok;
     if (value is String) {
-      await prefs.setString(target, value);
+      ok = await prefs.setString(target, value);
     } else if (value is int) {
-      await prefs.setInt(target, value);
+      ok = await prefs.setInt(target, value);
     } else if (value is bool) {
-      await prefs.setBool(target, value);
+      ok = await prefs.setBool(target, value);
     } else if (value is double) {
-      await prefs.setDouble(target, value);
+      ok = await prefs.setDouble(target, value);
     } else if (value is List<String>) {
-      await prefs.setStringList(target, value);
+      ok = await prefs.setStringList(target, value);
+    } else {
+      // Unknown type: we cannot copy it, so we must not authorise a delete.
+      Log.error('Cannot quarantine "$key" — unsupported type '
+          '${value.runtimeType}', tag: 'StoreMigrator');
+      return false;
     }
-    Log.warn('Quarantined unparseable "$key" as "$target"',
-        tag: 'StoreMigrator');
+    if (!ok) {
+      Log.error('Quarantine WRITE FAILED for "$key" — refusing to authorise '
+          'deletion of the original', tag: 'StoreMigrator');
+      return false;
+    }
+    Log.warn('Quarantined "$key" as "$target"', tag: 'StoreMigrator');
+    return true;
   }
 
   /// Test-only: the key the version stamp lives under.

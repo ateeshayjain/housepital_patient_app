@@ -271,4 +271,58 @@ void main() {
     });
   });
 
+  group('quarantine reports success (round-4 regression)', () {
+    test('returns TRUE when the copy is written', () async {
+      SharedPreferences.setMockInitialValues({'k': 'v'});
+      final p = await prefs();
+
+      expect(await StoreMigrator.quarantine(p, 'k', 1), isTrue);
+      expect(p.getString('__quarantine_v1_k'), 'v');
+    });
+
+    test('returns TRUE for an absent key — nothing to preserve', () async {
+      SharedPreferences.setMockInitialValues({});
+      final p = await prefs();
+
+      expect(await StoreMigrator.quarantine(p, 'absent', 1), isTrue);
+    });
+
+    test('the result is CHECKED — a failed copy must not authorise a delete',
+        () async {
+      // The bug: quarantine discarded the bool every setter returns.
+      // SharedPreferences does not revert its cache when a platform write
+      // fails, so on a full or locked disk the copy failed silently, the
+      // caller deleted the original, and the log read "Quarantined".
+      // Data destroyed, log said preserved.
+      //
+      // A mock store cannot fail a write, so this pins the CALLER's contract
+      // instead: when the step cannot preserve, it must throw rather than
+      // delete, leaving the version un-advanced for a retry.
+      SharedPreferences.setMockInitialValues({
+        versionKey: 1,
+        'legacy_blob': 'irreplaceable',
+      });
+      StoreMigrator.debugSetMigrations({
+        1: (p) async {
+          const key = 'legacy_blob';
+          final preserved = false; // simulate a failed quarantine write
+          if (!preserved) {
+            throw StateError('quarantine failed; refusing to delete');
+          }
+          // ignore: dead_code
+          await p.remove(key);
+        },
+      });
+      addTearDown(StoreMigrator.debugResetMigrations);
+
+      await StoreMigrator.run();
+
+      final p = await prefs();
+      expect(p.getString('legacy_blob'), 'irreplaceable',
+          reason: 'the original must survive a failed preservation');
+      expect(p.getInt(versionKey), 1,
+          reason: 'and the migration must be retried, not stamped done');
+    });
+  });
+
 }

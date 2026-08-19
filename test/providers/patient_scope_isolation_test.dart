@@ -365,4 +365,50 @@ void main() {
         reason: "the outgoing patient's dashboard must not survive");
   });
 
+  group('round-4 regressions', () {
+    test('the DEMO-SEED path announces the patient', () async {
+      // This is the only path that runs in the shipped build — the API
+      // announce sits inside a try that always throws while
+      // api.housepital.in does not resolve. Without an announce here,
+      // OrdersProvider is never told who the patient is, every order lands in
+      // the shared `housepital_orders__none` bucket, and the whole
+      // per-patient key scheme is inert.
+      final app = AppProvider(_UnreachableApi());
+      String? announced;
+      var calls = 0;
+      app.onPatientChanged = (id) {
+        announced = id;
+        calls++;
+      };
+
+      await app.loadPatients();
+
+      expect(calls, 1, reason: 'the demo seed must announce exactly once');
+      expect(announced, isNotNull);
+      expect(announced, app.currentPatient?.id);
+    });
+
+    test('switchPatient announces the INCOMING patient', () async {
+      final app = AppProvider(_UnreachableApi());
+      await app.loadPatients();
+      String? announced;
+      app.onPatientChanged = (id) => announced = id;
+
+      app.switchPatient(_otherPatient());
+
+      expect(announced, 'pat_other_sunita');
+    });
+
+    test('clearSession announces null', () async {
+      final app = AppProvider(_UnreachableApi());
+      await app.loadPatients();
+      String? announced = 'sentinel';
+      app.onPatientChanged = (id) => announced = id;
+
+      app.clearSession();
+
+      expect(announced, isNull);
+    });
+  });
+
 }

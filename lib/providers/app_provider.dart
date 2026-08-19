@@ -155,6 +155,14 @@ class AppProvider extends ChangeNotifier {
       // labelled with a fabricated name.
       DemoMode.markServingDemoData(DemoMode.sourcePatientIdentity);
       notifyListeners();
+      // MUST announce. This branch is the ONLY one that runs in the shipped
+      // build (api.housepital.in does not resolve, so the announce below sits
+      // inside a try that always throws). Without it OrdersProvider is never
+      // told who the patient is, every order lands in the shared
+      // `housepital_orders__none` bucket, and the per-patient key scheme is
+      // inert — which also silently reinstates the cold-start bug where the
+      // previous patient's history renders for the next one.
+      _announcePatient(DemoData.patient.id);
     }
 
     // Then try API in background

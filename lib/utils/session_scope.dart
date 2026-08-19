@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/app_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/assistant_provider.dart';
 import '../providers/billing_provider.dart';
 import '../providers/cart_provider.dart';
@@ -60,17 +61,47 @@ abstract final class SessionScope {
   /// round 3 found it cleared `AppProvider` only. Call once, high in the tree.
   static void install(BuildContext context) {
     final app = context.read<AppProvider>();
-    if (app.onPatientChanged != null) return;
-    app.onPatientChanged = (patientId) {
+    app.onPatientChanged ??= (patientId) {
       if (!context.mounted) return;
       // Re-point per-patient stores at the incoming patient. Orders are keyed
       // per patient, so this is a READ of a different key — it destroys
       // nothing belonging to either patient.
       unawaited(_adopt(context, patientId));
     };
+
+    // An INVOLUNTARY logout (401 / refresh failure) previously bypassed this
+    // file entirely, so it cancelled no medication notifications and cleared
+    // no provider — on the path most likely to fire on a lost phone.
+    final auth = context.read<AuthProvider>();
+    auth.onForcedLogout ??= () async {
+      if (!context.mounted) return;
+      await clearSession(context);
+    };
   }
 
+  /// Serialises adoptions. `loadPatients` runs on every Home mount with a 5s
+  /// API window, so two adoptions can otherwise overlap and a late one lands
+  /// one patient's orders under another's name — or leaves the id null and
+  /// writes to the shared `_none` bucket.
+  static Future<void>? _adoptInFlight;
+
   static Future<void> _adopt(BuildContext context, String? patientId) async {
+    final pending = _adoptInFlight;
+    if (pending != null) {
+      await pending.catchError((_) {});
+      // The queued adoption may have outlived this context.
+      if (!context.mounted) return;
+    }
+    final run = _runAdopt(context, patientId);
+    _adoptInFlight = run;
+    try {
+      await run;
+    } finally {
+      if (identical(_adoptInFlight, run)) _adoptInFlight = null;
+    }
+  }
+
+  static Future<void> _runAdopt(BuildContext context, String? patientId) async {
     await clearPatientData(context);
     if (!context.mounted) return;
     await context.read<OrdersProvider>().setPatient(patientId);

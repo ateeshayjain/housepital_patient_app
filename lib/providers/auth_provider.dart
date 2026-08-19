@@ -106,9 +106,26 @@ class AuthProvider extends ChangeNotifier {
   /// then let the caller retry the original request. If refresh fails the
   /// user is logged out (refresh token expired/revoked). Returns true if
   /// the caller should retry, false if it should surface the 401.
+  /// Fired when an involuntary logout happens (401 / refresh failure).
+  ///
+  /// [logout] only clears auth state and storage; the provider fan-out and the
+  /// cancellation of OS-scheduled medication notifications live in
+  /// SessionScope, which needs a BuildContext this class does not have. The
+  /// shell wires this. Without it, the logout path MOST likely to fire on a
+  /// lost or shared phone was the one that cleared nothing.
+  Future<void> Function()? onForcedLogout;
+
   Future<bool> handleUnauthorized() async {
     final ok = await _refreshToken();
     if (!ok) {
+      final hook = onForcedLogout;
+      if (hook != null) {
+        try {
+          await hook();
+        } catch (e) {
+          Log.warn('Forced-logout fan-out failed', error: e, tag: 'AuthProvider');
+        }
+      }
       await logout();
       return false;
     }
@@ -232,8 +249,14 @@ class AuthProvider extends ChangeNotifier {
       'housepital_schema_version',
       'housepital_pending_deletion',
     };
+    // Quarantined blobs are the ONLY copy of data a migration could not
+    // attribute — after v1->v2 they hold a pre-upgrade user's entire order
+    // history. Wiping them on the first logout destroyed it permanently.
+    // They are not patient-readable and carry no session state.
+    const preservedPrefixes = <String>['__quarantine_'];
     for (final key in prefs.getKeys().toList()) {
       if (preserved.contains(key)) continue;
+      if (preservedPrefixes.any(key.startsWith)) continue;
       await prefs.remove(key);
     }
     _currentUser = null;
