@@ -7,6 +7,7 @@ import '../../config/app_colors.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class MedicalDocument {
   final String id;
@@ -610,7 +611,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
 
   Future<void> _scanDocument() async {
     try {
-      final image = await _picker.pickImage(
+      final image = await ImagePrivacy.pickSanitizedImage(
+        _picker,
         source: ImageSource.camera,
         imageQuality: 85,
       );
@@ -628,7 +630,8 @@ class _DocumentRepositoryScreenState extends State<DocumentRepositoryScreen> {
 
   Future<void> _uploadFromGallery() async {
     try {
-      final image = await _picker.pickImage(
+      final image = await ImagePrivacy.pickSanitizedImage(
+        _picker,
         source: ImageSource.gallery,
         imageQuality: 85,
       );

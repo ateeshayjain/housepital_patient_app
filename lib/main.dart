@@ -92,6 +92,7 @@ import 'config/constants.dart';
 import 'data/demo_data.dart';
 import 'utils/permissions.dart';
 import 'utils/notification_router.dart';
+import 'utils/logger.dart';
 import 'widgets/demo_data_banner.dart';
 
 void main() async {
@@ -124,6 +125,21 @@ void main() async {
             .setCrashlyticsCollectionEnabled(true);
         await FirebasePerformance.instance
             .setPerformanceCollectionEnabled(true);
+
+        // Handled failures. The three hooks above only catch things that
+        // ESCAPE — and this app is careful never to let anything escape, so
+        // Crashlytics saw a clean project while every fallback, failed
+        // quarantine and refused payment order went to a debugPrint that
+        // release mode discards. Non-fatal, because by definition the app
+        // recovered; see the PII rule on Log.sink.
+        Log.sink = (level, message, {error, stack, tag}) {
+          FirebaseCrashlytics.instance.recordError(
+            error ?? StateError(message),
+            stack,
+            reason: tag == null ? message : '[$tag] $message',
+            fatal: false,
+          );
+        };
       } else {
         // In debug builds, keep both surfaces off so test runs and hot reloads
         // don't pollute the production project.

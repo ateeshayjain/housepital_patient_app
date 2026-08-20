@@ -11,6 +11,7 @@ import '../../providers/blog_provider.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 import 'article_category_style.dart';
+import '../../widgets/medical_disclaimer.dart';
 
 /// Renders a single care guide: accent-tinted hero header, an editorial
 /// markdown body, and an end-of-article feedback card.
@@ -107,6 +108,10 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
               styleSheet: _styleSheet(context, style.accent),
             ),
           ),
+          // Health content written by the care team still reads as advice to
+          // the person holding the phone. Say what it is, right where the
+          // article ends and before the "was this helpful" prompt.
+          const MedicalDisclaimer(context_: DisclaimerContext.article),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             child: _HelpfulCard(accent: style.accent),

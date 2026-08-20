@@ -351,5 +351,9 @@
   "delete_account_done_login_pending": "बाकी है: हम आपका लॉगिन अपने-आप नहीं हटा सके। हमें कॉल करें, हम इसे हटा देंगे।",
   "delete_account_done_server": "अनुरोध किया गया — अभी बाकी है: Housepital के पास रखे आपके रिकॉर्ड हमारी टीम को हटाने हैं। पुष्टि के लिए नीचे दिए संदर्भ के साथ 9990-911-911 पर कॉल करें।",
   "delete_account_reference": "संदर्भ",
-  "demo_banner_short": "नमूना जानकारी — आपका असली रिकॉर्ड नहीं"
+  "demo_banner_short": "नमूना जानकारी — आपका असली रिकॉर्ड नहीं",
+  "disclaimer_vitals": "ye readings aur unke rang sirf ek guide hain, diagnosis nahi. Housepital door se vitals ka matlab nahi nikalta — agar kuch theek na lage, ya rang chahe jo bhi ho patient ko takleef ho, to turant apni nurse ya health manager ko batayein.",
+  "disclaimer_medication": "yeh schedule sirf woh dikhata hai jo is patient ke liye record kiya gaya hai. Yeh prescription nahi hai aur reminder chhoot bhi sakte hain. Koi bhi dawa ya uski dose sirf doctor hi shuru, band ya change kar sakte hain.",
+  "disclaimer_article": "yeh aam jaankari hai, kisi ek vyakti ke liye salah nahi. Ispar amal karne se pehle apne doctor ya Housepital health manager se baat karein.",
+  "disclaimer_report": "yeh Housepital app mein darj records se banaya gaya hai. Yeh aapke doctor ke liye ek summary hai, clinical assessment nahi, aur adhoora ho sakta hai."
 }

@@ -281,15 +281,37 @@ class MedicationReminderService {
 
   // ---- ID generation ----
 
+  /// Largest base value that survives the `* 10 + slot` expansion inside a
+  /// 32-bit signed int: 199_999_999 * 10 + 9 = 1_999_999_999 < 2^31 - 1.
+  static const int _idBaseModulus = 200000000;
+
+  /// Folds a medication ID into the notification ID space.
+  ///
+  /// WHY NOT `hashCode.abs() * 10`
+  /// A notification ID is a Java `int` on Android and an `Int32` on iOS —
+  /// ±2^31-1. Dart's `String.hashCode` on the 64-bit VM ranges far past that,
+  /// so `hashCode.abs() * 10 + slot` routinely produced values the platform
+  /// channel truncated or rejected. Truncation is the dangerous half: two
+  /// medications whose IDs differ only above bit 31 collapse onto the SAME
+  /// notification ID, and scheduling the second silently REPLACES the first.
+  /// The patient is simply never reminded about one of their drugs, and
+  /// nothing anywhere reports an error.
+  ///
+  /// `.abs()` was also not a safety net: `int.minValue.abs()` returns
+  /// `int.minValue` in Dart — still negative. Masking off the sign bit is,
+  /// because it cannot have an exceptional case.
+  static int _foldToIdSpace(String medicationId) =>
+      (medicationId.hashCode & 0x7FFFFFFF) % _idBaseModulus;
+
   /// Generates a deterministic notification ID from a medication ID string
   /// and a slot index. The ID space is partitioned so each medication gets
   /// up to 10 unique IDs (slots 0-3 for schedules, 5 for snooze).
   static int _generateNotificationId(String medicationId, int slotIndex) {
-    return medicationId.hashCode.abs() * 10 + slotIndex;
+    return _foldToIdSpace(medicationId) * 10 + slotIndex;
   }
 
   static int _generateSnoozeId(String medicationId) {
-    return medicationId.hashCode.abs() * 10 + 5;
+    return _foldToIdSpace(medicationId) * 10 + 5;
   }
 
   /// Returns the list of notification IDs that would be generated for a

@@ -33,6 +33,7 @@ abstract final class DemoMode {
   static const String sourceProfile = 'profile';
   static const String sourceHandover = 'handover-report';
   static const String sourceVitals = 'vitals-trend';
+  static const String sourceStaffProfile = 'staff-profile';
 
   static final Set<String> _activeSources = <String>{};
 

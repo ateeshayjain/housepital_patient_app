@@ -16,6 +16,24 @@ import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 
 class PaymentScreen extends StatefulWidget {
+  /// Amount to charge, in **whole rupees**.
+  ///
+  /// MONEY UNITS — the one rule this screen has to keep straight.
+  /// Everything inside this screen is rupees: [amount], `_discountAmount`,
+  /// `_gstAmount`, `_totalAmount`, and every `formatCurrency` call. The ONLY
+  /// place paise exist is [_totalAmountPaise], handed to the gateway.
+  ///
+  /// It did not used to be. `_totalAmount` was rendered with
+  /// `formatCurrency` (rupees) and passed unchanged to `openCheckout`, whose
+  /// contract is paise — the same integer read as two different units four
+  /// lines apart. A ₹5,000 cart checkout displayed ₹5,000 and charged ₹50.
+  /// Billing compensated at ITS end by passing `totalDue * 100`, so the same
+  /// bill displayed ₹5,00,000 and charged the right ₹5,000. Two entry points,
+  /// wrong in opposite directions, each looking correct from where it was
+  /// written.
+  ///
+  /// So: callers pass rupees. Never pre-multiply. If you add a caller and it
+  /// looks a hundred times off, you have found this comment for a reason.
   final int amount;
   final String description;
   final String? invoiceId;
@@ -102,6 +120,10 @@ class _PaymentScreenState extends State<PaymentScreen>
       computeCartGst(_cartItems, discount: _discountAmount);
 
   int get _totalAmount => _subtotal - _discountAmount + _gstAmount;
+
+  /// The gateway boundary — the single conversion in this file. Razorpay and
+  /// the backend's `/payments/create-order` both take paise.
+  int get _totalAmountPaise => _totalAmount * 100;
 
   /// Generate + share the paid invoice as a PDF (field bug: 'View Receipt'
   /// only showed a toast — no receipt was produced). Builds an order from the
@@ -236,7 +258,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           ? null
           : await _paymentService!.createOrder(
               patientId: patientId,
-              amount: _totalAmount,
+              amount: _totalAmountPaise,
               paymentType: widget.invoiceId != null ? 'invoice' : 'order',
               referenceType: widget.invoiceId != null ? 'invoice' : null,
               referenceId: widget.invoiceId,
@@ -261,7 +283,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
 
     _paymentService!.openCheckout(
-      amount: _totalAmount,
+      amount: _totalAmountPaise,
       description: widget.description,
       orderId: orderId,
       onSuccess: () {

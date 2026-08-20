@@ -17,8 +17,6 @@ Tab switching is managed via `IndexedStack` in `MainShell` for state preservatio
 
 **Chrome:** the bar is a detached `GlassSurface` pill (16px side insets, radius 32, floating above the home indicator), not the fixed edge-to-edge orange bar of field round 5. It lives in the Scaffold's `bottomNavigationBar` slot so the body's bottom `MediaQuery` inset still covers its full footprint.
 
-**Nav bar:** FIXED full-width solid-orange bar anchored to the bottom edge (owner iterated floating-glass → pill → fixed), white icons/labels, SafeArea-padded.
-
 **GlassAppBar chrome contract:** every screen uses `GlassAppBar` (`lib/widgets/glass.dart`) — back on the left (or HOME leftmost on non-Home root tabs); trailing order `[custom…, home, search → /search, cart → /cart]` with the **CART always rightmost** and a live item-count badge. `showSearch`/`showCart`/`showHome` all default on; the purchase funnel (cart/checkout/payment) opts out of the cart icon; Billing shows no cart; the Home tab omits its own home button (SOS is the home-screen far-right emergency exception).
 
 ---

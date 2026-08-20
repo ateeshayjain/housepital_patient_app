@@ -43,6 +43,12 @@ class AssistantService {
       'Main yeh abhi nahi samajh paya — menu se try karein.';
 
   Future<AssistantResponse> ask(AssistantRequest req) async {
+    // Clinical guard runs BEFORE any routing — stub or cloud. See
+    // [_clinicalGuard]. A medical emergency must never be handed to an intent
+    // matcher, and must never wait on a network round-trip to an LLM.
+    final urgent = _clinicalGuard(req.text);
+    if (urgent != null) return urgent;
+
     if (useStub) {
       return _stubResponse(req.text);
     }
@@ -67,6 +73,91 @@ class AssistantService {
       debugPrint('AssistantService: ask failed: $e');
       return AssistantResponse.degraded(_degradedMessage);
     }
+  }
+
+  // ── Clinical guard ────────────────────────────────────────────────────
+  //
+  // Unmistakable emergencies. Deliberately narrow: every term here should be
+  // one a person only types when something is genuinely wrong, because the
+  // cost of a false positive is an offered SOS call the user declines, while
+  // the cost of a false negative is this app answering a medical emergency
+  // with a task.
+  static final RegExp _emergencyPattern = RegExp(
+    r'\b('
+    r'bleed|bleeding|khoon|blood loss|'
+    r'chest pain|seene? \w* ?dard|chhati me\w* dard|heart attack|'
+    r'saans nahi|saans nhi|not breathing|cant breathe|can.?t breathe|'
+    r'breathless|dam ghut|'
+    r'unconscious|behosh|behoshi|'
+    r'seizure|fits|convulsion|jhatke|'
+    r'stroke|paralysis|lakwa|'
+    r'collapsed?|gir gay|gir gai|girr gay|had a fall|'
+    r'emergency|ambulance|sos'
+    r')\b',
+  );
+
+  // Softer clinical complaints. These are NOT emergencies and must not
+  // escalate, but they are equally not tasks this app can perform — and an
+  // assistant that answers "bukhar hai" with medical advice is practising
+  // medicine.
+  static final RegExp _symptomPattern = RegExp(
+    r'\b('
+    r'fever|bukhar|temperature|'
+    r'vomit|ulti|nausea|'
+    r'dizzy|chakkar|'
+    r'pain|dard|'
+    r'infection|swelling|sujan|'
+    r'\bbp\b|sugar high|sugar low|'
+    r'rash|wound|ghaav|'
+    r'medicine (badl|change)|dose (badh|kam|change)'
+    r')\b',
+  );
+
+  /// Intercepts anything that reads as a medical situation.
+  ///
+  /// WHY THIS COMES FIRST, AND WHY IT IS NOT PART OF THE MATCHER
+  /// The intent matcher below is a list of unanchored `RegExp`s evaluated in
+  /// order, and a short alternative captures every longer word containing it.
+  /// The duty-days branch matched `din`, and "blee-din-g" contains "din" — so
+  /// "bleeding ho raha hai" was answered with "Staff ki duty check kar raha
+  /// hoon…". The word boundaries added below fix that specific collision, but
+  /// they cannot fix the class of it: the next short token added to any branch
+  /// will do the same thing to some other phrase.
+  ///
+  /// So the guard does not compete with the matcher — it pre-empts it. It also
+  /// sits in [ask], not in [_stubResponse], so it applies on the cloud path
+  /// too: an emergency must not depend on a network round-trip, and an LLM
+  /// prompt is not a safety control.
+  ///
+  /// This app is not a clinical service and must not answer as one. The
+  /// emergency branch offers the SOS call (confirmed, per the executor's
+  /// contract — the SOS BUTTON itself stays unblocked and is unaffected by
+  /// this file); the symptom branch hands the person to a human.
+  AssistantResponse? _clinicalGuard(String text) {
+    final t = text.toLowerCase();
+
+    if (_emergencyPattern.hasMatch(t)) {
+      return const AssistantResponse(
+        action: AssistantAction.placeCall,
+        params: {'target': 'sos'},
+        replyText: 'Yeh emergency lag rahi hai. Main abhi emergency help ke '
+            'liye call laga raha hoon — confirm karein. Agar turant madad '
+            'chahiye, screen par laal SOS button dabayein ya 112 par call '
+            'karein.',
+      );
+    }
+
+    if (_symptomPattern.hasMatch(t)) {
+      return const AssistantResponse(
+        action: AssistantAction.none,
+        params: {},
+        replyText: 'Main medical salah nahi de sakta. Yeh apni nurse ya '
+            'health manager ko turant batayein — "nurse ko call karo" boliye, '
+            'ya emergency ho to SOS button dabayein.',
+      );
+    }
+
+    return null;
   }
 
   /// Hinglish keyword matcher for the four known intents.
@@ -166,7 +257,11 @@ class AssistantService {
     // Duty-days is checked before billing because phrases like
     // "staff kitne din aaya iss mahine" contain the generic "mahine"
     // (month) keyword too — the more specific duty intent should win.
-    if (RegExp(r'duty|din|aaya|attendance|haazri').hasMatch(t)) {
+    // Word boundaries are load-bearing: bare `din` matched "bleeding",
+    // "reading" and "ordering". Never add an unanchored short alternative
+    // to this list.
+    if (RegExp(r'\bduty\b|\bdin\b|\bdino\b|\bdinon\b|\baaya\b|\battendance\b|\bhaazri\b')
+        .hasMatch(t)) {
       return const AssistantResponse(
         action: AssistantAction.getDutyDays,
         params: {},
@@ -174,7 +269,8 @@ class AssistantService {
       );
     }
 
-    if (RegExp(r'bill|mahine|paisa|payment|due|outstanding').hasMatch(t)) {
+    if (RegExp(r'\bbill|\bmahine\b|\bpaisa\b|\bpayment\b|\bdue\b|\boutstanding\b')
+        .hasMatch(t)) {
       return const AssistantResponse(
         action: AssistantAction.getBilling,
         params: {},

@@ -151,8 +151,8 @@ flutter test integration_test/
 
 ## Key Business Rules Encoded in Tests
 
-1. **Manpower services (caretaker, nursing_deployment, japa, nanny) have NO commission** -- users reject if they see prices upfront.
-2. **Vital sign boundaries go to the MORE SEVERE category** (e.g., BP 140 is RED, not yellow).
+1. **Manpower prices ARE shown and directly bookable** -- caretaker, nurse, physio, from the official Delhi NCR rate card. Prices were hidden Mar-Jun 2026 on a stale premise; the owner reversed that on 2026-06-11. This line said the opposite until 2026-08-20, under a heading claiming to describe what the tests encode -- it did not, and a reader trusting it would have "fixed" the code back to the retired rule.
+2. **Vital sign boundaries go to the MORE SEVERE category** (e.g., BP 140 is RED, not yellow). There is exactly ONE classifier, `lib/utils/vital_classifier.dart`; the second threshold table in `AppConstants.vitalRanges` disagreed with it and has been removed.
 3. **FAMILY_MEMBER can book but cannot pay** -- PRIMARY_CONTACT can do both.
 4. **Booking status transitions are strictly enforced** -- no skipping steps, no going backwards.
 5. **Equipment gets 30% discount for 3-month plan customers.**

@@ -138,7 +138,11 @@ class InvoiceDetailScreen extends StatelessWidget {
                         'amount': invoice.grandTotal,
                         'description':
                             '${invoice.invoiceNumber} — ${DateHelper.formatDateShort(invoice.billingPeriodStart)} to ${DateHelper.formatDateShort(invoice.billingPeriodEnd)}',
-                        'invoiceId': invoice.id,
+                        // 'invoice_id', not 'invoiceId' — main.dart's
+                        // '/payment' route reads the snake_case key, so the
+                        // camelCase spelling silently dropped the invoice and
+                        // the payment was recorded against no bill.
+                        'invoice_id': invoice.id,
                       },
                     );
                   },

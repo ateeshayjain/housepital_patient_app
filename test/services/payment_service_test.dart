@@ -82,7 +82,22 @@ class _FakeApiService extends ApiService {
       'reference_id': referenceId,
     });
     if (createOrderError != null) throw createOrderError!;
-    return createOrderResult ?? {'order_id': 'ord_test'};
+    // The REAL response shape, copied from
+    // housepital-backend/functions/src/routes/payments.ts:
+    //   res.status(201).json({payment_id, razorpay_order_id, amount, currency})
+    //
+    // This fake used to return {'order_id': ...}, mirroring what the client
+    // believed rather than what the backend sends — which is exactly why the
+    // client reading result['order_id'] passed its tests for four audit
+    // rounds while returning null against the real server on every call.
+    // A fake must be built from the contract, never from the caller.
+    return createOrderResult ??
+        {
+          'payment_id': 'pay_test',
+          'razorpay_order_id': 'ord_test',
+          'amount': 25000,
+          'currency': 'INR',
+        };
   }
 
   @override
@@ -302,8 +317,14 @@ void main() {
 
     tearDown(() => svc.dispose());
 
-    test('returns order_id from backend on success', () async {
-      fakeApi.createOrderResult = {'order_id': 'ord_999'};
+    test('reads razorpay_order_id — the field the backend actually sends',
+        () async {
+      fakeApi.createOrderResult = {
+        'payment_id': 'pay_999',
+        'razorpay_order_id': 'ord_999',
+        'amount': 25000,
+        'currency': 'INR',
+      };
 
       final id = await svc.createOrder(
         patientId: 'p-1',
@@ -347,7 +368,8 @@ void main() {
       expect(id, isNull);
     });
 
-    test('returns null when backend returns no order_id field', () async {
+    test('returns null when the response carries no order id at all',
+        () async {
       fakeApi.createOrderResult = {'unrelated': 'value'};
 
       final id = await svc.createOrder(
@@ -357,6 +379,39 @@ void main() {
       );
 
       expect(id, isNull);
+    });
+
+    test('still accepts the legacy order_id spelling', () async {
+      // Tolerated deliberately: a null order id here makes PaymentScreen fail
+      // closed and no payment can complete, so the cost of accepting both
+      // spellings is one `??` and the cost of rejecting one is an outage.
+      fakeApi.createOrderResult = {'order_id': 'ord_legacy'};
+
+      final id = await svc.createOrder(
+        patientId: 'p-1',
+        amount: 100,
+        paymentType: 'invoice',
+      );
+
+      expect(id, 'ord_legacy');
+    });
+
+    test('the default fake response — the real backend shape — resolves',
+        () async {
+      // Guards the regression directly: with the old
+      // `result['order_id']` read, this returns null and every real payment
+      // dies in PaymentScreen's fail-closed branch.
+      final id = await svc.createOrder(
+        patientId: 'p-1',
+        amount: 100,
+        paymentType: 'invoice',
+      );
+
+      expect(id, isNotNull,
+          reason: 'a null order id here means no real payment can ever '
+              'complete — the client was reading a key the backend has '
+              'never sent');
+      expect(id, 'ord_test');
     });
   }, skip: _skipReason);
 

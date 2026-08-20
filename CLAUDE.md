@@ -117,6 +117,71 @@ task "waiting for the test suite" — run targeted files, report results.
   string** — translating it silently changes behaviour. The payment retry decision used to
   be `message.contains('under verification')`; it is now a typed `PaymentFailure`.
 
+## Safety & correctness invariants (round 4, 2026-08-20)
+
+Each of these was a real shipped defect. Each has a regression test. Do not
+relax one without reading why it exists.
+
+- **Money has ONE unit per layer.** Everything inside `PaymentScreen` is whole
+  RUPEES — `amount`, discount, GST, `_totalAmount`, every `formatCurrency`.
+  Paise exist only in `_totalAmountPaise`, handed to `openCheckout` and
+  `createOrder`. Callers pass rupees and never pre-multiply. (`_totalAmount`
+  was displayed as rupees and charged as paise four lines apart: a ₹5,000 cart
+  checkout showed ₹5,000 and charged ₹50.)
+- **Backend field names come from the route, not from memory.** `createOrder`
+  reads `razorpay_order_id`; the client read `order_id` for four audit rounds,
+  and its test fake returned `order_id` too — a fake built from the caller's
+  belief can only confirm that belief. Build fakes from
+  `housepital-backend/functions/src/routes/`.
+- **The app never asserts what it cannot source.** No fabricated verification,
+  ratings, reviews or attendance — not in a fallback, and not laundered through
+  a `DemoData` fixture. Distinguish "not verified" (a fact about them) from
+  "could not load" (a fact about us). Invented data that a family acts on is
+  the worst output this app can produce.
+- **`needsAssessment` is a property of the DEVICE, never of the transaction.**
+  Availability flags are not consulted. Precedence: the CRM's
+  `requires_assessment` wins, else the device-family list minus accessories,
+  failing CLOSED. (`if (availableForRent) return false` exempted every
+  ventilator, BiPAP, CPAP, concentrator, suction machine and pump — and gated
+  the masks.)
+- **There is exactly ONE vital classifier**, `lib/utils/vital_classifier.dart`.
+  `VitalHelper` delegates and owns no thresholds. Unknown vital types return
+  `'unknown'`, never `'green'`. Thresholds are a conservative default awaiting
+  clinical sign-off — changing one changes both screens, which is the point.
+- **The assistant's clinical guard runs in `ask()`, before any routing**, so it
+  covers the cloud path too. Never add an unanchored short alternative to an
+  intent regex: bare `din` matched "blee**din**g", so a bleed was answered with
+  a staff-attendance lookup.
+- **Photos are stripped before upload** via `ImagePrivacy.pickSanitizedImage`.
+  Never call `picker.pickImage` directly. It fails CLOSED — no sanitised copy,
+  no upload. (`maxWidth`/`imageQuality` are sizing, not a privacy control:
+  image_picker only re-encodes when a resize is actually needed.)
+- **`Log.warn`/`Log.error` reach Crashlytics** via `Log.sink`, installed in
+  `main.dart`. **PII rule:** a log message says WHAT failed, never WHO it
+  happened to — no name, phone, address, diagnosis, drug or amount.
+- **Clinical surfaces carry `MedicalDisclaimer`** (vitals, medications,
+  articles) and the handover PDF carries its own on-page notice. Never a modal,
+  never blocking, and **never on the SOS path**. It degrades to English rather
+  than throwing — the first version's `AppLocalizations.of(context)!` took the
+  whole article screen down.
+- **Notification IDs must fit a signed 32-bit int.** Fold with
+  `& 0x7FFFFFFF` then modulo, never `hashCode.abs()` — `.abs()` has an
+  exceptional case and truncation makes two medications share an ID, silently
+  replacing one patient's reminder with another's.
+
+### Backend (`../housepital-backend`)
+
+- **`verifyPatientAccess` fails closed** on all three conditions: onboarded,
+  non-empty `authReq.patientId`, exact match. It used to deny only when both
+  ids were present and differed — and `verifyAuth` assigns `patientId = ""` to
+  any Firebase-authenticated caller with no `family_members` row, so a blank
+  claim passed for every patient id.
+- **Schema and code must agree.** `npx jest schema-conformance` reads the
+  migrations and the routes as text and fails on drift, without a database.
+  When they disagree, fix the CODE — the schema names are what the Flutter
+  client serialises. `sql/005_schema_code_reconciliation.sql` **has not been
+  run against any live database.**
+
 ## Storage & session contracts
 
 - **Orders/assessments are keyed PER PATIENT** (`housepital_orders_<patientId>`). A

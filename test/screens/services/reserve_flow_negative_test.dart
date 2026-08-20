@@ -34,14 +34,39 @@ EquipmentItem _priceOnRequestItem() => EquipmentItem(
       price: null, // price on request — Reserve flow, never a fabricated ₹
     );
 
+/// A priced item with NO clinical gate.
+///
+/// This used to be an "Oxygen Concentrator 5L", and these tests asserted that
+/// it was one-tap addable with an enabled "Add to Cart". That was the
+/// behaviour of the inverted `needsAssessment` rule, which exempted every
+/// rentable device — i.e. every concentrator, ventilator and BiPAP in the
+/// catalog. The fixture quietly encoded the defect, so the tests passed
+/// while an oxygen concentrator could be bought like a pillow.
+///
+/// The item is now an air mattress: genuinely unregulated, so it exercises
+/// the plain sale path. The gate itself is covered by
+/// test/models/equipment_assessment_gate_test.dart and the catalog-wide
+/// test beside it, plus `_assessmentItem` below.
 EquipmentItem _pricedItem() => EquipmentItem(
+      id: 'eq-air-mattress',
+      name: 'Air Bed Mattress',
+      brand: 'Niscomed',
+      category: 'Equipment',
+      availableForSale: true,
+      price: 3500,
+      mrp: 5000, // MRP strikethrough + % off (Blinkit-style)
+    );
+
+/// A regulated device: must NOT be one-tap addable however it is priced.
+EquipmentItem _assessmentItem() => EquipmentItem(
       id: 'eq-oxygen-5l',
       name: 'Oxygen Concentrator 5L',
       brand: 'Philips',
       category: 'Equipment',
       availableForSale: true,
+      availableForRent: true, // exactly the flag that used to exempt it
       price: 3500,
-      mrp: 5000, // MRP strikethrough + % off (Blinkit-style)
+      mrp: 5000,
     );
 
 Widget _host(EquipmentItem item, {required CartProvider cart}) => MaterialApp(
@@ -148,7 +173,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(cart.items.length, 1);
-      expect(cart.items.single.equipmentId, 'eq-oxygen-5l');
+      expect(cart.items.single.equipmentId, 'eq-air-mattress');
       expect(cart.items.single.unitPrice, 3500);
       expect(find.textContaining('added to cart'), findsOneWidget);
 
@@ -166,7 +191,7 @@ void main() {
       await _pump(tester, _pricedItem(), cart: CartProvider());
 
       // Tap the card body (item name) to open the detail sheet.
-      await tester.tap(find.text('Oxygen Concentrator 5L'));
+      await tester.tap(find.text('Air Bed Mattress'));
       await tester.pumpAndSettle();
 
       final addToCart = find.text('Add to Cart');
@@ -183,6 +208,40 @@ void main() {
       expect(find.text('Price confirmed on call before payment'),
           findsNothing);
       expect(find.text('On request'), findsNothing);
+    });
+  });
+
+  group('a regulated device is never one-tap addable', () {
+    // The inverted gate cleared these because they are rentable. Renting a
+    // concentrator does not make it safer than buying one, and this is the
+    // screen where that mattered: the ADD button put it straight in a cart.
+    testWidgets('tapping ADD on an oxygen concentrator does not buy it',
+        (tester) async {
+      // The ADD pill is always painted — it is an affordance that ROUTES.
+      // What must not happen is the item landing in the cart, which is
+      // exactly what the inverted gate allowed: `availableForRent` returned
+      // false from needsAssessment, so a concentrator satisfied
+      // _isSimpleSaleItem and one tap purchased it.
+      final cart = CartProvider();
+      await _pump(tester, _assessmentItem(), cart: cart);
+
+      await tester.tap(find.text('ADD'));
+      await tester.pumpAndSettle();
+
+      expect(cart.items, isEmpty,
+          reason: 'a device needing clinical assessment must never be '
+              'purchasable in one tap');
+      expect(find.textContaining('added to cart'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 5));
+    });
+
+    testWidgets('the item still reports that it needs an assessment',
+        (tester) async {
+      // Guards the model contract from the widget side too, so a future
+      // change to the card cannot quietly re-open the path.
+      expect(_assessmentItem().needsAssessment, isTrue);
+      expect(_pricedItem().needsAssessment, isFalse);
     });
   });
 }

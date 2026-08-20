@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
+import '../../data/demo_mode.dart';
 import '../../models/models.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/logger.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 
@@ -28,6 +30,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   StaffProfile? _staff;
   bool _isLoading = true;
 
+  /// True when the profile could not be fetched. Distinguishes "this person is
+  /// not verified" (a fact about them) from "we could not load their record"
+  /// (a fact about us). The screen must never state the first when it only
+  /// knows the second.
+  bool _loadFailed = false;
+
   @override
   void initState() {
     super.initState();
@@ -37,100 +45,43 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   Future<void> _loadProfile() async {
     try {
       _staff = await ApiService().getStaffProfile(widget.staffId);
+      DemoMode.markServingLiveData(DemoMode.sourceStaffProfile);
     } catch (e) {
-      debugPrint('Error loading staff profile: $e');
-      // Mock data for preview
-      _staff = StaffProfile.fromJson({
-        'id': widget.staffId,
-        'name': widget.staffName ?? 'Housepital Staff',
-        'role': widget.staffRole ?? 'nurse',
-        'photo_url': null,
-        'rating': 4.8,
-        'total_reviews': 142,
-        'id_verified': true,
-        'training_complete': true,
-        'police_verified': true,
-        'languages': ['Hindi', 'English'],
-        'experience': '5 years',
-        'assigned_since':
-            DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-        'documents': [
-          {
-            'type': 'aadhaar',
-            'label': 'Aadhaar Card',
-            'status': 'verified',
-            'verified_at': DateTime.now()
-                .subtract(const Duration(days: 120))
-                .toIso8601String(),
-          },
-          {
-            'type': 'police_verification',
-            'label': 'Police Verification',
-            'status': 'verified',
-            'verified_at': DateTime.now()
-                .subtract(const Duration(days: 90))
-                .toIso8601String(),
-          },
-          {
-            'type': 'training_certificate',
-            'label': 'Nursing Training Certificate',
-            'status': 'verified',
-            'verified_at': DateTime.now()
-                .subtract(const Duration(days: 200))
-                .toIso8601String(),
-          },
-          {
-            'type': 'medical_certificate',
-            'label': 'Medical Fitness Certificate',
-            'status': 'verified',
-            'verified_at': DateTime.now()
-                .subtract(const Duration(days: 60))
-                .toIso8601String(),
-          },
-        ],
-        'reviews': [
-          {
-            'id': 'r1',
-            'patient_name': 'Ramesh K.',
-            'rating': 5.0,
-            'comment':
-                'Priya is very caring and attentive. She always makes sure my father takes his medication on time.',
-            'date': DateTime.now()
-                .subtract(const Duration(days: 3))
-                .toIso8601String(),
-          },
-          {
-            'id': 'r2',
-            'patient_name': 'Suresh G.',
-            'rating': 4.5,
-            'comment':
-                'Very professional. Good at wound dressing and vitals monitoring. Highly recommend.',
-            'date': DateTime.now()
-                .subtract(const Duration(days: 18))
-                .toIso8601String(),
-          },
-          {
-            'id': 'r3',
-            'patient_name': 'Anita S.',
-            'rating': 5.0,
-            'comment': 'Excellent care for my mother post-surgery. Very gentle and patient.',
-            'date': DateTime.now()
-                .subtract(const Duration(days: 45))
-                .toIso8601String(),
-          },
-          {
-            'id': 'r4',
-            'patient_name': 'Vikram P.',
-            'rating': 4.0,
-            'comment': null,
-            'date': DateTime.now()
-                .subtract(const Duration(days: 60))
-                .toIso8601String(),
-          },
-        ],
-      });
+      Log.warn('Staff profile unavailable; showing an UNVERIFIED placeholder',
+          error: e, tag: 'StaffProfile');
+
+      // DEMO FALLBACK — READ THE NEXT PARAGRAPH BEFORE CHANGING IT.
+      //
+      // This branch previously fabricated `police_verified: true`,
+      // `id_verified: true`, four "verified" compliance documents with
+      // plausible dates, a 4.8 rating and four named patient reviews. Because
+      // `api.housepital.in` does not resolve in any shipped build, that branch
+      // is the ONLY one that ever runs: every person who has opened a staff
+      // profile has been told their caregiver passed a police check that
+      // Housepital never performed and this app never saw.
+      //
+      // A background-verification claim is a safety claim about a stranger who
+      // enters a patient's home. Inventing one is not a placeholder; it is the
+      // single most consequential false statement this app can make, and it is
+      // the kind of claim a family relies on precisely when they are least able
+      // to check it.
+      //
+      // So the fallback now asserts NOTHING it cannot source. Verification
+      // flags stay false, documents and reviews stay empty, and the UI renders
+      // its "not available" states. An empty badge row is a truthful "we could
+      // not load this"; a green tick is a lie. Never seed this from
+      // DemoData either — the same claim laundered through a fixture file is
+      // still the same claim.
+      _staff = StaffProfile(
+        id: widget.staffId,
+        name: widget.staffName ?? 'Housepital Staff',
+        role: widget.staffRole ?? 'nurse',
+        // idVerified / trainingComplete / policeVerified all default to false.
+      );
+      _loadFailed = true;
+      DemoMode.markServingDemoData(DemoMode.sourceStaffProfile);
     }
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -340,6 +291,27 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
           ),
         ),
         const SizedBox(height: 8),
+        if (_loadFailed)
+          HousepitalCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.cloud_off, size: 20, color: context.hc.grey),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Verification status could not be loaded. Contact '
+                      'Housepital support to confirm this staff member’s '
+                      'credentials.',
+                      style: TextStyle(fontSize: 13, color: context.hc.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
         HousepitalCard(
           child: Column(
             children: [
@@ -359,12 +331,6 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 Icons.school,
                 'Training Certificate',
                 _staff!.trainingComplete,
-              ),
-              const Divider(height: 1),
-              _verificationRow(
-                Icons.medical_services,
-                'Medical Fitness',
-                true,
               ),
             ],
           ),
@@ -412,7 +378,18 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   // Attendance Calendar — monthly calendar view of staff attendance
   // ---------------------------------------------------------------------------
   Widget _buildAttendanceCalendar(AppLocalizations l) {
-    // Generate mock attendance data for the current month
+    // SAMPLE ATTENDANCE — there is no attendance feed in this app yet.
+    //
+    // Every cell below is generated right here: "present, 8:00 AM–8:00 PM,
+    // 12 hours", with absences hard-coded at the 5th and 16th of whatever
+    // month it happens to be. Nothing consults the staff app, the CRM, or any
+    // API. Attendance is the one record on this screen a family is most likely
+    // to act on — to dispute a bill, or to satisfy themselves that someone was
+    // actually with the patient — so an unlabelled invented grid is a
+    // fabricated evidentiary record, not a placeholder.
+    //
+    // The banner below says so, unconditionally, and must stay until a real
+    // feed replaces this generator.
     final now = DateTime.now();
     final firstDay = DateTime(now.year, now.month, 1);
     final attendanceMap = <DateTime, StaffAttendance>{};
@@ -502,6 +479,33 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: context.hc.warningLight,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, size: 18, color: context.hc.warning),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Sample attendance. Housepital is not yet reporting this '
+                  'staff member’s real check-in and check-out times to the '
+                  'app — do not use this grid to verify a visit or a bill.',
+                  style: TextStyle(fontSize: 12, color: context.hc.black),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
           ],
         ),
         const SizedBox(height: 12),

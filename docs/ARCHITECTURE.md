@@ -203,9 +203,18 @@ lib/
   (squircle `RoundedSuperellipseBorder(16)`, press-scale 0.97 @ 120ms).
 - Glass screens pair with `extendBodyBehindAppBar` + top scroll padding
   `MediaQuery.padding.top + kToolbarHeight`.
-- **Bottom nav** (`main_shell.dart`): FIXED full-width solid-orange bar, white
-  icons, SafeArea-padded (owner iterated floating-glass → pill → fixed). Six root
-  tabs (Calendar added at index 3 — indices 1/2 referenced externally).
+- **Bottom nav** (`main_shell.dart`): a FLOATING LIQUID-GLASS PILL — 16px side
+  insets, `GlassSurface` radius 32, floating above the home indicator, with a
+  transparent `BottomNavigationBar` inside it. The owner iterated
+  floating-glass → pill → fixed orange bar (round 5) → **back to the pill**
+  (round 8). It sits in the Scaffold's `bottomNavigationBar` slot, so the
+  body's bottom `MediaQuery` inset still covers its full footprint and
+  `extendBody: true` lets content glide underneath — which is the structural
+  answer to round 5's "the pill covered content".
+  **FIVE root tabs:** Home (0), My Care (1), Services (2), Billing (3),
+  More (4). The care calendar is **not** a tab; it lives in the My Care app
+  bar (`'/care-calendar'`). Indices 1/2/3 are referenced externally via
+  `MainShell.switchToTab` — do not reorder them.
 - **Nav contract:** back on the left (or HOME leftmost on non-Home root tabs);
   trailing order `[custom…, home, search, cart]` with the **CART always rightmost**
   and a live item-count badge. `showSearch`/`showCart`/`showHome` default on; the

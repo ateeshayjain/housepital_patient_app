@@ -41,11 +41,24 @@ class DemoDataBannerHost extends StatelessWidget {
             child,
             // Bottom of the app-bar band, centred: clear of the status bar and
             // of the app bar's own controls, without pushing anything.
+            // IgnorePointer, and it is not cosmetic. The pill spans the full
+            // width minus 12pt of inset, sitting exactly where glass app bars
+            // put their trailing actions — search, cart, and on My Care the
+            // calendar. Measured: the overlay's painted box intersects those
+            // buttons, and RenderParagraph.hitTestSelf returns true, so the
+            // text itself swallowed the tap. Since this banner is up in every
+            // shipped build (the API host does not resolve), those actions
+            // were dead for every user, with no visual cue why.
+            //
+            // The pill is a NOTICE. It has nothing to tap, so it must not be
+            // in the hit-test path at all.
             Positioned(
               top: MediaQuery.of(context).padding.top + kToolbarHeight + 4,
               left: 12,
               right: 12,
-              child: const Center(child: _DemoDataPill()),
+              child: const IgnorePointer(
+                child: Center(child: _DemoDataPill()),
+              ),
             ),
           ],
         );

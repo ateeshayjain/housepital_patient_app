@@ -67,6 +67,9 @@ class PaymentService {
   /// Creates a payment order on the backend before opening checkout.
   /// Returns the Razorpay order ID to pass to [openCheckout].
   /// Returns null if the backend call fails (demo mode can proceed without it).
+  ///
+  /// [amount] is in **paise**, like [openCheckout] — the backend passes it
+  /// straight to `razorpay.orders.create`, which takes paise.
   Future<String?> createOrder({
     required String patientId,
     required int amount,
@@ -82,7 +85,17 @@ class PaymentService {
         referenceType: referenceType,
         referenceId: referenceId,
       );
-      return result['order_id'] as String?;
+      // The backend responds `{payment_id, razorpay_order_id, amount,
+      // currency}`. This read used to be `result['order_id']`, a key that
+      // response has never contained, so it evaluated to null on every
+      // success — and PaymentScreen's fail-closed guard turned that into
+      // "we couldn't start a secure payment" for every real transaction.
+      // Nothing was mis-charged, but no real payment could complete at all,
+      // and the failure looked like a backend outage rather than a typo.
+      //
+      // Accept the legacy spelling too: a null order id is not a small bug
+      // here, and tolerating both costs one `??`.
+      return (result['razorpay_order_id'] ?? result['order_id']) as String?;
     } catch (e) {
       Log.warn('Create order failed', error: e, tag: 'PaymentService');
       return null;

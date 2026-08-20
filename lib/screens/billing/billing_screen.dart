@@ -316,7 +316,10 @@ class _BillingScreenState extends State<BillingScreen> {
                       context,
                       '/payment',
                       arguments: <String, dynamic>{
-                        'amount': totalDue * 100,
+                        // Rupees. PaymentScreen converts to paise at the
+                        // gateway boundary — pre-multiplying here rendered
+                        // a ₹5,000 bill as ₹5,00,000 on the pay screen.
+                        'amount': totalDue,
                         'description': 'Outstanding balance payment',
                       },
                     ),

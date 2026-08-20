@@ -296,6 +296,19 @@ class HandoverReportService {
               'Compiled by the Housepital patient app from supervisor-synced '
               'records. This is a computer-generated document.',
               style: const pw.TextStyle(fontSize: 8, color: _grey)),
+          pw.SizedBox(height: 4),
+          // This document is handed to a doctor and reads like a clinical
+          // summary. It is not one: it is a transcription of what was entered
+          // in an app, it can be incomplete, and no clinician has reviewed it
+          // before it prints. The reader is the one person who most needs to
+          // know that, so it goes on the page rather than in the app.
+          pw.Text(
+              'NOT A CLINICAL ASSESSMENT. Records are entered by caregivers '
+              'and family through the Housepital app and are not verified by '
+              'a clinician. Readings, doses and timings may be incomplete or '
+              'delayed. Please confirm anything you intend to act on directly '
+              'with the patient and the care team.',
+              style: const pw.TextStyle(fontSize: 8, color: _grey)),
         ],
       ),
     );

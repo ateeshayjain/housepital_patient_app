@@ -1,7 +1,7 @@
 # Housepital Patient App
 
 **Status:** Active development — pre-launch
-**Stage:** Post-feature build (Jun 2026) — Home Layout B, Care Guides, AI Assistant (action-taking) + Cloud Function shipped; all audit batches + tri-audit fixes complete; **six field-feedback rounds (3–6) shipped**: fixed solid-orange nav bar, Calendar root tab, chrome contract, calm/dark/one-accent design pass, working offline assistant, 1-tap dose logging, manpower prices shown + direct booking, equipment catalog dedup/pricing + bundled product images
+**Stage:** Post-feature build (Jun 2026) — Home Layout B, Care Guides, AI Assistant (action-taking) + Cloud Function shipped; all audit batches + tri-audit fixes complete; **field-feedback rounds 3–8 shipped**: floating liquid-glass pill nav (iterated floating-glass → pill → fixed orange bar in round 5 → back to the pill in round 8), five root tabs with the calendar moved to the My Care app bar, chrome contract, calm/dark/one-accent design pass, working offline assistant, 1-tap dose logging, manpower prices shown + direct booking, equipment catalog dedup/pricing + bundled product images
 **Owner:** Ateeshay Jain ([Ateeshay.jain@gmail.com](mailto:Ateeshay.jain@gmail.com))
 **Last reviewed:** 2026-06-15
 

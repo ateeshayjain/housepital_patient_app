@@ -13,6 +13,7 @@ import '../../utils/permissions.dart';
 import '../../utils/session_scope.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -67,7 +68,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (source == null) return;
 
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    final image = await ImagePrivacy.pickSanitizedImage(picker,
+        source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
     if (!mounted) return;

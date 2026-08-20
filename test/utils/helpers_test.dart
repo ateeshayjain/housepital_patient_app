@@ -193,9 +193,12 @@ void main() {
       expect(VitalHelper.getVitalStatus('pulse', 120), 'alert');
     });
 
-    test('returns "normal" for unknown vital type', () {
-      // Unknown vital type returns greyLight color which maps to "normal"
-      expect(VitalHelper.getVitalStatus('unknown_vital', 100), 'normal');
+    test('returns "unknown" for an unknown vital type — never "normal"', () {
+      // This asserted 'normal'. An unrecognised or typo'd vital type rendered
+      // as a reassuring green "normal", which is the worst possible way for
+      // the app to say "I have no idea what this reading is". It now returns
+      // 'unknown' and paints neutral grey.
+      expect(VitalHelper.getVitalStatus('unknown_vital', 100), 'unknown');
     });
   });
 }

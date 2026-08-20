@@ -25,7 +25,11 @@ class HousepitalColorsDark {
   static const Color textDisabled = Color(0xFF7A7A7A);  // ~4.2:1 on card / 5.4:1 on bg
 
   // Brand orange — same hue, but verify how it's used in dark.
-  // #F39314 vs surface #1A1A1A → 6.32:1 — AA for normal text / AAA for large.
+  // MEASURED against the tokens that actually exist in this class:
+  //   #F39314 on surface #000000      → 8.99:1  (AAA)
+  //   #F39314 on surfaceElevated #1C1C1E → 7.29:1  (AAA large, AA normal)
+  // The previous comment cited "6.32:1 vs #1A1A1A" — a surface this file has
+  // never defined, and a ratio that matches no pair here.
   static const Color orange = Color(0xFFF39314);
   // ON-orange: WHITE by explicit owner decision (2026-06-11) — brand look
   // over the AA ratio; keep on-orange text bold ≥14px to compensate.
@@ -331,8 +335,15 @@ class HousepitalTheme {
         labelStyle: TextStyle(fontFamily: 'Archivo',
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          // Raw orange on orangeLight is ~2:1 — orangeText keeps AA.
-          color: HousepitalColors.orangeText,
+          // 12px label on orangeLight #FFF3E0. MEASURED:
+          //   raw orange  #F39314 → 2.13:1  (fails everything)
+          //   orangeText  #B86E00 → 3.63:1  (fails AA — this was the token
+          //                                  here, under a comment claiming
+          //                                  it "keeps AA")
+          //   orangeStrong #9A5C00 → 4.90:1 (AA)
+          // 12px is normal text, so 4.5:1 is the floor and orangeStrong is
+          // the only one of the three that clears it.
+          color: HousepitalColors.orangeStrong,
         ),
         shape: StadiumBorder(),
         side: BorderSide(color: Colors.transparent),

@@ -14,6 +14,7 @@ import '../../utils/helpers.dart';
 import '../../utils/validators.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/glass.dart';
+import '../../widgets/medical_disclaimer.dart';
 
 class VitalsScreen extends StatefulWidget {
   final String? initialVital;
@@ -492,6 +493,10 @@ class _VitalsScreenState extends State<VitalsScreen>
 
           // Insights
           _buildInsights(primaryKey, values),
+
+          // The screen colours a person's readings red/amber/green and says
+          // "outside safe range". State the limits of that where it is read.
+          const MedicalDisclaimer(context_: DisclaimerContext.vitals),
 
           // Clearance so the extended FAB never covers the last insight row.
           const SizedBox(height: 88),

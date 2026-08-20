@@ -40,8 +40,8 @@ Replaces phone-call-based monitoring with structured, transparent visibility int
 ## Quick Stats
 
 - **149 Dart source files** | **~53,800 lines of code**
-- **99 test files** | **~1,771 tests at runtime** (1,370 `test()`/`testWidgets()` call sites; parameterized guard suites expand at runtime) | **~23,800 test LOC**
-- **6 bottom tabs** (Home, My Care, Services, Calendar, Billing, More) — fixed solid-orange nav bar
+- **108 test files** | **1,436 `test()`/`testWidgets()` call sites** (parameterized guard suites expand further at runtime). **These figures are self-reported: CI has never executed a step** (47 runs, all blocked on a billing lock), so no test result from this repo carries independent attestation.
+- **5 bottom tabs** (Home, My Care, Services, Billing, More) — a floating liquid-glass pill. The care calendar is **not** a tab; the owner moved it to the My Care app bar to get back to five icons.
 - **40+ screens** with full EN/HI localization and true-black tonal dark mode
 - **52 named routes** in onGenerateRoute
 - **351 equipment items** (all priced; 320 with bundled product photos, ~31 placeholder)
@@ -206,7 +206,7 @@ housepital_patient_app/
 │   ├── my-care-tab.md                # My Care tab developer guide
 │   └── superpowers/                  # Design specs + implementation plans
 │
-└── test/                             # 86 test files, 1,550+ tests
+└── test/                             # 108 test files, 1,436 test call sites
     ├── screens/overflow_smoke_test.dart  # 37 screens × 3 widths overflow guard
     ├── widgets/dark_mode_test.dart       # dark-mode token guard
     └── utils/i18n_sync_test.dart         # EN/HI key-sync guard
@@ -266,7 +266,7 @@ housepital_patient_app/
 - Equipment detail sheet (buy vs. rent, specs, add to cart)
 - Cart + Razorpay checkout (equipment); service booking wizard for bookable services
 
-### Tab 5 — Billing
+### Tab 4 — Billing
 - Invoice dashboard (total due, overdue count, total paid)
 - Invoice list with filter tabs (all, pending, overdue, paid)
 - Invoice detail with line items + GST breakdown
@@ -275,14 +275,17 @@ housepital_patient_app/
 - Payment methods management
 - Spend summary by category
 
-### Tab 4 — Calendar (root tab)
-- Care Calendar is a root bottom-tab (index 3, between Services and Billing)
+### Care Calendar (NOT a tab — reached from the My Care app bar)
+- Route `'/care-calendar'`, a custom app-bar action left of search. It was a
+  root tab at index 3 during field rounds 4–5; the owner moved it out to get
+  back to five bottom icons. Index 3 is Billing again — `switchToTab(3)` from
+  Home's "Pay Now" silently went to the Calendar while it sat there.
 - Day / Week / Month views in one segmented control
 - Dose groups with single-tap mark-taken (records a timestamped log)
 - Staff attendance with mark-present confirmations
 - Future-day "N doses scheduled" cards; hairline separators between dose rows
 
-### Tab 6 — More (Settings)
+### Tab 5 — More (Settings)
 - Patient profile editor (medical details, dietary restrictions, emergency contacts)
 - Family members management (add/remove, notification preferences)
 - Medical document repository
