@@ -652,6 +652,63 @@ In-app notification feed.
 | 001 | 001_initial_schema.sql       | 2026-03    | All 21 tables: patients, family, staff, services,   |
 |     |                              |            | bookings, payments, vitals, reports, medications,   |
 |     |                              |            | concerns, ratings, notifications, coupons, equipment|
+| 002 | 002_seed_services.sql        | 2026-03    | Service catalog seed data                           |
+| 003 | 003_seed_equipment.sql       | 2026-03    | Equipment catalog seed data                         |
+| 004 | 004_seed_coupons.sql         | 2026-03    | Coupon seed data                                    |
+| 005 | 005_schema_code_reconciliation.sql | 2026-08-20 | Reconciles the schema with the code that reads |
+|     |                              |            | it — see below. **Not yet applied to any database.**|
+
+### 005 — schema/code reconciliation (2026-08-20)
+
+The round-4 audit diffed every `db("table")` chain in `functions/src` against
+this schema and found ~20 sites referencing columns and tables that had never
+existed. MySQL rejects an unknown column outright, so each was a 500 on a
+route that had never once returned success. Nothing noticed because the client
+falls back to bundled sample data whenever the API is unreachable, and
+`api.housepital.in` does not resolve — so a backend where 20 endpoints were
+structurally incapable of responding presented, from the app, as a backend
+that was merely offline.
+
+The breaks split two ways. Where the code used a DIFFERENT NAME for a column
+that exists, the **code** was changed, because the schema name is also what
+the Flutter client serialises — renaming the column would have broken the app
+to satisfy the server:
+
+| Route code used   | Actual column   | Table                |
+|-------------------|-----------------|----------------------|
+| `family_member_id`| `paid_by`       | payments             |
+| `family_member_id`| `booked_by`     | bookings             |
+| `family_member_id`| `raised_by`     | family_concerns      |
+| `family_member_id`| `requested_by`  | assessment_requests  |
+| `family_member_id`| `rated_by`      | daily_ratings        |
+| `base_amount`     | `price_amount`  | bookings             |
+| `schedule_times`  | `time_slots`    | medications          |
+| `start_date`      | `prescribed_date`| medications         |
+| `sort_order`      | `display_order` | service_catalog      |
+| `is_active`       | `status`        | equipment_catalog    |
+| `patient_id`      | (join via `medication_id`) | medication_logs |
+
+Where the code needed something that genuinely did not exist, **the schema**
+gained it:
+
+| Table                       | Added                                    |
+|-----------------------------|------------------------------------------|
+| payments                    | `updated_at` (5 write sites needed it)   |
+| medications                 | `updated_at`, `reminders_enabled`        |
+| family_concerns             | `updated_at`                             |
+| daily_ratings               | `updated_at`                             |
+| notification_log            | `is_read`, `read_at` + index             |
+| equipment_catalog           | `sort_order` + index                     |
+| **staff_reviews**           | new table                                |
+| **staff_documents**         | new table                                |
+| **equipment_deployments**   | new table                                |
+| **health_manager_assignments** | new table                             |
+
+`functions/src/__tests__/schema-conformance.test.ts` now parses this schema
+(including `ALTER TABLE ... ADD COLUMN`) and every query chain in the routes,
+and fails on any unknown table or column. It runs without a database, so it
+runs everywhere — the previous state of affairs was only possible because no
+test could reach a live MySQL instance.
 
 ---
 

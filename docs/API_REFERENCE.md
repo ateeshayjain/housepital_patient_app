@@ -888,15 +888,27 @@ Add a medication.
 {
   "name": "string (required)",
   "dosage": "string",
+  "form": "string",
   "frequency": "string",
-  "schedule_times": ["08:00", "21:00"],
+  "time_slots": ["08:00", "21:00"],
   "instructions": "string",
-  "start_date": "YYYY-MM-DD",
+  "prescribed_by": "string",
+  "prescribed_date": "YYYY-MM-DD",
   "end_date": "YYYY-MM-DD",
   "stock_count": 30,
-  "low_stock_threshold": 5
+  "stock_unit": "string",
+  "reminders_enabled": true
 }
 ```
+
+> **Renamed in round 4.** This endpoint used to document (and validate)
+> `schedule_times`, `start_date` and `low_stock_threshold`. None of those
+> existed as columns on `medications`, and the Flutter client had always sent
+> `time_slots` / `prescribed_date` / `stock_unit` / `reminders_enabled` — the
+> names the table actually uses. So a well-formed request from the app was
+> stripped by validation and whatever survived hit an unknown column. The
+> names above are now the same in the client, the validator, the route and the
+> schema. `low_stock_threshold` is gone entirely: nothing read it.
 
 **Response:** `201` -- Medication object
 

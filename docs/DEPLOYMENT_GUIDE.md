@@ -216,11 +216,31 @@ The `flutter_local_notifications` package requires the following Android permiss
 ```xml
 <!-- Medication reminder notifications (Android 13+) -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-<!-- Exact alarm scheduling for medication reminders -->
-<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 <!-- Receive boot completed to reschedule notifications -->
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 ```
+
+**SCHEDULE_EXACT_ALARM is deliberately NOT declared.** It was, and nothing
+used it: every call in `MedicationReminderService` passes
+`AndroidScheduleMode.inexactAllowWhileIdle`. It is a Play Console RESTRICTED
+permission — declaring it forces a policy declaration and review, and it is
+auto-revocable on the user's device — so an unused declaration was pure
+release risk for no capability. If reminders ever need to fire to the minute,
+the correct permission for a medication reminder is `USE_EXACT_ALARM` (allowed
+for this use case without a declaration form) AND a switch to
+`AndroidScheduleMode.exactAllowWhileIdle`. Change both together or neither.
+
+The manifest also declares three `flutter_local_notifications` receivers
+(`ScheduledNotificationReceiver`, `ActionBroadcastReceiver`,
+`ScheduledNotificationBootReceiver`). They were absent, which is why Android
+reminders did not work at all — and why every scheduled dose was silently lost
+on reboot, a failure a patient notices only by missing medication.
+
+And a `<queries>` block for `tel:`, `mailto:`, `https:` and
+`android.speech.RecognitionService`. Without those, Android 11+ hides the
+dialler from `canLaunchUrl()` even when one is installed — which would have
+taken down the SOS and "call my nurse" paths — and the Sahayak voice button
+cannot find a recognition service.
 
 For Android 13+ (API 33+), the app requests `POST_NOTIFICATIONS` permission at runtime when the user first adds a medication.
 

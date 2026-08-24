@@ -161,31 +161,65 @@ Commission is non-refundable WHEN ALL THREE conditions are met:
 
 ## Vitals Alert Thresholds
 
-Defined in `constants.dart` as `AppConstants.vitalRanges`. Units vary by vital type.
+**Single source of truth: `lib/utils/vital_classifier.dart`.** Nothing else
+may hold thresholds — not this document, not the backend, not a constants map.
+
+That rule is written this firmly because the app has had FOUR tables at once:
+`vital_classifier.dart`, `AppConstants.vitalRanges` (now deleted), the table
+that used to sit in this section, and inline ternaries in the backend's
+`deployments.ts` (now delegating to `functions/src/utils/vitalClassifier.ts`).
+Each was written in good faith and each disagreed with the others, so a
+reading's colour depended on which screen — or which side of the network —
+you happened to be on. SpO2 91 was RED on My Care and BORDERLINE on the trend
+screen; a 95F hypothermic reading came back from the server as "normal".
+
+The table below is a TRANSCRIPTION for human readers. If it ever disagrees
+with the Dart file, the Dart file is right and this is a bug — but it should
+not be able to drift: `functions/src/__tests__/vital-classifier.test.ts`
+parses the Dart source and diffs it against the TypeScript copy across the
+whole range.
+
+> **These thresholds are provisional and need clinical sign-off.** Where the
+> old tables disagreed, the reconciliation took the MORE CONSERVATIVE bound —
+> the one that escalates sooner — because in home care the cost of an
+> unnecessary "call your nurse" is far below the cost of a missed
+> deterioration. That is a safe default, not a clinical authority.
+
+Boundary convention: the boundary value belongs to the **more severe**
+category (140 systolic is RED, not yellow).
 
 ### Blood Pressure (mmHg)
 
 | Vital       | GREEN (Normal) | YELLOW (Borderline) | RED (Alert)       |
 |-------------|----------------|---------------------|-------------------|
-| Systolic    | 90-130         | 130-140 or 80-90    | >140 or <80       |
-| Diastolic   | 60-85          | 85-90 or 55-60      | >90 or <55        |
+| Systolic    | 100-130        | 130-140 or 90-100   | >=140 or <90      |
+| Diastolic   | 65-85          | 85-90 or 60-65      | >=90 or <60       |
+
+Blood pressure is reported as ONE status across both numbers — the more
+severe of the two — because either number alone can make a reading urgent.
 
 ### Other Vitals
 
-| Vital         | GREEN           | YELLOW            | RED               | Unit      |
-|---------------|-----------------|-------------------|-------------------|-----------|
-| Pulse         | 60-100          | 100-110 or 50-60  | >110 or <50       | bpm       |
-| SpO2          | 95-100          | 92-95             | <92               | %         |
-| Temperature   | 97.0-99.0       | 99.0-100.4        | >100.4 or <96.0   | F         |
-| Blood Sugar   | 70-140          | 140-180 or 60-70  | >180 or <60       | mg/dL     |
+| Vital         | GREEN           | YELLOW               | RED               | Unit      |
+|---------------|-----------------|----------------------|-------------------|-----------|
+| Pulse         | 60-100          | 100-110 or 50-60     | >110 or <50       | bpm       |
+| SpO2          | 95-100          | 90-95                | <90               | %         |
+| Temperature   | 97.0-99.0       | 99.0-100.4 or 96-97  | >100.4 or <96.0   | F         |
+| Blood Sugar   | 70-140          | 140-180 or 60-70     | >180 or <60       | mg/dL     |
 
-### Backend Vital Status Calculation (deployments.ts)
+### Unknown vitals and missing readings
 
-The backend uses simplified thresholds for the service-detail endpoint:
-- BP: normal (<= 140/90), warning (> 140/90), critical (> 180/120)
-- SpO2: normal (>= 95), warning (>= 90), critical (< 90)
-- Pulse: normal (60-100), warning (outside 60-100), critical (> 120 or < 50)
-- Temperature: normal (<= 100), warning (> 100), critical (> 103)
+An unrecognised vital type returns `'unknown'`, **never** `'green'` — it used
+to return green, so a typo'd or newly-added key rendered as a reassuring green
+dot, which is the worst available way to say "I have no idea what this is".
+On the backend a null or non-finite reading returns `null` rather than
+`"normal"`: absence of data is not evidence of health.
+
+### Backend
+
+`functions/src/routes/deployments.ts` no longer holds its own thresholds. It
+delegates to `functions/src/utils/vitalClassifier.ts`, which is a literal
+transcription of the Dart table above.
 
 ---
 

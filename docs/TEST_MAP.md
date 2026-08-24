@@ -1,9 +1,24 @@
 # Test Map -- Housepital Patient App
 
-**Last updated:** 2026-06-15
-**Total test count:** ~1,771 at runtime (1,370 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
-**Pass rate:** all passing (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
-**Test file count:** 101 (`find test -name "*_test.dart" | wc -l`) — 1,819 tests at runtime
+**Last updated:** 2026-08-20
+**Total test count:** **1,911 at runtime**, measured (1,436 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
+**Pass rate:** all 1,911 passing, 0 failures (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
+**Test file count:** 108 (`find test -name "*_test.dart" | wc -l`)
+
+> **These numbers are from a local run on 2026-08-20 and have no independent
+> attestation.** CI has never executed a step (47 runs, billing lock), so no
+> figure in this file has ever been reproduced by anything but a developer
+> machine. Treat it as a self-report until CI runs.
+
+### Backend tests (separate repo)
+
+`housepital-backend/functions` — `npx jest`. Two suites added in round 4 are
+worth knowing about because they need no database and so run anywhere:
+
+| Suite | What it pins |
+|-------|--------------|
+| `schema-conformance.test.ts` | Every `db("table")` chain in the routes against the SQL migrations. Caught ~20 columns and 4 tables that had never existed. |
+| `vital-classifier.test.ts` | The TypeScript threshold table against the **Dart source**, parsed and diffed across the whole range, so the two languages cannot drift. |
 
 ### How to update this count
 
@@ -314,3 +329,42 @@ itself is imported by zero tests despite three call sites; `session_scope.dart`,
 `demo_mode.dart`, `demo_data_banner.dart` and `delete_account_screen.dart` have no
 tests; ~120 tests assert copies of production data rather than production; 17 payment
 tests skip without `--dart-define=RAZORPAY_KEY`.
+
+---
+
+## Round 4 additions (2026-08-20)
+
+Eight files, all written against a specific defect that shipped. Each header
+comment names the defect rather than the function, because in every case the
+code read correctly and the *behaviour* was wrong.
+
+| File | The defect it exists for |
+|------|--------------------------|
+| `test/services/money_units_test.dart` | `PaymentScreen.amount` was read as rupees by everything that displayed it and as paise by everything that charged it. Cart showed ₹5,000 and billed ₹50; Billing showed ₹5,00,000 and billed correctly. Pins that exactly one conversion exists, at the gateway boundary. |
+| `test/models/equipment_assessment_gate_test.dart` | `needsAssessment` exempted every rentable item, and every ventilator/BiPAP/CPAP/concentrator/suction machine in the catalog is rentable. It gated BiPAP *masks* instead. |
+| `test/models/equipment_catalog_gate_test.dart` | The same rule against the **shipped catalog**, not a fixture — the failure was invisible in the abstract and obvious against the data. Also checks every referenced product image still exists after the 235-file delete. |
+| `test/services/assistant_clinical_guard_test.dart` | "bleeding ho raha hai" routed to `get_duty_days`, because the unanchored pattern `din` matches "blee-**din**-g". Pins the word boundaries AND the guard that pre-empts routing entirely. |
+| `test/screens/staff_profile_no_fabrication_test.dart` | The staff-profile fallback fabricated `police_verified: true`, a rating and four named reviews — on the only code path that runs in a shipped build. |
+| `test/services/notification_id_test.dart` | Notification IDs overflowed 32 bits, so two medications could collapse onto one ID and scheduling the second silently replaced the first. |
+| `test/utils/vital_classifier_test.dart` | Replaces `vital_ranges_test.dart`, which validated that a threshold map was *self*-consistent while it disagreed with the other classifier. Pins **agreement** between both entry points. |
+| `test/widgets/medical_disclaimer_test.dart` | The app carried no medical disclaimer anywhere. Pins placement, both languages, and that it never blocks or touches the SOS path. |
+
+### One thing these tests taught about tests
+
+Three of the eight found bugs in *themselves* before they found anything else:
+the payment fake returned `{'order_id': ...}` — mirroring the client's wrong
+assumption instead of the backend's actual response, which is precisely why
+that bug survived four audit rounds; the schema parser was truncated by a
+semicolon inside a SQL comment; and the Dart/TypeScript differ ran past the
+end of one function into the next and reported four phantom mismatches.
+
+A fake built from the code under test can only ever confirm that code. Build
+it from the contract.
+
+Also worth recording, because it silently weakens widget tests:
+`AppLocalizations.delegate.load()` awaits `rootBundle.loadString`, and
+`Localizations` renders an **empty widget** until that resolves.
+`pumpAndSettle` settles frames and animations, not arbitrary futures — so the
+second and later `pumpWidget` calls in a file find an empty tree, and a
+`findsNothing` assertion passes for entirely the wrong reason. Use the
+`runAsync` + delay pattern from `test/screens/home/home_layout_test.dart`.
