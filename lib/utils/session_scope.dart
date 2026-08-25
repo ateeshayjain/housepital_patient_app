@@ -15,6 +15,7 @@ import '../providers/orders_provider.dart';
 import '../providers/reminders_provider.dart';
 import '../services/cache_service.dart';
 import '../services/medication_reminder_service.dart';
+import 'image_privacy.dart';
 import '../utils/logger.dart';
 
 /// One place that knows which state belongs to a single patient, and clears
@@ -156,6 +157,13 @@ abstract final class SessionScope {
       for (final key in _patientScopedPrefsKeys) {
         await prefs.remove(key);
       }
+      // Sanitised photo copies. ImagePrivacy re-encodes every picked image
+      // to a temp file and hands out its path; those are photographs taken
+      // inside ONE patient's home — a wound, a meter reading, an equipment
+      // fault — so they are patient-scoped like everything else here. They
+      // were not being deleted at all until this was wired.
+      await ImagePrivacy.purgeAll();
+
       // Per-day satisfaction ratings are keyed by date, not patient.
       for (final key in prefs.getKeys().toList()) {
         if (key.startsWith(_dailyRatingPrefix)) {

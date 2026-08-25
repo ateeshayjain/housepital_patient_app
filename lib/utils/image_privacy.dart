@@ -73,7 +73,13 @@ abstract final class ImagePrivacy {
 
       final encoded = img.encodeJpg(baked, quality: 88);
 
-      final dir = await Directory.systemTemp.createTemp('hpl_img_');
+      // Purge before writing, not after: the consumer of the returned XFile
+      // holds its path (chat upload, concern evidence, profile photo), so the
+      // file cannot be deleted at the end of this method. Cleaning at the
+      // START of the next pick is the next safest point.
+      await purgeStale();
+
+      final dir = await Directory.systemTemp.createTemp(_tempPrefix);
       final out = File('${dir.path}/${_safeName(original.name)}');
       await out.writeAsBytes(encoded, flush: true);
 
@@ -82,6 +88,55 @@ abstract final class ImagePrivacy {
       Log.error('Failed to strip image metadata — upload refused',
           error: e, stack: st, tag: 'ImagePrivacy');
       return null;
+    }
+  }
+
+  /// Prefix for the scratch directories this class creates. Distinctive so
+  /// [purgeStale] and [purgeAll] can never touch anything they did not write.
+  static const String _tempPrefix = 'hpl_img_';
+
+  /// How long a sanitised copy may linger before it is fair game.
+  static const Duration _maxAge = Duration(hours: 1);
+
+  /// Deletes sanitised copies older than [_maxAge].
+  ///
+  /// WHY THIS EXISTS
+  /// [stripMetadata] writes a re-encoded copy to a fresh temp directory and
+  /// returns its path. Nothing deleted it — ever. So the fix that strips GPS
+  /// out of a wound photo was also leaving a full-resolution copy of that
+  /// photo in the OS temp area, indefinitely, once per pick. The metadata was
+  /// gone and the image was not, which is a poor trade to make silently.
+  ///
+  /// The OS does eventually reclaim its temp area, on its own schedule, with
+  /// no guarantee useful to a health app.
+  static Future<void> purgeStale() => _purge(olderThan: _maxAge);
+
+  /// Deletes every sanitised copy regardless of age.
+  ///
+  /// Called on a patient switch and on logout: these files are photographs
+  /// taken inside one patient's home, so they are patient-scoped data and
+  /// belong in the same wipe as everything else. See [SessionScope].
+  static Future<void> purgeAll() => _purge(olderThan: Duration.zero);
+
+  static Future<void> _purge({required Duration olderThan}) async {
+    try {
+      final cutoff = DateTime.now().subtract(olderThan);
+      final tmp = Directory.systemTemp;
+      if (!tmp.existsSync()) return;
+      for (final entity in tmp.listSync(followLinks: false)) {
+        final name = entity.path.split(Platform.pathSeparator).last;
+        if (!name.startsWith(_tempPrefix)) continue;
+        try {
+          if (entity.statSync().modified.isAfter(cutoff)) continue;
+          await entity.delete(recursive: true);
+        } catch (_) {
+          // A file still open, or already gone. Never fatal — this is
+          // housekeeping, and failing it must not break a photo attachment.
+        }
+      }
+    } catch (e) {
+      Log.warn('Could not purge sanitised image copies',
+          error: e, tag: 'ImagePrivacy');
     }
   }
 
