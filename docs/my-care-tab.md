@@ -194,7 +194,7 @@ flutter test test/models/ test/providers/ test/screens/my_care/
 
 ## Business Rules
 
-- **Never show prices for manpower services** (caretaker, nursing, japa, nanny) — users reject without talking to sales
+- **Manpower prices ARE shown and directly bookable** (caretaker, nursing, physio) — Delhi NCR rate card, normal cart/payment path, Housepital calls back after purchase to assign staff. *(This entry previously said the opposite; the owner reversed it on 2026-06-11 — do not reintroduce.)* Japa/Nanny are Dai Maa, a separate business.
 - **Equipment pricing is monthly** (minimum 15 days = 1 month), never per-day
 - **Staff app writes administration logs** — patient app is read-only for medication logs
 - **Patient app writes medication CRUD** — add, edit, delete, stock updates

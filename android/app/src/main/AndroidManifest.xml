@@ -1,8 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- SCHEDULE_EXACT_ALARM was declared here and never used: every call in
+         MedicationReminderService passes
+         AndroidScheduleMode.inexactAllowWhileIdle. It is a Play Console
+         RESTRICTED permission — declaring it forces a policy declaration and
+         review, and is auto-revocable on the user's device, so an unused
+         declaration is pure release risk for no capability. If medication
+         reminders ever need to fire to the minute, the correct permission for
+         that use case is USE_EXACT_ALARM (allowed for medication reminders
+         without a declaration form) AND a switch to
+         AndroidScheduleMode.exactAllowWhileIdle — change both together or
+         neither. -->
     <application
         android:label="housepital_patient"
         android:name="${applicationName}"
@@ -29,6 +39,31 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- flutter_local_notifications receivers.
+             These were absent, which is why Android reminders did not work:
+             the plugin schedules through AlarmManager and needs its own
+             receiver registered to deliver the notification, a boot receiver
+             to re-arm everything after a restart (otherwise every scheduled
+             dose is silently lost on reboot — the failure a patient notices
+             only by missing medication), and an action receiver for the
+             "Taken" button the service already publishes. -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false"/>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false"/>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -44,6 +79,31 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+
+        <!-- Android 11+ package visibility. Without these declarations
+             canLaunchUrl() returns false and launchUrl() throws, even when a
+             dialler or mail app is installed — the platform simply hides them
+             from us. The tel: entry covers the SOS and "call my nurse" paths,
+             which must never fail. -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="mailto"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+
+        <!-- speech_to_text needs to see a recognition service to work at all;
+             this is what makes the Sahayak voice button functional on
+             Android 11+. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

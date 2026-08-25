@@ -2,7 +2,82 @@
 
 Running list of bugs, workarounds, technical debt, and things that work but are not right.
 
-**Last updated:** 2026-05-28 (audit batch 4)
+**Last updated:** 2026-08-03 (audit round 3)
+
+## Open — from the eleven-checklist audits (rounds 1–3, `docs/audits/`)
+
+Full evidence in `docs/audits/round3/`. Listed here so this file stops being the
+one place that doesn't know.
+
+**Blockers**
+- `api.housepital.in` does not resolve. Every provider serves `DemoData`; the app
+  ships a demo-data build.
+- Demo clinical data seeds on every fresh install. Three rounds have improved the
+  LABELLING; no round has gated the seed. There is no `DEMO_DATA` build flag.
+- App icon is an upscale of a 143×182 raster (ink fills 50.2%×64.0%, no iOS 18
+  dark/tinted variants). Needs the designer's vector before submission.
+- `storage.rules` is written but **undeployed**; live posture unknown.
+- No account-deletion request reaches any server — the record is written locally
+  and read by nothing.
+- Android release signs with the **debug** keystore; the auth gate at
+  `main.dart` is commented out; no dSYM upload phase; no kill switch.
+
+**High**
+- ~~The demo-notice overlay pill absorbs touches~~ **FIXED 2026-08-20** — the
+  overlay is now wrapped in `IgnorePointer`. It still occludes the first content
+  row on several screens, and `maxLines: 1` still truncates the warning in Hindi
+  and at the 1.4× text ceiling.
+- `DemoMode` has **3** `markServingLiveData` call sites for **13** declared
+  sources, so the notice largely does not clear;
+  `sourceCareTeam`/`sourceCareCalendar`/`sourceProfile` are declared and never
+  wired. (Counts corrected 2026-08-20 — this line said "one … for eleven".
+  `sourceVitals` and `sourceStaffProfile` have since been added, both wired at
+  both ends.)
+- ~~`logger.dart:63` is an unwired TODO~~ **FIXED 2026-08-20** — `Log.sink` is
+  now installed from `main.dart` and forwards warn/error to
+  `FirebaseCrashlytics.recordError(fatal: false)` on mobile release builds.
+  **64** warn/error sites (not the ~45 previously stated) now reach a remote
+  sink, including every `StoreMigrator` failure path. Note the PII rule on
+  `Log.sink`: messages must describe what failed, never who it happened to.
+- ~~40.3 MiB of unreferenced product images ship~~ **FIXED 2026-08-20** — 235
+  orphans deleted (40.2 MiB); `assets/images/products/` went 78 MiB → 38 MiB.
+  Three orphans were first WIRED to catalog entries that had no photo rather
+  than deleted. A test now asserts every catalog `image_url` resolves to a file
+  that exists.
+- Four `BackdropFilter` surfaces per frame (~22% of screen) since the pill nav.
+- Dynamic Type clamped at 1.4×, untested; 17 of 54 icon buttons unlabelled;
+  zero contrast assertions in `test/`.
+- ~~the design gate still cites the old wrong figure~~ **FIXED 2026-08-20** —
+  `scripts/check_design_consistency.sh` now states the measured 3.99:1 (AA-large
+  only) and points at `orangeStrong` (5.38:1) for text under 18px. The chip
+  theme moved from `orangeText` (3.63:1 on `orangeLight` — failing AA under a
+  comment claiming it "keeps AA") to `orangeStrong` (4.90:1). The dark-mode
+  comment citing "6.32:1 vs #1A1A1A" — a surface this file never defined — now
+  carries the measured 8.99:1 (on `#000000`) and 7.29:1 (on `#1C1C1E`).
+- Backend: the two databases define the same six nouns incompatibly;
+  `family_members.user_id` is `UNIQUE`, so the server structurally cannot return
+  two patients and the patient-switch feature would 403.
+- ~~Backend: ~20 routes query columns and tables that do not exist~~
+  **FIXED 2026-08-20** — `sql/005_schema_code_reconciliation.sql` adds the five
+  genuinely-missing columns and four missing tables; the rest were renames in
+  the CODE (`family_member_id` → `paid_by`/`raised_by`/`booked_by`/`rated_by`/
+  `requested_by`, `schedule_times` → `time_slots`, `sort_order` →
+  `display_order`, `base_amount` → `price_amount`), because the schema names
+  are also what the Flutter client serialises.
+  `functions/src/__tests__/schema-conformance.test.ts` now fails on any future
+  drift, without needing a database. **The migration has not been run against
+  any live database** — that is still outstanding.
+- ~~Backend: `verifyPatientAccess` could be bypassed with an empty
+  `patientId`~~ **FIXED 2026-08-20** — it denied only when BOTH ids were present
+  and differed, and `verifyAuth` assigns `patientId = ""` to any
+  Firebase-authenticated caller with no `family_members` row, so that blank
+  claim satisfied the guard for every patient id. Now fails closed on all three
+  conditions. **Not deployed.**
+
+**Accepted risks (owner decisions, not defects)**
+- White on Housepital orange = 2.33:1 — explicit owner decision, measured and accepted.
+- Manpower prices shown and directly bookable.
+- Floating liquid-glass pill nav (reverses field round 5).
 
 ---
 

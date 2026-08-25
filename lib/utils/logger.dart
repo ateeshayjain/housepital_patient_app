@@ -24,7 +24,36 @@ enum LogLevel { debug, info, warn, error }
 ///       error: e, stack: st, tag: 'AppProvider');
 /// }
 /// ```
+/// Receives warn/error records for out-of-process reporting.
+///
+/// Deliberately a function type rather than a Crashlytics import: [Log] is
+/// imported by almost every file in the app, and pulling Firebase in here
+/// would drag it into every unit test too. `main.dart` installs the real sink.
+typedef LogSink = void Function(
+  LogLevel level,
+  String message, {
+  Object? error,
+  StackTrace? stack,
+  String? tag,
+});
+
 class Log {
+  /// Out-of-process destination for warn/error. Null in tests and until
+  /// `main.dart` installs one.
+  ///
+  /// PII RULE — read before logging anything.
+  /// Whatever reaches this sink leaves the device and lands in a third-party
+  /// console. Log messages must describe WHAT failed, never WHO it happened
+  /// to: no patient name, phone, address, diagnosis, drug name, or invoice
+  /// amount. "Failed to load dashboard" is a good message; "Failed to load
+  /// dashboard for Kamala Devi (9876543210)" is a PHI disclosure with a log
+  /// level in front of it.
+  static LogSink? sink;
+
+  /// Test-only: removes the sink so one test cannot leak records into another.
+  @visibleForTesting
+  static void resetSink() => sink = null;
+
   /// Logs a verbose diagnostic [message]. Dropped in release builds.
   static void debug(String message, {String? tag}) =>
       _log(LogLevel.debug, message, tag: tag);
@@ -60,8 +89,23 @@ class Log {
     if (stack != null && (level == LogLevel.warn || level == LogLevel.error)) {
       debugPrint(stack.toString());
     }
-    // TODO(observability): forward warn/error to FirebaseCrashlytics.recordError
-    // here once a non-fatal reporting policy is decided. Kept as a single
-    // chokepoint so that wiring is a one-line change.
+    // Forward the levels that matter. `debugPrint` is a no-op in release, so
+    // before this existed every HANDLED failure in the app — the demo
+    // fallbacks, a failed store quarantine, a payment order that could not be
+    // created, a photo whose metadata could not be stripped — was invisible
+    // in production. Crashlytics only ever saw uncaught crashes, which is the
+    // one category this app is careful to avoid, so the reporting looked
+    // healthy precisely because the failures were being handled.
+    if (level == LogLevel.warn || level == LogLevel.error) {
+      final s = sink;
+      if (s != null) {
+        try {
+          s(level, message, error: error, stack: stack, tag: tag);
+        } catch (_) {
+          // A reporting failure must never become an app failure. Swallowed
+          // deliberately, and not re-logged — that recurses.
+        }
+      }
+    }
   }
 }

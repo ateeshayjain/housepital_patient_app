@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class ReturnScreen extends StatefulWidget {
   final String orderId;
@@ -313,7 +314,8 @@ class _ReturnScreenState extends State<ReturnScreen> {
 
   Future<void> _pickPhoto() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera);
+    final image = await ImagePrivacy.pickSanitizedImage(picker,
+        source: ImageSource.camera);
     if (image != null && mounted) {
       setState(() => _photoPath = image.path);
     }

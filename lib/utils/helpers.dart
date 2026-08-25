@@ -1,26 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../config/constants.dart';
 import '../config/theme.dart';
+import 'vital_classifier.dart';
 
+/// Presentation layer over [classifyVital]. Owns NO thresholds.
+///
+/// It used to own a second, different set — read from
+/// `AppConstants.vitalRanges`, under different key names. SpO2 91 was RED via
+/// classifyVital and BORDERLINE here; sugar 190 was YELLOW there and ALERT
+/// here; and because this side spelled the key `systolic` while the other
+/// spelled it `bp_systolic`, a blood-pressure reading matched neither map on
+/// the trend screen and was counted as normal.
+///
+/// Everything now resolves through the single classifier. If a threshold
+/// needs to change, it changes in vital_classifier.dart and both screens move
+/// together — which is the only property that was ever missing.
 class VitalHelper {
   static Color getVitalColor(String vitalType, double value) {
-    final ranges = AppConstants.vitalRanges[vitalType];
-    if (ranges == null) return HousepitalColors.greyLight;
-
-    if (value < ranges['low']! || value > ranges['high']!) {
-      return HousepitalColors.vitalAlert;
-    } else if (value < ranges['normalLow']! || value > ranges['normalHigh']!) {
-      return HousepitalColors.vitalBorderline;
+    switch (classifyVital(vitalType, value)) {
+      case 'red':
+        return HousepitalColors.vitalAlert;
+      case 'yellow':
+        return HousepitalColors.vitalBorderline;
+      case 'green':
+        return HousepitalColors.vitalNormal;
+      default:
+        // 'unknown' — an unrecognised vital type. Neutral, never reassuring.
+        return HousepitalColors.greyLight;
     }
-    return HousepitalColors.vitalNormal;
   }
 
   static String getVitalStatus(String vitalType, double value) {
-    final color = getVitalColor(vitalType, value);
-    if (color == HousepitalColors.vitalAlert) return 'alert';
-    if (color == HousepitalColors.vitalBorderline) return 'borderline';
-    return 'normal';
+    switch (classifyVital(vitalType, value)) {
+      case 'red':
+        return 'alert';
+      case 'yellow':
+        return 'borderline';
+      case 'green':
+        return 'normal';
+      default:
+        return 'unknown';
+    }
   }
 }
 

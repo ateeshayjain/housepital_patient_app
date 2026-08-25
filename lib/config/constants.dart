@@ -29,14 +29,12 @@ class AppConstants {
   static const int pageSize = 20;
 
   // Vitals Normal Ranges
-  static const Map<String, Map<String, double>> vitalRanges = {
-    'systolic': {'low': 90, 'normalLow': 100, 'normalHigh': 130, 'high': 140},
-    'diastolic': {'low': 60, 'normalLow': 65, 'normalHigh': 85, 'high': 90},
-    'pulse': {'low': 50, 'normalLow': 60, 'normalHigh': 100, 'high': 110},
-    'spo2': {'low': 90, 'normalLow': 95, 'normalHigh': 100, 'high': 100},
-    'temperature': {'low': 96.0, 'normalLow': 97.0, 'normalHigh': 99.0, 'high': 100.4},
-    'sugar': {'low': 60, 'normalLow': 70, 'normalHigh': 140, 'high': 180},
-  };
+  // REMOVED: `vitalRanges`. It was the app's SECOND set of vital thresholds,
+  // read only by VitalHelper, and it disagreed with vital_classifier.dart on
+  // SpO2 (red <90 vs <92), sugar (red >180 vs >200) and systolic — under
+  // different key names, so a reading could match one map and neither the
+  // other. Thresholds now live in exactly one place:
+  // lib/utils/vital_classifier.dart. Do not reintroduce a second source.
 
   // Attendance Grace Period (minutes)
   static const int attendanceGracePeriod = 30;

@@ -145,21 +145,21 @@ Available services for booking.
 | booking_type        | ENUM          | 'instant', 'scheduled', 'assessment' -- NOT NULL   |
 | description         | TEXT          |                                                    |
 | description_hi      | TEXT          |                                                    |
-| base_price_min      | INT           | In paise. NULL = hide price (manpower)             |
+| base_price_min      | INT           | In paise. NULL = no price yet -> quote-pending      |
 | base_price_max      | INT           | In paise                                           |
 | duration_minutes    | INT           |                                                    |
 | preparation_notes   | TEXT          |                                                    |
 | preparation_notes_hi| TEXT          |                                                    |
 | lead_time_hours     | INT           | DEFAULT 24                                         |
 | is_active           | BOOLEAN       | DEFAULT TRUE                                       |
-| hide_price          | BOOLEAN       | DEFAULT FALSE -- Never show price to user          |
+| hide_price          | BOOLEAN       | DEAD COLUMN -- ignored by the client since 2026-06 |
 | icon_name           | VARCHAR(50)   |                                                    |
 | display_order       | INT           | DEFAULT 0                                          |
 | created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                          |
 
 **Indexes:** `idx_category (category)`, `idx_active (is_active)`, `idx_booking_type (booking_type)`
 
-**Business rule:** When `hide_price = TRUE`, the API returns `base_price_min` and `base_price_max` as `null` to the client. This applies to caretaker, nursing, japa, and nanny services.
+**Business rule (current):** manpower prices **ARE shown and directly bookable** — caretaker, nurse and physio all carry rate-card prices and go through the normal cart/payment path. `hide_price` is a dead column: the client ignores it entirely and decides quote-pending purely from whether a price exists (`price == null || price == 0`). The pre-2026-06 rule that this table used to describe (hide prices for manpower) was reversed by the owner on 2026-06-11 and must not be reintroduced.
 
 ---
 
@@ -652,6 +652,105 @@ In-app notification feed.
 | 001 | 001_initial_schema.sql       | 2026-03    | All 21 tables: patients, family, staff, services,   |
 |     |                              |            | bookings, payments, vitals, reports, medications,   |
 |     |                              |            | concerns, ratings, notifications, coupons, equipment|
+| 002 | 002_seed_services.sql        | 2026-03    | Service catalog seed data                           |
+| 003 | 003_seed_equipment.sql       | 2026-03    | Equipment catalog seed data                         |
+| 004 | 004_seed_coupons.sql         | 2026-03    | Coupon seed data                                    |
+| 005 | 005_schema_code_reconciliation.sql | 2026-08-20 | Reconciles the schema with the code that reads |
+|     |                              |            | it — see below. **Verified locally; not yet applied to production.** |
+
+### 005 — schema/code reconciliation (2026-08-20)
+
+The round-4 audit diffed every `db("table")` chain in `functions/src` against
+this schema and found ~20 sites referencing columns and tables that had never
+existed. MySQL rejects an unknown column outright, so each was a 500 on a
+route that had never once returned success. Nothing noticed because the client
+falls back to bundled sample data whenever the API is unreachable, and
+`api.housepital.in` does not resolve — so a backend where 20 endpoints were
+structurally incapable of responding presented, from the app, as a backend
+that was merely offline.
+
+The breaks split two ways. Where the code used a DIFFERENT NAME for a column
+that exists, the **code** was changed, because the schema name is also what
+the Flutter client serialises — renaming the column would have broken the app
+to satisfy the server:
+
+| Route code used   | Actual column   | Table                |
+|-------------------|-----------------|----------------------|
+| `family_member_id`| `paid_by`       | payments             |
+| `family_member_id`| `booked_by`     | bookings             |
+| `family_member_id`| `raised_by`     | family_concerns      |
+| `family_member_id`| `requested_by`  | assessment_requests  |
+| `family_member_id`| `rated_by`      | daily_ratings        |
+| `base_amount`     | `price_amount`  | bookings             |
+| `schedule_times`  | `time_slots`    | medications          |
+| `start_date`      | `prescribed_date`| medications         |
+| `sort_order`      | `display_order` | service_catalog      |
+| `is_active`       | `status`        | equipment_catalog    |
+| `patient_id`      | (join via `medication_id`) | medication_logs |
+
+Where the code needed something that genuinely did not exist, **the schema**
+gained it:
+
+| Table                       | Added                                    |
+|-----------------------------|------------------------------------------|
+| payments                    | `updated_at` (5 write sites needed it)   |
+| medications                 | `updated_at`, `reminders_enabled`        |
+| family_concerns             | `updated_at`                             |
+| daily_ratings               | `updated_at`                             |
+| notification_log            | `is_read`, `read_at` + index             |
+| equipment_catalog           | `sort_order` + index                     |
+| **staff_reviews**           | new table                                |
+| **staff_documents**         | new table                                |
+| **equipment_deployments**   | new table                                |
+| **health_manager_assignments** | new table                             |
+
+#### Re-runnable by construction
+
+MySQL 8 has no `ADD COLUMN IF NOT EXISTS`, so 005's first draft could be run
+exactly once — the second run died on the first duplicate column. That is the
+wrong failure mode for a migration nobody can rehearse against production: if
+the first run failed part way (dropped connection, permissions, lock timeout),
+the retry would error on the columns that *did* apply and never reach the ones
+that did not, leaving the schema half-migrated with no safe way forward.
+
+Every `ADD COLUMN` and `ADD INDEX` now goes through two helper procedures that
+check `information_schema` first; `CREATE TABLE IF NOT EXISTS` was already
+idempotent. The helpers are dropped at the end of the script.
+
+#### Verification performed (2026-08-20)
+
+Against a real MySQL 8 instance, not a parser:
+
+| Check | Result |
+|-------|--------|
+| 001→005 applied to a clean database | all five OK |
+| Resulting schema | 25 tables, 351 columns |
+| Every table/column the routes query exists | yes, zero unknown |
+| 005 run a second and third time | no errors |
+| Schema after 3 runs vs after 1 | byte-identical |
+| Helper procedures left behind | none |
+
+**This has still never run against production**, because there is no reachable
+production database — no credentials, no `gcloud`, and `api.housepital.in` does
+not resolve. What the above removes is the risk that 005 had never been
+executed *at all*; it does not remove the need to verify against a copy of real
+data before applying it.
+
+#### The conformance test
+
+`functions/src/__tests__/schema-conformance.test.ts` parses this schema — both
+`ALTER TABLE ... ADD COLUMN` and the guarded `CALL hpl_add_column_if_missing`
+form — plus every query chain in the routes, and fails on any unknown table or
+column. It needs no database, so it runs everywhere; the original problem was
+only possible because no test could reach a live MySQL instance.
+
+Its parser was cross-checked against the live database above and now agrees
+exactly: no missed columns, no invented ones. Getting there took two
+corrections, both instructive. It first read `NOT` as a column name from the
+continuation line of a multi-line `ENUM` definition — a phantom column, which
+makes the guard *more* permissive and is therefore the quiet direction of
+error. Then the keyword blacklist that fixed it deleted `daily_ratings.comment`
+and `staff_reviews.comment`, which are real columns the routes read.
 
 ---
 

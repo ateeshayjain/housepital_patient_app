@@ -71,7 +71,7 @@ ServiceCatalogScreen.switchToSubTab(1); // jump to Equipment tab
 
 ### Key Service IDs
 
-**Manpower** (all `bookingType: 'assessment'`, no prices shown):
+**Manpower** (rate-card prices ARE shown and directly bookable — the old "no prices shown" rule was reversed by the owner on 2026-06-11):
 - `mp-nurse-basic-12`, `mp-nurse-basic-24`, `mp-nurse-adv-12`, `mp-nurse-adv-24`, `mp-nurse-crit-12`, `mp-nurse-crit-24`
 - `mp-caretaker-basic-12` through `mp-caretaker-crit-24` (6 variants)
 - `mp-japa-24`, `mp-nanny-12`
@@ -149,9 +149,9 @@ The Review step provides `_savedAddresses` (mock data: Home, Parent's Home, Offi
 
 ### Pricing Display Rules
 
-- `basePriceMin` is nullable — if null, no price row is shown
+- `basePriceMin` is nullable — if null the item has NO PRICE YET and renders as quote-pending. This is never decided by category: manpower carries rate-card prices.
 - If `basePriceMax` differs from `basePriceMin`, a range is displayed (e.g. "3,500 - 5,000")
-- **Never show prices for manpower services** (nurse, caretaker, japa, nanny) — users reject without speaking to sales
+- **Manpower prices ARE shown** (caretaker, nurse, physio) and are directly bookable through the normal cart/payment path. Prices come from the official Delhi NCR rate card. Housepital calls back after purchase to confirm requirements and assign staff. Japa/nanny are Dai Maa, a separate business, not Housepital offerings.
 - Equipment pricing is monthly (minimum 15 days = 1 month)
 - Formatted via `DateHelper.formatCurrency()`
 
@@ -383,7 +383,7 @@ assets/
 
 ## Business Rules
 
-- **Never show prices for manpower services** (nurse, caretaker, japa, nanny) — users reject without talking to sales. Physio is the exception (prices shown: 900/1200/1500).
+- **Manpower prices ARE shown and directly bookable** (caretaker ₹800–1,500/day, nurse ₹1,600–3,000/day, monthly packages ₹18,000–₹90,000/mo, physio 900/1200/1500). Prices were hidden Mar–Jun 2026 on a stale premise; the owner reversed that on 2026-06-11 (commit `e41224c`). Quote-pending applies ONLY to items that genuinely lack a price (`price == null || price == 0`), never to a category.
 - **Equipment pricing is monthly** (minimum 15 days = 1 month), never per-day.
 - **Assessment services** require a coordinator callback within 2 hours — no instant booking.
 - **Doctor visit** recommends GP or ICU specialist based on patient concern category.

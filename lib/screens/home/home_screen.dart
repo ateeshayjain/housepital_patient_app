@@ -37,6 +37,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Timer? _dutyTimer;
 
+  /// Guards the patient-switch tap. The switch fans out an async wipe through
+  /// SessionScope; two taps inside that window interleave two wipes and the
+  /// second pop closes the shell.
+  bool _switching = false;
+
   // Banner carousel — manual swipe + dots ONLY. The timer-driven auto-advance
   // was removed (audit round 2): self-moving UI fights the calm-clinical tone,
   // and the banner is already demoted to a promo surface at the page bottom.
@@ -1763,10 +1768,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 trailing: patient.id == app.currentPatient?.id
                     ? const Icon(Icons.check, color: HousepitalColors.orange)
                     : null,
-                onTap: () {
-                  app.switchPatient(patient);
-                  Navigator.pop(context);
-                },
+                onTap: _switching
+                    ? null
+                    : () async {
+                        // Do NOT clear here. `switchPatient` fires
+                        // AppProvider.onPatientChanged, which SessionScope
+                        // owns — clearing manually as well ran the entire
+                        // wipe TWICE per tap (two cancelAll platform round
+                        // trips, two full prefs scans, twelve notifies), with
+                        // the second one detached and racing loadDashboard.
+                        //
+                        // The guard is not cosmetic: the wipe is async and
+                        // unawaited here, so two taps inside the window
+                        // interleave two wipes and the second nav.pop() fires
+                        // on a closed sheet.
+                        setState(() => _switching = true);
+                        final nav = Navigator.of(context);
+                        app.switchPatient(patient);
+                        nav.pop();
+                        if (mounted) setState(() => _switching = false);
+                      },
               ),
             ),
             const SizedBox(height: 16),

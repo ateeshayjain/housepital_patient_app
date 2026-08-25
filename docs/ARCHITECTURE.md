@@ -14,7 +14,7 @@
 | Layer              | Technology                                        |
 |--------------------|---------------------------------------------------|
 | Frontend           | Flutter 3.x / Dart                                |
-| State Management   | Provider (ChangeNotifier) -- 10 providers          |
+| State Management   | Provider (ChangeNotifier) -- 11 providers          |
 | Backend Runtime    | Node.js + Express.js (TypeScript)                  |
 | Hosting            | Firebase Cloud Functions (asia-south1)             |
 | Relational DB      | Cloud SQL for MySQL (asia-south1)                  |
@@ -65,7 +65,7 @@ lib/
  |   +-- blog_provider.dart           # BlogProvider -- Care Guides articles (demo fallback)
  |   +-- assistant_provider.dart      # AssistantProvider -- service + executor + voice orchestration
  +-- screens/
- |   +-- main_shell.dart              # Fixed solid-orange bottom nav bar (6 tabs: Home/My Care/Services/Calendar/Billing/More)
+ |   +-- main_shell.dart              # Fixed solid-orange bottom nav bar (5 tabs: Home/My Care/Services/Billing/More; calendar lives in the My Care app bar)
  |   +-- auth/
  |   |   +-- login_screen.dart
  |   |   +-- otp_screen.dart
@@ -203,9 +203,18 @@ lib/
   (squircle `RoundedSuperellipseBorder(16)`, press-scale 0.97 @ 120ms).
 - Glass screens pair with `extendBodyBehindAppBar` + top scroll padding
   `MediaQuery.padding.top + kToolbarHeight`.
-- **Bottom nav** (`main_shell.dart`): FIXED full-width solid-orange bar, white
-  icons, SafeArea-padded (owner iterated floating-glass → pill → fixed). Six root
-  tabs (Calendar added at index 3 — indices 1/2 referenced externally).
+- **Bottom nav** (`main_shell.dart`): a FLOATING LIQUID-GLASS PILL — 16px side
+  insets, `GlassSurface` radius 32, floating above the home indicator, with a
+  transparent `BottomNavigationBar` inside it. The owner iterated
+  floating-glass → pill → fixed orange bar (round 5) → **back to the pill**
+  (round 8). It sits in the Scaffold's `bottomNavigationBar` slot, so the
+  body's bottom `MediaQuery` inset still covers its full footprint and
+  `extendBody: true` lets content glide underneath — which is the structural
+  answer to round 5's "the pill covered content".
+  **FIVE root tabs:** Home (0), My Care (1), Services (2), Billing (3),
+  More (4). The care calendar is **not** a tab; it lives in the My Care app
+  bar (`'/care-calendar'`). Indices 1/2/3 are referenced externally via
+  `MainShell.switchToTab` — do not reorder them.
 - **Nav contract:** back on the left (or HOME leftmost on non-Home root tabs);
   trailing order `[custom…, home, search, cart]` with the **CART always rightmost**
   and a live item-count badge. `showSearch`/`showCart`/`showHome` default on; the
@@ -345,11 +354,12 @@ bundled TTFs in `assets/fonts/`; google_fonts was removed.)
 
 ## State Management
 
-Ten `ChangeNotifierProvider` instances initialized in `main.dart`:
+Eleven `ChangeNotifierProvider` instances initialized in `main.dart`:
 
 | Provider              | Scope                          | Key State                                      |
 |-----------------------|--------------------------------|------------------------------------------------|
 | `AuthProvider`        | Login, OTP, session            | AuthState, user profile, Firebase token         |
+| `RemindersProvider`   | Care-calendar reminders        | Free-text reminder items (patient-scoped, persisted) |
 | `AppProvider`         | Global app state               | Current patient, dashboard data, locale          |
 | `BillingProvider`     | Billing + payments             | Billing summary, invoices, EMI plans, transactions |
 | `CartProvider`        | Shopping cart                  | List<CartItem> with index-based ops, SharedPreferences persistence. Flat CartItem model (no nested EquipmentItem). |
@@ -369,3 +379,91 @@ Ten `ChangeNotifierProvider` instances initialized in `main.dart`:
 | `requirePrimary`       | Blocks non-PRIMARY_CONTACT users from write operations |
 
 **Update rule:** Every time a new service, library, or structural change is made, this file MUST be updated in the same session.
+
+## Patient scoping, demo honesty and storage versioning (2026-08-03)
+
+Four small pieces added after the eleven-checklist audit. Each exists because
+the audit found a specific failure; keep the reason attached to the code.
+
+| File | Responsibility | Why it exists |
+|---|---|---|
+| `lib/utils/session_scope.dart` | The single list of everything scoped to ONE patient, cleared together | `switchPatient` and `logout` reset nothing, so patient A's deployment, vitals, medications, orders and amount due rendered under patient B's name. The app is shared between a patient, a primary contact and family members, so this is a PHI leak, not a caching detail. **When anything gains patient-scoped state — a provider field, a prefs key, a cache entry — add it here in the same edit and assert it in `test/providers/patient_scope_isolation_test.dart`.** The first version of this file was written from a symptom list and missed five stores. |
+| `lib/data/demo_mode.dart` | Tracks WHICH sources are serving bundled sample data | The app falls back to `DemoData` when `api.housepital.in` is unreachable, which is a good demo property and a dangerous clinical one. A set of named sources, not a bool: a single global flag let one provider's recovery take the warning down while others still served samples. |
+| `lib/widgets/demo_data_banner.dart` | Renders that state on EVERY route | Installed from `MaterialApp.builder`, above the Navigator. Two earlier shapes both regressed: inside `MainShell` it missed every pushed clinical screen, and as a full-width strip in a Column it stole the status bar and pushed every glass app bar down. It is now a compact glass pill in a **Stack overlay** — it displaces nothing, so adding or removing it cannot change any screen's layout. Known open defect: it absorbs touches and occludes the first content row on several screens (see docs/audits/round3). |
+| `lib/services/store_migrator.dart` | Stamps and migrates local storage | 13 SharedPreferences namespaces were bare JSON with no version. Free to fix before the first public release, effectively impossible after. Runs in `main()` **before** the providers are constructed, because they read storage in their constructors. Never throws — it sits before `runApp`, where an exception is a black screen rather than a crash report. **Now at v2** with one shipped step (v1→v2 quarantines the pre-per-patient order keys). |
+
+`lib/screens/settings/delete_account_screen.dart` (route `/delete-account`) is
+the App Store 5.1.1(v) / DPDP §12 deletion path. It records a durable local
+request, deletes the Firebase credential, wipes local data, and then states
+separately what is **done** and what is **requested** — it must never claim a
+server-side erasure the app cannot perform.
+
+`storage.rules` covers chat and concern-evidence photo uploads. Read the
+header before changing the ownership model: the client never reads a Firebase
+uid, so `request.auth.uid == patientId` is always false and would deny every
+upload.
+
+## Storage contracts (read before changing any persisted shape)
+
+**Order and assessment storage is keyed PER PATIENT** —
+`housepital_orders_<patientId>` / `housepital_assessments_<patientId>`. It was
+two global keys, and that made the patient-scoped clear destructive: clearing
+wrote `[]` over the one key and permanently erased the outgoing patient's
+history. With per-patient keys a switch is a READ of a different key, so
+`OrdersProvider.clearPatientScopedData()` is correctly **memory-only** —
+it must never persist. `OrdersProvider.setPatient()` re-points the provider.
+
+**Every patient-switch path fans out through `SessionScope`.** There are two:
+the switch sheet, and `AppProvider.loadPatients()` adopting a different patient
+from the API, which runs on every Home mount. `AppProvider.onPatientChanged` is
+the hook; `SessionScope.install(context)` wires it, called once from
+`MainShell.initState`. **If you add a third switch path, route it through the
+hook — do not clear by hand.**
+
+**`SessionScope` clears stores, not symptoms.** When anything gains
+patient-scoped state — a provider field, a SharedPreferences key, a cache
+entry, an OS-scheduled notification — add it to `SessionScope` in the same
+edit and assert it in `test/providers/patient_scope_isolation_test.dart`. The
+first version of that file was written from a list of reported symptoms and
+missed five stores; a partial wipe that reads as complete is more dangerous
+than no wipe.
+
+**Scheduled OS notifications are patient-scoped state.** They outlive the app,
+so `MedicationReminderService().cancelAllReminders()` is part of the wipe.
+Without it a previous patient's drug name fires on the lock screen after the
+phone changes hands.
+
+**Storage schema changes go through `StoreMigrator`.** Bump `currentVersion`,
+add a step to `_buildShippedMigrations()`, and use FROZEN string literals — a
+step must never reference a key constant or model class, because those change
+under it. A step that cannot parse what it finds must call `quarantine()`
+rather than overwrite. A failing step stops at the last good version so it is
+retried next launch; it must never stamp success. `debugSetMigrations()`
+exists so the loop itself is testable.
+
+## Payment failure contract
+
+`PaymentService.onFailure` carries a typed `PaymentFailure`, never a message
+string the caller inspects:
+
+| Kind | Money moved? | Retry allowed? |
+|---|---|---|
+| `notStarted` | No — checkout never opened | Yes |
+| `declined` | No — gateway declined or user cancelled | Yes |
+| `unverified` | **Probably yes** — checkout reported success, verification failed | **Never** |
+
+The branch used to be `message.contains('under verification')` against an
+English literal. Localising that string — which the i18n rule requires — would
+have silently restored a Retry button on a **paid** invoice. Never reintroduce
+a string-matched branch here.
+
+## Demo-data honesty
+
+`DemoMode` is a SET of named sources, not a bool. A source may only clear
+ITSELF (`markServingLiveData`) — a single global flag let one provider's
+recovery hide the notice while others still served samples. Add a
+`source*` constant AND its `markServingDemoData` call in the same edit:
+unused public constants are invisible to `flutter analyze`, so a declared-but-
+unwired constant makes the enumeration read complete without being complete.
+**Known open gap:** several sources mark and never clear (see
+docs/audits/round3).

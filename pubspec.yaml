@@ -59,6 +59,9 @@ dependencies:
   url_launcher: ^6.3.1
   share_plus: ^11.0.0
   image_picker: ^1.1.2
+  # Direct (was already resolved transitively) — used by
+  # lib/utils/image_privacy.dart to re-encode picked photos without EXIF.
+  image: ^4.8.0
   pin_code_fields: ^8.0.1
   # audit M-9: used to derive basename from picker XFile paths for storage keys
   path: ^1.9.0

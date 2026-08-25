@@ -13,6 +13,7 @@ import '../../utils/app_localizations.dart';
 // (audit F finding — was unbounded, 10MB DoS risk).
 import '../../utils/validators.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class RaiseConcernScreen extends StatefulWidget {
   const RaiseConcernScreen({super.key});
@@ -93,7 +94,8 @@ class _RaiseConcernScreenState extends State<RaiseConcernScreen> {
 
   Future<void> _capturePhoto(ImageSource source) async {
     try {
-      final image = await _picker.pickImage(
+      final image = await ImagePrivacy.pickSanitizedImage(
+        _picker,
         source: source,
         imageQuality: 80,
         maxWidth: 1200,

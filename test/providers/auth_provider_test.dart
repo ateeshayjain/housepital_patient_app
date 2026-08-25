@@ -319,4 +319,33 @@ void main() {
     });
   });
 
+  group('logout preserves what must outlive a session (round 4)', () {
+    test('keeps the schema stamp, the deletion record, and QUARANTINE',
+        () async {
+      // Quarantined blobs are the ONLY copy of data a migration could not
+      // attribute — after v1->v2 they hold a pre-upgrade user's entire order
+      // history. Wiping them on the first logout destroyed it permanently.
+      SharedPreferences.setMockInitialValues({
+        'housepital_schema_version': 2,
+        'housepital_pending_deletion': '{"reference":"DEL-1"}',
+        '__quarantine_v1_housepital_orders': '[{"id":"HPL-1"}]',
+        'housepital_orders_pat_a': '[{"id":"HPL-2"}]',
+        'profile_photo_path': '/tmp/x.jpg',
+      });
+      final auth = AuthProvider(FakeFirebaseService(), FakeAuthApiService());
+
+      await auth.logout();
+
+      final p = await SharedPreferences.getInstance();
+      expect(p.getInt('housepital_schema_version'), 2);
+      expect(p.getString('housepital_pending_deletion'), isNotNull);
+      expect(p.getString('__quarantine_v1_housepital_orders'),
+          '[{"id":"HPL-1"}]',
+          reason: 'the sole copy of pre-v2 order history must survive logout');
+      expect(p.containsKey('housepital_orders_pat_a'), isFalse,
+          reason: 'patient data must NOT survive');
+      expect(p.containsKey('profile_photo_path'), isFalse);
+    });
+  });
+
 }

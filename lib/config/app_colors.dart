@@ -52,16 +52,24 @@ class HcPalette {
   final Color warningLight;
   final Color error;
   final Color errorLight;
+  /// Text/icons ON an error fill — flips with appearance (see theme.dart).
+  final Color onError;
   final Color info;
   final Color infoLight;
 
   // Orange family (orange itself is constant; text/dark/tint variants differ)
   final Color orange;
   final Color orangeText;
+  /// Brand orange safe for SMALL text on light surfaces (5.38:1).
+  final Color orangeStrong;
   final Color orangeDark;
   final Color orangeLight;
   // Text/icons ON an orange fill. White on orange fails AA (~2.3:1), so both
-  // modes use the same dark ink (6.3:1 on orange).
+  /// Text/icons ON an orange fill. WHITE in both appearances by explicit owner
+  /// decision — measured 2.33:1, recorded as an accepted risk. The older
+  /// comment here claimed dark ink at 6.3:1, which described a palette that no
+  /// longer exists and read as a standing justification to revert the owner's
+  /// call. Do not.
   final Color onOrange;
 
   // Misc semantic
@@ -86,10 +94,12 @@ class HcPalette {
         warningLight = HousepitalColors.warningLight,
         error = HousepitalColors.error,
         errorLight = HousepitalColors.errorLight,
+        onError = HousepitalColors.onError,
         info = HousepitalColors.info,
         infoLight = HousepitalColors.infoLight,
         orange = HousepitalColors.orange,
         orangeText = HousepitalColors.orangeText,
+        orangeStrong = HousepitalColors.orangeStrong,
         orangeDark = HousepitalColors.orangeDark,
         orangeLight = HousepitalColors.orangeLight,
         onOrange = HousepitalColors.onOrange,
@@ -114,10 +124,12 @@ class HcPalette {
         warningLight = HousepitalColorsDark.warningLight,
         error = HousepitalColorsDark.error,
         errorLight = HousepitalColorsDark.errorLight,
+        onError = HousepitalColorsDark.onError,
         info = HousepitalColorsDark.info,
         infoLight = HousepitalColorsDark.infoLight,
         orange = HousepitalColorsDark.orange,
         orangeText = HousepitalColorsDark.orange,
+        orangeStrong = HousepitalColorsDark.orangeStrong,
         orangeDark = HousepitalColorsDark.orange,
         orangeLight = HousepitalColorsDark.orangeMuted,
         onOrange = HousepitalColorsDark.onOrange,

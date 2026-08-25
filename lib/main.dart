@@ -22,6 +22,7 @@ import 'providers/reminders_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/api_service.dart';
 import 'services/firebase_service.dart';
+import 'services/store_migrator.dart';
 import 'utils/app_localizations.dart';
 
 import 'screens/splash_screen.dart';
@@ -47,6 +48,7 @@ import 'screens/settings/add_patient_screen.dart';
 import 'screens/settings/notification_preferences_screen.dart';
 import 'screens/settings/help_faq_screen.dart';
 import 'screens/settings/about_screen.dart';
+import 'screens/settings/delete_account_screen.dart';
 import 'screens/billing/invoice_detail_screen.dart';
 import 'screens/billing/transaction_log_screen.dart';
 import 'screens/billing/payment_methods_screen.dart';
@@ -90,6 +92,8 @@ import 'config/constants.dart';
 import 'data/demo_data.dart';
 import 'utils/permissions.dart';
 import 'utils/notification_router.dart';
+import 'utils/logger.dart';
+import 'widgets/demo_data_banner.dart';
 
 void main() async {
   // audit batch 4 (Agent J): wrap the whole app in runZonedGuarded so async
@@ -121,6 +125,21 @@ void main() async {
             .setCrashlyticsCollectionEnabled(true);
         await FirebasePerformance.instance
             .setPerformanceCollectionEnabled(true);
+
+        // Handled failures. The three hooks above only catch things that
+        // ESCAPE — and this app is careful never to let anything escape, so
+        // Crashlytics saw a clean project while every fallback, failed
+        // quarantine and refused payment order went to a debugPrint that
+        // release mode discards. Non-fatal, because by definition the app
+        // recovered; see the PII rule on Log.sink.
+        Log.sink = (level, message, {error, stack, tag}) {
+          FirebaseCrashlytics.instance.recordError(
+            error ?? StateError(message),
+            stack,
+            reason: tag == null ? message : '[$tag] $message',
+            fatal: false,
+          );
+        };
       } else {
         // In debug builds, keep both surfaces off so test runs and hot reloads
         // don't pollute the production project.
@@ -164,6 +183,12 @@ void main() async {
         ),
       );
     };
+
+    // Migrate local storage BEFORE any provider reads it. Providers are
+    // constructed a few lines below and load from SharedPreferences in their
+    // constructors, so this has to happen first or a v1 blob reaches a v2
+    // parser.
+    await StoreMigrator.run();
 
     // Initialise local medication reminders (no-op on web).
     if (!kIsWeb) {
@@ -419,7 +444,10 @@ class _HousepitalAppState extends State<HousepitalApp> {
               maxScaleFactor: 1.4,
             ),
           ),
-          child: child!,
+          // Above the Navigator, so the sample-data notice is present on
+          // EVERY route — not just the five root tabs. It handles its own
+          // top inset; see DemoDataBannerHost.
+          child: DemoDataBannerHost(child: child!),
         );
       },
       onGenerateRoute: (settings) {
@@ -552,9 +580,15 @@ class _HousepitalAppState extends State<HousepitalApp> {
           case '/documents':
             return MaterialPageRoute(
                 builder: (_) => const DocumentRepositoryScreen());
+          // BUG-16: this used to return a bare `Scaffold()` — a blank screen
+          // with no app bar and no way back, reachable from the assistant
+          // ("services dikhao" → assistant_service.dart:189). Services is a
+          // ROOT TAB, so the correct behaviour is to return to the shell and
+          // select it rather than push a second copy of a tab on top of
+          // itself. _RootTabRedirect does that and never paints a frame.
           case '/services':
             return MaterialPageRoute(
-                builder: (_) => const Scaffold());
+                builder: (_) => const _RootTabRedirect(tabIndex: 2));
           case '/service-detail':
             final service = settings.arguments as ActiveService;
             return MaterialPageRoute(
@@ -728,6 +762,9 @@ class _HousepitalAppState extends State<HousepitalApp> {
                       staffPhoto: raw['staffPhoto'] as String?,
                       assignedSince: raw['assignedSince'] as DateTime?,
                     ));
+          case '/delete-account':
+            return MaterialPageRoute(
+                builder: (_) => const DeleteAccountScreen());
           case '/care-calendar':
             return MaterialPageRoute(
                 builder: (_) => const CareCalendarScreen());
@@ -779,5 +816,40 @@ class _HousepitalAppState extends State<HousepitalApp> {
         }
       },
     );
+  }
+}
+
+/// Sends the app back to a ROOT TAB instead of pushing a duplicate copy of
+/// that tab onto the navigation stack.
+///
+/// Named routes that name a root tab (e.g. '/services') resolve to this. It
+/// pops back to the shell and selects the tab in the first post-frame
+/// callback, so the user never sees an intermediate screen — and never lands
+/// on a pushed screen with no way back, which is what BUG-16 was.
+class _RootTabRedirect extends StatefulWidget {
+  const _RootTabRedirect({required this.tabIndex});
+
+  final int tabIndex;
+
+  @override
+  State<_RootTabRedirect> createState() => _RootTabRedirectState();
+}
+
+class _RootTabRedirectState extends State<_RootTabRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      MainShell.switchToTab(widget.tabIndex);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Matches the shell's background so the single frame before the redirect
+    // is indistinguishable from the tab itself.
+    return Scaffold(backgroundColor: Theme.of(context).scaffoldBackgroundColor);
   }
 }

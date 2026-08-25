@@ -13,6 +13,11 @@ import 'package:housepital_patient/data/demo_data.dart';
 import 'package:housepital_patient/providers/orders_provider.dart';
 import 'package:housepital_patient/models/models.dart';
 
+/// Orders are keyed PER PATIENT (round 3: one global key made the
+/// patient-scoped clear destructive). These suites test persistence, so they
+/// pin one patient and use that patient's keys.
+const _kTestPatient = 'pat_test';
+
 // -- Fixture helpers ----------------------------------------------------------
 
 CartItem _makeCartItem({
@@ -79,7 +84,7 @@ void main() {
   group('orders persistence after addOrder', () {
     test('orders are written to SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({});
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
 
       provider.addOrder(
         items: [_makeCartItem()],
@@ -91,7 +96,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       final prefs = await SharedPreferences.getInstance();
-      final stored = prefs.getString('housepital_orders');
+      final stored = prefs.getString('housepital_orders_$_kTestPatient');
       expect(stored, isNotNull);
 
       final decoded = jsonDecode(stored!) as List;
@@ -106,7 +111,7 @@ void main() {
   group('assessments persistence after addAssessment', () {
     test('assessments are written to SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({});
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
 
       provider.addAssessment(
         serviceId: 'svc-nurse',
@@ -117,7 +122,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       final prefs = await SharedPreferences.getInstance();
-      final stored = prefs.getString('housepital_assessments');
+      final stored = prefs.getString('housepital_assessments_$_kTestPatient');
       expect(stored, isNotNull);
 
       final decoded = jsonDecode(stored!) as List;
@@ -137,10 +142,10 @@ void main() {
       ];
 
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': jsonEncode(seededOrders),
+        'housepital_orders_$_kTestPatient': jsonEncode(seededOrders),
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       // Wait for async _loadFromStorage
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
@@ -155,10 +160,10 @@ void main() {
       ];
 
       SharedPreferences.setMockInitialValues({
-        'housepital_assessments': jsonEncode(seededAssessments),
+        'housepital_assessments_$_kTestPatient': jsonEncode(seededAssessments),
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(provider.assessments.length, 1);
@@ -167,11 +172,11 @@ void main() {
 
     test('both orders and assessments load together', () async {
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': jsonEncode([_makeOrderJson()]),
-        'housepital_assessments': jsonEncode([_makeAssessmentJson()]),
+        'housepital_orders_$_kTestPatient': jsonEncode([_makeOrderJson()]),
+        'housepital_assessments_$_kTestPatient': jsonEncode([_makeAssessmentJson()]),
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(provider.orders.length, 1);
@@ -185,10 +190,10 @@ void main() {
   group('corrupt JSON handling', () {
     test('corrupt orders JSON does not crash, orders remain empty', () async {
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': 'this is not valid json {{{',
+        'housepital_orders_$_kTestPatient': 'this is not valid json {{{',
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Should not crash, orders remain empty
@@ -197,10 +202,10 @@ void main() {
 
     test('corrupt assessments JSON does not crash, assessments remain empty', () async {
       SharedPreferences.setMockInitialValues({
-        'housepital_assessments': ':::invalid:::',
+        'housepital_assessments_$_kTestPatient': ':::invalid:::',
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(provider.assessments, isEmpty);
@@ -208,11 +213,11 @@ void main() {
 
     test('corrupt orders does not affect valid assessments', () async {
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': 'broken json',
-        'housepital_assessments': jsonEncode([_makeAssessmentJson()]),
+        'housepital_orders_$_kTestPatient': 'broken json',
+        'housepital_assessments_$_kTestPatient': jsonEncode([_makeAssessmentJson()]),
       });
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Orders corrupt but assessments might still load if provider continues
@@ -227,7 +232,7 @@ void main() {
         'assessments stay empty', () async {
       SharedPreferences.setMockInitialValues({});
 
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Contract change (Billing demo-mode fix): with no backend and nothing
@@ -236,7 +241,7 @@ void main() {
       expect(provider.orders, isNotEmpty);
       expect(provider.orders.first['id'], DemoData.orders.first['id']);
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('housepital_orders'), isNull,
+      expect(prefs.getString('housepital_orders_$_kTestPatient'), isNull,
           reason: 'demo seed must not be persisted');
       expect(provider.assessments, isEmpty);
     });
@@ -248,7 +253,7 @@ void main() {
   group('persistence round-trip', () {
     test('orders survive SharedPreferences round-trip', () async {
       SharedPreferences.setMockInitialValues({});
-      final provider1 = OrdersProvider();
+      final provider1 = OrdersProvider(patientId: _kTestPatient);
 
       provider1.addOrder(
         items: [_makeCartItem()],
@@ -259,7 +264,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Create a new provider that reads from the same SharedPreferences
-      final provider2 = OrdersProvider();
+      final provider2 = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       expect(provider2.orders.length, 1);

@@ -285,7 +285,7 @@ Tabbed service browser with 5 sub-tabs. (~2000 lines)
 - Tab 4 — Diagnostics: Lab tests (ECG, blood work, etc.). Availability info.
 - Tab 5 — Sleep Therapy: Sleep study services. Assessment-based.
 - Global key `ServiceCatalogScreen.catalogKey` allows switching sub-tabs from HomeScreen.
-- NEVER shows prices for manpower services (nursing, caretaker, japa, nanny).
+- **Manpower prices ARE shown and directly bookable** (nursing, caretaker, physio) from the Delhi NCR rate card. The old "never show prices" rule was reversed by the owner on 2026-06-11 and must not be reintroduced. Japa/Nanny are Dai Maa, a separate business.
 
 **Key Methods:**
 - `_buildManpowerTab()` — Service cards with category grouping

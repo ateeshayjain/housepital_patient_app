@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// =============================================================================
+// HOUSEPITAL PATIENT APP — CLOUD STORAGE SECURITY RULES
+// =============================================================================
+//
+// !!  DEPLOY REQUIRED  !!  Editing this file changes nothing live:
+//
+//   firebase deploy --only storage --project housepital-patient
+//
+// Verify at:
+//   https://console.firebase.google.com/project/housepital-patient/storage/rules
+//
+// -----------------------------------------------------------------------------
+// READ THIS BEFORE CHANGING THE OWNERSHIP MODEL
+// -----------------------------------------------------------------------------
+// These rules CANNOT currently enforce per-patient isolation, and pretending
+// otherwise breaks the app. The reason is concrete:
+//
+//   `grep -rn "\.uid" lib/` returns ZERO hits.
+//
+// The client never reads a Firebase uid. Every `patientId` it writes into a
+// Storage path is a BACKEND id (`pat_demo_rajesh`), not an auth uid. An earlier
+// draft of this file used `request.auth.uid == patientId`, which is always
+// false — deploying it would have denied 100% of chat and concern-evidence
+// uploads, for the patient as well as family, surfacing as a generic network
+// error. That is how a security rule gets rolled back to `if request.auth
+// != null` and the project ends up worse off than before.
+//
+// So this file does the strongest thing that is TRUE today: authenticated-only
+// writes, tight path/type/size limits, immutable objects, and default deny
+// everywhere else. It does NOT stop one authenticated user from reading
+// another patient's photo if they can guess the path.
+//
+// TO GET REAL ISOLATION (backend work, in preference order):
+//   1. Mint a custom claim listing the patient ids a signed-in user may access:
+//        claims.patients = ['pat_demo_rajesh', ...]
+//      then change ownsPatient() to
+//        request.auth.token.patients.hasAny([patientId])
+//      This is the only model that fits the product: one patient is shared by
+//      the patient, a primary contact, and family members, so uid == patientId
+//      is wrong even once uids exist.
+//   2. Or have the backend issue upload URLs and take the client out of the
+//      trust decision entirely.
+// Until one of those ships, treat photo paths as guessable and do not put
+// anything in the FILENAME that is not already inside the file.
+//
+// What the app writes (grep of uploadFile call sites):
+//   chat/{patientId}/{ts}_{filename}          — chat_screen.dart:133
+//   concerns/{patientId}_{batchTs}/{i}_{name} — raise_concern_screen.dart:328
+//
+// NOTE on the concerns path: it packs two ids into ONE segment with `_`, which
+// is also a legal character inside a patient id — so a prefix split cannot
+// reliably recover the patient id (every current id contains `_`, collapsing
+// the prefix to `pat`). Do not write a rule that depends on splitting it. When
+// the client is next touched, change the path to two segments:
+//   concerns/{patientId}/{batchTs}/{filename}
+// and this file can then scope it the same way as chat/.
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isImageUnder10Mb() {
+      return request.resource.size < 10 * 1024 * 1024
+          && request.resource.contentType.matches('image/.*');
+    }
+
+    // ---- chat attachments -------------------------------------------------
+    match /chat/{patientId}/{fileName} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isImageUnder10Mb();
+      // Chat history is a record — no client-side edit or delete.
+      allow update, delete: if false;
+    }
+
+    // ---- concern evidence photos ------------------------------------------
+    match /concerns/{batch}/{fileName} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isImageUnder10Mb();
+      allow update, delete: if false;
+    }
+
+    // ---- everything else --------------------------------------------------
+    // Explicit default deny. Any new upload path must be added above with its
+    // own rule — never left to fall through.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

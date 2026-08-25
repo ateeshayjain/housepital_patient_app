@@ -25,7 +25,11 @@ class HousepitalColorsDark {
   static const Color textDisabled = Color(0xFF7A7A7A);  // ~4.2:1 on card / 5.4:1 on bg
 
   // Brand orange — same hue, but verify how it's used in dark.
-  // #F39314 vs surface #1A1A1A → 6.32:1 — AA for normal text / AAA for large.
+  // MEASURED against the tokens that actually exist in this class:
+  //   #F39314 on surface #000000      → 8.99:1  (AAA)
+  //   #F39314 on surfaceElevated #1C1C1E → 7.29:1  (AAA large, AA normal)
+  // The previous comment cited "6.32:1 vs #1A1A1A" — a surface this file has
+  // never defined, and a ratio that matches no pair here.
   static const Color orange = Color(0xFFF39314);
   // ON-orange: WHITE by explicit owner decision (2026-06-11) — brand look
   // over the AA ratio; keep on-orange text bold ≥14px to compensate.
@@ -45,6 +49,14 @@ class HousepitalColorsDark {
   static const Color warningLight = Color(0xFF3A2D14); // tint bg
   static const Color error = Color(0xFFEF5350);        // 4.9:1 on surface
   static const Color errorLight = Color(0xFF3A1F1F);   // tint bg
+  /// Text/icons ON an error fill. The dark-mode error is a LIGHTER red, so
+  /// white on it measures only 3.49:1 — a real AA failure that shipped on the
+  /// delete-account button. Dark ink measures 4.62:1. This is the "paired
+  /// foreground that flips with appearance" rule; the white-on-orange owner
+  /// decision is specific to orange and does not extend to error surfaces.
+  static const Color onError = Color(0xFF212121);
+  /// Dark mode: brand orange already measures 8.99:1 on true black.
+  static const Color orangeStrong = orange;
   static const Color info = Color(0xFF64B5F6);         // 7.6:1 on surface
   static const Color infoLight = Color(0xFF1A2735);    // tint bg
 
@@ -59,9 +71,14 @@ class HousepitalColorsDark {
 class HousepitalColors {
   // Brand Primary - Pantone 1375 C (WCAG AA compliant)
   static const Color orange = Color(0xFFF39314);
-  static const Color orangeText = Color(0xFFB86E00); // 4.6:1 on white — use for text
+  // MEASURED 3.99:1 on white — the comment here used to claim 4.6:1, and the
+  // design gate enforces this token BECAUSE of that wrong figure. It clears the
+  // 3:1 large-text floor but FAILS 4.5:1 for body text. For small text use
+  // `orangeStrong` (#9A5C00, 5.38:1).
+  static const Color orangeText = Color(0xFFB86E00);
   static const Color orangeLight = Color(0xFFFFF3E0);
-  static const Color orangeDark = Color(0xFFCC6E00); // 4.5:1 on white
+  static const Color orangeDark = Color(0xFFCC6E00); // MEASURED 3.62:1 on white
+                                                     // (comment claimed 4.5:1)
   // ON-orange text/icons: WHITE, by explicit owner decision (2026-06-11) —
   // the brand look wins over the AA ratio here (white on #F39314 is ~2.3:1;
   // Apple ships white-on-orange too). Keep text on orange fills BOLD (w600+)
@@ -84,10 +101,17 @@ class HousepitalColors {
   // Status Colors (WCAG AA compliant for text)
   static const Color success = Color(0xFF2E7D32); // darker green, 5.1:1
   static const Color successLight = Color(0xFFE8F5E9);
-  static const Color warning = Color(0xFFE65100); // dark orange instead of yellow, 4.6:1
+  // MEASURED 3.79:1 on white (comment claimed 4.6:1). Large text / non-text
+  // only; it clears the 3:1 floor, not the 4.5:1 body-text floor.
+  static const Color warning = Color(0xFFE65100);
   static const Color warningLight = Color(0xFFFFF3E0);
   static const Color error = Color(0xFFD32F2F); // 4.7:1
   static const Color errorLight = Color(0xFFFFEBEE);
+  /// Text/icons ON an error fill. Measured: #FFFFFF on #D32F2F = 4.98:1. ✅
+  static const Color onError = Color(0xFFFFFFFF);
+  /// Brand orange darkened for SMALL text on light surfaces: 5.38:1 on white,
+  /// where `orangeText` measures only 3.99:1. Use for 11-14px orange labels.
+  static const Color orangeStrong = Color(0xFF9A5C00);
   static const Color info = Color(0xFF1565C0); // darker blue, 5.1:1
   static const Color infoLight = Color(0xFFE3F2FD);
 
@@ -228,7 +252,10 @@ class HousepitalTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: HousepitalColors.orange,
-          // Dark text on orange — 6.3:1 vs white's ~2.3:1 (brand fill kept).
+          // NOTE: this comment described the PRE-2026-06 palette. `onOrange`
+          // is now WHITE in both appearances by explicit owner decision,
+          // measured at 2.33:1. Recorded as accepted risk — do not "fix" it
+          // back to dark ink.
           foregroundColor: HousepitalColors.onOrange,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -251,7 +278,7 @@ class HousepitalTheme {
         ),
       ),
       // Raw brand orange on white is only ~2.3:1 — TextButtons use the
-      // darkened orangeText (4.6:1, AA) instead.
+      // darkened orangeText — MEASURED 3.99:1, not the 4.6:1 once claimed.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: HousepitalColors.orangeText,
@@ -308,8 +335,15 @@ class HousepitalTheme {
         labelStyle: TextStyle(fontFamily: 'Archivo',
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          // Raw orange on orangeLight is ~2:1 — orangeText keeps AA.
-          color: HousepitalColors.orangeText,
+          // 12px label on orangeLight #FFF3E0. MEASURED:
+          //   raw orange  #F39314 → 2.13:1  (fails everything)
+          //   orangeText  #B86E00 → 3.63:1  (fails AA — this was the token
+          //                                  here, under a comment claiming
+          //                                  it "keeps AA")
+          //   orangeStrong #9A5C00 → 4.90:1 (AA)
+          // 12px is normal text, so 4.5:1 is the floor and orangeStrong is
+          // the only one of the three that clears it.
+          color: HousepitalColors.orangeStrong,
         ),
         shape: StadiumBorder(),
         side: BorderSide(color: Colors.transparent),

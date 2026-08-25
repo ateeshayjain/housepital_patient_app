@@ -21,6 +21,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../data/demo_data.dart';
+import '../data/demo_mode.dart';
 import '../models/care_event.dart';
 import '../models/medical_history.dart';
 
@@ -98,6 +99,11 @@ class HandoverReportService {
     final logo = await _loadLogo();
     final generated = now ?? DateTime.now();
 
+    // Every field below is SAMPLE data. This document is shared with a real
+    // clinician (Printing.sharePdf), so it must say so on its own face — an
+    // in-app banner cannot travel with a PDF. See the header band below.
+    DemoMode.markServingDemoData(DemoMode.sourceHandover);
+
     final patient = DemoData.patient;
     final MedicalHistory mh = DemoData.medicalHistory;
     final medications = DemoData.medications.where((m) => m.isActive).toList();
@@ -118,6 +124,21 @@ class HandoverReportService {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
+        header: (ctx) => pw.Container(
+          width: double.infinity,
+          margin: const pw.EdgeInsets.only(bottom: 10),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: const pw.BoxDecoration(color: PdfColors.red50),
+          child: pw.Text(
+            'SAMPLE DATA - NOT A CLINICAL RECORD. This report was generated '
+            'while the Housepital service was unreachable and contains '
+            'placeholder information. Do not use it for clinical decisions.',
+            style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.red900),
+          ),
+        ),
         footer: (ctx) => pw.Container(
           alignment: pw.Alignment.centerRight,
           margin: const pw.EdgeInsets.only(top: 8),
@@ -274,6 +295,19 @@ class HandoverReportService {
           pw.Text(
               'Compiled by the Housepital patient app from supervisor-synced '
               'records. This is a computer-generated document.',
+              style: const pw.TextStyle(fontSize: 8, color: _grey)),
+          pw.SizedBox(height: 4),
+          // This document is handed to a doctor and reads like a clinical
+          // summary. It is not one: it is a transcription of what was entered
+          // in an app, it can be incomplete, and no clinician has reviewed it
+          // before it prints. The reader is the one person who most needs to
+          // know that, so it goes on the page rather than in the app.
+          pw.Text(
+              'NOT A CLINICAL ASSESSMENT. Records are entered by caregivers '
+              'and family through the Housepital app and are not verified by '
+              'a clinician. Readings, doses and timings may be incomplete or '
+              'delayed. Please confirm anything you intend to act on directly '
+              'with the patient and the care team.',
               style: const pw.TextStyle(fontSize: 8, color: _grey)),
         ],
       ),

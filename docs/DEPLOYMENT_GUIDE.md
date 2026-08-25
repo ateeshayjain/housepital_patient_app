@@ -2,7 +2,7 @@
 
 Step-by-step guide to deploy the full Housepital Patient App stack.
 
-**Last updated:** 2026-05-28 (audit batch 4 — added Firebase Console hardening checklist)
+**Last updated:** 2026-08-03 (audit round 3 — storage-rules deploy added to the pre-launch rules block, not just initial setup)
 
 ---
 
@@ -44,6 +44,7 @@ Deploy the security rules:
 ```bash
 cd /Users/ateeshayjain/housepital-backend
 firebase deploy --only firestore:rules
+firebase deploy --only storage          # storage.rules — chat + concern photos
 ```
 
 Rules file: `firestore.rules` (5 collection rules + default deny)
@@ -215,11 +216,31 @@ The `flutter_local_notifications` package requires the following Android permiss
 ```xml
 <!-- Medication reminder notifications (Android 13+) -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-<!-- Exact alarm scheduling for medication reminders -->
-<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 <!-- Receive boot completed to reschedule notifications -->
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 ```
+
+**SCHEDULE_EXACT_ALARM is deliberately NOT declared.** It was, and nothing
+used it: every call in `MedicationReminderService` passes
+`AndroidScheduleMode.inexactAllowWhileIdle`. It is a Play Console RESTRICTED
+permission — declaring it forces a policy declaration and review, and it is
+auto-revocable on the user's device — so an unused declaration was pure
+release risk for no capability. If reminders ever need to fire to the minute,
+the correct permission for a medication reminder is `USE_EXACT_ALARM` (allowed
+for this use case without a declaration form) AND a switch to
+`AndroidScheduleMode.exactAllowWhileIdle`. Change both together or neither.
+
+The manifest also declares three `flutter_local_notifications` receivers
+(`ScheduledNotificationReceiver`, `ActionBroadcastReceiver`,
+`ScheduledNotificationBootReceiver`). They were absent, which is why Android
+reminders did not work at all — and why every scheduled dose was silently lost
+on reboot, a failure a patient notices only by missing medication.
+
+And a `<queries>` block for `tel:`, `mailto:`, `https:` and
+`android.speech.RecognitionService`. Without those, Android 11+ hides the
+dialler from `canLaunchUrl()` even when one is installed — which would have
+taken down the SOS and "call my nurse" paths — and the Sahayak voice button
+cannot find a recognition service.
 
 For Android 13+ (API 33+), the app requests `POST_NOTIFICATIONS` permission at runtime when the user first adds a medication.
 
@@ -390,9 +411,19 @@ The repo's `firestore.rules` file is the source of truth. After every change:
 # From this repo (or from housepital-backend if firebase.json lives there):
 firebase deploy --only firestore:rules --project housepital-patient
 
-# Verify the deployed rules match the file:
+# STORAGE RULES ARE A SEPARATE DEPLOY and are easy to forget — chat and
+# concern-evidence photos are unprotected until this runs:
+firebase deploy --only storage --project housepital-patient
+
+# Verify the deployed rules match the files:
 firebase firestore:rules get --project housepital-patient
 ```
+
+**`storage.rules` caveat — read the file header before relying on it.** It is
+authenticated-only, not per-patient: the client never reads a Firebase uid, so
+a `request.auth.uid == patientId` rule would deny 100% of uploads. Real
+isolation needs a `user_patients` custom claim from the backend. Do not
+describe the current rules as per-patient isolation.
 
 **Audit trail:** every deploy is logged at
 https://console.firebase.google.com/project/housepital-patient/firestore/rules

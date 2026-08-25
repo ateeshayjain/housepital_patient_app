@@ -1,6 +1,7 @@
 // lib/screens/my_care/staff_otp_verification_screen.dart
 
 import 'dart:async';
+import '../../config/constants.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -349,7 +350,8 @@ class _StaffOtpVerificationScreenState
         OutlinedButton.icon(
           onPressed: () async {
             // NOTE: Support number to be updated with production contact details.
-            final uri = Uri.parse('tel:+918888888888');
+            // Was the placeholder +918888888888.
+            final uri = Uri.parse('tel:+91${AppConstants.supportPhone}');
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri);
             }

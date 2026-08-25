@@ -11,6 +11,7 @@ import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 /// In-app chat screen backed by Firestore `chat_messages` collection.
 ///
@@ -118,7 +119,8 @@ class _ChatScreenState extends State<ChatScreen> {
     // don't risk reading a stale BuildContext after picker/upload returns.
     final firebaseService = context.read<AuthProvider>().firebaseService;
 
-    final picked = await _imagePicker.pickImage(
+    final picked = await ImagePrivacy.pickSanitizedImage(
+      _imagePicker,
       source: ImageSource.gallery,
       maxWidth: 1024,
       imageQuality: 75,

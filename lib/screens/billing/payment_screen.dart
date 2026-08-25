@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
 import '../../models/models.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/invoice_pdf_service.dart';
 import '../../services/payment_service.dart';
@@ -15,6 +16,24 @@ import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
 
 class PaymentScreen extends StatefulWidget {
+  /// Amount to charge, in **whole rupees**.
+  ///
+  /// MONEY UNITS — the one rule this screen has to keep straight.
+  /// Everything inside this screen is rupees: [amount], `_discountAmount`,
+  /// `_gstAmount`, `_totalAmount`, and every `formatCurrency` call. The ONLY
+  /// place paise exist is [_totalAmountPaise], handed to the gateway.
+  ///
+  /// It did not used to be. `_totalAmount` was rendered with
+  /// `formatCurrency` (rupees) and passed unchanged to `openCheckout`, whose
+  /// contract is paise — the same integer read as two different units four
+  /// lines apart. A ₹5,000 cart checkout displayed ₹5,000 and charged ₹50.
+  /// Billing compensated at ITS end by passing `totalDue * 100`, so the same
+  /// bill displayed ₹5,00,000 and charged the right ₹5,000. Two entry points,
+  /// wrong in opposite directions, each looking correct from where it was
+  /// written.
+  ///
+  /// So: callers pass rupees. Never pre-multiply. If you add a caller and it
+  /// looks a hundred times off, you have found this comment for a reason.
   final int amount;
   final String description;
   final String? invoiceId;
@@ -43,6 +62,13 @@ class _PaymentScreenState extends State<PaymentScreen>
   // Payment result state
   bool _showResult = false;
   bool _paymentSuccess = true;
+
+  /// True when Razorpay reported success but we could not verify it.
+  ///
+  /// This is NOT a failure and must never be rendered as one: the charge has
+  /// probably already happened. Showing "Payment Failed" with a Retry button
+  /// here invites a second debit for the same bill.
+  bool _pendingVerification = false;
   String? _transactionId;
   String? _failureMessage;
 
@@ -94,6 +120,10 @@ class _PaymentScreenState extends State<PaymentScreen>
       computeCartGst(_cartItems, discount: _discountAmount);
 
   int get _totalAmount => _subtotal - _discountAmount + _gstAmount;
+
+  /// The gateway boundary — the single conversion in this file. Razorpay and
+  /// the backend's `/payments/create-order` both take paise.
+  int get _totalAmountPaise => _totalAmount * 100;
 
   /// Generate + share the paid invoice as a PDF (field bug: 'View Receipt'
   /// only showed a toast — no receipt was produced). Builds an order from the
@@ -217,9 +247,45 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     setState(() => _isProcessing = true);
 
+    // Real payments must carry a backend-created order_id, because that is
+    // what makes the signature verifiable afterwards. Without it the success
+    // handler can only reach the unverifiable "skipped" state. Demo builds
+    // skip this: openCheckout simulates locally and no money moves.
+    String? orderId;
+    if (!PaymentService.isDemoPayments) {
+      final patientId = context.read<AppProvider>().currentPatient?.id;
+      orderId = patientId == null
+          ? null
+          : await _paymentService!.createOrder(
+              patientId: patientId,
+              amount: _totalAmountPaise,
+              paymentType: widget.invoiceId != null ? 'invoice' : 'order',
+              referenceType: widget.invoiceId != null ? 'invoice' : null,
+              referenceId: widget.invoiceId,
+            );
+      if (!mounted) return;
+      if (orderId == null) {
+        // Fail closed: opening checkout now would take money we could never
+        // verify. Better a retryable error than an unverifiable payment.
+        setState(() {
+          _isProcessing = false;
+          _showResult = true;
+          _paymentSuccess = false;
+          _transactionId = null;
+          _failureMessage =
+              "We couldn't start a secure payment just now. Nothing has been "
+              'charged — please try again in a moment.';
+        });
+        HapticFeedback.heavyImpact();
+        _playResultAnimations();
+        return;
+      }
+    }
+
     _paymentService!.openCheckout(
-      amount: _totalAmount,
+      amount: _totalAmountPaise,
       description: widget.description,
+      orderId: orderId,
       onSuccess: () {
         if (!mounted) return;
         final txnId =
@@ -234,13 +300,20 @@ class _PaymentScreenState extends State<PaymentScreen>
         HapticFeedback.mediumImpact();
         _playResultAnimations();
       },
-      onFailure: (message) {
+      onFailure: (message, kind) {
         if (!mounted) return;
+        // Typed, not string-matched. This branch decides whether a Retry
+        // button appears; deciding it by `message.contains('under
+        // verification')` meant translating that message — which the i18n
+        // rule requires — would silently restore a double-debit path on a
+        // paid invoice.
+        final unverified = kind == PaymentFailure.unverified;
         setState(() {
           _isProcessing = false;
           _showResult = true;
           _paymentSuccess = false;
-          _transactionId = null;
+          _pendingVerification = unverified;
+          _transactionId = unverified ? _transactionId : null;
           _failureMessage = message;
         });
         HapticFeedback.heavyImpact();
@@ -262,7 +335,14 @@ class _PaymentScreenState extends State<PaymentScreen>
     }
   }
 
-  /// Web payment simulation — simulates a successful payment after a brief delay.
+  /// Web payment — simulated ONLY in demo builds.
+  ///
+  /// This used to report success unconditionally because it was gated on
+  /// `kIsWeb` rather than on whether payments are simulated at all. With a
+  /// real Razorpay key that meant a web user saw "payment successful" and a
+  /// confirmed order without any payment being taken. The correct axis is
+  /// [PaymentService.isDemoPayments]: web checkout is not wired up, so with a
+  /// real key we must fail closed rather than invent a success.
   Future<void> _processWebPayment() async {
     setState(() => _isProcessing = true);
 
@@ -270,6 +350,22 @@ class _PaymentScreenState extends State<PaymentScreen>
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    if (!PaymentService.isDemoPayments) {
+      setState(() {
+        _isProcessing = false;
+        _showResult = true;
+        _paymentSuccess = false;
+        _transactionId = null;
+        _failureMessage =
+            'Online payment is not available in the web app yet — please pay '
+            'from the Housepital mobile app, or call us and we will take it '
+            'over the phone.';
+      });
+      HapticFeedback.heavyImpact();
+      _playResultAnimations();
+      return;
+    }
 
     final txnId = 'web_pay_${DateTime.now().millisecondsSinceEpoch}';
     setState(() {
@@ -286,6 +382,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     setState(() {
       _showResult = false;
       _paymentSuccess = true;
+      _pendingVerification = false;
       _transactionId = null;
       _failureMessage = null;
     });
@@ -395,10 +492,16 @@ class _PaymentScreenState extends State<PaymentScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isSuccess ? Icons.check_circle : Icons.cancel,
+                      isSuccess
+                          ? Icons.check_circle
+                          : _pendingVerification
+                              ? Icons.schedule
+                              : Icons.cancel,
                       color: isSuccess
                           ? context.hc.success
-                          : context.hc.error,
+                          : _pendingVerification
+                              ? context.hc.warning
+                              : context.hc.error,
                       size: 72,
                     ),
                   ),
@@ -409,13 +512,20 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Text(
                   isSuccess
                       ? l.t('payment_successful')
-                      : 'Payment Failed',
+                      : _pendingVerification
+                          ? l.t('payment_pending_verification_title')
+                          : l.t('payment_failed'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: isSuccess
                         ? context.hc.success
-                        : context.hc.error,
+                        : _pendingVerification
+                            // 24pt w700 is "large text", so the 3:1 floor
+                            // applies: warning measures 3.79:1 on the light
+                            // surface and far more on true black.
+                            ? context.hc.warning
+                            : context.hc.error,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -521,6 +631,29 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ),
                       ),
                     ],
+                  ),
+                ] else if (_pendingVerification) ...[
+                  // Deliberately NO retry: paying again would debit twice for
+                  // the same bill. The only useful action is to reach a human.
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      // '/support' does not exist; help-faq carries the real
+                      // contact numbers.
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/help-faq'),
+                      child: Text(l.t('payment_pending_contact_us')),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Go Back'),
+                    ),
                   ),
                 ] else ...[
                   SizedBox(

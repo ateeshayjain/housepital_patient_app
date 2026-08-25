@@ -55,7 +55,9 @@ report "Hardcoded Color(0xFF…) is banned in screens — use HousepitalColors.*
   "$hex"
 
 # 5. Raw brand orange (#F39314) as TEXT color — fails WCAG AA on white (~2.3:1)
-#    and on orangeLight tints (~2:1). Text must use orangeText (4.6:1) — or
+#    and on orangeLight tints (2.13:1). Text must use orangeText (MEASURED
+#    3.99:1 on white — AA-large only, NOT the 4.6:1 this comment used to
+#    claim; use orangeStrong at 5.38:1 for anything under 18px) — or
 #    onOrange when the text sits ON an orange fill. Pragmatic single-line grep:
 #    flags TextStyle + a plain `.orange` token on the same line (orangeText /
 #    orangeDark / orangeLight / onOrange don't match because the char after

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
@@ -349,7 +350,11 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                 icon: Icons.phone,
                 label: 'Call',
                 color: context.hc.success,
-                onTap: () => _launchUrl('tel:+919999999999'),
+                // Was the placeholder +919999999999. This is the terminal step of
+                // the pending-payment path ("Contact Housepital"), so a fake
+                // number here strands someone whose money has already moved.
+                onTap: () =>
+                    _launchUrl('tel:+91${AppConstants.supportPhone}'),
               ),
               _contactButton(
                 icon: Icons.email,
@@ -362,7 +367,8 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
                 label: 'WhatsApp',
                 color: const Color(0xFF25D366),
                 onTap: () => _launchUrl(
-                    'https://wa.me/919999999999?text=Hi,%20I%20need%20help%20with%20Housepital%20app'),
+                    'https://wa.me/91${AppConstants.supportPhone}'
+                    '?text=Hi,%20I%20need%20help%20with%20Housepital%20app'),
               ),
             ],
           ),

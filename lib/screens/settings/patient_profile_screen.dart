@@ -15,6 +15,7 @@ import '../../utils/permissions.dart';
 import '../../utils/validators.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
@@ -202,7 +203,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     if (source == null) return;
 
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    final image = await ImagePrivacy.pickSanitizedImage(picker,
+        source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
     if (!mounted) return;

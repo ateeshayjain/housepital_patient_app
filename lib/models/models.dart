@@ -1007,6 +1007,11 @@ class EquipmentItem {
   final double? mrp;
   final String? useCase;
 
+  /// Backend/CRM override for [needsAssessment]. Null means "not stated", and
+  /// the device-family rule below decides. Clinical policy belongs in the CRM,
+  /// not in a regex in a phone app — this field is how it gets here.
+  final bool? requiresAssessment;
+
 
   EquipmentItem({
     required this.id,
@@ -1031,7 +1036,7 @@ class EquipmentItem {
     this.imageUrls,
     this.mrp,
     this.useCase,
-
+    this.requiresAssessment,
   });
 
   /// Legacy getter — derives type from availability flags.
@@ -1043,17 +1048,74 @@ class EquipmentItem {
     return (price! / rentalPrice!).ceil();
   }
 
-  /// Equipment that requires a complementary clinical assessment before ordering.
-  /// Only applies to BUY flow — rental items go through rental agreement instead.
+  /// Device families that must not reach a patient's home without a
+  /// Housepital clinician sizing, prescribing, or setting them up first.
+  ///
+  /// Matched against the lowercased product name. Keep this list explicit and
+  /// boring: it is a clinical safety rule, and a clever pattern that quietly
+  /// stops matching is indistinguishable from having no rule at all.
+  static const List<String> _assessmentDeviceFamilies = <String>[
+    'ventilator',
+    'ventilation',
+    'bipap',
+    'bi-pap',
+    'cpap',
+    'c-pap',
+    'oxygen concentrator',
+    'oxygen cylinder',
+    'suction machine',
+    'syringe pump',
+    'infusion pump',
+    'feeding pump',
+  ];
+
+  /// Consumables and spares for a device the patient ALREADY has under an
+  /// existing prescription. Re-ordering a replacement mask must not require a
+  /// fresh assessment — that is friction with no safety return, and it sends
+  /// people to buy the part somewhere Housepital cannot see.
+  static const List<String> _accessoryTerms = <String>[
+    'mask',
+    'tubing',
+    'tube',
+    'connector',
+    'filter',
+    'circuit',
+    'jar',
+    'humidifier chamber',
+    'cannula',
+    'catheter mount',
+  ];
+
+  /// True when this item needs a Housepital clinical assessment before a
+  /// family can order it.
+  ///
+  /// WHAT THIS USED TO DO, AND WHY IT WAS EXACTLY BACKWARDS
+  /// The first line was `if (availableForRent) return false;` — on the theory
+  /// that "the rental agreement covers it". But in this catalog every single
+  /// ventilator, BiPAP unit, CPAP unit, oxygen concentrator, suction machine
+  /// and syringe pump is `available_for_rent: true`, so that line exempted the
+  /// entire regulated set. What the gate actually caught was the rent=false
+  /// remainder: `BiPAP Mask (M)`, `CPAP NOSE MASK` — accessories. It cleared
+  /// every machine and stopped the spare parts. Oxygen concentrators (17 of
+  /// them) were not in the name list at all, so they were doubly exempt.
+  ///
+  /// Renting a ventilator does not make it safer than buying one. The
+  /// assessment is a property of the DEVICE, never of the transaction, so
+  /// availability flags are not consulted here at all.
+  ///
+  /// Precedence: an explicit CRM value wins; otherwise the device-family rule
+  /// decides, minus accessories. When in doubt this fails CLOSED (assess).
   bool get needsAssessment {
-    // Rentable items don't need assessment (rental agreement covers terms)
-    if (availableForRent == true) return false;
+    final override = requiresAssessment;
+    if (override != null) return override;
+
     final n = name.toLowerCase();
-    return n.contains('ventilator') ||
-        n.contains('bipap') ||
-        n.contains('bi-pap') ||
-        n.contains('cpap') ||
-        n.contains('c-pap');
+    final isDevice = _assessmentDeviceFamilies.any(n.contains);
+    if (!isDevice) return false;
+
+    // A "BiPAP Mask" contains 'bipap' but is a spare, not a machine.
+    final isAccessory = _accessoryTerms.any(n.contains);
+    return !isAccessory;
   }
 
   bool get isVariant => parentProductId != null;
@@ -1081,7 +1143,7 @@ class EquipmentItem {
         'image_urls': imageUrls,
         'mrp': mrp,
         'use_case': useCase,
-
+        'requires_assessment': requiresAssessment,
       };
 
   factory EquipmentItem.fromJson(Map<String, dynamic> json) => EquipmentItem(
@@ -1107,6 +1169,7 @@ class EquipmentItem {
         imageUrls: json['image_urls'] != null
             ? List<String>.from(json['image_urls'])
             : null,
+        requiresAssessment: json['requires_assessment'] as bool?,
         mrp: (json['mrp'] as num?)?.toDouble(),
         useCase: json['use_case'] as String?,
 

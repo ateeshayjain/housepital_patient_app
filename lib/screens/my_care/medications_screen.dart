@@ -17,6 +17,7 @@ import '../../widgets/care_pulse_ring.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/glass.dart';
+import '../../widgets/medical_disclaimer.dart';
 
 class MedicationsScreen extends StatefulWidget {
   const MedicationsScreen({super.key});
@@ -116,10 +117,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                // +1 for the weekly-adherence header card.
-                itemCount: medProv.activeMedications.length + 1,
+                // +1 for the weekly-adherence header card, +1 for the
+                // trailing disclaimer. The app schedules and reminds on
+                // prescription drugs; it must not read as the prescription.
+                itemCount: medProv.activeMedications.length + 2,
                 itemBuilder: (context, index) {
                   if (index == 0) return _adherenceHeader(context);
+                  if (index == medProv.activeMedications.length + 1) {
+                    return const MedicalDisclaimer(
+                        context_: DisclaimerContext.medication);
+                  }
                   final med = medProv.activeMedications[index - 1];
                   return _medicationCard(context, med, l, medProv);
                 },

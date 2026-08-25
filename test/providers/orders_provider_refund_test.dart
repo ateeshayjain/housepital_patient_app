@@ -18,6 +18,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:housepital_patient/providers/orders_provider.dart';
 import 'package:housepital_patient/models/models.dart';
 
+/// Orders are keyed PER PATIENT (round 3: one global key made the
+/// patient-scoped clear destructive). These suites test persistence, so they
+/// pin one patient and use that patient's keys.
+const _kTestPatient = 'pat_test';
+
 CartItem _makeItem({int unitPrice = 1000}) => CartItem(
       equipmentId: 'eq1',
       name: 'Item',
@@ -33,7 +38,7 @@ Future<OrdersProvider> _providerWithSeededOrder({
   required DateTime createdAt,
 }) async {
   SharedPreferences.setMockInitialValues({
-    'housepital_orders': jsonEncode([
+    'housepital_orders_$_kTestPatient': jsonEncode([
       {
         'id': id,
         'items': const [],
@@ -44,7 +49,7 @@ Future<OrdersProvider> _providerWithSeededOrder({
       },
     ]),
   });
-  final provider = OrdersProvider();
+  final provider = OrdersProvider(patientId: _kTestPatient);
   // _loadFromStorage is async — give it a microtask turn so orders populate.
   await Future<void>.delayed(Duration.zero);
   return provider;
@@ -62,7 +67,7 @@ void main() {
   // ───────────────────────────────────────────────────────────────────────────
   group('cancelOrder within 24h grace window', () {
     test('refundAmount = totalAmount - 100, refundStatus = pending', () {
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem()],
         totalAmount: 5000,
@@ -81,7 +86,7 @@ void main() {
     });
 
     test('refundEta is exactly 7 days after cancellation', () {
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem()],
         totalAmount: 2000,
@@ -138,7 +143,7 @@ void main() {
   // ───────────────────────────────────────────────────────────────────────────
   group('cancelOrder edge cases', () {
     test('totalAmount = 0 → refundAmount = 0, refundStatus = none', () {
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem(unitPrice: 0)],
         totalAmount: 0,
@@ -158,7 +163,7 @@ void main() {
       // path must not crash or produce a negative refund — the clamp/0-branch
       // is the defensive guard. Seed directly to bypass addOrder validation.
       SharedPreferences.setMockInitialValues({
-        'housepital_orders': jsonEncode([
+        'housepital_orders_$_kTestPatient': jsonEncode([
           {
             'id': 'HPL-BOOK-NEG',
             'items': const [],
@@ -169,7 +174,7 @@ void main() {
           },
         ]),
       });
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       await Future<void>.delayed(Duration.zero);
 
       provider.cancelOrder('HPL-BOOK-NEG', 'r');
@@ -182,7 +187,7 @@ void main() {
 
     test('refund amount within 24h equals totalAmount when totalAmount > 100', () {
       // Belt-and-braces: bookingFee is exactly ₹100, no surprises.
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem()],
         totalAmount: 200,
@@ -196,7 +201,7 @@ void main() {
     });
 
     test('refund amount within 24h when totalAmount < 100 → clamped to 0', () {
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem()],
         totalAmount: 50,
@@ -217,7 +222,7 @@ void main() {
   // ───────────────────────────────────────────────────────────────────────────
   group('cancelOrder persistence', () {
     test('refund fields are persisted to SharedPreferences', () async {
-      final provider = OrdersProvider();
+      final provider = OrdersProvider(patientId: _kTestPatient);
       provider.addOrder(
         items: [_makeItem()],
         totalAmount: 3000,
@@ -230,7 +235,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString('housepital_orders');
+      final raw = prefs.getString('housepital_orders_$_kTestPatient');
       expect(raw, isNotNull);
 
       final decoded = jsonDecode(raw!) as List;

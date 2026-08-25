@@ -11,7 +11,6 @@ import '../../config/app_colors.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/orders_provider.dart';
-import '../../services/payment_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/helpers.dart';
 import '../../utils/permissions.dart';
@@ -300,41 +299,30 @@ class _BillingScreenState extends State<BillingScreen> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      final paymentService = PaymentService();
-                      paymentService.openCheckout(
-                        amount: totalDue * 100,
-                        description: 'Outstanding balance payment',
-                        onSuccess: () {
-                          paymentService.dispose();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l.t('payment_successful')),
-                                backgroundColor: context.hc.success,
-                              ),
-                            );
-                          }
-                        },
-                        onFailure: (message) {
-                          paymentService.dispose();
-                          if (context.mounted) {
-                            // Razorpay messages already start with "Payment
-                            // Failed - …" — don't double the prefix.
-                            final lower = message.toLowerCase();
-                            final text = lower.contains('payment failed')
-                                ? message
-                                : '${l.t('payment_failed')}: $message';
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(text),
-                                backgroundColor: context.hc.error,
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    },
+                    // Routes through PaymentScreen instead of calling
+                    // openCheckout directly.
+                    //
+                    // This button used to construct its own PaymentService and
+                    // open checkout with NO order_id — a second, unguarded
+                    // payment path. With a real Razorpay key that meant money
+                    // could be captured while the success response carried no
+                    // signature to verify, so the (correct) fail-closed
+                    // handler would then tell the patient their payment was
+                    // unverified. Charged and disowned, with no order record.
+                    //
+                    // PaymentScreen owns the guarded flow: createOrder first,
+                    // fail closed if it returns null, verify afterwards.
+                    onPressed: () => Navigator.pushNamed(
+                      context,
+                      '/payment',
+                      arguments: <String, dynamic>{
+                        // Rupees. PaymentScreen converts to paise at the
+                        // gateway boundary — pre-multiplying here rendered
+                        // a ₹5,000 bill as ₹5,00,000 on the pay screen.
+                        'amount': totalDue,
+                        'description': 'Outstanding balance payment',
+                      },
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: HousepitalColors.orange,

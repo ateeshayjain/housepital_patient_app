@@ -10,8 +10,10 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/permissions.dart';
+import '../../utils/session_scope.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/glass.dart';
+import '../../utils/image_privacy.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -66,7 +68,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (source == null) return;
 
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    final image = await ImagePrivacy.pickSanitizedImage(picker,
+        source: source, maxWidth: 512, maxHeight: 512);
     if (image == null) return;
 
     if (!mounted) return;
@@ -265,6 +268,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             textColor: context.hc.error,
             onTap: () => _confirmLogout(context),
           ),
+          const Divider(height: 1),
+          // App Store Guideline 5.1.1(v) + DPDP 2023 §12: account deletion
+          // must be reachable IN the app. A Logout button does not satisfy
+          // either, and "email support to delete" is an automatic rejection.
+          _settingsTile(
+            context,
+            icon: Icons.person_remove_outlined,
+            title: 'Delete account',
+            textColor: context.hc.error,
+            onTap: () => Navigator.pushNamed(context, '/delete-account'),
+          ),
         ],
       ),
     );
@@ -438,9 +452,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              context.read<AuthProvider>().logout();
-              Navigator.pop(context);
+            onPressed: () async {
+              // Wipe patient data from memory AND disk BEFORE signing out —
+              // on a shared phone the next person must not see the previous
+              // patient's clinical data. Awaited so logout's prefs.clear()
+              // cannot race the wipe.
+              final nav = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
+              await SessionScope.clearSession(context);
+              await auth.logout();
+              nav.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: context.hc.error,

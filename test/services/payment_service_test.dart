@@ -20,7 +20,8 @@
 //       - failed    → onFailure() with "Payment under verification…" message
 //                     (regression test for the M-2 / Fix-1 issue where a
 //                     failed verification still confirmed the booking).
-//       - skippedDemo (no order_id/signature) → onSuccess() (demo path).
+//       - skippedDemo (no order_id/signature) → onSuccess() ONLY in demo
+//                     builds; with a real key it must fail closed.
 //   • _handleError → onFailure(message-or-fallback).
 //   • Constructor assert fires in debug if razorpay_key placeholder.
 //
@@ -81,7 +82,22 @@ class _FakeApiService extends ApiService {
       'reference_id': referenceId,
     });
     if (createOrderError != null) throw createOrderError!;
-    return createOrderResult ?? {'order_id': 'ord_test'};
+    // The REAL response shape, copied from
+    // housepital-backend/functions/src/routes/payments.ts:
+    //   res.status(201).json({payment_id, razorpay_order_id, amount, currency})
+    //
+    // This fake used to return {'order_id': ...}, mirroring what the client
+    // believed rather than what the backend sends — which is exactly why the
+    // client reading result['order_id'] passed its tests for four audit
+    // rounds while returning null against the real server on every call.
+    // A fake must be built from the contract, never from the caller.
+    return createOrderResult ??
+        {
+          'payment_id': 'pay_test',
+          'razorpay_order_id': 'ord_test',
+          'amount': 25000,
+          'currency': 'INR',
+        };
   }
 
   @override
@@ -248,7 +264,7 @@ void main() {
         amount: 10000,
         description: 'demo',
         onSuccess: () => succeeded = true,
-        onFailure: (m) => failure = m,
+        onFailure: (m, _) => failure = m,
       );
       // Simulation completes on a short timer.
       await Future<void>.delayed(const Duration(milliseconds: 1200));
@@ -301,8 +317,14 @@ void main() {
 
     tearDown(() => svc.dispose());
 
-    test('returns order_id from backend on success', () async {
-      fakeApi.createOrderResult = {'order_id': 'ord_999'};
+    test('reads razorpay_order_id — the field the backend actually sends',
+        () async {
+      fakeApi.createOrderResult = {
+        'payment_id': 'pay_999',
+        'razorpay_order_id': 'ord_999',
+        'amount': 25000,
+        'currency': 'INR',
+      };
 
       final id = await svc.createOrder(
         patientId: 'p-1',
@@ -346,7 +368,8 @@ void main() {
       expect(id, isNull);
     });
 
-    test('returns null when backend returns no order_id field', () async {
+    test('returns null when the response carries no order id at all',
+        () async {
       fakeApi.createOrderResult = {'unrelated': 'value'};
 
       final id = await svc.createOrder(
@@ -356,6 +379,39 @@ void main() {
       );
 
       expect(id, isNull);
+    });
+
+    test('still accepts the legacy order_id spelling', () async {
+      // Tolerated deliberately: a null order id here makes PaymentScreen fail
+      // closed and no payment can complete, so the cost of accepting both
+      // spellings is one `??` and the cost of rejecting one is an outage.
+      fakeApi.createOrderResult = {'order_id': 'ord_legacy'};
+
+      final id = await svc.createOrder(
+        patientId: 'p-1',
+        amount: 100,
+        paymentType: 'invoice',
+      );
+
+      expect(id, 'ord_legacy');
+    });
+
+    test('the default fake response — the real backend shape — resolves',
+        () async {
+      // Guards the regression directly: with the old
+      // `result['order_id']` read, this returns null and every real payment
+      // dies in PaymentScreen's fail-closed branch.
+      final id = await svc.createOrder(
+        patientId: 'p-1',
+        amount: 100,
+        paymentType: 'invoice',
+      );
+
+      expect(id, isNotNull,
+          reason: 'a null order id here means no real payment can ever '
+              'complete — the client was reading a key the backend has '
+              'never sent');
+      expect(id, 'ord_test');
     });
   }, skip: _skipReason);
 
@@ -391,7 +447,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -446,7 +502,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -470,9 +526,9 @@ void main() {
   // ----------------------------------------------------------
   // openCheckout — demo mode (missing order_id / signature)
   // ----------------------------------------------------------
-  group('openCheckout — demo mode (skippedDemo)', () {
+  group('openCheckout — unverifiable success (skippedDemo)', () {
     test(
-        'success response missing order_id+signature → onSuccess (demo path) and verifyPayment NOT called',
+        'success response missing order_id+signature with a REAL key → onFailure, never onSuccess',
         () async {
       final fakeApi = _FakeApiService();
 
@@ -494,7 +550,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -502,11 +558,19 @@ void main() {
 
       await completer.wait();
 
-      expect(successCalled, isTrue,
-          reason: 'demo-mode payments should still call onSuccess');
-      expect(failureMessage, isNull);
+      // A REAL Razorpay key is configured in this suite
+      // (rzp_test_ci_dummy_key is deliberately not a placeholder), so a
+      // checkout that completes without an order_id/signature is a payment we
+      // cannot verify — not a demo payment. Confirming it would clear the cart
+      // and confirm the booking for money nobody proved was taken.
+      expect(successCalled, isFalse,
+          reason:
+              'an unverifiable payment must NOT be confirmed when a real key '
+              'is configured');
+      expect(failureMessage, isNotNull,
+          reason: 'the user must be told verification is pending');
       expect(fakeApi.verifyCalls, isEmpty,
-          reason: 'verifyPayment should NOT be called in demo mode');
+          reason: 'nothing to verify without an order_id/signature');
 
       svc.dispose();
       teardown();
@@ -542,7 +606,7 @@ void main() {
           successCalled = true;
           completer.fire();
         },
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -581,7 +645,7 @@ void main() {
         amount: 1000,
         description: 'Test',
         orderId: 'ord_x',
-        onFailure: (m) {
+        onFailure: (m, _) {
           failureMessage = m;
           completer.fire();
         },
@@ -625,17 +689,20 @@ void main() {
           description: 'Test',
           orderId: 'ord_x',
           onSuccess: () => successCalled = true,
-          onFailure: (m) => failure = m,
+          onFailure: (m, _) => failure = m,
         ),
         returnsNormally,
       );
 
-      // Let the demo response dispatch.
+      // Let the response dispatch.
       await Future<void>.delayed(const Duration(milliseconds: 30));
 
-      // Demo flow → onSuccess fires.
-      expect(successCalled, isTrue);
-      expect(failure, isNull);
+      // The point of this test is the SYNCHRONOUS contract above. Which
+      // callback fires depends on verifiability: the stub response carries no
+      // signature, so with the real key this suite uses it fails closed. Any
+      // outcome is fine here — silence is not.
+      expect(successCalled || failure != null, isTrue,
+          reason: 'openCheckout must always resolve to one callback');
 
       svc.dispose();
       teardown();
@@ -665,7 +732,7 @@ void main() {
         description: 'Test',
         orderId: 'ord_x',
         onSuccess: () => successCalled = true,
-        onFailure: (_) => failureCalled = true,
+        onFailure: (_, _) => failureCalled = true,
       );
 
       // Wallet events are handled but don't trigger user callbacks in the
@@ -715,7 +782,7 @@ void main() {
         prefillPhone: '9999911911',
         prefillEmail: 'fam@example.com',
         onSuccess: completer.fire,
-        onFailure: (_) => completer.fire(),
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();
@@ -767,6 +834,10 @@ void main() {
         description: 'Test',
         // no orderId
         onSuccess: completer.fire,
+        // Fail-closed contract: with a real key and no order_id the outcome is
+        // onFailure, not onSuccess. This test is about the options payload, so
+        // latch on either callback.
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();
@@ -803,6 +874,10 @@ void main() {
         prefillName: 'OnlyName',
         // phone + email omitted
         onSuccess: completer.fire,
+        // Fail-closed contract: with a real key and no order_id the outcome is
+        // onFailure, not onSuccess. This test is about the options payload, so
+        // latch on either callback.
+        onFailure: (_, _) => completer.fire(),
       );
 
       await completer.wait();

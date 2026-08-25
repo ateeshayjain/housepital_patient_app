@@ -52,7 +52,7 @@ class PaymentService {
   static bool get isDemoPayments => _placeholderKeys.contains(_testKey);
 
   VoidCallback? _onSuccessCallback;
-  void Function(String)? _onFailureCallback;
+  void Function(String, PaymentFailure)? _onFailureCallback;
 
   PaymentService({IApiService? apiService})
       : _apiService = apiService ?? ApiService() {
@@ -67,6 +67,9 @@ class PaymentService {
   /// Creates a payment order on the backend before opening checkout.
   /// Returns the Razorpay order ID to pass to [openCheckout].
   /// Returns null if the backend call fails (demo mode can proceed without it).
+  ///
+  /// [amount] is in **paise**, like [openCheckout] — the backend passes it
+  /// straight to `razorpay.orders.create`, which takes paise.
   Future<String?> createOrder({
     required String patientId,
     required int amount,
@@ -82,7 +85,17 @@ class PaymentService {
         referenceType: referenceType,
         referenceId: referenceId,
       );
-      return result['order_id'] as String?;
+      // The backend responds `{payment_id, razorpay_order_id, amount,
+      // currency}`. This read used to be `result['order_id']`, a key that
+      // response has never contained, so it evaluated to null on every
+      // success — and PaymentScreen's fail-closed guard turned that into
+      // "we couldn't start a secure payment" for every real transaction.
+      // Nothing was mis-charged, but no real payment could complete at all,
+      // and the failure looked like a backend outage rather than a typo.
+      //
+      // Accept the legacy spelling too: a null order id is not a small bug
+      // here, and tolerating both costs one `??`.
+      return (result['razorpay_order_id'] ?? result['order_id']) as String?;
     } catch (e) {
       Log.warn('Create order failed', error: e, tag: 'PaymentService');
       return null;
@@ -102,7 +115,7 @@ class PaymentService {
     String? prefillPhone,
     String? prefillEmail,
     VoidCallback? onSuccess,
-    void Function(String)? onFailure,
+    void Function(String message, PaymentFailure kind)? onFailure,
   }) {
     _onSuccessCallback = onSuccess;
     _onFailureCallback = onFailure;
@@ -143,7 +156,8 @@ class PaymentService {
       _razorpay.open(options);
     } catch (e) {
       Log.warn('Razorpay open error', error: e, tag: 'PaymentService');
-      _onFailureCallback?.call('Failed to open payment gateway');
+      _onFailureCallback?.call(
+          'Failed to open payment gateway', PaymentFailure.notStarted);
     }
   }
 
@@ -161,13 +175,31 @@ class PaymentService {
         _onSuccessCallback?.call();
         break;
       case _VerificationOutcome.skippedDemo:
-        // Demo mode (no order_id/signature) — keep existing demo behaviour
-        // so flows still complete locally without a backend.
-        _onSuccessCallback?.call();
+        // "Skipped" means we could not verify — it is only safe to treat that
+        // as success in DEMO builds, where no real money moved.
+        //
+        // With a real Razorpay key, this state is reachable whenever the
+        // backend order call failed (createOrder returns null on error), so
+        // treating it as success would confirm the booking and clear the cart
+        // for a payment nobody verified. Real money, unverified: fail closed.
+        if (isDemoPayments) {
+          _onSuccessCallback?.call();
+        } else {
+          Log.error(
+              'Payment could not be verified: checkout completed without an '
+              'order_id/signature while a real Razorpay key is configured. '
+              'Refusing to confirm.',
+              tag: 'PaymentService');
+          _onFailureCallback?.call(
+            "Payment under verification — we'll confirm in 24 hours",
+            PaymentFailure.unverified,
+          );
+        }
         break;
       case _VerificationOutcome.failed:
         _onFailureCallback?.call(
           "Payment under verification — we'll confirm in 24 hours",
+          PaymentFailure.unverified,
         );
         break;
     }
@@ -201,7 +233,8 @@ class PaymentService {
 
   void _handleError(PaymentFailureResponse response) {
     Log.warn('Payment error: ${response.code}', tag: 'PaymentService');
-    _onFailureCallback?.call(response.message ?? 'Payment failed');
+    _onFailureCallback?.call(
+        response.message ?? 'Payment failed', PaymentFailure.declined);
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
@@ -214,6 +247,27 @@ class PaymentService {
 }
 
 /// Internal outcome of backend payment signature verification.
+/// Why a payment did not complete.
+///
+/// This exists because the caller USED to distinguish "charged but
+/// unverifiable" from "declined" by string-matching an English message
+/// literal (`message.contains('under verification')`). That branch decides
+/// whether the user is shown a Retry button, so localising the message — which
+/// the project's i18n rule requires — would have silently restored a
+/// double-debit path on a paid invoice. The signal is now typed and the
+/// message is free to be translated.
+enum PaymentFailure {
+  /// Checkout never opened. No money moved. Retrying is safe.
+  notStarted,
+
+  /// The gateway declined or the user cancelled. No money moved. Retry is safe.
+  declined,
+
+  /// Checkout reported SUCCESS but we could not verify it. Money has probably
+  /// left the patient's account. NEVER offer a retry here.
+  unverified,
+}
+
 enum _VerificationOutcome {
   verified,
   failed,

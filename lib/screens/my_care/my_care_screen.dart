@@ -83,6 +83,16 @@ class _MyCareScreenState extends State<MyCareScreen> with WidgetsBindingObserver
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         showHome: true, // owner: home button on every screen (only the Home tab omits it)
+        // Care calendar lives here now (owner: 'move the calendar to My Care
+        // so that there are five icons below'). Custom actions sit first in
+        // the trailing group, before search and cart.
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'Care calendar',
+            onPressed: () => Navigator.pushNamed(context, '/care-calendar'),
+          ),
+        ],
         // Bar title is hidden while the in-body large title is at rest, and
         // fades in on scroll. Loading/error/empty states have no in-body
         // title, so the bar title stays visible there.

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/app_colors.dart';
+import '../../data/demo_mode.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../../utils/app_localizations.dart';
@@ -13,6 +14,7 @@ import '../../utils/helpers.dart';
 import '../../utils/validators.dart';
 import '../../utils/vital_classifier.dart';
 import '../../widgets/glass.dart';
+import '../../widgets/medical_disclaimer.dart';
 
 class VitalsScreen extends StatefulWidget {
   final String? initialVital;
@@ -47,6 +49,17 @@ class _VitalsScreenState extends State<VitalsScreen>
   int get _periodDays =>
       _period == '7d' ? 7 : _period == '30d' ? 30 : _period == '90d' ? 90 : 180;
 
+  /// Builds the SAMPLE vitals trend.
+  ///
+  /// This fabricates 7–180 days of BP, pulse, SpO2, temperature and blood
+  /// sugar from a fixed seed. Round 3 found it merged silently with the
+  /// patient's real readings and raised no demo flag — fabricated clinical
+  /// trend data, indistinguishable from measured data, on the screen a family
+  /// checks. Two rules now hold it:
+  ///   1. It only runs when there is nothing real to show.
+  ///   2. When it runs it raises [DemoMode.sourceVitals], so the app-wide
+  ///      sample-data notice appears on this screen.
+  /// It is never merged with real readings again — see [_mergedVitals].
   void _generateMockData() {
     final rng = Random(42);
     final now = DateTime.now();
@@ -66,6 +79,7 @@ class _VitalsScreenState extends State<VitalsScreen>
         'sugar': 95.0 + rng.nextInt(35),
       });
     });
+    DemoMode.markServingDemoData(DemoMode.sourceVitals);
     if (mounted) setState(() {});
   }
 
@@ -102,17 +116,24 @@ class _VitalsScreenState extends State<VitalsScreen>
     }
   }
 
-  /// Mock baseline + manually entered readings (provider) for the selected
-  /// period, oldest first — a reading saved from the entry sheet appears on
-  /// the chart, stat cards, and 'Latest reading' immediately.
+  /// Readings for the selected period, oldest first.
+  ///
+  /// REAL READINGS ARE NEVER MIXED WITH SAMPLE ONES. If the patient has any
+  /// real reading in the window, only real readings are shown — a chart that
+  /// is half measured and half invented is worse than a sparse chart, because
+  /// nothing on it can be trusted. The sample trend is a placeholder for an
+  /// empty screen, not a backdrop for real data.
   List<VitalReading> _mergedVitals(List<VitalReading> manual) {
     final cutoff = DateTime.now().subtract(Duration(days: _periodDays));
-    final merged = [
-      ..._vitals,
-      ...manual.where((r) => r.recordedAt.isAfter(cutoff)),
-    ];
-    merged.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
-    return merged;
+    final real = manual.where((r) => r.recordedAt.isAfter(cutoff)).toList();
+    if (real.isNotEmpty) {
+      DemoMode.markServingLiveData(DemoMode.sourceVitals);
+      real.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+      return real;
+    }
+    final sample = [..._vitals];
+    sample.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    return sample;
   }
 
   @override
@@ -472,6 +493,10 @@ class _VitalsScreenState extends State<VitalsScreen>
 
           // Insights
           _buildInsights(primaryKey, values),
+
+          // The screen colours a person's readings red/amber/green and says
+          // "outside safe range". State the limits of that where it is read.
+          const MedicalDisclaimer(context_: DisclaimerContext.vitals),
 
           // Clearance so the extended FAB never covers the last insight row.
           const SizedBox(height: 88),
