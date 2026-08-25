@@ -102,7 +102,25 @@ const Map<String, Size> _phoneSizes = {
   'small  320x568 (SE)': Size(320, 568),
   'std    375x667 (8)': Size(375, 667),
   'large  414x896 (11)': Size(414, 896),
+  // WCAG 1.4.4 requires text to scale to 200% without loss of content or
+  // function. main.dart used to clamp at 1.4x under a comment CITING 1.4.4 —
+  // it failed the rule it invoked, and a user at iOS AX5 had their setting
+  // silently discarded on an app they may be using because they cannot read
+  // small text.
+  //
+  // Raising the clamp is only defensible with evidence, so this pass exists:
+  // every screen in the sweep, at the standard phone size, with text at 2.0x.
+  // If this row goes red, the clamp is wrong or the screen is.
+  'std @2.0x text 375x667': Size(375, 667),
 };
+
+/// Text scale applied by [_wrap] for the current pass.
+///
+/// A file-level variable rather than a parameter because [_wrap] is called
+/// from thirty-odd host builders; threading a scale through every one of them
+/// would be a larger and more error-prone edit than this. Set by
+/// [_exceptionAt] before each pump and restored after.
+double _textScale = 1.0;
 
 // ── Test providers: seed demo data synchronously, neutralise I/O loaders ─────
 
@@ -329,7 +347,10 @@ Widget _appHost(Widget child) => _wrap(
 // (The Home banner auto-scroll timer this originally guarded against has been
 // removed — the banner is manual swipe + dots only.)
 Widget _wrap(Widget home) => MediaQuery(
-      data: const MediaQueryData(disableAnimations: true),
+      data: MediaQueryData(
+        disableAnimations: true,
+        textScaler: TextScaler.linear(_textScale),
+      ),
       child: MaterialApp(
         localizationsDelegates: const [AppLocalizations.delegate],
         supportedLocales: const [Locale('en')],
@@ -341,7 +362,10 @@ Widget _wrap(Widget home) => MediaQuery(
 /// null). Mirrors the runAsync+pump pattern used by the other screen tests so
 /// the async AppLocalizations delegate and real timers behave.
 Future<Object?> _exceptionAt(
-    WidgetTester tester, Widget Function() build, Size size) async {
+    WidgetTester tester, Widget Function() build, Size size,
+    {double textScale = 1.0}) async {
+  _textScale = textScale;
+  addTearDown(() => _textScale = 1.0);
   // Set the SharedPreferences mock BEFORE building, because the providers'
   // constructors call SharedPreferences.getInstance — building eagerly in the
   // caller would run that before the mock exists (order-dependent crash).
@@ -374,10 +398,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   _phoneSizes.forEach((label, size) {
+    // The label carries the scale for the 200% pass; everything else is 1.0.
+    final scale = label.contains('@2.0x') ? 2.0 : 1.0;
     // ── Original two (Home + My Care) ─────────────────────────────────────
     testWidgets('Home lays out without overflow — $label', (tester) async {
       final ex =
-          await _exceptionAt(tester, () => _homeHost(_TestAppProvider()), size);
+          await _exceptionAt(tester, () => _homeHost(_TestAppProvider()), size,
+              textScale: scale);
       expect(ex, isNull,
           reason: 'Home overflowed at $size — a RenderFlex exceeded its box.');
     });
@@ -394,7 +421,8 @@ void main() {
     // ── Const / no-arg screens ────────────────────────────────────────────
     void noArg(String name, Widget Function() screen) {
       testWidgets('$name lays out without overflow — $label', (tester) async {
-        final ex = await _exceptionAt(tester, () => _appHost(screen()), size);
+        final ex = await _exceptionAt(tester, () => _appHost(screen()), size,
+          textScale: scale);
         expect(ex, isNull, reason: '$name overflowed at $size.');
       });
     }
@@ -469,7 +497,8 @@ void main() {
     // ── Arg-taking screens ────────────────────────────────────────────────
     void argScreen(String name, Widget Function() screen) {
       testWidgets('$name lays out without overflow — $label', (tester) async {
-        final ex = await _exceptionAt(tester, () => _appHost(screen()), size);
+        final ex = await _exceptionAt(tester, () => _appHost(screen()), size,
+          textScale: scale);
         expect(ex, isNull, reason: '$name overflowed at $size.');
       });
     }

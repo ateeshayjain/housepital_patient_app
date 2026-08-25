@@ -1,9 +1,20 @@
 # Test Map -- Housepital Patient App
 
-**Last updated:** 2026-08-20
-**Total test count:** **1,911 at runtime**, measured (1,436 `test()`/`testWidgets()` call sites; parameterized guard suites — e.g. overflow smoke 37 screens × 3 widths — expand at runtime)
-**Pass rate:** all 1,911 passing, 0 failures (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
-**Test file count:** 108 (`find test -name "*_test.dart" | wc -l`)
+**Last updated:** 2026-08-25
+**Total test count:** **1,983 at runtime**, measured (1,469 `test()`/`testWidgets()` call sites; parameterized guard suites expand at runtime — the overflow smoke sweep alone is 39 screens × **4 passes**)
+**Pass rate:** all 1,983 passing, 0 failures (payment groups require `--dart-define=RAZORPAY_KEY=...`; CI passes `rzp_test_ci_dummy_key`)
+**Test file count:** 110 (`find test -name "*_test.dart" | wc -l`)
+
+### The overflow sweep has four passes, not three
+
+320×568, 375×667, 414×896 — and **375×667 at 200% text**. The fourth was added
+when `main.dart`'s text clamp was raised from 1.4× to 2.0×: WCAG 1.4.4
+requires 200%, and the old ceiling sat under a comment citing that very
+criterion. All 156 rows pass, with the Ahem font's worst-case wide glyphs, so
+the 1.4× ceiling had never been protecting anything.
+
+**Do not delete that pass.** It is the only evidence behind the number in
+`main.dart`; without it, 2.0× becomes a claim.
 
 > **These numbers are from a local run on 2026-08-20 and have no independent
 > attestation.** CI has never executed a step (47 runs, billing lock), so no
@@ -368,3 +379,37 @@ Also worth recording, because it silently weakens widget tests:
 second and later `pumpWidget` calls in a file find an empty tree, and a
 `findsNothing` assertion passes for entirely the wrong reason. Use the
 `runAsync` + delay pattern from `test/screens/home/home_layout_test.dart`.
+
+---
+
+## Round 5 additions (2026-08-25)
+
+| File | The defect it exists for |
+|------|--------------------------|
+| `test/screens/bucket_b_regressions_test.dart` | Startup latency, build environments, glass contrast, the vitals per-chart rule, and four surfaces that reported success for actions that never happened. |
+| `test/utils/data_lifecycle_test.dart` | `ImagePrivacy` re-encoded every picked photo to a temp file and **never deleted it** — the fix that stripped GPS from a wound photo left a full-resolution copy in the OS temp area indefinitely. Also pins that the deletion notice no longer promises to delete documents the app has never stored. |
+| `test/screens/text_scale_and_contrast_test.dart` | The 1.4× text clamp, and `Colors.white70` over the orange gradient at 1.82:1 — the worst text contrast in the app, on the amount someone is about to be charged. Computes the contrast ratios rather than asserting them. |
+
+### Backend (separate repo)
+
+| Suite | What it pins |
+|-------|--------------|
+| `schema-conformance.test.ts` | Every `db("table")` chain against the migrations. |
+| `vital-classifier.test.ts` | The TypeScript thresholds against the **Dart source**, diffed across the range. |
+| `route-conformance.test.ts` | Every client API call against every backend route. Found **13 calls with no route**, including the only caregiver-removal control in the app. Its `ACCEPTED_MISSING` set has two guards: the list cannot silently grow, and an entry must be removed once its route exists. |
+
+85 backend tests pass.
+
+### A pattern worth naming
+
+Five of the checks written across rounds 4 and 5 found bugs **in themselves**
+before they found anything in the product: a payment fake built from the
+caller's imagined field name, a SQL parser truncated by a semicolon inside a
+comment, a Dart/TypeScript differ that ran past the end of one function into
+the next, a keyword blacklist that deleted two real columns, and a
+source-text assertion that failed on the *documentation of the fix it was
+testing*.
+
+The common thread: each was built from what the author expected rather than
+from the artefact. A fake built from the code under test can only confirm that
+code.

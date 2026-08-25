@@ -657,6 +657,46 @@ In-app notification feed.
 | 004 | 004_seed_coupons.sql         | 2026-03    | Coupon seed data                                    |
 | 005 | 005_schema_code_reconciliation.sql | 2026-08-20 | Reconciles the schema with the code that reads |
 |     |                              |            | it — see below. **Verified locally; not yet applied to production.** |
+| 006 | 006_missing_route_tables.sql | 2026-08-25 | Tables for controls that were wired to 404s — |
+|     |                              |            | see below. **Verified locally; not applied to production.** |
+
+### 006 — tables for controls that were wired to 404s (2026-08-25)
+
+A round-5 sweep compared every client API call in `api_service.dart` against
+every `router.<verb>` in the backend. **Thirteen client calls had no route at
+all.** None had surfaced as a bug, because the client catches the failure and
+the UI reports success.
+
+Eight are now implemented. Two needed a table:
+
+| Table | Backs |
+|---|---|
+| `staff_replacement_requests` | `POST /deployments/:id/replacement` — the **only** control in the app for removing a caregiver from a patient's home. A family tapped it, saw success, and nothing recorded that they asked. |
+| `equipment_reviews` | `GET`/`POST /equipment/:id/reviews` — the composer on every equipment item, whose POST has never had a destination. |
+
+Columns added:
+
+| Table | Added | Why |
+|---|---|---|
+| `vitals` | `recorded_by_type` (`staff`/`family`/`patient`), `recorded_by` | Every row was implicitly staff-recorded. The patient app can now write one, and a clinician reading a trend needs to tell a home cuff from a nurse's device. |
+
+Design notes worth keeping:
+
+- `equipment_reviews.display_name` is **stored**, not re-derived from the
+  patient record at render time, and the route writes only a first name. A
+  review is public; a full name on a healthcare product is more disclosure
+  than anyone intends when they tap submit.
+- `equipment_reviews.patient_id` exists so a review can be withdrawn when its
+  author's data is deleted — the erasure path that `DATA-4.03` still records
+  as missing everywhere else.
+- `staff_replacement_requests` has a `UNIQUE`-less design on purpose; the
+  route enforces one OPEN request per deployment in code, so a second ask
+  returns the existing ticket rather than erroring. A dead button is worse
+  than a duplicate.
+
+Verified against MySQL 8: 001→006 apply clean (**27 tables, 375 columns**),
+and re-running 005 and 006 is a no-op producing an identical schema. Guarded
+and re-runnable for the same reason as 005.
 
 ### 005 — schema/code reconciliation (2026-08-20)
 

@@ -455,15 +455,27 @@ class _HousepitalAppState extends State<HousepitalApp> {
       // NOTE: Auth gate disabled for demo mode. Enable before production release.
       // home: Consumer<AuthProvider>(...),
       home: SplashScreen(warmup: widget.warmup),
-      // Clamp system text scaling so layouts don't break at extreme accessibility
-      // settings, but still honour user preference up to 1.4x (WCAG 1.4.4).
+      // System text scaling.
+      //
+      // The ceiling was 1.4x, under a comment citing WCAG 1.4.4 — the
+      // criterion that requires 200%. It failed the rule it invoked, and a
+      // user at iOS AX5 (~3.1x) or Android's 2.0x had their setting silently
+      // discarded down to 1.4x on a healthcare app they may be using
+      // BECAUSE they cannot read small text.
+      //
+      // Now 2.0x: the 1.4.4 minimum, and a figure every screen is tested at
+      // (see the textScale sweep in overflow_smoke_test.dart). Larger is not
+      // yet honoured — the 37-screen sweep is the evidence for what actually
+      // holds, and it is the thing to extend before raising this again.
+      // Raising the number without extending the sweep would replace a
+      // measured limitation with an unmeasured claim.
       builder: (context, child) {
         final mq = MediaQuery.of(context);
         return MediaQuery(
           data: mq.copyWith(
             textScaler: mq.textScaler.clamp(
               minScaleFactor: 0.85,
-              maxScaleFactor: 1.4,
+              maxScaleFactor: 2.0,
             ),
           ),
           // Above the Navigator, so the sample-data notice is present on
