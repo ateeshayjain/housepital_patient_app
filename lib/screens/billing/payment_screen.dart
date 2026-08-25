@@ -698,9 +698,19 @@ class _PaymentScreenState extends State<PaymentScreen>
           children: [
             Text(
               l.t('amount_to_pay'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.white70,
+                // MEASURED: Colors.white70 over this orange gradient is
+                // 1.82:1 — the worst text contrast in the app, on the label
+                // for the single most consequential number in it.
+                //
+                // onOrange (pure white) is 2.33:1. Still below AA, and still
+                // the owner's explicit, documented decision for text on an
+                // orange FILL. The point of this change is that a dimmed
+                // white was never that decision: it silently degraded an
+                // already-accepted risk by a further 22%, on the amount
+                // someone is about to be charged.
+                color: context.hc.onOrange,
               ),
             ),
             const SizedBox(height: 4),
@@ -716,9 +726,10 @@ class _PaymentScreenState extends State<PaymentScreen>
             Text(
               widget.description,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
+                // Same gradient, same reason as the label above.
                 fontSize: 13,
-                color: Colors.white70,
+                color: context.hc.onOrange,
               ),
             ),
           ],
