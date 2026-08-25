@@ -11,6 +11,83 @@ are code.
 
 ---
 
+## 0. Before you can build — the repo alone is not enough
+
+Two things are deliberately **not** in git. Neither is documented anywhere
+else, and without them a fresh clone does not build.
+
+### The two repositories
+
+| Repo | Contains |
+|---|---|
+| `github.com/ateeshayjain/housepital_patient_app` | The Flutter app, all documentation, all audit reports |
+| `github.com/ateeshayjain/housepital-backend` | Firebase Functions + Express API, the SQL migrations, the conformance checks |
+
+You need **both**. Several documents in this repo reference
+`housepital-backend/...` paths as though the two sit side by side; clone them
+into the same parent directory or those paths and the `check_schema_drift.sh`
+invocation will not resolve.
+
+There is also a **staff app** and a **CRM** that this app is meant to be the
+third leg of. Neither is in scope here, and neither has been reconciled with
+this app's data model beyond what migrations 005 and 006 did.
+
+### `ios/Runner/GoogleService-Info.plist` — missing, and iOS will not build
+
+This file is gitignored and has never been committed. It is the only piece of
+setup that is not reproducible from the repo.
+
+Get it from the Firebase console for project **`housepital-patient`** →
+Project settings → iOS app → *GoogleService-Info.plist*, and place it at
+`ios/Runner/GoogleService-Info.plist`.
+
+Note the asymmetry, because it is confusing and it is deliberate: the Android
+equivalent (`android/app/google-services.json`) and `lib/config/
+firebase_options.dart` **are** tracked. Those `.gitignore` entries were added
+after the files had already been committed, so they are inert. Firebase client
+identifiers are not secrets the way an API key is — they ship inside every
+binary — so the real control is Firebase Security Rules plus API-key
+restrictions in the console, not untracking the files. Do not "fix" this by
+deleting the tracked ones.
+
+### Android gradle wrapper
+
+Only `gradle-wrapper.properties` is tracked; `gradlew` and
+`gradle-wrapper.jar` are not. Regenerate with `gradle wrapper` or open the
+`android/` folder once in Android Studio. iOS is unaffected.
+
+### Optional at build time
+
+- **Razorpay** — `--dart-define=RAZORPAY_KEY=…`. Without it the app runs in
+  demo-payments mode and the full purchase flow still works locally. CI uses
+  `rzp_test_ci_dummy_key`, which is deliberately *not* a placeholder: it
+  un-skips eight payment test groups.
+- **Backend URL** — `--dart-define=API_BASE_URL=…` to point a build at
+  staging. Defaults to production.
+- **Assistant** — `--dart-define=ASSISTANT_API_URL=…`. Leave unset: the
+  offline Hinglish stub is the only version cleared for use, and the AI/LLM
+  audit holds release on ever setting this.
+
+### Verifying the clone is sound
+
+```bash
+flutter pub get
+flutter analyze                                    # expect: no issues
+bash scripts/check_design_consistency.sh           # expect: passed
+flutter test --dart-define=RAZORPAY_KEY=rzp_test_ci_dummy_key
+```
+
+Expect **1,983 passing, 0 failures**. If that number differs, find out why
+before trusting anything else in this document.
+
+```bash
+cd ../housepital-backend/functions && npm ci && npx jest
+```
+
+Expect **85 passing**.
+
+---
+
 ## 1. Read these three things first, in this order
 
 1. **`docs/audits/round5/RE_VERIFICATION.md`** — the current, honest count of

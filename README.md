@@ -5,10 +5,19 @@
 A mobile app for Housepital's patients and their families across Delhi NCR.
 Replaces phone-call-based monitoring with structured, transparent visibility into all active home healthcare services.
 
+> ### Handing this over? Start at [docs/HANDOVER.md](./docs/HANDOVER.md)
+>
+> It covers what is fixed, what is deliberately still open (**578 of 685 audit
+> findings**), and — in section 0 — the two things not in this repo that a
+> fresh clone needs in order to build: the **second repository**
+> (`housepital-backend`) and `ios/Runner/GoogleService-Info.plist`.
+
 ## Quick Links
 
 | Resource | Link |
 |---|---|
+| **Handover / start here** | [docs/HANDOVER.md](./docs/HANDOVER.md) |
+| Backend repo | [ateeshayjain/housepital-backend](https://github.com/ateeshayjain/housepital-backend) |
 | Project meta / onboarding | [PROJECT.md](./PROJECT.md) |
 | Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | Open PRs | <https://github.com/ateeshayjain/housepital_patient_app/pulls> |
