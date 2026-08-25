@@ -656,7 +656,7 @@ In-app notification feed.
 | 003 | 003_seed_equipment.sql       | 2026-03    | Equipment catalog seed data                         |
 | 004 | 004_seed_coupons.sql         | 2026-03    | Coupon seed data                                    |
 | 005 | 005_schema_code_reconciliation.sql | 2026-08-20 | Reconciles the schema with the code that reads |
-|     |                              |            | it — see below. **Not yet applied to any database.**|
+|     |                              |            | it — see below. **Verified locally; not yet applied to production.** |
 
 ### 005 — schema/code reconciliation (2026-08-20)
 
@@ -704,11 +704,53 @@ gained it:
 | **equipment_deployments**   | new table                                |
 | **health_manager_assignments** | new table                             |
 
-`functions/src/__tests__/schema-conformance.test.ts` now parses this schema
-(including `ALTER TABLE ... ADD COLUMN`) and every query chain in the routes,
-and fails on any unknown table or column. It runs without a database, so it
-runs everywhere — the previous state of affairs was only possible because no
-test could reach a live MySQL instance.
+#### Re-runnable by construction
+
+MySQL 8 has no `ADD COLUMN IF NOT EXISTS`, so 005's first draft could be run
+exactly once — the second run died on the first duplicate column. That is the
+wrong failure mode for a migration nobody can rehearse against production: if
+the first run failed part way (dropped connection, permissions, lock timeout),
+the retry would error on the columns that *did* apply and never reach the ones
+that did not, leaving the schema half-migrated with no safe way forward.
+
+Every `ADD COLUMN` and `ADD INDEX` now goes through two helper procedures that
+check `information_schema` first; `CREATE TABLE IF NOT EXISTS` was already
+idempotent. The helpers are dropped at the end of the script.
+
+#### Verification performed (2026-08-20)
+
+Against a real MySQL 8 instance, not a parser:
+
+| Check | Result |
+|-------|--------|
+| 001→005 applied to a clean database | all five OK |
+| Resulting schema | 25 tables, 351 columns |
+| Every table/column the routes query exists | yes, zero unknown |
+| 005 run a second and third time | no errors |
+| Schema after 3 runs vs after 1 | byte-identical |
+| Helper procedures left behind | none |
+
+**This has still never run against production**, because there is no reachable
+production database — no credentials, no `gcloud`, and `api.housepital.in` does
+not resolve. What the above removes is the risk that 005 had never been
+executed *at all*; it does not remove the need to verify against a copy of real
+data before applying it.
+
+#### The conformance test
+
+`functions/src/__tests__/schema-conformance.test.ts` parses this schema — both
+`ALTER TABLE ... ADD COLUMN` and the guarded `CALL hpl_add_column_if_missing`
+form — plus every query chain in the routes, and fails on any unknown table or
+column. It needs no database, so it runs everywhere; the original problem was
+only possible because no test could reach a live MySQL instance.
+
+Its parser was cross-checked against the live database above and now agrees
+exactly: no missed columns, no invented ones. Getting there took two
+corrections, both instructive. It first read `NOT` as a column name from the
+continuation line of a multi-line `ENUM` definition — a phantom column, which
+makes the guard *more* permissive and is therefore the quiet direction of
+error. Then the keyword blacklist that fixed it deleted `daily_ratings.comment`
+and `staff_reviews.comment`, which are real columns the routes read.
 
 ---
 
