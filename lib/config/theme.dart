@@ -18,6 +18,12 @@ class HousepitalColorsDark {
   static const Color surfaceHigh = Color(0xFF2C2C2E);      // sheets-over-cards, inputs
   static const Color divider = Color(0xFF2A2A2C);          // rare — prefer tone over strokes
 
+  /// Boundary for glass surfaces when the user has asked for higher contrast.
+  /// #8E8E93 measures 5.22:1 against the card tone and 6.44:1 against true
+  /// black — WCAG 1.4.11 wants 3:1 for a UI component boundary, and the
+  /// default glass edge (white @ 0.08) measures 1.26:1.
+  static const Color glassEdgeAccessible = Color(0xFF8E8E93);
+
   // Text (contrast vs the CARD tone #1C1C1E, the common reading surface;
   // ratios are higher still on the black page bg)
   static const Color textPrimary = Color(0xFFF2F2F2);   // ~14:1 — AAA
@@ -97,6 +103,12 @@ class HousepitalColors {
   static const Color background = Color(0xFFF8F9FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color divider = Color(0xFFE0E0E0);
+
+  /// Boundary for glass surfaces when the user has asked for higher contrast.
+  /// #767680 measures 4.26:1 against the page background — the default glass
+  /// edge (white @ 0.6 over a near-white page) measures 1.03:1, which is the
+  /// nav pill boundary the accessibility audit graded Fail under 1.4.11.
+  static const Color glassEdgeAccessible = Color(0xFF767680);
 
   // Status Colors (WCAG AA compliant for text)
   static const Color success = Color(0xFF2E7D32); // darker green, 5.1:1

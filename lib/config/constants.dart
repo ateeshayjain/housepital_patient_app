@@ -1,6 +1,27 @@
 class AppConstants {
-  // API Configuration - Update with your backend URL
-  static const String apiBaseUrl = 'https://api.housepital.in/v1';
+  // API base URL. Overridable at build time:
+  //   --dart-define=API_BASE_URL=https://staging.housepital.in/v1
+  //
+  // This was a plain `const` with the production host baked in, while the
+  // correct idiom sat eight lines below for `assistantApiUrl` — someone knew
+  // the pattern, applied it to the newer constant, and never came back for
+  // this one. The consequence was not cosmetic: a debug build and a store
+  // build hit the SAME server, so there was no way to point a build at
+  // staging, no way to exercise the app against a backend without touching
+  // production data, and no way for QA to run anywhere but prod.
+  //
+  // The default is unchanged, so an un-defined build behaves exactly as
+  // before.
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api.housepital.in/v1',
+  );
+
+  /// True when this build points somewhere other than production. Used to
+  /// surface the target in-app so a tester can never mistake a staging build
+  /// for a production one — or, worse, the reverse.
+  static bool get isNonProductionApi =>
+      apiBaseUrl != 'https://api.housepital.in/v1';
 
   // AI Assistant (Sahayak) endpoint — the Firebase Cloud Function URL.
   // Set at build time:  --dart-define=ASSISTANT_API_URL=https://...

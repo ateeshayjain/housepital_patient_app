@@ -95,19 +95,23 @@ class AboutScreen extends StatelessWidget {
               context,
               icon: Icons.description_outlined,
               title: 'Terms of Service',
-              url: 'https://housepital.in/terms',
+              // www., not the apex: the certificate on housepital.in covers
+              // www. only, so the bare host fails TLS and the Terms link dies
+              // in the browser with a security warning — on the one screen
+              // where a user goes looking for the legal basis of the service.
+              url: 'https://www.housepital.in/terms',
             ),
             _linkTile(
               context,
               icon: Icons.privacy_tip_outlined,
               title: 'Privacy Policy',
-              url: 'https://housepital.in/privacy',
+              url: 'https://www.housepital.in/privacy',
             ),
             _linkTile(
               context,
               icon: Icons.language,
               title: 'Website',
-              url: 'https://housepital.in',
+              url: 'https://www.housepital.in',
             ),
 
             const SizedBox(height: 40),

@@ -355,5 +355,11 @@
   "disclaimer_vitals": "ye readings aur unke rang sirf ek guide hain, diagnosis nahi. Housepital door se vitals ka matlab nahi nikalta — agar kuch theek na lage, ya rang chahe jo bhi ho patient ko takleef ho, to turant apni nurse ya health manager ko batayein.",
   "disclaimer_medication": "yeh schedule sirf woh dikhata hai jo is patient ke liye record kiya gaya hai. Yeh prescription nahi hai aur reminder chhoot bhi sakte hain. Koi bhi dawa ya uski dose sirf doctor hi shuru, band ya change kar sakte hain.",
   "disclaimer_article": "yeh aam jaankari hai, kisi ek vyakti ke liye salah nahi. Ispar amal karne se pehle apne doctor ya Housepital health manager se baat karein.",
-  "disclaimer_report": "yeh Housepital app mein darj records se banaya gaya hai. Yeh aapke doctor ke liye ek summary hai, clinical assessment nahi, aur adhoora ho sakta hai."
+  "disclaimer_report": "yeh Housepital app mein darj records se banaya gaya hai. Yeh aapke doctor ke liye ek summary hai, clinical assessment nahi, aur adhoora ho sakta hai.",
+  "vitals_no_data_title": "abhi koi reading nahi",
+  "vitals_no_data_body": "pehli reading darj karne ke liye 'Add reading' dabayein. Jaise-jaise readings judti jayengi, trend banta jayega.",
+  "vitals_sample_label": "namuna trend — is patient ki readings nahi",
+  "feedback_saved_local": "is device par save ho gaya. Housepital tak abhi nahi pahuncha — feedback service connect nahi hai.",
+  "review_saved_local": "sirf is phone par save hua. Doosre customers ise abhi nahi dekh sakte — reviews publish nahi ho rahe.",
+  "review_audience_notice": "review doosre Housepital customers ko aapke pehle naam ke saath dikhne ke liye hote hain. Ismein medical jaankari ya aisi koi baat na likhein jo aap doosron ko nahi dikhana chahte."
 }

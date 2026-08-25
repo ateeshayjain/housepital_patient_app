@@ -118,7 +118,7 @@ class ReferralScreen extends StatelessWidget {
                             SharePlus.instance.share(ShareParams(
                               text: 'Get hospital-like care at home with Housepital! '
                                   'Use my referral code $_referralCode to get started. '
-                                  'Download now: https://housepital.in/app',
+                                  'Download now: https://www.housepital.in/app',
                             ));
                           },
                           icon: const Icon(Icons.share, size: 16),

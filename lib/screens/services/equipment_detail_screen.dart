@@ -11,6 +11,7 @@ import '../../providers/cart_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/common_widgets.dart';
+import '../../utils/app_localizations.dart';
 
 class EquipmentDetailScreen extends StatefulWidget {
   final ServiceItem service;
@@ -1316,6 +1317,18 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
               Text('Write a Review', style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.black,
               )),
+              const SizedBox(height: 8),
+              // AUDIENCE, stated before they type. No surface in this app told
+              // a user who could see what they were writing. A review box on a
+              // healthcare app invites exactly the disclosure it should not —
+              // "this helped my mother's oxygen levels after her surgery" —
+              // and the person writing it has no way to know it is not private
+              // correspondence with Housepital.
+              Text(
+                AppLocalizations.of(context)!.t('review_audience_notice'),
+                style: TextStyle(
+                    fontSize: 12, height: 1.4, color: context.hc.grey),
+              ),
               const SizedBox(height: 16),
               // Star selector — shared accessible rater (44pt targets +
               // per-star Semantics), replaces a bare GestureDetector row.
@@ -1367,8 +1380,16 @@ class _EquipmentDetailScreenState extends State<EquipmentDetailScreen> {
                       ));
                     });
                     if (mounted) {
+                      // The review is inserted into a local list after the
+                      // POST fails against an endpoint that does not exist.
+                      // It is visible to this user, on this phone, until the
+                      // screen is disposed. "Thank you for your review!"
+                      // implied publication to other customers.
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Thank you for your review!')),
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context)!
+                              .t('review_saved_local')),
+                        ),
                       );
                     }
                   },
