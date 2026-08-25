@@ -244,7 +244,29 @@ cannot find a recognition service.
 
 For Android 13+ (API 33+), the app requests `POST_NOTIFICATIONS` permission at runtime when the user first adds a medication.
 
-### 4.1.2 New Dependencies to Install
+#### Release gate — schema drift (run before every backend deploy)
+
+```bash
+cd housepital-backend && ./scripts/check_schema_drift.sh
+```
+
+Exit 0 = the routes and the migrations agree. **Exit 1 = do not deploy.**
+
+The sync audit graded this Fail with "no gate in either repo", and required a
+check that counts **fields**, not records — because both live faults were
+field-level (`medications.patient_id` on a table without it;
+`family_member_id` where the column is `rated_by`). A table-level or
+record-level check would have passed both.
+
+It needs no database and no network, which is the point: every check capable
+of catching the original drift required infrastructure nobody had, so none
+ever ran.
+
+**Owner:** unassigned. This is a real gap, not an oversight in this document —
+`A.03` graded the deploy steps Warning specifically because the ritual exists
+and the accountability does not. Name someone before release.
+
+## 4.1.2 New Dependencies to Install
 
 These dependencies were added since the last deployment guide update:
 

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
 import '../screens/main_shell.dart';
+import '../config/theme.dart';
 
 /// Liquid-Glass-style material primitives (Flutter approximation).
 ///
@@ -139,9 +140,55 @@ class GlassSurface extends StatelessWidget {
     this.opacity = 0.55,
   });
 
+  /// True when the user has asked the system for a less translucent, higher
+  /// contrast interface.
+  ///
+  /// Flutter does not surface iOS "Reduce Transparency" — `MediaQueryData`
+  /// has `highContrast`, `disableAnimations`, `boldText`, `invertColors` and
+  /// `accessibleNavigation`, and nothing else. So this is a PROXY, and it is
+  /// worth being honest that it is one: `highContrast` is iOS "Increase
+  /// Contrast" (and Android's high-contrast text), `accessibleNavigation` is
+  /// a screen reader being active. Someone who turns on Reduce Transparency
+  /// alone still gets the blur. Revisit if Flutter ever exposes the flag.
+  static bool reduceTransparencyOf(BuildContext context) =>
+      MediaQuery.highContrastOf(context) ||
+      MediaQuery.accessibleNavigationOf(context);
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final solid = reduceTransparencyOf(context);
+
+    // ACCESSIBLE PATH — opaque, no blur, and a boundary that can actually be
+    // seen. The default glass edge measures 1.03:1 in light and 1.26:1 in
+    // dark against what sits behind it; WCAG 1.4.11 asks for 3:1 to identify
+    // a UI component. The accessible tokens measure 4.26:1 and 5.22:1.
+    //
+    // Dropping BackdropFilter here is not only a contrast fix. Root tabs
+    // stack three to four of these, and a backdrop filter forces a
+    // save-layer of the region beneath it every frame — the single largest
+    // scroll cost in the app. Users on this path get the cheap version.
+    //
+    // The frosted default is unchanged, because the owner chose it
+    // deliberately (round 8: "make it more frosted", then approved). This
+    // adds a path for people who need one; it does not overrule that.
+    if (solid) {
+      final fill = dark ? const Color(0xFF1C1C1E) : Colors.white;
+      final edge = dark
+          ? HousepitalColorsDark.glassEdgeAccessible
+          : HousepitalColors.glassEdgeAccessible;
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: borderRadius,
+          border: borderRadius != null
+              ? Border.all(color: edge, width: 1)
+              : Border(top: BorderSide(color: edge, width: 1)),
+        ),
+        child: child,
+      );
+    }
+
     // Dark fill matches the calm-pass card family (#1C1C1E on true black).
     final fill = dark
         ? const Color(0xFF1C1C1E).withValues(alpha: opacity)

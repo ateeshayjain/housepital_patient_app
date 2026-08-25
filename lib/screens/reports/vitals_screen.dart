@@ -79,7 +79,17 @@ class _VitalsScreenState extends State<VitalsScreen>
         'sugar': 95.0 + rng.nextInt(35),
       });
     });
-    DemoMode.markServingDemoData(DemoMode.sourceVitals);
+    // NOT marked here. This method only regenerates the sample SERIES; it
+    // knows nothing about whether the patient has real readings. Raising the
+    // flag unconditionally meant every 7d/30d/90d/All tap drove
+    // isServingDemoData false -> true -> false, remounting the notice pill —
+    // and `_DemoDataPillState.initState` fires a one-shot ASSERTIVE
+    // SemanticsService announcement on every mount. A VoiceOver user with
+    // entirely real readings was interrupted with "Sample data — not your
+    // live record" on each period change. A false alarm, announced
+    // assertively, to the users least able to dismiss it as a glitch.
+    //
+    // build() decides the flag from the data, once, for the whole screen.
     if (mounted) setState(() {});
   }
 
@@ -123,11 +133,62 @@ class _VitalsScreenState extends State<VitalsScreen>
   /// is half measured and half invented is worse than a sparse chart, because
   /// nothing on it can be trusted. The sample trend is a placeholder for an
   /// empty screen, not a backdrop for real data.
-  List<VitalReading> _mergedVitals(List<VitalReading> manual) {
+  /// The five keys the CHARTS use, in tab order. Deliberately distinct from
+  /// `_vitalKeys` above, which holds the ENTRY-SHEET keys — that list says
+  /// 'bp' where the chart says 'systolic'. Two vocabularies for the same five
+  /// vitals is its own hazard; they are kept apart and named apart rather
+  /// than merged, because the entry sheet genuinely writes a pair for BP.
+  static const List<String> _chartKeys = <String>[
+    'systolic',
+    'temperature',
+    'spo2',
+    'sugar',
+    'pulse',
+  ];
+
+  /// Reads [key] off a reading, or null if that reading does not carry it.
+  static double? _valueFor(VitalReading r, String key) {
+    switch (key) {
+      case 'systolic':
+        return r.systolic;
+      case 'diastolic':
+        return r.diastolic;
+      case 'temperature':
+        return r.temperature;
+      case 'spo2':
+        return r.spo2;
+      case 'sugar':
+        return r.sugar;
+      case 'pulse':
+        return r.pulse;
+      default:
+        return null;
+    }
+  }
+
+  /// Readings for one vital, for the selected period, oldest first.
+  ///
+  /// THE RULE IS PER VITAL, AND THAT IS THE WHOLE POINT.
+  /// This used to decide globally: if the patient had ANY real reading in the
+  /// window, every tab dropped its sample trend. But the entry sheet writes
+  /// exactly ONE vital per reading — every other field on the new
+  /// `VitalReading` is null. So recording a single blood-sugar value made
+  /// `real.isNotEmpty` true for all five tabs at once, and Blood Pressure,
+  /// Temperature, SpO2 and Pulse — which had shown 180 days of trend one tap
+  /// earlier — collapsed to the bare words "No data". The user's only
+  /// feedback was "Reading saved".
+  ///
+  /// Scoping the decision to the key keeps the property that actually
+  /// mattered — a chart is never half measured and half invented — while
+  /// letting each vital switch over independently, as its first real reading
+  /// arrives.
+  List<VitalReading> _mergedVitalsFor(List<VitalReading> manual, String key) {
     final cutoff = DateTime.now().subtract(Duration(days: _periodDays));
-    final real = manual.where((r) => r.recordedAt.isAfter(cutoff)).toList();
+    final real = manual
+        .where((r) =>
+            r.recordedAt.isAfter(cutoff) && _valueFor(r, key) != null)
+        .toList();
     if (real.isNotEmpty) {
-      DemoMode.markServingLiveData(DemoMode.sourceVitals);
       real.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
       return real;
     }
@@ -136,10 +197,29 @@ class _VitalsScreenState extends State<VitalsScreen>
     return sample;
   }
 
+  /// True when [key] is currently charting invented data.
+  bool _isSampleFor(List<VitalReading> manual, String key) {
+    final cutoff = DateTime.now().subtract(Duration(days: _periodDays));
+    return !manual.any((r) =>
+        r.recordedAt.isAfter(cutoff) && _valueFor(r, key) != null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final vitals = _mergedVitals(context.watch<AppProvider>().vitalsHistory);
+    final manual = context.watch<AppProvider>().vitalsHistory;
+
+    // The banner must speak for the screen as a whole: it is raised while ANY
+    // chart here is still showing the sample trend, and only lowered once
+    // every one of them is backed by a real reading. Raising it on the first
+    // sample tab and lowering it on the first real one — which a global rule
+    // did — is an affirmative all-clear over invented data.
+    final anySample = _chartKeys.any((k) => _isSampleFor(manual, k));
+    if (anySample) {
+      DemoMode.markServingDemoData(DemoMode.sourceVitals);
+    } else {
+      DemoMode.markServingLiveData(DemoMode.sourceVitals);
+    }
 
     return Scaffold(
       // No assistant FAB on this pushed route (it lives on MainShell's
@@ -188,11 +268,21 @@ class _VitalsScreenState extends State<VitalsScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildChartPage(vitals, 'systolic', 'diastolic', 'mmHg', 'Blood Pressure'),
-                _buildChartPage(vitals, 'temperature', null, '\u00B0F', 'Temperature'),
-                _buildChartPage(vitals, 'spo2', null, '%', 'SpO2'),
-                _buildChartPage(vitals, 'sugar', null, 'mg/dl', 'Blood Sugar'),
-                _buildChartPage(vitals, 'pulse', null, 'bpm', 'Pulse'),
+                _buildChartPage(_mergedVitalsFor(manual, 'systolic'),
+                    'systolic', 'diastolic', 'mmHg', 'Blood Pressure',
+                    isSample: _isSampleFor(manual, 'systolic')),
+                _buildChartPage(_mergedVitalsFor(manual, 'temperature'),
+                    'temperature', null, '\u00B0F', 'Temperature',
+                    isSample: _isSampleFor(manual, 'temperature')),
+                _buildChartPage(_mergedVitalsFor(manual, 'spo2'),
+                    'spo2', null, '%', 'SpO2',
+                    isSample: _isSampleFor(manual, 'spo2')),
+                _buildChartPage(_mergedVitalsFor(manual, 'sugar'),
+                    'sugar', null, 'mg/dl', 'Blood Sugar',
+                    isSample: _isSampleFor(manual, 'sugar')),
+                _buildChartPage(_mergedVitalsFor(manual, 'pulse'),
+                    'pulse', null, 'bpm', 'Pulse',
+                    isSample: _isSampleFor(manual, 'pulse')),
               ],
             ),
           ),
@@ -232,9 +322,20 @@ class _VitalsScreenState extends State<VitalsScreen>
   }
 
   Widget _buildChartPage(List<VitalReading> vitals, String primaryKey,
-      String? secondaryKey, String unit, String title) {
+      String? secondaryKey, String unit, String title,
+      {bool isSample = false}) {
     if (vitals.isEmpty) {
-      return const Center(child: Text('No data available'));
+      final l = AppLocalizations.of(context)!;
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
+            l.t('vitals_no_data_title'),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: context.hc.grey),
+          ),
+        ),
+      );
     }
 
     // Extract values
@@ -280,7 +381,38 @@ class _VitalsScreenState extends State<VitalsScreen>
     }
 
     if (spots.isEmpty || latestReading == null) {
-      return const Center(child: Text('No data'));
+      // "No data" was the whole message here, in English only, on a chart
+      // that had shown 180 days of trend one tap earlier. It read as data
+      // loss rather than as an empty start, and it offered nothing to do.
+      final l = AppLocalizations.of(context)!;
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.show_chart, size: 40, color: context.hc.greyLight),
+              const SizedBox(height: 12),
+              Text(
+                l.t('vitals_no_data_title'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: context.hc.black,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l.t('vitals_no_data_body'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 13, height: 1.45, color: context.hc.grey),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final avg = values.reduce((a, b) => a + b) / values.length;
@@ -293,6 +425,42 @@ class _VitalsScreenState extends State<VitalsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Per-chart sample notice. The app-wide pill says "Sample data —
+          // not your live record" in one clipped line at the top of the
+          // screen, and never says WHICH data it means. On a screen showing
+          // a fabricated 180-day clinical trend — with a hero reading, an
+          // average, a min/max and an alert count, all rendered identically
+          // whether measured or invented — that is not enough. This sits with
+          // the numbers it is about, and disappears per-vital as each one
+          // gets its first real reading.
+          if (isSample)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: context.hc.warningLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        size: 16, color: context.hc.warning),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.t('vitals_sample_label'),
+                        style: TextStyle(
+                            fontSize: 12, color: context.hc.black),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Latest reading hero
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),

@@ -617,10 +617,13 @@ class _DailyCareRatingCardState extends State<_DailyCareRatingCard> {
     setState(() => _ratedToday = stars);
 
     if (stars >= 4) {
+      // The rating is written to SharedPreferences and nowhere else. Nobody
+      // at Housepital sees it, so "we've shared your feedback with the team"
+      // was a claim about an action that never happened.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              "Thanks for rating! We've shared your feedback with the team."),
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.t('feedback_saved_local')),
         ),
       );
     } else {

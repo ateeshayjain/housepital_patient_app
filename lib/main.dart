@@ -121,10 +121,16 @@ void main() async {
           FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
           return true;
         };
-        await FirebaseCrashlytics.instance
-            .setCrashlyticsCollectionEnabled(true);
-        await FirebasePerformance.instance
-            .setPerformanceCollectionEnabled(true);
+        // NOT awaited. These are remote toggles; nothing on the first frame
+        // depends on them, and awaiting four platform round-trips before
+        // runApp() put that latency directly into time-to-interactive on
+        // exactly the low-end devices where it hurts most. The error HANDLERS
+        // above are assigned synchronously and are live immediately, which is
+        // the part that actually had to happen early.
+        unawaited(FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(true));
+        unawaited(FirebasePerformance.instance
+            .setPerformanceCollectionEnabled(true));
 
         // Handled failures. The three hooks above only catch things that
         // ESCAPE — and this app is careful never to let anything escape, so
@@ -143,10 +149,10 @@ void main() async {
       } else {
         // In debug builds, keep both surfaces off so test runs and hot reloads
         // don't pollute the production project.
-        await FirebaseCrashlytics.instance
-            .setCrashlyticsCollectionEnabled(false);
-        await FirebasePerformance.instance
-            .setPerformanceCollectionEnabled(false);
+        unawaited(FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(false));
+        unawaited(FirebasePerformance.instance
+            .setPerformanceCollectionEnabled(false));
       }
     }
 
@@ -190,10 +196,22 @@ void main() async {
     // parser.
     await StoreMigrator.run();
 
-    // Initialise local medication reminders (no-op on web).
-    if (!kIsWeb) {
-      await MedicationReminderService().init();
-    }
+    // Medication reminders. Deliberately NOT awaited here: it touches the
+    // notification plugin and the timezone database, nothing on the first
+    // frame reads it, and it used to sit on the critical path adding its
+    // latency to every cold start. The splash screen races this future
+    // instead, so the work still finishes before the user can reach a screen
+    // that depends on it — see SplashScreen.warmup.
+    //
+    // StoreMigrator above STAYS awaited. Providers are constructed below and
+    // read SharedPreferences in their constructors, so a v1 blob would reach
+    // a v2 parser. That one is a correctness barrier, not a latency cost.
+    final Future<void> warmup = kIsWeb
+        ? Future<void>.value()
+        : MedicationReminderService().init().catchError((Object e, StackTrace s) {
+            Log.warn('Medication reminder init failed; reminders may not fire',
+                error: e, stack: s, tag: 'startup');
+          });
 
     final firebaseService = FirebaseService();
     final apiService = ApiService();
@@ -293,7 +311,7 @@ void main() async {
             create: (_) => ThemeProvider(),
           ),
         ],
-        child: const HousepitalApp(),
+        child: HousepitalApp(warmup: warmup),
       ),
     );
   }, (error, stack) {
@@ -310,7 +328,11 @@ void main() async {
 }
 
 class HousepitalApp extends StatefulWidget {
-  const HousepitalApp({super.key});
+  /// Startup work still running when the tree is built. Threaded down to
+  /// [SplashScreen], which races it rather than waiting a fixed two seconds.
+  final Future<void>? warmup;
+
+  const HousepitalApp({super.key, this.warmup});
 
   /// Global navigator key for notification routing from cold-start.
   static final navigatorKey = GlobalKey<NavigatorState>();
@@ -432,7 +454,7 @@ class _HousepitalAppState extends State<HousepitalApp> {
       ],
       // NOTE: Auth gate disabled for demo mode. Enable before production release.
       // home: Consumer<AuthProvider>(...),
-      home: const SplashScreen(),
+      home: SplashScreen(warmup: widget.warmup),
       // Clamp system text scaling so layouts don't break at extreme accessibility
       // settings, but still honour user preference up to 1.4x (WCAG 1.4.4).
       builder: (context, child) {

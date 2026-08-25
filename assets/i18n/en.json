@@ -355,5 +355,11 @@
   "disclaimer_vitals": "These readings and their colours are a guide, not a diagnosis. Housepital does not interpret vitals remotely — if something looks wrong, or if the person feels unwell whatever the colour says, tell your nurse or health manager straight away.",
   "disclaimer_medication": "This schedule reflects what has been recorded for this patient. It is not a prescription and reminders can be missed. Only a doctor may start, stop or change a medicine or its dose.",
   "disclaimer_article": "General information, not advice for any one person. Talk to your doctor or your Housepital health manager before acting on anything here.",
-  "disclaimer_report": "Prepared from records entered in the Housepital app. It is a summary for your doctor, not a clinical assessment, and it may be incomplete."
+  "disclaimer_report": "Prepared from records entered in the Housepital app. It is a summary for your doctor, not a clinical assessment, and it may be incomplete.",
+  "vitals_no_data_title": "No readings yet",
+  "vitals_no_data_body": "Tap Add reading to record the first one. Your trend builds up as readings are added.",
+  "vitals_sample_label": "Sample trend — not this patient's readings",
+  "feedback_saved_local": "Saved on this device. Housepital has not received it yet — the feedback service isn't connected.",
+  "review_saved_local": "Saved on this phone only. Other customers can't see it yet — reviews aren't being published.",
+  "review_audience_notice": "Reviews are meant to be visible to other Housepital customers, along with your first name. Don't include medical details or anything you wouldn't want other customers to read."
 }

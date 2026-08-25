@@ -723,8 +723,19 @@ class _DailyReportScreenState extends State<DailyReportScreen> {
               onPressed: selectedRating > 0
                   ? () {
                       Navigator.pop(context);
+                      // "Rating submitted!" was a plain untruth: this handler
+                      // pops a dialog and shows a snackbar. It writes nothing,
+                      // sends nothing, and stores nothing — the rating is
+                      // discarded the instant the dialog closes. Telling
+                      // someone their feedback reached the care team when it
+                      // reached nothing is the same defect class as the
+                      // fabricated police check, in a smaller place.
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Rating submitted!')),
+                        SnackBar(
+                          content: Text(
+                              AppLocalizations.of(context)!
+                                  .t('feedback_saved_local')),
+                        ),
                       );
                     }
                   : null,
