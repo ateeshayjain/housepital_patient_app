@@ -1,5 +1,22 @@
 # API Reference
 
+> ## ⚠️ This document described endpoints that did not exist
+>
+> Until 2026-08-25 this reference documented every endpoint below as though it
+> were live. Eight of them had never been implemented — including
+> `POST /deployments/:id/replacement`, the only control in the app for
+> removing a caregiver from a patient's home.
+>
+> That is part of why the gap survived: the documentation asserted the routes
+> were there, the client called them, the calls failed, and the UI reported
+> success. Nothing anywhere contradicted the document.
+>
+> Endpoints that are **specified but not implemented** are now marked
+> **`NOT IMPLEMENTED`** in their own heading. `route-conformance.test.ts` in
+> the backend fails if a client call has no route, so this document can no
+> longer be the only thing claiming an endpoint exists.
+
+
 ## Overview
 
 All endpoints are served via a single Firebase Cloud Function (`api`) deployed to `asia-south1`. The Express app is mounted at the function root, so the full URL pattern is:
@@ -444,9 +461,18 @@ Paginated booking history.
 
 ---
 
-### `PUT /bookings/:id/cancel`
+### `POST /bookings/:id/cancel`
 
 Cancel a booking. Refund policy depends on time before scheduled date.
+
+> Documented as `PUT` until 2026-08-25; the client has always sent `POST`.
+> Since the route did not exist at all, neither verb 404'd more than the
+> other — but a reader reconciling the two would have concluded the client
+> was wrong, when the document was.
+
+A booking already `completed`, `cancelled` or `no_show` returns **409**:
+terminal states are terminal, and a second cancel must not overwrite the
+first reason and timestamp.
 
 **Auth:** Bearer token + verifyPatientAccess
 
@@ -1002,9 +1028,12 @@ List active coupons, optionally filtered by category.
 
 ## Slot Availability
 
-### `GET /services/:id/slots`
+### `GET /services/:id/slots` — **NOT IMPLEMENTED**
 
 Check available time slots for a service on a given date.
+
+> **Not implemented.** Needs a staff-availability / scheduling model that does
+> not exist. Listed as an accepted gap in `route-conformance.test.ts`.
 
 **Auth:** Bearer token
 
@@ -1057,9 +1086,14 @@ Submit a review for equipment.
 
 ## Returns
 
-### `POST /returns/schedule`
+### `POST /returns/schedule` — **NOT IMPLEMENTED**
 
 Schedule an equipment return.
+
+> **Not implemented, and nothing calls it.** The client's equipment-return
+> path is `POST /equipment-orders/:id/return`, which is also unimplemented and
+> blocked on the same question: whether `bookings` or `equipment_deployments`
+> is authoritative for an equipment order.
 
 **Auth:** Bearer token + requirePrimary
 
@@ -1121,3 +1155,53 @@ Applies to: `/notifications`, `/patients/:id/bookings`, `/patients/:id/invoices`
 ---
 
 **Update rule:** Every new Cloud Function or endpoint = update this file.
+
+---
+
+### `POST /patients/:id/vitals`
+
+Record a vital-sign reading from the app.
+
+**Auth:** Bearer token + verifyPatientAccess
+
+**Input:** at least one of `systolic`, `diastolic`, `pulse`, `spo2`,
+`temperature`, `sugar`; optional `recorded_at`, `notes`.
+
+```json
+{ "systolic": 128, "diastolic": 82, "recorded_at": "2026-08-25T09:30:00Z" }
+```
+
+**Response:** `201` — the stored row.
+
+The server sets `recorded_by_type` to `family` or `patient`, never `staff`.
+That distinction is clinical, not bookkeeping: a family member's home cuff and
+a nurse's device are not the same evidence to a doctor reading a trend.
+
+Until this route existed the vitals entry sheet had no destination at all —
+readings lived in the local provider and died with the install, which is why
+the trend charts fall back to a generated sample series.
+
+---
+
+### `PUT /assessments/:id/accept`
+
+Accept a coordinator's quote.
+
+**Auth:** Bearer token + requirePrimary
+
+**Input:** `{ "selected_plan": "string (optional)" }`
+
+**Response:** `200` — `{success, id, status: "accepted"}`
+· `404` not found or not yours
+· `409` already accepted/declined, **or the quote has expired** — an expired
+quote must not be acceptable at its old price.
+
+---
+
+### `PUT /assessments/:id/decline`
+
+**Input:** `{ "reason": "string (optional)" }`
+
+**Response:** `200` · `404` · `409` if already resolved.
+
+---
